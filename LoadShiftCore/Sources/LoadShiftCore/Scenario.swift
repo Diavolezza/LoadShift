@@ -16,12 +16,16 @@ public enum Control: Int, CaseIterable, Sendable, Codable {
     case manualCapacity
     /// Rules for the capacity: all on, fixed number, autoscaling with a target utilization.
     case capacityRules
+    /// Planning batch jobs by hand: a start time per job.
+    case batchByHand
 }
 
 /// The special goal of a scenario: the third star.
 public enum SpecialGoal: Equatable, Sendable {
     /// Mean utilization of the running servers at least this, per mille.
     case meanUtilization(Int)
+    /// Mean carbon intensity of the energy used for batch work at most this, g/kWh.
+    case batchIntensity(Int)
     /// CO₂ at least this much below the reference, per mille.
     case reduction(Int)
 }
@@ -54,13 +58,18 @@ public struct Scenario: Equatable, Sendable {
     public let controls: Set<Control>
     /// Policy at the start: how the data center was left by the previous shift.
     public let initialPolicy: Policy
+    /// What the reference operator does in this scenario.
+    public let referencePolicy: Policy
     public let goals: StarGoals
+    public let batchJobs: [BatchJobSpec]
 
     public init(number: Int, title: String, setting: GridSetting, weather: WeatherMode = .drawn, days: Int,
                 seed: UInt64, fleet: [FleetEntry], interactive: InteractiveLoad,
                 facility: Facility = Facility(), slaTarget: Int = 990,
                 controls: Set<Control> = [.capacityRules], initialPolicy: Policy = .reference,
-                goals: StarGoals = StarGoals(reduction: 150, special: .reduction(250))) {
+                referencePolicy: Policy = .reference,
+                goals: StarGoals = StarGoals(reduction: 150, special: .reduction(250)),
+                batchJobs: [BatchJobSpec] = []) {
         self.number = number
         self.title = title
         self.setting = setting
@@ -73,7 +82,9 @@ public struct Scenario: Equatable, Sendable {
         self.slaTarget = slaTarget
         self.controls = controls
         self.initialPolicy = initialPolicy
+        self.referencePolicy = referencePolicy
         self.goals = goals
+        self.batchJobs = batchJobs
     }
 
     /// First tick: 00:00 on day 0.
@@ -86,7 +97,7 @@ public struct Scenario: Equatable, Sendable {
 
     /// The goals a result reaches.
     public func goalsMet(_ totals: Totals, reference: Totals) -> (rules: Bool, reduction: Bool, special: Bool) {
-        let rules = totals.sla >= slaTarget && totals.emissions < reference.emissions
+        let rules = totals.sla >= slaTarget && totals.deadlinesMissed == 0 && totals.emissions < reference.emissions
         let reduction = rules && totals.emissions * 1_000 <= reference.emissions * (1_000 - goals.reduction)
         let special: Bool
         switch goals.special {
@@ -94,6 +105,8 @@ public struct Scenario: Equatable, Sendable {
             special = rules && totals.meanUtilization >= minimum
         case .reduction(let r):
             special = rules && totals.emissions * 1_000 <= reference.emissions * (1_000 - r)
+        case .batchIntensity(let maximum):
+            special = rules && totals.batchEnergy > 0 && totals.meanBatchIntensityTenths <= maximum * 10
         }
         return (rules, reduction, special)
     }
@@ -120,5 +133,33 @@ public struct Scenario: Equatable, Sendable {
         initialPolicy: Policy(capacity: .manual(servers: 20)),
         goals: StarGoals(reduction: 150, special: .meanUtilization(600)))
 
-    public static let all: [Scenario] = [nightShift]
+    /// Scenario 2, "Wait for the sun": the batch cluster of the web shop in Spain in summer. Reports, backups and
+    /// imports must be done by their deadlines; when they run is up to the player. In Spain's solar grid the
+    /// midday hours are the cleanest – not the night (G3).
+    public static let waitForTheSun = Scenario(
+        number: 2, title: "Wait for the sun", setting: GridSetting(.spain, .year), days: 2, seed: 2,
+        fleet: [FleetEntry(.cpuCurrent, 10)],
+        interactive: InteractiveLoad(peak: 0),
+        controls: [.batchByHand],
+        initialPolicy: Policy(capacity: .manual(servers: 0), batch: .byHand),
+        referencePolicy: Policy(capacity: .manual(servers: 0), batch: .asap),
+        goals: StarGoals(reduction: 100, special: .batchIntensity(83)),
+        batchJobs: [
+            BatchJobSpec("Daily report", servers: 4, hours: 3,
+                         arrival: GameTime(day: 0, hour: 0), deadline: GameTime(day: 0, hour: 18)),
+            BatchJobSpec("Backup", servers: 3, hours: 4,
+                         arrival: GameTime(day: 0, hour: 1), deadline: GameTime(day: 1, hour: 6)),
+            BatchJobSpec("Data import", servers: 6, hours: 2,
+                         arrival: GameTime(day: 0, hour: 7), deadline: GameTime(day: 0, hour: 20)),
+            BatchJobSpec("Image conversion", servers: 5, hours: 4,
+                         arrival: GameTime(day: 0, hour: 18), deadline: GameTime(day: 1, hour: 18)),
+            BatchJobSpec("Daily report", servers: 4, hours: 3,
+                         arrival: GameTime(day: 1, hour: 0), deadline: GameTime(day: 1, hour: 18)),
+            BatchJobSpec("Backup", servers: 3, hours: 4,
+                         arrival: GameTime(day: 1, hour: 1), deadline: GameTime(day: 2, hour: 0)),
+            BatchJobSpec("Search index", servers: 4, hours: 3,
+                         arrival: GameTime(day: 1, hour: 6), deadline: GameTime(day: 2, hour: 0)),
+        ])
+
+    public static let all: [Scenario] = [nightShift, waitForTheSun]
 }

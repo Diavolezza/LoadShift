@@ -92,6 +92,40 @@ final class LessonTests: XCTestCase {
         XCTAssertEqual(scenario.stars(fixedHalf.totals, reference: reference.totals), 0)
     }
 
+    func testScenario2WaitForTheSun() {
+        let scenario = Scenario.waitForTheSun
+        let reference = Simulation.reference(for: scenario)
+        let greenest = run(scenario, Policy(capacity: .manual(servers: 0), batch: .greenest))
+        let night = run(scenario, Policy(capacity: .manual(servers: 0), batch: .atHour(1)))
+        let noon = run(scenario, Policy(capacity: .manual(servers: 0), batch: .atHour(11)))
+        let nothing = run(scenario, scenario.initialPolicy)
+
+        Self.report.append("Scenario 2 – \(scenario.title) (\(scenario.setting.region.name), \(scenario.setting.season.name), \(scenario.days) days)")
+        Self.report.append(Self.header + "  batch g/kWh  missed")
+        for (name, simulation) in [("reference: as soon as", reference), ("greenest (forecast)", greenest),
+                                   ("every job at 01:00", night), ("every job at 11:00", noon),
+                                   ("nothing planned", nothing)] {
+            Self.report.append(Self.line(name, simulation.totals, reference: reference.totals)
+                + String(format: "  %11d  %6d", (simulation.totals.meanBatchIntensityTenths + 5) / 10,
+                         simulation.totals.deadlinesMissed)
+                + "  " + String(repeating: "★", count: scenario.stars(simulation.totals, reference: reference.totals)))
+        }
+        for (i, job) in greenest.jobs.enumerated() {
+            let start = job.startedAt.map { GameTime(tick: $0) }
+            Self.report.append("  greenest job \(i) \(job.spec.name): start day \(start?.day ?? -1) \(start?.clockText ?? "–")")
+        }
+        Self.report.append("")
+
+        XCTAssertEqual(reference.totals.deadlinesMissed, 0, "the reference meets every deadline")
+        XCTAssertEqual(scenario.stars(reference.totals, reference: reference.totals), 0)
+        XCTAssertEqual(greenest.totals.deadlinesMissed, 0)
+        XCTAssertEqual(scenario.stars(greenest.totals, reference: reference.totals), 3, "planning by the forecast earns three stars")
+        XCTAssertGreaterThan(nothing.totals.deadlinesMissed, 0)
+        XCTAssertEqual(scenario.stars(nothing.totals, reference: reference.totals), 0)
+        // The night is not clean in a solar grid: the nightly batch is hardly better than the reference.
+        XCTAssertLessThanOrEqual(scenario.stars(night.totals, reference: reference.totals), 1)
+    }
+
     // MARK: - Report
 
     private static let header =

@@ -6,6 +6,7 @@ import LoadShiftCore
 struct BriefingView: View {
     let scenario: Scenario
     let onStart: () -> Void
+    var onBack: (() -> Void)? = nil
 
     var body: some View {
         GeometryReader { geo in
@@ -34,6 +35,12 @@ struct BriefingView: View {
 
     private var header: some View {
         HStack(alignment: .center, spacing: 18) {
+            if let onBack {
+                Button(action: onBack) {
+                    Image(systemName: "chevron.left").font(.title.weight(.semibold))
+                }
+                .accessibilityLabel(Text("Back"))
+            }
             Image(systemName: "server.rack")
                 .font(.system(size: 52, weight: .light))
                 .foregroundStyle(Theme.accent)
@@ -56,7 +63,7 @@ struct BriefingView: View {
     }
 
     private var story: some View {
-        let text = BriefingText.of(scenario.number)
+        let text = ScenarioTexts.of(scenario)
         return VStack(alignment: .leading, spacing: 26) {
             Section(title: "Situation", text: text.situation)
             Section(title: "The idea", text: text.idea)
@@ -67,19 +74,25 @@ struct BriefingView: View {
     private var sideCard: some View {
         let perServer = scenario.fleet.first?.kind.capacity ?? 0
         let peak = scenario.interactive.peak
+        let text = ScenarioTexts.of(scenario)
         return VStack(alignment: .leading, spacing: 22) {
             VStack(alignment: .leading, spacing: 10) {
                 Fact(icon: "mappin.and.ellipse", text: scenario.setting.region.localizedName)
                 Fact(icon: "leaf", text: scenario.setting.season.localizedName)
                 Fact(icon: "clock", text: scenario.days == 1 ? "1 day, from 00:00" : "\(scenario.days) days, from 00:00")
-                Fact(icon: "server.rack", text: "\(scenario.serverCount) servers, \(perServer) load units each")
-                Fact(icon: "chart.line.uptrend.xyaxis", text: "Evening peak about \(peak) load units")
+                if peak > 0 {
+                    Fact(icon: "server.rack", text: "\(scenario.serverCount) servers, \(perServer) load units each")
+                    Fact(icon: "chart.line.uptrend.xyaxis", text: "Evening peak about \(peak) load units")
+                } else {
+                    Fact(icon: "server.rack", text: "\(scenario.serverCount) servers for batch jobs")
+                    Fact(icon: "square.stack.3d.up", text: "\(scenario.batchJobs.count) jobs with deadlines")
+                }
             }
             Divider()
             VStack(alignment: .leading, spacing: 12) {
                 Text("Goals")
                     .font(.title2.bold())
-                GoalLine(ok: nil, stars: 1, text: "SLA at least \(Format.percent(scenario.slaTarget)) and less CO₂ than the reference operator, who leaves every server on", font: .title3)
+                GoalLine(ok: nil, stars: 1, text: text.rules, font: .title3)
                 GoalLine(ok: nil, stars: 2, text: "CO₂ \(Format.changePermille(-scenario.goals.reduction)) or better", font: .title3)
                 GoalLine(ok: nil, stars: 3, text: StarText.special(scenario.goals.special), font: .title3)
                 Text("One star opens the next scenario.")
@@ -129,19 +142,5 @@ struct BriefingView: View {
             }
             .font(.title3)
         }
-    }
-}
-
-/// The texts of a briefing.
-struct BriefingText {
-    let situation: LocalizedStringKey
-    let idea: LocalizedStringKey
-    let screen: LocalizedStringKey
-
-    static func of(_ number: Int) -> BriefingText {
-        BriefingText(
-            situation: "You run the data center of a web shop in Germany. Its 20 servers are sized for the Christmas season. Today is an ordinary autumn day: in the evening many people shop, at night hardly anyone. It is midnight, and the previous shift has left every server on.",
-            idea: "An idle server still draws about a quarter of its maximum power. Switch off the servers that are not needed – and switch them on again in time: a server takes 30 minutes before it can work.",
-            screen: "The game starts paused. Top: clock and speed – pause, 1×, 4×, 16× – and below it your goals. Middle: your racks; grey servers are off, amber ones are booting, the green bar shows how busy a server is. Right: plus and minus for the servers, and the situation right now. Bottom: carbon intensity of the grid with the forecast, the load so far and the expected load (dotted); the dotted lines with \"5 servers\", \"10 servers\" … show how many servers a load needs.")
     }
 }

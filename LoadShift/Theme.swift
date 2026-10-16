@@ -12,6 +12,11 @@ enum Theme {
     static let demand = Color(red: 0.16, green: 0.36, blue: 0.68)
     static let capacity = Color(red: 0.62, green: 0.75, blue: 0.92)
     static let off = Color(white: 0.84)
+    /// A server switched on that is still booting.
+    static let booting = Color(red: 0.72, green: 0.82, blue: 0.92)
+    /// Load bar of interactive work and of batch work in the hall.
+    static let interactiveLoad = Color(red: 0.36, green: 0.62, blue: 0.95)
+    static let batchLoad = amber
     static let slab = Color(red: 0.25, green: 0.30, blue: 0.29)
 
     /// Color of a carbon intensity: green when clean, amber, red when dirty (g/kWh).

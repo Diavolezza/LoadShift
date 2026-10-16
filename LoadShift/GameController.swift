@@ -21,6 +21,9 @@ final class GameController {
     var showEnd = false
     /// Stars of the finished run (set once at the end).
     private(set) var stars = 0
+    /// A batch job that must start soon or will miss its deadline: the game paused for it.
+    private(set) var urgentJob: Int?
+    private var warnedJobs = Set<Int>()
     private var loop: Task<Void, Never>?
 
     init(scenario: Scenario) {
@@ -54,7 +57,44 @@ final class GameController {
     func step() {
         guard !simulation.isFinished else { return }
         simulation.step()
-        if simulation.isFinished { finish() }
+        if simulation.isFinished {
+            finish()
+        } else {
+            checkUrgentJobs()
+        }
+    }
+
+    /// Pauses once per job when an unplanned job has to start within the next hour (CONCEPT.md 3.3).
+    private func checkUrgentJobs() {
+        guard scenario.controls.contains(.batchByHand) else { return }
+        for job in simulation.jobs where !job.state.isStarted && job.plannedStart == nil
+            && !warnedJobs.contains(job.id) && simulation.tick >= job.spec.latestStart - GameTime.ticksPerHour {
+            warnedJobs.insert(job.id)
+            urgentJob = job.id
+            setSpeed(.paused)
+            return
+        }
+    }
+
+    func dismissUrgent() { urgentJob = nil }
+
+    var hasBatch: Bool { !scenario.batchJobs.isEmpty }
+    var hasInteractive: Bool { scenario.interactive.peak > 0 }
+
+    // MARK: - Batch jobs by hand
+
+    func plan(job: Int, start: Int) {
+        simulation.plan(job: job, start: start)
+        if urgentJob == job { urgentJob = nil }
+    }
+
+    func unplan(job: Int) { simulation.unplan(job: job) }
+
+    /// Default start when the player plans a job: the next full hour, not before its arrival.
+    func suggestedStart(job: Int) -> Int {
+        let earliest = max(simulation.tick, simulation.jobs[job].spec.arrival)
+        let perHour = GameTime.ticksPerHour
+        return (earliest + perHour - 1) / perHour * perHour
     }
 
     /// Runs a number of ticks at once (launch arguments).
@@ -99,8 +139,17 @@ final class GameController {
         return (last.emissionsSoFar - ref) * 1_000 / ref
     }
 
-    /// "What if" for the debrief: the whole scenario replayed with other rules, with the real weather and load.
+    /// "What if" for the debrief: the whole scenario replayed with other rules, with the same load and grid mix.
     func whatIf() -> [(label: LocalizedStringKey, totals: Totals)] {
+        if hasBatch {
+            let capacity = scenario.referencePolicy.capacity
+            return [
+                ("Every job as soon as it arrives (reference)", reference.totals),
+                ("Every job at night, at 01:00", Simulation.replay(scenario, policy: Policy(capacity: capacity, batch: .atHour(1))).totals),
+                ("Every job at 11:00", Simulation.replay(scenario, policy: Policy(capacity: capacity, batch: .atHour(11))).totals),
+                ("Planned by the forecast (from scenario 3)", Simulation.replay(scenario, policy: Policy(capacity: capacity, batch: .greenest)).totals),
+            ]
+        }
         let half = scenario.serverCount / 2, most = scenario.serverCount * 7 / 10
         return [
             ("All servers on (reference)", reference.totals),
@@ -117,6 +166,8 @@ final class GameController {
         draft = scenario.initialPolicy
         stars = 0
         showEnd = false
+        urgentJob = nil
+        warnedJobs = []
     }
 }
 

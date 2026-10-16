@@ -1,8 +1,9 @@
 /// The simulation of one data center through a scenario (docs/CONCEPT.md, sections 3, 5–7, 11).
 ///
 /// Deterministic: the same scenario and the same policy changes at the same ticks always give the same result.
-/// Order within a tick: servers that finished booting go on; the policy switches servers; the demand is served;
-/// power, energy and emissions are booked.
+/// Order within a tick: servers that finished booting go on; batch jobs move on (booted → working → done);
+/// the capacity policy switches the servers not working for batch jobs; batch jobs due now start; the demand
+/// is served; power, energy and emissions are booked.
 
 /// Running totals of a simulation.
 public struct Totals: Equatable, Sendable {
@@ -22,6 +23,12 @@ public struct Totals: Equatable, Sendable {
     public internal(set) var serverTicks = 0
     /// Sum over all ticks of the capacity of the running servers, work units.
     public internal(set) var capacityTicks = 0
+    /// Facility energy (mWh) and operational emissions (µg) of the servers working for batch jobs.
+    public internal(set) var batchEnergy = 0
+    public internal(set) var batchOperational = 0
+    /// Batch jobs finished, and deadlines missed.
+    public internal(set) var jobsDone = 0
+    public internal(set) var deadlinesMissed = 0
 
     /// Share of the demand served in time, per mille.
     public var sla: Int { demand == 0 ? 1_000 : inTime * 1_000 / demand }
@@ -35,6 +42,8 @@ public struct Totals: Equatable, Sendable {
     public var meanUtilization: Int { capacityTicks == 0 ? 0 : served * 1_000 / capacityTicks }
     /// Mean number of servers switched on, per mille of a server.
     public var meanServersOn: Int { ticks == 0 ? 0 : serverTicks * 1_000 / ticks }
+    /// Mean carbon intensity of the energy used for batch work, tenths of g/kWh.
+    public var meanBatchIntensityTenths: Int { batchEnergy == 0 ? 0 : batchOperational * 10 / batchEnergy }
     /// Mean carbon intensity of the energy used, tenths of g/kWh.
     public var meanIntensityTenths: Int { facilityEnergy == 0 ? 0 : operational * 10 / facilityEnergy }
 }
@@ -49,6 +58,8 @@ public struct TickRecord: Equatable, Sendable {
     /// Work served in time (slow requests count half); below `demand` means slow or dropped requests.
     public let inTime: Int
     public let serversOn: Int
+    /// Servers switched on for batch jobs.
+    public let batchServers: Int
     public let itPower: Int
     public let facilityPower: Int
     /// Operational plus embodied emissions from the start up to and including this tick, µg CO₂e.
@@ -60,6 +71,7 @@ public struct Simulation: Sendable {
     public let grid: Grid
     public var policy: Policy
     public private(set) var servers: [Server]
+    public private(set) var jobs: [BatchJob]
     /// The next tick to simulate.
     public private(set) var tick: Int
     public private(set) var totals = Totals()
@@ -67,6 +79,8 @@ public struct Simulation: Sendable {
     /// Set in a projection: from here on the simulation knows only what the operator knows at that tick –
     /// the grid forecast made then and the expected demand without noise (`projected(with:)`).
     public private(set) var plannedAt: Int?
+    /// Jobs whose missed deadline has been counted.
+    private var missedCounted = Set<Int>()
 
     public init(scenario: Scenario, policy: Policy) {
         self.scenario = scenario
@@ -79,6 +93,7 @@ public struct Simulation: Sendable {
             }
         }
         self.servers = servers
+        self.jobs = scenario.batchJobs.enumerated().map { BatchJob(id: $0.offset, spec: $0.element) }
         self.tick = scenario.startTick
         history.reserveCapacity(scenario.endTick - scenario.startTick)
     }
@@ -98,8 +113,24 @@ public struct Simulation: Sendable {
 
     /// Runs the scenario with the reference operator's policy (CONCEPT.md 8.2).
     public static func reference(for scenario: Scenario) -> Simulation {
-        replay(scenario, policy: .reference)
+        replay(scenario, policy: scenario.referencePolicy)
     }
+
+    // MARK: - Planning batch jobs by hand
+
+    /// Plans a job to start at a tick (not before its arrival or now). Started jobs cannot be moved.
+    public mutating func plan(job id: Int, start: Int) {
+        guard jobs.indices.contains(id), !jobs[id].state.isStarted else { return }
+        jobs[id].state = .planned(start: max(start, jobs[id].spec.arrival, tick))
+    }
+
+    public mutating func unplan(job id: Int) {
+        guard jobs.indices.contains(id), !jobs[id].state.isStarted else { return }
+        jobs[id].state = .waiting
+    }
+
+    /// Servers that can run batch jobs.
+    public var batchServerCount: Int { servers.filter { $0.kind.servesBatch }.count }
 
     /// Runs the whole scenario with one policy from start to end – for "what if" in the debrief.
     public static func replay(_ scenario: Scenario, policy: Policy) -> Simulation {
@@ -132,7 +163,9 @@ public struct Simulation: Sendable {
     public mutating func step() {
         precondition(!isFinished, "the scenario has ended")
         finishBooting()
+        updateJobs()
         applyCapacityPolicy()
+        startBatchJobs()
 
         let demand = plannedAt == nil ? scenario.interactive.actual(tick: tick, seed: scenario.seed)
                                       : scenario.interactive.expected(tick: tick)
@@ -143,10 +176,20 @@ public struct Simulation: Sendable {
         let utilization = capacity == 0 ? 0 : served * 1_000 / capacity
 
         var itPower = 0
+        var batchPower = 0
+        var batchServers = 0
         var embodied = 0
         var poweredOn = 0
         for i in servers.indices {
-            if servers[i].state.isOn, servers[i].kind.servesInteractive {
+            if let job = servers[i].job {
+                if case .running = jobs[job].state, servers[i].state.isOn {
+                    servers[i].utilization = 1_000
+                } else {
+                    servers[i].utilization = 0
+                }
+                batchPower += servers[i].power(utilization: servers[i].utilization)
+                if servers[i].state.isPowered { batchServers += 1 }
+            } else if servers[i].state.isOn, servers[i].kind.servesInteractive {
                 servers[i].utilization = utilization
             } else {
                 servers[i].utilization = 0
@@ -170,16 +213,117 @@ public struct Simulation: Sendable {
         totals.embodied += embodied
         totals.serverTicks += poweredOn
         totals.capacityTicks += capacity
+        let batchEnergy = scenario.facility.facilityPower(itPower: batchPower) * Units.milliwattHoursPerWattTick
+        totals.batchEnergy += batchEnergy
+        totals.batchOperational += Units.emissions(milliwattHours: batchEnergy, intensityTenths: intensity)
 
         history.append(TickRecord(tick: tick, intensityTenths: intensity, demand: demand, capacity: capacity,
-                                  served: served, inTime: inTime, serversOn: poweredOn, itPower: itPower,
+                                  served: served, inTime: inTime, serversOn: poweredOn,
+                                  batchServers: batchServers, itPower: itPower,
                                   facilityPower: facilityPower, emissionsSoFar: totals.emissions))
         tick += 1
+        if isFinished {
+            updateJobs()
+        }
+    }
+
+    // MARK: - Batch jobs
+
+    /// Jobs whose servers have booted begin to work; finished jobs release their servers; deadlines that pass
+    /// unfinished are counted.
+    private mutating func updateJobs() {
+        for i in jobs.indices {
+            switch jobs[i].state {
+            case .started(let at, let workFrom) where workFrom <= tick:
+                jobs[i].state = .running(startedAt: at, endsAt: tick + jobs[i].spec.duration)
+            case .running(let at, let endsAt) where endsAt <= tick:
+                jobs[i].state = .done(startedAt: at, at: endsAt)
+                totals.jobsDone += 1
+                if endsAt > jobs[i].spec.deadline && !missedCounted.contains(i) {
+                    missedCounted.insert(i)
+                    totals.deadlinesMissed += 1
+                }
+                for s in servers.indices where servers[s].job == i {
+                    servers[s].job = nil
+                    servers[s].state = .off
+                }
+            default:
+                break
+            }
+            // Unfinished when the deadline passes: counted once.
+            if !jobs[i].state.isDone && tick >= jobs[i].spec.deadline && !missedCounted.contains(i) {
+                missedCounted.insert(i)
+                totals.deadlinesMissed += 1
+            }
+        }
+    }
+
+    /// Starts the jobs the batch policy wants to start now, if enough servers are free.
+    private mutating func startBatchJobs() {
+        guard !jobs.isEmpty else { return }
+        switch policy.batch {
+        case .byHand:
+            break
+        case .asap:
+            for i in jobs.indices where jobs[i].state == .waiting && jobs[i].spec.arrival <= tick {
+                jobs[i].state = .planned(start: tick)
+            }
+        case .atHour(let hour):
+            for i in jobs.indices where jobs[i].state == .waiting && jobs[i].spec.arrival <= tick {
+                var start = jobs[i].spec.arrival
+                while GameTime(tick: start).hour != hour || GameTime(tick: start).minute != 0 { start += 1 }
+                jobs[i].state = .planned(start: min(start, max(jobs[i].spec.latestStart, tick)))
+            }
+        case .greenest:
+            let arrivedNow = jobs.contains { $0.spec.arrival == tick || ($0.spec.arrival < tick && $0.state == .waiting) }
+            if arrivedNow { replanGreenest() }
+        }
+        for i in jobs.indices {
+            guard case .planned(let start) = jobs[i].state, start <= tick, jobs[i].spec.arrival <= tick else { continue }
+            let free = servers.indices.filter { servers[$0].kind.servesBatch && servers[$0].job == nil }
+            guard free.count >= jobs[i].spec.servers else { continue }
+            // Prefer servers that are off, so interactive work keeps its running servers.
+            let chosen = free.sorted { (servers[$0].state.isPowered ? 1 : 0, $0) < (servers[$1].state.isPowered ? 1 : 0, $1) }
+                .prefix(jobs[i].spec.servers)
+            var ready = tick
+            for s in chosen {
+                servers[s].job = i
+                switch servers[s].state {
+                case .off:
+                    servers[s].state = .booting(readyAt: tick + ServerKind.bootTicks)
+                    ready = max(ready, tick + ServerKind.bootTicks)
+                case .booting(let at):
+                    ready = max(ready, at)
+                case .on:
+                    break
+                }
+            }
+            jobs[i].state = ready <= tick ? .running(startedAt: tick, endsAt: tick + jobs[i].spec.duration)
+                                          : .started(at: tick, workFrom: ready)
+        }
+    }
+
+    /// Plans all jobs not started yet into the greenest hours (forecast made now), around the running ones.
+    private mutating func replanGreenest() {
+        var busy: [Int: Int] = [:]
+        for job in jobs {
+            switch job.state {
+            case .started(_, let workFrom):
+                for t in tick..<(workFrom + job.spec.duration) { busy[t, default: 0] += job.spec.servers }
+            case .running(_, let endsAt):
+                for t in tick..<endsAt { busy[t, default: 0] += job.spec.servers }
+            default:
+                break
+            }
+        }
+        let open = jobs.filter { !$0.state.isStarted }.map { (id: $0.id, spec: $0.spec) }
+        let starts = BatchPlanner.plan(open, servers: batchServerCount, busy: busy, grid: grid, madeAt: tick)
+        for (id, start) in starts { jobs[id].state = .planned(start: start) }
     }
 
     /// Capacity of the servers that take interactive work now.
     public var readyCapacity: Int {
-        servers.reduce(0) { $0 + ($1.state.isOn ? $1.kind.capacity : 0) }
+        servers.reduce(0) { $0 + ($1.state.isOn && $1.job == nil ? $1.kind.capacity : 0) }
     }
 
     private mutating func finishBooting() {
@@ -193,7 +337,7 @@ public struct Simulation: Sendable {
     /// Indices of the servers for interactive work, most efficient first.
     private var interactiveOrder: [Int] {
         servers.indices
-            .filter { servers[$0].kind.servesInteractive }
+            .filter { servers[$0].kind.servesInteractive && servers[$0].job == nil }
             .sorted { a, b in
                 let ea = servers[a].kind.efficiency, eb = servers[b].kind.efficiency
                 return ea != eb ? ea > eb : a < b

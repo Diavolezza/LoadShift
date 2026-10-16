@@ -1,12 +1,42 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%@ has no start time and must start by %@, or it misses its deadline." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ hat keine Startzeit und muss bis %2$@ starten, sonst verpasst er seine Frist."
+          }
+        }
+      }
+    },
+    "%lld days" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Tage"
+          }
+        }
+      }
+    },
     "%lld days, from 00:00" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld Tage, ab 00:00"
+          }
+        }
+      }
+    },
+    "%lld jobs with deadlines" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Jobs mit Fristen"
           }
         }
       }
@@ -51,6 +81,26 @@
         }
       }
     },
+    "%lld servers · %lld h · due %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld Server · %2$lld h · fällig %3$@"
+          }
+        }
+      }
+    },
+    "%lld servers for batch jobs" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Server für Batch-Jobs"
+          }
+        }
+      }
+    },
     "%lld servers run" : {
       "localizations" : {
         "de" : {
@@ -67,6 +117,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$lld Server mit je %2$lld Lasteinheiten"
+          }
+        }
+      }
+    },
+    "1 day" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 Tag"
           }
         }
       }
@@ -151,6 +211,16 @@
         }
       }
     },
+    "arrives %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "kommt %@"
+          }
+        }
+      }
+    },
     "Autoscale" : {
       "localizations" : {
         "de" : {
@@ -212,12 +282,112 @@
         }
       }
     },
+    "Backup" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Backup"
+          }
+        }
+      }
+    },
+    "batch ≤ %lld g/kWh" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batch ≤ %lld g/kWh"
+          }
+        }
+      }
+    },
+    "Batch job" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batch-Job"
+          }
+        }
+      }
+    },
+    "Batch jobs" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batch-Jobs"
+          }
+        }
+      }
+    },
+    "Batch jobs – light: arrival to deadline, outlined: planned, filled: running or done" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batch-Jobs – hell: Ankunft bis Frist, umrandet: geplant, gefüllt: läuft oder fertig"
+          }
+        }
+      }
+    },
+    "batch work at %lld g/kWh or less on average" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batch-Arbeit im Schnitt bei höchstens %lld g/kWh"
+          }
+        }
+      }
+    },
+    "Batch work Ø %lld g/kWh (reference %lld)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batch-Arbeit Ø %1$lld g/kWh (Referenz %2$lld)"
+          }
+        }
+      }
+    },
+    "Batch work, mean g/kWh" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batch-Arbeit, Ø g/kWh"
+          }
+        }
+      }
+    },
+    "Batch work: no job has run yet" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batch-Arbeit: noch kein Job gelaufen"
+          }
+        }
+      }
+    },
     "Best result" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bestes Ergebnis"
+          }
+        }
+      }
+    },
+    "booting" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "startet"
           }
         }
       }
@@ -335,6 +505,36 @@
         }
       }
     },
+    "compared with the reference operator, who starts every job as soon as it arrives." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "im Vergleich zum Referenzbetreiber, der jeden Job sofort bei Ankunft startet."
+          }
+        }
+      }
+    },
+    "Daily report" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tagesreport"
+          }
+        }
+      }
+    },
+    "Data import" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Datenimport"
+          }
+        }
+      }
+    },
     "Day %lld" : {
       "localizations" : {
         "de" : {
@@ -345,12 +545,62 @@
         }
       }
     },
+    "Day %lld, %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tag %1$lld, %2$@"
+          }
+        }
+      }
+    },
     "Day complete" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tag geschafft"
+          }
+        }
+      }
+    },
+    "Deadlines missed: %lld" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fristen verpasst: %lld"
+          }
+        }
+      }
+    },
+    "done %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "fertig %@"
+          }
+        }
+      }
+    },
+    "Each job needs servers for some hours and must be finished by its deadline. When it starts, its servers switch on and boot for 30 minutes first; servers without a job are off." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jeder Job braucht einige Stunden lang Server und muss bis zu seiner Frist fertig sein. Beim Start schalten sich seine Server ein und starten zuerst 30 Minuten lang; Server ohne Job sind aus."
+          }
+        }
+      }
+    },
+    "Earn a star in the scenario before." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hol dir einen Stern im Szenario davor."
           }
         }
       }
@@ -371,6 +621,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abendspitze etwa %lld Lasteinheiten"
+          }
+        }
+      }
+    },
+    "Every job as soon as it arrives (reference)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jeder Job sofort bei Ankunft (Referenz)"
+          }
+        }
+      }
+    },
+    "Every job at 11:00" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jeder Job um 11:00"
+          }
+        }
+      }
+    },
+    "Every job at night, at 01:00" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jeder Job nachts um 01:00"
+          }
+        }
+      }
+    },
+    "every job by its deadline and less CO₂ than the reference" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "jeder Job rechtzeitig und weniger CO₂ als die Referenz"
           }
         }
       }
@@ -411,6 +701,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fest: %lld Server den ganzen Tag"
+          }
+        }
+      }
+    },
+    "Forecast while it runs: %lld g/kWh · start by %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prognose während der Laufzeit: %1$lld g/kWh · spätestens %2$@"
           }
         }
       }
@@ -468,12 +768,52 @@
         }
       }
     },
+    "Image conversion" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bildkonvertierung"
+          }
+        }
+      }
+    },
     "IT power" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "IT-Leistung"
+          }
+        }
+      }
+    },
+    "Jobs done" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jobs fertig"
+          }
+        }
+      }
+    },
+    "Jobs on time" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jobs rechtzeitig"
+          }
+        }
+      }
+    },
+    "late, %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "zu spät, %@"
           }
         }
       }
@@ -521,6 +861,26 @@
         }
       }
     },
+    "Missed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verpasst"
+          }
+        }
+      }
+    },
+    "More scenarios follow: forecasts and wind, headroom and autoscaling, cooling, hardware, AI training, eco mode, two sites." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weitere Szenarien folgen: Prognosen und Wind, Reserve und Autoscaling, Kühlung, Hardware, KI-Training, Eco-Modus, zwei Standorte."
+          }
+        }
+      }
+    },
     "New rule" : {
       "localizations" : {
         "de" : {
@@ -542,6 +902,16 @@
         }
       }
     },
+    "No deadline missed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Frist verpasst"
+          }
+        }
+      }
+    },
     "Norway" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -549,6 +919,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Norwegen"
+          }
+        }
+      }
+    },
+    "not planned" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "nicht geplant"
           }
         }
       }
@@ -583,12 +963,12 @@
         }
       }
     },
-    "On – the green bar shows the load" : {
+    "OK" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "An – der grüne Balken zeigt die Last"
+            "value" : "OK"
           }
         }
       }
@@ -619,6 +999,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ein Stern schaltet das nächste Szenario frei."
+          }
+        }
+      }
+    },
+    "Plan" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Planen"
+          }
+        }
+      }
+    },
+    "planned" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "geplant"
+          }
+        }
+      }
+    },
+    "Planned by the forecast (from scenario 3)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach Prognose geplant (ab Szenario 3)"
           }
         }
       }
@@ -664,12 +1074,32 @@
         }
       }
     },
+    "Remove the plan" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plan entfernen"
+          }
+        }
+      }
+    },
     "Right now" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gerade jetzt"
+          }
+        }
+      }
+    },
+    "Right: the jobs with their size and deadline. Plan a start time for each job with plus and minus, or start it now; a planned job starts by itself. Bottom: the carbon intensity with the forecast, and below it one row per job – light: the time between arrival and deadline, outlined: planned, filled: running or done. The game pauses when a job must start within the hour." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechts: die Jobs mit Größe und Frist. Plane für jeden Job mit Plus und Minus eine Startzeit oder starte ihn sofort; ein geplanter Job startet von selbst. Unten: die CO₂-Intensität mit Prognose und darunter eine Zeile pro Job – hell: die Zeit zwischen Ankunft und Frist, umrandet: geplant, gefüllt: läuft oder fertig. Das Spiel hält an, wenn ein Job innerhalb der nächsten Stunde starten muss."
           }
         }
       }
@@ -684,12 +1114,62 @@
         }
       }
     },
+    "Run a greener data center" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Rechenzentrum klimafreundlich betreiben"
+          }
+        }
+      }
+    },
+    "runs until %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "läuft bis %@"
+          }
+        }
+      }
+    },
     "Scenario %lld: %@" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Szenario %1$lld: %2$@"
+          }
+        }
+      }
+    },
+    "Scenario complete" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szenario geschafft"
+          }
+        }
+      }
+    },
+    "Search index" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suchindex"
+          }
+        }
+      }
+    },
+    "Servers in use: %lld of %lld" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Server in Benutzung: %1$lld von %2$lld"
           }
         }
       }
@@ -757,6 +1237,16 @@
         }
       }
     },
+    "SLA at least 99 % and less CO₂ than the reference" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SLA mindestens 99 % und weniger CO₂ als die Referenz"
+          }
+        }
+      }
+    },
     "Spain" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -785,6 +1275,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Start"
+          }
+        }
+      }
+    },
+    "start by %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "spätestens %@"
+          }
+        }
+      }
+    },
+    "Start now" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jetzt starten"
           }
         }
       }
@@ -830,12 +1340,12 @@
         }
       }
     },
-    "The game starts paused. Top: clock and speed – pause, 1×, 4×, 16× – and below it your goals. Middle: your racks; grey servers are off, amber ones are booting, the green bar shows how busy a server is. Right: plus and minus for the servers, and the situation right now. Bottom: carbon intensity of the grid with the forecast, the load so far and the expected load (dotted); the dotted lines with \"5 servers\", \"10 servers\" … show how many servers a load needs." : {
+    "The game starts paused. Top: clock and speed – pause, 1×, 4×, 16× – and below it your goals. Middle: your racks; grey servers are off, light blue ones are booting, the blue bar shows how busy a server is. Right: plus and minus for the servers, and the situation right now. Bottom: carbon intensity of the grid with the forecast, the load so far and the expected load (dotted); the lines on the right show how many servers a load needs." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Das Spiel beginnt pausiert. Oben: Uhr und Tempo – Pause, 1×, 4×, 16× – und darunter deine Ziele. Mitte: deine Racks; graue Server sind aus, orange starten gerade, der grüne Balken zeigt, wie ausgelastet ein Server ist. Rechts: Plus und Minus für die Server und die Lage gerade jetzt. Unten: die CO₂-Intensität des Stroms mit Prognose, die Last bisher und die erwartete Last (gepunktet); die gepunkteten Linien mit „5 Server“, „10 Server“ … zeigen, wie viele Server eine Last braucht."
+            "value" : "Das Spiel beginnt pausiert. Oben: Uhr und Tempo – Pause, 1×, 4×, 16× – und darunter deine Ziele. Mitte: deine Racks; graue Server sind aus, hellblaue starten gerade, der blaue Balken zeigt, wie ausgelastet ein Server ist. Rechts: Plus und Minus für die Server und die Lage gerade jetzt. Unten: die CO₂-Intensität des Stroms mit Prognose, die Last bisher und die erwartete Last (gepunktet); die Linien rechts zeigen, wie viele Server eine Last braucht."
           }
         }
       }
@@ -850,12 +1360,32 @@
         }
       }
     },
-    "The same day with exactly the same load and grid mix – only the rules differ:" : {
+    "The night is not clean everywhere: in a solar grid the midday hours are the cleanest. Part of the CO₂ is the hardware's manufacturing – it stays the same whenever the jobs run." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Derselbe Tag mit genau derselben Last und demselben Strommix – nur die Regeln sind anders:"
+            "value" : "Die Nacht ist nicht überall sauber: Im Solarnetz sind die Mittagsstunden am saubersten. Ein Teil des CO₂ stammt aus der Herstellung der Hardware – er bleibt gleich, egal wann die Jobs laufen."
+          }
+        }
+      }
+    },
+    "The same job emits less CO₂ when the grid is clean. In Spain's solar grid the cleanest hours are around midday, not at night. Plan every job into clean hours before its deadline – and keep in mind that only ten servers are there." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Derselbe Job stößt weniger CO₂ aus, wenn der Strom sauber ist. Im spanischen Solarnetz sind die saubersten Stunden um die Mittagszeit, nicht nachts. Plane jeden Job vor seiner Frist in saubere Stunden – und denk daran, dass nur zehn Server da sind."
+          }
+        }
+      }
+    },
+    "The same run with exactly the same load and grid mix – only the rules differ:" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Derselbe Ablauf mit genau derselben Last und demselben Strommix – nur die Regeln sind anders:"
           }
         }
       }
@@ -866,6 +1396,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Es laufen die Server, die für die erwartete Last der nächsten Stunde nötig sind. Ein niedriges Ziel lässt Reserve für Spitzen, aber mehr Server stehen im Leerlauf; ein hohes Ziel ist effizient, wird aber bei Spitzen langsam."
+          }
+        }
+      }
+    },
+    "The web shop's batch cluster in Spain: ten servers for reports, backups, imports and conversions. Over two days seven jobs arrive, each with a deadline. Nobody minds when a job runs – as long as it is finished in time." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Batch-Cluster des Webshops in Spanien: zehn Server für Reports, Backups, Importe und Konvertierungen. In zwei Tagen kommen sieben Jobs, jeder mit einer Frist. Wann ein Job läuft, ist egal – solange er rechtzeitig fertig ist."
+          }
+        }
+      }
+    },
+    "Too late for the deadline – start by %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zu spät für die Frist – spätestens %@ starten."
           }
         }
       }
@@ -890,6 +1440,26 @@
         }
       }
     },
+    "Wait for the sun" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warten auf die Sonne"
+          }
+        }
+      }
+    },
+    "Web requests" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Web-Requests"
+          }
+        }
+      }
+    },
     "What if …" : {
       "localizations" : {
         "de" : {
@@ -901,12 +1471,11 @@
       }
     },
     "Whole year" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ganzes Jahr"
+            "value" : "Jahresmittel"
           }
         }
       }

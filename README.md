@@ -9,9 +9,9 @@ The game is a simulation, not a race: pause at any time, plan in peace, and let 
 needs to be decided. Ten scenarios introduce one idea each; a debrief compares your result with a reference
 operator and measures it with the Software Carbon Intensity (SCI, ISO/IEC 21031:2024).
 
-Status: step 2 of the concept (`docs/CONCEPT.md`, section 12): scenario 1 "Night shift" is playable – briefing,
-time control, isometric hall, timeline with grid forecast and load, capacity rules with their expected effect,
-comparison with the reference operator at the end. The lesson report of the core tests is written to
+Status: step 3 of the concept is under way (`docs/CONCEPT.md`, section 12). Playable: scenario 1 "Night shift"
+(switching servers by hand) and scenario 2 "Wait for the sun" (planning batch jobs into clean hours), with
+goals, stars and "what if" in the debrief. The lesson report of the core tests is written to
 `build/lesson-report.txt`.
 
 ## Project layout

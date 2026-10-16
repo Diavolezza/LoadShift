@@ -10,14 +10,18 @@ struct PolicyPanel: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                Text("Capacity")
-                    .font(.title2.bold())
-                if game.byHand {
-                    ManualCapacity(game: game)
+                if game.scenario.controls.contains(.batchByHand) {
+                    BatchPanel(game: game)
                 } else {
-                    CapacityRules(game: game)
+                    Text("Capacity")
+                        .font(.title2.bold())
+                    if game.byHand {
+                        ManualCapacity(game: game)
+                    } else {
+                        CapacityRules(game: game)
+                    }
+                    NowBox(simulation: game.simulation)
                 }
-                NowBox(simulation: game.simulation)
             }
             .padding(20)
         }

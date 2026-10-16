@@ -2,10 +2,12 @@ import SwiftUI
 import LoadShiftCore
 
 /// The data center hall in isometric view (docs/CONCEPT.md 10.1, D2): racks of ten servers each. A server
-/// is a slab on the rack's front: light grey when off, amber while booting, dark when on – its green bar
-/// shows how busy it is.
+/// is a slab on the rack's front: light grey when off, light blue while booting, dark when on – its bar shows
+/// how busy it is, blue for interactive work, amber for a batch job.
 struct HallView: View {
     let servers: [Server]
+    var interactive = true
+    var batch = false
 
     static let slotsPerRack = 10
 
@@ -19,8 +21,13 @@ struct HallView: View {
             .accessibilityLabel(Text("\(on) of \(servers.count) servers on"))
             HStack(spacing: 18) {
                 LegendSwatch(color: Theme.off, text: "Off")
-                LegendSwatch(color: Theme.amber, text: "Booting")
-                LegendSwatch(color: Theme.slab, fill: Theme.accent, text: "On – the green bar shows the load")
+                LegendSwatch(color: Theme.booting, text: "Booting")
+                if interactive {
+                    LegendSwatch(color: Theme.slab, fill: Theme.interactiveLoad, text: "Web requests")
+                }
+                if batch {
+                    LegendSwatch(color: Theme.slab, fill: Theme.batchLoad, text: "Batch job")
+                }
                 Spacer()
                 Text("\(on) of \(servers.count) servers on · \(Format.kilowatts(itPower)) kW IT power")
                     .font(.callout.monospacedDigit())
@@ -101,14 +108,14 @@ struct HallView: View {
                 case .off:
                     context.fill(slab, with: .color(Theme.off))
                 case .booting:
-                    context.fill(slab, with: .color(Theme.amber))
+                    context.fill(slab, with: .color(Theme.booting))
                 case .on:
                     context.fill(slab, with: .color(Theme.slab))
                     let width = (sx1 - sx0 - 0.08) * Double(max(server.utilization, 20)) / 1_000
                     let barZ0 = z0 + (z1 - z0) * 0.3, barZ1 = z1 - (z1 - z0) * 0.3
                     context.fill(polygon([p(sx0 + 0.04, y1, barZ0), p(sx0 + 0.04 + width, y1, barZ0),
                                           p(sx0 + 0.04 + width, y1, barZ1), p(sx0 + 0.04, y1, barZ1)]),
-                                 with: .color(Theme.accent))
+                                 with: .color(server.job == nil ? Theme.interactiveLoad : Theme.batchLoad))
                 }
             }
         }

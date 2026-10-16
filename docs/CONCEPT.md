@@ -323,8 +323,8 @@ Ten scenarios, each introducing one idea. Region and season are chosen so that t
 | # | Title | Region, season | Length | New controls | Idea |
 |---|---|---|---|---|---|
 | 1 | Night shift | Germany, autumn | 1 day | servers on/off by hand | Idle power: at night 20 % load, all servers on wastes energy; switching on takes 30 minutes, so plan ahead (G2). |
-| 2 | Wait for the sun | Spain, summer | 2 days | batch policy, forecast | Reports and backups move into the midday dip (G3). |
-| 3 | When the wind drops | Great Britain, winter | 3 days | threshold policy, deadline safety | The forecast is uncertain; a threshold plus the safety rule beats a fixed window (G3). |
+| 2 | Wait for the sun | Spain (annual profile) | 2 days | batch jobs planned by hand, forecast | Reports and backups move into the midday dip – the night is not clean in a solar grid (G3). |
+| 3 | When the wind drops | Great Britain, winter | 3 days | batch rules (greenest hours, threshold), deadline safety | The rules automate what the player planned by hand in scenario 2; the forecast is uncertain, a threshold plus the safety rule beats a fixed window (G3). |
 | 4 | Headroom | Germany, winter | 2 days | capacity rules with autoscaling (target utilization), money, SLA penalty | Autoscaling automates what the player did by hand in scenario 1; a marketing campaign doubles the load: too little headroom costs SLA, too much costs energy (G4). |
 | 5 | Heat wave | Germany, summer | 3 days | cooling type, setpoint | PUE rises with the outside temperature; setpoint and free cooling (G5). |
 | 6 | Old iron | France and Poland | 3 years (monthly steps) | buying and retiring servers | Replacing hardware pays off in Poland, hardly in France (G6, G1). |
@@ -404,7 +404,7 @@ After each step the game is played by a person before the next step begins (**pl
 | 0 | Repo, build script with watcher, Xcode project, empty core package, README, license | builds and tests run on the Mac – **done** (version 0.0) |
 | 1 | Core: clock, grid curves and forecast, interactive load, servers with power, autoscaling, SLA, emissions | headless run of scenario 1 prints plausible numbers; tests green – **done** (version 0.1) |
 | 2 | Minimal UI: top bar with speed control, timeline, capacity tab, simple hall | scenario 1 playable; **play test** – done; revised after the play test (version 0.2.1): start at 00:00, switching by hand, goals and stars, "what if" |
-| 3 | Batch with policies and deadline safety; reference operator; debrief | scenarios 2 and 3 playable; **play test** |
+| 3 | Batch with policies and deadline safety; reference operator; debrief | scenarios 2 and 3 playable; **play test** – scenario 2 built (version 0.3), scenario 3 open |
 | 4 | Money, events, automatic pause | scenario 4; **play test** |
 | 5 | Cooling and PUE, outside temperature | scenario 5; **play test** |
 | 6 | Embodied emissions, buying/retiring, monthly time scale, SCI | scenario 6; **play test** |
@@ -470,6 +470,39 @@ After each step the game is played by a person before the next step begins (**pl
   lines have no check circles. "What if" says what is the same: the load and the grid mix.
 - Launch arguments for screenshots: `-play`, `-ticks N`, `-fixed N`, `-careful 1`, `-autoscale P`.
 
+**As built in step 3, part 1** (scenario 2):
+
+- Core: `BatchJobSpec` (servers, hours, arrival, deadline), `BatchJob` with the states waiting, planned, started
+  (servers booting), running, done. A job switches its servers on when it starts, works after the boot time and
+  releases them when done; a planned job waits if not enough servers are free. Deadlines missed are counted
+  once. Batch modes: by hand, as soon as possible (reference), at a fixed hour, greenest (`BatchPlanner`: the
+  start with the lowest mean forecast intensity before the latest start, capacity-aware, tightest deadline first;
+  planned again when a job arrives). Each scenario has its own reference policy; in scenario 2 servers without a
+  job are off for everybody, so the comparison shows the effect of the timing alone.
+- First star now also needs every deadline met; special goal "batch work at most X g/kWh on average".
+- Scenario 2: Spain (annual profile, 94 g/kWh at 14:00, 161 at 21:00), 2 days, 10 CPU servers, 7 jobs (daily
+  report ×2, backup ×2, data import, image conversion, search index). Goals: ★★ −10 %, ★★★ batch work ≤ 83 g/kWh.
+
+| Operator | CO₂ kg | vs. reference | Batch work g/kWh | Deadlines missed | Stars |
+|---|---:|---:|---:|---:|---:|
+| as soon as possible (reference) | 14.1 | – | 104 | 0 | – |
+| greenest by forecast | 11.9 | −16 % | 79 | 0 | ★★★ |
+| every job at 11:00 | 12.4 | −12 % | 85 | 0 | ★★ |
+| every job at 01:00 (nightly batch) | 14.9 | +6 % | 114 | 0 | – |
+| nothing planned | – | – | – | 7 | – |
+
+  The embodied emissions of the ten servers (5 kg in two days) are a large share in a clean grid; they are the
+  same whenever the jobs run.
+- App: scenario list (cards with stars, locked until the scenario before has a star); briefing per scenario
+  (`ScenarioTexts`); batch panel with one row per job (size, deadline, status, start time with plus and minus,
+  "Start now", forecast mean while it would run, latest start, warning when planned too late); the game pauses
+  once per job when an unplanned job must start within the hour; the timeline's lower lane shows one row per job
+  (window from arrival to deadline, planned outline, booting and running bars, deadline mark); hall bars blue
+  for web requests, amber for batch jobs, light blue for booting; goal bar for batch: deadlines and the mean
+  intensity of the batch work compared with the reference (CO₂ so far would favour waiting); end card with jobs
+  on time, mean g/kWh and "what if" (as soon as possible, at 01:00, at 11:00, by the forecast).
+- The dotted server lines in the load lane are lighter after the second play test.
+
 **Taken over from the Carbon Rush prototype** (copied, checked for every reference to its origin):
 grid curves and their generator, the forecast model, the electricity price formula, the embodied and SCI
 bookkeeping, the build script with its watcher, the string catalog tools, the App Store tools, sound effects and
@@ -493,6 +526,7 @@ music. Not taken over: maps, paths, the tower-and-creep rules, opponents, networ
 | D10 | Start time | every scenario starts at 00:00 |
 | D11 | Scenario 1 | switching by hand only; autoscaling comes with scenario 4 |
 | D12 | Preview of the day's result | not during the run; "what if" in the debrief instead (principle 4) |
+| D13 | Scenario 2 | batch jobs planned by hand; batch rules come with scenario 3 (same pattern as D11) |
 
 ---
 

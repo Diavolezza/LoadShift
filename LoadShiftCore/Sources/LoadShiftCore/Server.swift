@@ -65,6 +65,9 @@ public enum ServerKind: Int, CaseIterable, Sendable, Codable {
     /// Serves interactive and streaming work.
     public var servesInteractive: Bool { capacity > 0 }
 
+    /// Runs batch jobs (CPU servers).
+    public var servesBatch: Bool { self == .cpuOld || self == .cpuCurrent }
+
     /// Work per kW at full load, used to pick the most efficient servers first (per mille).
     public var efficiency: Int { capacity * 1_000_000 / maxPower }
 
@@ -88,6 +91,8 @@ public struct Server: Equatable, Sendable, Codable, Identifiable {
     public internal(set) var state: ServerState
     /// Share of its capacity used in the last tick, per mille.
     public internal(set) var utilization: Int = 0
+    /// The batch job the server works for, if any.
+    public internal(set) var job: Int?
 
     public init(id: Int, kind: ServerKind, state: ServerState = .on) {
         self.id = id

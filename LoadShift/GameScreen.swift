@@ -13,7 +13,7 @@ struct GameScreen: View {
                 GoalBar(game: game)
                 Divider()
                 HStack(spacing: 0) {
-                    HallView(servers: game.simulation.servers)
+                    HallView(servers: game.simulation.servers, interactive: game.hasInteractive, batch: game.hasBatch)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                     Divider()
                     PolicyPanel(game: game)
@@ -62,8 +62,14 @@ struct TopBar: View {
             Spacer(minLength: 8)
             Metric(title: "Grid now", value: "\(intensity) g/kWh", color: Theme.intensityColor(intensity))
             Metric(title: "CO₂ so far", value: "\(Format.kilograms(simulation.totals.emissions)) kg")
-            Metric(title: "SLA", value: Format.percent(simulation.totals.sla),
-                   color: simulation.totals.sla >= simulation.scenario.slaTarget ? Theme.ink : Theme.red)
+            if game.hasInteractive {
+                Metric(title: "SLA", value: Format.percent(simulation.totals.sla),
+                       color: simulation.totals.sla >= simulation.scenario.slaTarget ? Theme.ink : Theme.red)
+            }
+            if game.hasBatch {
+                Metric(title: "Jobs done", value: "\(simulation.totals.jobsDone) / \(simulation.jobs.count)",
+                       color: simulation.totals.deadlinesMissed == 0 ? Theme.ink : Theme.red)
+            }
             Metric(title: "Power", value: "\(Format.kilowatts(last?.facilityPower ?? 0)) kW")
         }
         .padding(.horizontal, 20)
@@ -86,8 +92,24 @@ struct GoalBar: View {
             Text("Goals")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
-            GoalItem(ok: slaOK, started: change != nil, text: "SLA ≥ \(Format.percent(scenario.slaTarget))")
-            GoalItem(ok: (change ?? 0) < 0, started: change != nil, text: co2Text(change))
+            if game.hasInteractive {
+                GoalItem(ok: slaOK, started: change != nil, text: "SLA ≥ \(Format.percent(scenario.slaTarget))")
+            }
+            if game.hasBatch {
+                let missed = totals.deadlinesMissed
+                GoalItem(ok: missed == 0, started: change != nil,
+                         text: missed == 0 ? "No deadline missed" : "Deadlines missed: \(missed)")
+            }
+            if game.hasInteractive {
+                GoalItem(ok: (change ?? 0) < 0, started: change != nil, text: co2Text(change))
+            } else {
+                // Batch only: CO₂ so far would favour waiting; the intensity of the work done is a fair measure.
+                let mine = totals.meanBatchIntensityTenths, ref = game.reference.totals.meanBatchIntensityTenths
+                GoalItem(ok: mine <= ref, started: totals.batchEnergy > 0,
+                         text: totals.batchEnergy > 0
+                            ? "Batch work Ø \((mine + 5) / 10) g/kWh (reference \((ref + 5) / 10))"
+                            : "Batch work: no job has run yet")
+            }
             Spacer(minLength: 0)
             HStack(spacing: 4) {
                 Text(verbatim: "★★").foregroundStyle(Theme.amber)
@@ -131,6 +153,7 @@ enum StarText {
         switch goal {
         case .meanUtilization(let p): return "mean utilization at least \(Format.wholePercent(p))"
         case .reduction(let p): return "CO₂ \(Format.changePermille(-p)) or better"
+        case .batchIntensity(let g): return "batch work at \(g) g/kWh or less on average"
         }
     }
 
@@ -138,6 +161,7 @@ enum StarText {
         switch goal {
         case .meanUtilization(let p): return "utilization ≥ \(Format.wholePercent(p))"
         case .reduction(let p): return "CO₂ from \(Format.changePermille(-p))"
+        case .batchIntensity(let g): return "batch ≤ \(g) g/kWh"
         }
     }
 }
@@ -247,9 +271,10 @@ struct EndCard: View {
         let you = game.simulation.totals
         let ref = game.reference.totals
         let met = scenario.goalsMet(you, reference: ref)
+        let texts = ScenarioTexts.of(scenario)
         return VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .firstTextBaseline) {
-                Text("Day complete")
+                Text(scenario.days == 1 ? "Day complete" : "Scenario complete")
                     .font(.largeTitle.bold())
                 Spacer()
                 StarRow(stars: game.stars)
@@ -257,11 +282,10 @@ struct EndCard: View {
             Text(verbatim: "\(Format.change(you.emissions, from: ref.emissions)) CO₂")
                 .font(.system(size: 40, weight: .bold, design: .rounded))
                 .foregroundStyle(you.emissions < ref.emissions ? Theme.accent : Theme.red)
-            Text("compared with the reference operator, who leaves every server on.")
+            Text(texts.comparedWith)
                 .foregroundStyle(.secondary)
             VStack(alignment: .leading, spacing: 6) {
-                GoalLine(ok: met.rules, stars: 1,
-                         text: "SLA at least \(Format.percent(scenario.slaTarget)) and less CO₂ than the reference")
+                GoalLine(ok: met.rules, stars: 1, text: texts.rules)
                 GoalLine(ok: met.reduction, stars: 2,
                          text: "CO₂ \(Format.changePermille(-scenario.goals.reduction)) or better")
                 GoalLine(ok: met.special, stars: 3, text: StarText.special(scenario.goals.special))
@@ -276,12 +300,19 @@ struct EndCard: View {
                 row("CO₂ (kg)", Format.kilograms(you.emissions), Format.kilograms(ref.emissions))
                 row("of it embodied (kg)", Format.kilograms(you.embodied), Format.kilograms(ref.embodied))
                 row("Energy (kWh)", Format.kilowattHours(you.facilityEnergy), Format.kilowattHours(ref.facilityEnergy))
-                row("SLA", Format.percent(you.sla), Format.percent(ref.sla))
-                row("Servers on (mean)", servers(you.meanServersOn), servers(ref.meanServersOn))
-                row("Mean utilization", Format.wholePercent(you.meanUtilization), Format.wholePercent(ref.meanUtilization))
+                if game.hasInteractive {
+                    row("SLA", Format.percent(you.sla), Format.percent(ref.sla))
+                    row("Servers on (mean)", servers(you.meanServersOn), servers(ref.meanServersOn))
+                    row("Mean utilization", Format.wholePercent(you.meanUtilization), Format.wholePercent(ref.meanUtilization))
+                }
+                if game.hasBatch {
+                    let count = game.simulation.jobs.count
+                    row("Jobs on time", "\(count - you.deadlinesMissed) / \(count)", "\(count - ref.deadlinesMissed) / \(count)")
+                    row("Batch work, mean g/kWh", "\((you.meanBatchIntensityTenths + 5) / 10)", "\((ref.meanBatchIntensityTenths + 5) / 10)")
+                }
             }
             .font(.body.monospacedDigit())
-            Text("Switching servers off saves energy, not hardware: the embodied emissions stay the same.")
+            Text(texts.remark)
                 .font(.callout)
                 .foregroundStyle(.secondary)
             WhatIf(game: game)
@@ -336,22 +367,27 @@ struct WhatIf: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("What if …")
                 .font(.headline)
-            Text("The same day with exactly the same load and grid mix – only the rules differ:")
+            Text("The same run with exactly the same load and grid mix – only the rules differ:")
                 .font(.callout)
                 .foregroundStyle(.secondary)
             SwiftUI.Grid(alignment: .trailing, horizontalSpacing: 16, verticalSpacing: 5) {
                 GridRow {
                     Text(verbatim: "").gridColumnAlignment(.leading)
                     Text("CO₂ vs. you").foregroundStyle(.secondary)
-                    Text("SLA").foregroundStyle(.secondary)
+                    Text(game.hasBatch ? "Missed" : "SLA").foregroundStyle(.secondary)
                     Text(verbatim: "").gridColumnAlignment(.leading)
                 }
                 ForEach(Array(game.whatIf().enumerated()), id: \.offset) { _, alternative in
                     GridRow {
                         Text(alternative.label).gridColumnAlignment(.leading)
                         Text(verbatim: Format.change(alternative.totals.emissions, from: you.emissions))
-                        Text(verbatim: Format.percent(alternative.totals.sla))
-                            .foregroundStyle(alternative.totals.sla >= game.scenario.slaTarget ? Theme.ink : Theme.red)
+                        if game.hasBatch {
+                            Text(verbatim: "\(alternative.totals.deadlinesMissed)")
+                                .foregroundStyle(alternative.totals.deadlinesMissed == 0 ? Theme.ink : Theme.red)
+                        } else {
+                            Text(verbatim: Format.percent(alternative.totals.sla))
+                                .foregroundStyle(alternative.totals.sla >= game.scenario.slaTarget ? Theme.ink : Theme.red)
+                        }
                         StarRow(stars: game.scenario.stars(alternative.totals, reference: ref), size: 11)
                     }
                 }
