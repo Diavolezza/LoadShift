@@ -20,6 +20,8 @@ public struct Totals: Equatable, Sendable {
     public internal(set) var embodied = 0
     /// Sum over all ticks of the servers switched on (booting included).
     public internal(set) var serverTicks = 0
+    /// Sum over all ticks of the capacity of the running servers, work units.
+    public internal(set) var capacityTicks = 0
 
     /// Share of the demand served in time, per mille.
     public var sla: Int { demand == 0 ? 1_000 : inTime * 1_000 / demand }
@@ -29,6 +31,8 @@ public struct Totals: Equatable, Sendable {
     public var emissions: Int { operational + embodied }
     /// SCI per interactive work unit (= 1,000 requests), µg CO₂e (GSF SCI: (O + M) per R [S2]).
     public var sciPerUnit: Int { served == 0 ? 0 : emissions / served }
+    /// Mean utilization of the running servers' capacity, per mille.
+    public var meanUtilization: Int { capacityTicks == 0 ? 0 : served * 1_000 / capacityTicks }
     /// Mean number of servers switched on, per mille of a server.
     public var meanServersOn: Int { ticks == 0 ? 0 : serverTicks * 1_000 / ticks }
     /// Mean carbon intensity of the energy used, tenths of g/kWh.
@@ -42,9 +46,13 @@ public struct TickRecord: Equatable, Sendable {
     public let demand: Int
     public let capacity: Int
     public let served: Int
+    /// Work served in time (slow requests count half); below `demand` means slow or dropped requests.
+    public let inTime: Int
     public let serversOn: Int
     public let itPower: Int
     public let facilityPower: Int
+    /// Operational plus embodied emissions from the start up to and including this tick, µg CO₂e.
+    public let emissionsSoFar: Int
 }
 
 public struct Simulation: Sendable {
@@ -75,6 +83,11 @@ public struct Simulation: Sendable {
         history.reserveCapacity(scenario.endTick - scenario.startTick)
     }
 
+    /// A simulation starting with the scenario's initial policy.
+    public init(scenario: Scenario) {
+        self.init(scenario: scenario, policy: scenario.initialPolicy)
+    }
+
     public var time: GameTime { GameTime(tick: tick) }
     public var isFinished: Bool { tick >= scenario.endTick }
 
@@ -85,9 +98,21 @@ public struct Simulation: Sendable {
 
     /// Runs the scenario with the reference operator's policy (CONCEPT.md 8.2).
     public static func reference(for scenario: Scenario) -> Simulation {
-        var simulation = Simulation(scenario: scenario, policy: .reference)
+        replay(scenario, policy: .reference)
+    }
+
+    /// Runs the whole scenario with one policy from start to end – for "what if" in the debrief.
+    public static func replay(_ scenario: Scenario, policy: Policy) -> Simulation {
+        var simulation = Simulation(scenario: scenario, policy: policy)
         simulation.run()
         return simulation
+    }
+
+    /// Emissions of this run up to (and including) the given tick, µg CO₂e.
+    public func emissions(through tick: Int) -> Int {
+        let index = tick - scenario.startTick
+        guard !history.isEmpty, index >= 0 else { return 0 }
+        return history[min(index, history.count - 1)].emissionsSoFar
     }
 
     /// What the scenario will probably bring with a policy from now on: the rest of the scenario simulated
@@ -144,10 +169,11 @@ public struct Simulation: Sendable {
         totals.operational += Units.emissions(milliwattHours: facilityEnergy, intensityTenths: intensity)
         totals.embodied += embodied
         totals.serverTicks += poweredOn
+        totals.capacityTicks += capacity
 
         history.append(TickRecord(tick: tick, intensityTenths: intensity, demand: demand, capacity: capacity,
-                                  served: served, serversOn: poweredOn, itPower: itPower,
-                                  facilityPower: facilityPower))
+                                  served: served, inTime: inTime, serversOn: poweredOn, itPower: itPower,
+                                  facilityPower: facilityPower, emissionsSoFar: totals.emissions))
         tick += 1
     }
 

@@ -1,11 +1,11 @@
 /// Game time. One tick is 15 game minutes, one game day 96 ticks (concept, section 3.1).
-/// Tick 0 is 00:00 on day 0; the first scenario day starts at 06:00 (tick 24).
+/// Tick 0 is 00:00 on day 0; every scenario starts there (decision D10).
 public struct GameTime: Hashable, Comparable, Codable, Sendable {
     public static let minutesPerTick = 15
     public static let ticksPerHour = 60 / minutesPerTick
     public static let ticksPerDay = 24 * ticksPerHour
-    /// Tick at which a scenario starts: 06:00 on day 0.
-    public static let start = GameTime(tick: 6 * ticksPerHour)
+    /// Tick at which a scenario starts: 00:00 on day 0.
+    public static let start = GameTime(tick: 0)
 
     public let tick: Int
 

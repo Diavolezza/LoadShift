@@ -69,6 +69,7 @@ final class SimulationTests: XCTestCase {
         simulation.step()
         let record = simulation.history[0]
         XCTAssertEqual(record.served, 40)
+        XCTAssertEqual(record.inTime, 37)
         XCTAssertEqual(simulation.totals.inTime, 37)
     }
 
@@ -95,5 +96,23 @@ final class SimulationTests: XCTestCase {
         real.policy = Policy(capacity: .autoscale(targetUtilization: 700))
         real.run()
         XCTAssertLessThan(abs(real.totals.emissions - projected.emissions) * 5, real.totals.emissions)
+    }
+
+    func testStarsNeedTheRulesFirst() {
+        let scenario = Scenario.nightShift
+        let reference = Simulation.reference(for: scenario).totals
+        var cheap = Totals()
+        cheap.demand = 1_000; cheap.served = 1_000; cheap.inTime = 900; cheap.capacityTicks = 1_000
+        cheap.operational = reference.emissions / 2
+        XCTAssertEqual(scenario.stars(cheap, reference: reference), 0, "SLA missed: no star at all")
+        cheap.inTime = 1_000
+        XCTAssertEqual(scenario.stars(cheap, reference: reference), 3)
+    }
+
+    func testEmissionsSoFarFollowTheTotals() {
+        let simulation = Simulation.reference(for: .nightShift)
+        XCTAssertEqual(simulation.history.last?.emissionsSoFar, simulation.totals.emissions)
+        XCTAssertEqual(simulation.emissions(through: Scenario.nightShift.endTick + 5), simulation.totals.emissions)
+        XCTAssertLessThan(simulation.emissions(through: 40), simulation.totals.emissions / 2)
     }
 }

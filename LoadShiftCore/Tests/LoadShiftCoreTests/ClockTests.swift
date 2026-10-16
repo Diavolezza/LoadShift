@@ -7,9 +7,9 @@ final class ClockTests: XCTestCase {
         XCTAssertEqual(GameTime.ticksPerHour, 4)
     }
 
-    func testScenarioStartsAtSixInTheMorning() {
+    func testScenarioStartsAtMidnight() {
         XCTAssertEqual(GameTime.start.day, 0)
-        XCTAssertEqual(GameTime.start.clockText, "06:00")
+        XCTAssertEqual(GameTime.start.clockText, "00:00")
     }
 
     func testDayAndClock() {

@@ -49,6 +49,12 @@ enum Format {
         return (permille < 0 ? "−" : "+") + text + "\u{202F}%"
     }
 
+    /// A change given in per mille, signed, with one decimal ("−12.3 %").
+    static func changePermille(_ permille: Int) -> String {
+        let text = (Double(abs(permille)) / 10).formatted(.number.precision(.fractionLength(1)))
+        return (permille < 0 ? "−" : "+") + text + "\u{202F}%"
+    }
+
     /// W as kW with one decimal.
     static func kilowatts(_ watts: Int) -> String {
         (Double(watts) / 1_000).formatted(.number.precision(.fractionLength(1)))

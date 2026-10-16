@@ -46,9 +46,12 @@ These principles come from the experience with a real-time prototype that was to
    follows them. This is how real operations work, and it leaves time to think.
 3. **One new idea at a time.** Each scenario unlocks only the controls it needs. The full set appears only in the
    last scenarios and in free play.
-4. **Show the effect before and after.** Before a change, the game shows its expected effect from the forecast
-   ("about −12 % CO₂ today"). After the day, the debrief compares the player's result with a reference operator
-   who does nothing clever (section 8).
+4. **Find out by playing, compare afterwards.** During the run the game shows the immediate effect of a change
+   (servers working, load and capacity, power now) and the information an operator has (forecast, expected load),
+   but no forecast of the day's result – otherwise the run would be unnecessary (play test of step 2). After the
+   day, the debrief compares the player's result with a reference operator who does nothing clever and shows
+   "what if": the same day replayed with other rules (section 8). Where forecasts are uncertain (later scenarios),
+   a preview may return, with its uncertainty band, as a lesson about forecasts.
 5. **Few, clearly different things.** Four kinds of workload, three kinds of server, two generations. Each has its
    own color and its own shape, readable at phone size.
 6. **Real numbers where they exist.** Grid curves, power, PUE and embodied emissions come from published sources
@@ -69,8 +72,7 @@ servers on a grid, network topology, green certificates and offsets (the SCI exc
 - One tick = **15 game minutes**; one game day = 96 ticks.
 - Speeds: pause; 1× = one game hour in 4 seconds (a day in about 1.5 minutes); 4×; 16×; "skip to the next
   event". (checked in the first play test, D8)
-- A scenario lasts 1 to 7 game days. A day starts at 00:00; the first game day starts paused at 06:00, so the
-  player can look at the forecast first.
+- A scenario lasts 1 to 7 game days and always starts paused at 00:00 (D10).
 
 ### 3.2 Why 15 minutes
 
@@ -297,9 +299,14 @@ The debrief compares:
 
 ### 8.3 Stars
 
-- ★ the scenario's rules are met (SLA target, deadlines, budget not negative at the end).
+- ★ the scenario's rules are met (SLA target, less CO₂ than the reference; later also deadlines and a budget not
+  negative at the end). One star opens the next scenario.
 - ★★ CO₂ at least X % below the reference (per scenario).
-- ★★★ a special goal of the scenario (e.g. PUE ≤ 1.2, no wasted embodied emissions, SCI below a value).
+- ★★★ a special goal of the scenario (e.g. mean utilization, PUE ≤ 1.2, no wasted embodied emissions, SCI below a
+  value).
+- The second and third star need the first, not each other. The thresholds are set with the lesson tests: a
+  scripted good operator reaches three stars, a rough one one or two, the reference operator none. The aim is that
+  a first run usually opens the next scenario and all stars take two or three runs.
 
 ### 8.4 Comparison in class
 
@@ -315,10 +322,10 @@ Ten scenarios, each introducing one idea. Region and season are chosen so that t
 
 | # | Title | Region, season | Length | New controls | Idea |
 |---|---|---|---|---|---|
-| 1 | Night shift | Germany, autumn | 1 day | servers on/off, target utilization | Idle power: at night 20 % load, all servers on wastes energy (G2). |
+| 1 | Night shift | Germany, autumn | 1 day | servers on/off by hand | Idle power: at night 20 % load, all servers on wastes energy; switching on takes 30 minutes, so plan ahead (G2). |
 | 2 | Wait for the sun | Spain, summer | 2 days | batch policy, forecast | Reports and backups move into the midday dip (G3). |
 | 3 | When the wind drops | Great Britain, winter | 3 days | threshold policy, deadline safety | The forecast is uncertain; a threshold plus the safety rule beats a fixed window (G3). |
-| 4 | Headroom | Germany, winter | 2 days | money, SLA penalty | A marketing campaign doubles the load: too little headroom costs SLA, too much costs energy (G4). |
+| 4 | Headroom | Germany, winter | 2 days | capacity rules with autoscaling (target utilization), money, SLA penalty | Autoscaling automates what the player did by hand in scenario 1; a marketing campaign doubles the load: too little headroom costs SLA, too much costs energy (G4). |
 | 5 | Heat wave | Germany, summer | 3 days | cooling type, setpoint | PUE rises with the outside temperature; setpoint and free cooling (G5). |
 | 6 | Old iron | France and Poland | 3 years (monthly steps) | buying and retiring servers | Replacing hardware pays off in Poland, hardly in France (G6, G1). |
 | 7 | Training run | Germany, spring | 3 days | AI training, power cap | Run the training in clean hours and cap the GPUs (G3, G6). |
@@ -360,8 +367,8 @@ Each scenario has:
   fill in order (D2).
 - **Timeline:** the most important view for the lessons: it shows at a glance when the grid is clean and what the
   data center does at that time.
-- **Policies:** the right column, one tab per unlocked topic. Each control shows its expected effect for the rest of
-  the day before it is applied.
+- **Controls:** the right column, one section per unlocked topic. Switching by hand takes effect at once; rules
+  show which one is active and take effect with "Apply". A box "Right now" shows the immediate situation.
 - **iPhone** (from step 9, D1): the hall becomes a compact status row; timeline and policies as tabs.
 
 ### 10.2 Look
@@ -396,7 +403,7 @@ After each step the game is played by a person before the next step begins (**pl
 |---|---|---|
 | 0 | Repo, build script with watcher, Xcode project, empty core package, README, license | builds and tests run on the Mac – **done** (version 0.0) |
 | 1 | Core: clock, grid curves and forecast, interactive load, servers with power, autoscaling, SLA, emissions | headless run of scenario 1 prints plausible numbers; tests green – **done** (version 0.1) |
-| 2 | Minimal UI: top bar with speed control, timeline, capacity tab, simple hall | scenario 1 playable; **play test** – built (version 0.2), play test pending |
+| 2 | Minimal UI: top bar with speed control, timeline, capacity tab, simple hall | scenario 1 playable; **play test** – done; revised after the play test (version 0.2.1): start at 00:00, switching by hand, goals and stars, "what if" |
 | 3 | Batch with policies and deadline safety; reference operator; debrief | scenarios 2 and 3 playable; **play test** |
 | 4 | Money, events, automatic pause | scenario 4; **play test** |
 | 5 | Cooling and PUE, outside temperature | scenario 5; **play test** |
@@ -432,19 +439,32 @@ After each step the game is played by a person before the next step begins (**pl
 | autoscale 90 % | 85.0 | 5.0 | 163 | 99.3 % | 8.9 | −25 % |
 | manual, 10 servers | 85.6 | 5.0 | 167 | 95.5 % | 10.0 | −25 %, misses the SLA at the evening peak |
 
-**As built in step 2** (app):
+**As built in step 2** (app, revised after the first play test):
 
-- Briefing before the scenario (situation, goal, idea, what is on the screen), then the play screen: top bar with
-  day, clock, speed (pause, 1×, 4×, 16×) and the figures grid now, CO₂ so far, SLA, facility power; isometric hall
-  with racks of ten servers (off grey, booting amber, on dark with a green load bar); timeline with the carbon
-  intensity so far (colored area), the forecast with its band, demand and capacity, expected demand; capacity
-  panel on the right.
-- Rules are edited first and take effect with "Apply". The panel shows the expected CO₂ and SLA at the end of the
-  day for the current and the edited rule. The projection uses only what the operator knows at that moment: the
-  grid forecast made now and the expected demand without noise (`Simulation.projected(with:)`).
-- At the end a card compares the result with the reference operator (CO₂, of it embodied, energy, SLA, mean
-  servers on) and states whether the SLA target was met.
-- Launch arguments for screenshots: `-play`, `-ticks N`, `-autoscale P`, `-fixed N`, `-draftAutoscale P`.
+- Briefing before the scenario (situation, idea, goals with stars, what is on the screen, best result so far),
+  then the play screen: top bar with day, clock, speed (pause, 1×, 4×, 16×) and the figures grid now, CO₂ so far,
+  SLA, facility power; below it a goal bar (SLA target, CO₂ compared with the reference so far, what the second
+  and third star need); isometric hall with racks of ten servers (off grey, booting amber, on dark with a green
+  load bar); timeline with the carbon intensity so far (colored area), the forecast with its band, load and
+  capacity, expected load, red marks for slow requests.
+- Scenario 1: plus and minus for the servers, effective at once, and a box "Right now" (servers working, load /
+  capacity, utilization, expected load in an hour, IT power). The capacity rules (all on, fixed, autoscaling) with
+  "Active" and "Apply" are built for scenario 4. `Simulation.projected(with:)` stays in the core for later.
+- End card: stars and the three goals, the result next to the reference operator's (CO₂, of it embodied, energy,
+  SLA, mean servers on, mean utilization), and "what if": the same day replayed with all servers on, half and 70 %
+  of the fleet all day, and autoscaling at 70 %. Best stars are kept on the device; one star opens the next
+  scenario.
+- Scenario 1 numbers with the start at 00:00 (`build/lesson-report.txt`):
+
+| Operator | CO₂ kg | vs. reference | SLA | Mean utilization | Stars |
+|---|---:|---:|---:|---:|---:|
+| all on (reference) | 115.3 | – | 100 % | 35 % | – |
+| by hand, careful (every 15 min for the next 90 min at 80 %) | 88.6 | −23 % | 100 % | 72 % | ★★★ |
+| by hand, twice: 8 servers at night, 16 from 06:00 | 99.4 | −14 % | 100 % | 50 % | ★ |
+| fixed 10 servers | 86.7 | −25 % | 95.5 % | 68 % | – |
+| autoscaling 70 % (scenario 4) | 92.7 | −20 % | 100 % | 63 % | ★★★ |
+
+- Launch arguments for screenshots: `-play`, `-ticks N`, `-fixed N`, `-careful 1`, `-autoscale P`.
 
 **Taken over from the Carbon Rush prototype** (copied, checked for every reference to its origin):
 grid curves and their generator, the forecast model, the electricity price formula, the embodied and SCI
@@ -466,6 +486,9 @@ music. Not taken over: maps, paths, the tower-and-creep rules, opponents, networ
 | D7 | Outside temperature per region and season | collected in step 5 |
 | D8 | Speeds | 1× = an hour in 4 s, 4×, 16×; checked in the first play test |
 | D9 | Order of the teaching goals | the order in which the scenarios introduce them, measurement first (section 1) |
+| D10 | Start time | every scenario starts at 00:00 |
+| D11 | Scenario 1 | switching by hand only; autoscaling comes with scenario 4 |
+| D12 | Preview of the day's result | not during the run; "what if" in the debrief instead (principle 4) |
 
 ---
 

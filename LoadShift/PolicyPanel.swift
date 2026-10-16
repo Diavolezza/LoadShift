@@ -1,31 +1,105 @@
 import SwiftUI
 import LoadShiftCore
 
-/// The rules (docs/CONCEPT.md 10.1): one section per unlocked topic. Step 2 has capacity only.
-/// Every change shows its expected effect before it is applied (principle 4).
+/// The controls on the right (docs/CONCEPT.md 10.1): only what the scenario unlocks.
+/// Switching by hand takes effect at once; rules are edited and applied. No forecast of the day's result –
+/// that comes in the debrief as "what if".
 struct PolicyPanel: View {
+    let game: GameController
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Capacity")
+                    .font(.title2.bold())
+                if game.byHand {
+                    ManualCapacity(game: game)
+                } else {
+                    CapacityRules(game: game)
+                }
+                NowBox(simulation: game.simulation)
+            }
+            .padding(20)
+        }
+        .background(Theme.panel)
+    }
+}
+
+/// Scenario 1: switch servers on and off by hand.
+struct ManualCapacity: View {
+    let game: GameController
+
+    var body: some View {
+        let wanted = game.wantedServers
+        let total = game.scenario.serverCount
+        VStack(alignment: .leading, spacing: 14) {
+            Text("An idle server still draws about a quarter of its maximum power. Switch off what is not needed – but a server you switch on takes 30 minutes before it can work.")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: 16) {
+                RoundButton(symbol: "minus") { game.setWantedServers(wanted - 1) }
+                    .disabled(wanted <= 0 || game.isFinished)
+                VStack(spacing: 0) {
+                    Text(verbatim: "\(wanted)")
+                        .font(.system(size: 44, weight: .bold, design: .rounded).monospacedDigit())
+                    Text("of \(total) servers on")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(minWidth: 110)
+                RoundButton(symbol: "plus") { game.setWantedServers(wanted + 1) }
+                    .disabled(wanted >= total || game.isFinished)
+            }
+            .frame(maxWidth: .infinity)
+            Text("Takes effect at once. Switched-off servers stop immediately; switched-on servers boot for 30 minutes.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+}
+
+struct RoundButton: View {
+    let symbol: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.title2.weight(.bold))
+                .frame(width: 56, height: 56)
+                .background(Theme.accent.opacity(0.14), in: Circle())
+                .foregroundStyle(Theme.accent)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// Rules for the capacity (from scenario 4): all on, fixed, autoscaling. Edited, then applied.
+struct CapacityRules: View {
     @Bindable var game: GameController
 
     private enum Mode: Int { case allOn, manual, autoscale }
 
-    private var serverCount: Int { game.simulation.servers.filter { $0.kind.servesInteractive }.count }
+    private var serverCount: Int { game.scenario.serverCount }
 
-    private var mode: Binding<Mode> {
+    private func mode(of policy: Policy) -> Mode {
+        switch policy.capacity {
+        case .allOn: return .allOn
+        case .manual: return .manual
+        case .autoscale: return .autoscale
+        }
+    }
+
+    private var modeBinding: Binding<Mode> {
         Binding {
-            switch game.draft.capacity {
-            case .allOn: return Mode.allOn
-            case .manual: return Mode.manual
-            case .autoscale: return Mode.autoscale
-            }
+            mode(of: game.draft)
         } set: { newMode in
             switch newMode {
-            case .allOn:
-                game.draft.capacity = .allOn
-            case .manual:
-                let on = game.simulation.servers.filter { $0.state.isPowered && $0.kind.servesInteractive }.count
-                game.draft.capacity = .manual(servers: max(1, on))
-            case .autoscale:
-                game.draft.capacity = .autoscale(targetUtilization: 700)
+            case .allOn: game.draft.capacity = .allOn
+            case .manual: game.draft.capacity = .manual(servers: max(1, game.wantedServers))
+            case .autoscale: game.draft.capacity = .autoscale(targetUtilization: 700)
             }
         }
     }
@@ -45,100 +119,107 @@ struct PolicyPanel: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Capacity")
-                    .font(.title2.bold())
-                Text("An idle server still draws about a quarter of its maximum power. Decide how many servers run. Switching a server on takes 30 minutes.")
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 8) {
+                Image(systemName: "checkmark.seal.fill").foregroundStyle(Theme.accent)
+                Text("Active: \(Text(PolicyText.describe(game.simulation.policy)))")
+                    .font(.headline)
+            }
+            .padding(10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Theme.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: 10))
+            Text("New rule")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.secondary)
+            Picker("Rule", selection: modeBinding) {
+                Text("All on").tag(Mode.allOn)
+                Text("Fixed").tag(Mode.manual)
+                Text("Autoscale").tag(Mode.autoscale)
+            }
+            .pickerStyle(.segmented)
+            switch modeBinding.wrappedValue {
+            case .allOn:
+                Text("Every server runs all the time – like the reference operator.")
+                    .font(.callout)
+            case .manual:
+                Stepper(value: manualCount, in: 0...max(1, serverCount)) {
+                    Text("\(manualCount.wrappedValue) servers run").monospacedDigit()
+                }
+            case .autoscale:
+                Text("Target utilization: \(Format.wholePercent(Int(target.wrappedValue * 10)))")
+                    .monospacedDigit()
+                Slider(value: target, in: 40...90, step: 5)
+                    .tint(Theme.accent)
+                Text("The servers needed for the expected load of the next hour run. A low target leaves headroom for peaks but more servers idle; a high target is efficient but gets slow at peaks.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-                Picker("Rule", selection: mode) {
-                    Text("All on").tag(Mode.allOn)
-                    Text("Fixed").tag(Mode.manual)
-                    Text("Autoscale").tag(Mode.autoscale)
-                }
-                .pickerStyle(.segmented)
-                switch mode.wrappedValue {
-                case .allOn:
-                    Text("Every server runs all the time – like the reference operator.")
-                        .font(.callout)
-                case .manual:
-                    Stepper(value: manualCount, in: 1...max(1, serverCount)) {
-                        Text("\(manualCount.wrappedValue) servers run")
-                            .monospacedDigit()
-                    }
-                    Text("The same number day and night. Too few, and the evening peak gets slow.")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                case .autoscale:
-                    Text("Target utilization: \(Format.wholePercent(Int(target.wrappedValue * 10)))")
-                        .monospacedDigit()
-                    Slider(value: target, in: 40...90, step: 5)
-                        .tint(Theme.accent)
-                    Text("The servers needed for the expected load of the next hour run. A low target leaves headroom for peaks but more servers idle; a high target is efficient but gets slow at peaks.")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                EffectBox(game: game)
+            }
+            if game.draftChanged {
                 Button {
                     game.apply()
                 } label: {
-                    Text("Apply")
-                        .frame(maxWidth: .infinity)
-                        .foregroundStyle(.white)
+                    Text("Apply").frame(maxWidth: .infinity).foregroundStyle(.white)
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(Theme.accent)
                 .controlSize(.large)
-                .disabled(!game.draftChanged || game.isFinished)
+                .disabled(game.isFinished)
             }
-            .padding(20)
         }
-        .background(Theme.panel)
     }
 }
 
-/// Expected result at the end of the scenario with the current rules and with the edited ones, from the
-/// forecast and the expected load.
-struct EffectBox: View {
-    let game: GameController
+enum PolicyText {
+    static func describe(_ policy: Policy) -> LocalizedStringKey {
+        switch policy.capacity {
+        case .allOn: return "All servers on"
+        case .manual(let n): return "\(n) servers"
+        case .autoscale(let t): return "Autoscaling at \(Format.wholePercent(t))"
+        }
+    }
+}
+
+/// The situation right now: running servers, load and capacity, the expected load in an hour.
+struct NowBox: View {
+    let simulation: Simulation
 
     var body: some View {
-        let current = game.projection(for: game.simulation.policy)
-        let target = game.scenario.slaTarget
+        let running = simulation.servers.filter { $0.state.isOn }.count
+        let booting = simulation.servers.filter { if case .booting = $0.state { return true } else { return false } }.count
+        let last = simulation.history.last
+        let inAnHour = simulation.scenario.interactive.expected(tick: simulation.tick + GameTime.ticksPerHour)
         VStack(alignment: .leading, spacing: 8) {
-            Text("Expected at the end of the day")
+            Text("Right now")
                 .font(.headline)
-            if game.draftChanged {
-                let draft = game.projection(for: game.draft)
-                SwiftUI.Grid(alignment: .trailing, horizontalSpacing: 14, verticalSpacing: 4) {
-                    GridRow {
-                        Text(verbatim: "").gridColumnAlignment(.leading)
-                        Text("now").foregroundStyle(.secondary)
-                        Text("new").foregroundStyle(.secondary)
-                    }
-                    GridRow {
-                        Text(verbatim: "CO₂").gridColumnAlignment(.leading)
-                        Text(verbatim: "\(Format.kilograms(current.emissions)) kg")
-                        Text(verbatim: "\(Format.kilograms(draft.emissions)) kg").bold()
-                    }
-                    GridRow {
-                        Text("SLA").gridColumnAlignment(.leading)
-                        Text(verbatim: Format.percent(current.sla))
-                        Text(verbatim: Format.percent(draft.sla)).bold()
-                            .foregroundStyle(draft.sla >= target ? Theme.ink : Theme.red)
-                    }
+            SwiftUI.Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 5) {
+                GridRow {
+                    Text("Servers working")
+                    Text(verbatim: booting > 0 ? "\(running) (+\(booting))" : "\(running)").bold()
                 }
-                .font(.callout.monospacedDigit())
-                Text("\(Format.change(draft.emissions, from: current.emissions)) CO₂ until the end of the day")
-                    .font(.callout.weight(.semibold))
-                    .foregroundStyle(draft.emissions <= current.emissions ? Theme.accent : Theme.red)
-            } else {
-                Text("CO₂ \(Format.kilograms(current.emissions)) kg · SLA \(Format.percent(current.sla))")
-                    .font(.callout.monospacedDigit())
+                GridRow {
+                    Text("Load / capacity")
+                    Text(verbatim: "\(last?.demand ?? 0) / \(last?.capacity ?? simulation.readyCapacity)").bold()
+                }
+                GridRow {
+                    Text("Utilization")
+                    let capacity = last?.capacity ?? 0
+                    Text(verbatim: capacity == 0 ? "–" : Format.wholePercent((last?.served ?? 0) * 1_000 / capacity)).bold()
+                }
+                GridRow {
+                    Text("Expected load in 1 h")
+                    Text(verbatim: "\(inAnHour)").bold()
+                }
+                GridRow {
+                    Text("IT power")
+                    Text(verbatim: "\(Format.kilowatts(last?.itPower ?? 0)) kW").bold()
+                }
             }
+            .font(.callout.monospacedDigit())
+            Text("A server handles 20 load units (20,000 requests per 15 minutes). Above 85 % utilization requests get slow.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)

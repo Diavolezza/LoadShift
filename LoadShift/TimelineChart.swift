@@ -103,8 +103,13 @@ struct TimelineChart: View {
             for (t, v) in expected.dropFirst() { line.addLine(to: CGPoint(x: x(t), y: yU(v))) }
             context.stroke(line, with: .color(Theme.demand.opacity(0.6)), style: StrokeStyle(lineWidth: 1.5, dash: [2, 3]))
         }
+        // Slow or dropped requests: a red mark under the lane.
+        for r in history where r.inTime < r.demand {
+            let rect = CGRect(x: x(r.tick), y: lowLane.bottom + 1, width: max(1, x(r.tick + 1) - x(r.tick)), height: 4)
+            context.fill(Path(rect), with: .color(Theme.red))
+        }
         axis(&context, top: lowLane.top, bottom: lowLane.bottom, left: left, right: right, maxLabel: "\(Int(unitsTop))")
-        context.draw(Text("Demand (line) and capacity of the running servers (area), 1,000 requests per 15 min")
+        context.draw(Text("Load (line) and capacity of the running servers (area) – red: slow requests")
                         .font(.caption.weight(.semibold)),
                      at: CGPoint(x: left, y: lowLane.top - 12), anchor: .leading)
 
