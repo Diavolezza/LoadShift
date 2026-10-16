@@ -396,7 +396,7 @@ After each step the game is played by a person before the next step begins (**pl
 |---|---|---|
 | 0 | Repo, build script with watcher, Xcode project, empty core package, README, license | builds and tests run on the Mac – **done** (version 0.0) |
 | 1 | Core: clock, grid curves and forecast, interactive load, servers with power, autoscaling, SLA, emissions | headless run of scenario 1 prints plausible numbers; tests green – **done** (version 0.1) |
-| 2 | Minimal UI: top bar with speed control, timeline, capacity tab, simple hall | scenario 1 playable; **play test** |
+| 2 | Minimal UI: top bar with speed control, timeline, capacity tab, simple hall | scenario 1 playable; **play test** – built (version 0.2), play test pending |
 | 3 | Batch with policies and deadline safety; reference operator; debrief | scenarios 2 and 3 playable; **play test** |
 | 4 | Money, events, automatic pause | scenario 4; **play test** |
 | 5 | Cooling and PUE, outside temperature | scenario 5; **play test** |
@@ -431,6 +431,20 @@ After each step the game is played by a person before the next step begins (**pl
 | autoscale 70 % | 91.8 | 5.0 | 177 | 100 % | 11.4 | −19 % |
 | autoscale 90 % | 85.0 | 5.0 | 163 | 99.3 % | 8.9 | −25 % |
 | manual, 10 servers | 85.6 | 5.0 | 167 | 95.5 % | 10.0 | −25 %, misses the SLA at the evening peak |
+
+**As built in step 2** (app):
+
+- Briefing before the scenario (situation, goal, idea, what is on the screen), then the play screen: top bar with
+  day, clock, speed (pause, 1×, 4×, 16×) and the figures grid now, CO₂ so far, SLA, facility power; isometric hall
+  with racks of ten servers (off grey, booting amber, on dark with a green load bar); timeline with the carbon
+  intensity so far (colored area), the forecast with its band, demand and capacity, expected demand; capacity
+  panel on the right.
+- Rules are edited first and take effect with "Apply". The panel shows the expected CO₂ and SLA at the end of the
+  day for the current and the edited rule. The projection uses only what the operator knows at that moment: the
+  grid forecast made now and the expected demand without noise (`Simulation.projected(with:)`).
+- At the end a card compares the result with the reference operator (CO₂, of it embodied, energy, SLA, mean
+  servers on) and states whether the SLA target was met.
+- Launch arguments for screenshots: `-play`, `-ticks N`, `-autoscale P`, `-fixed N`, `-draftAutoscale P`.
 
 **Taken over from the Carbon Rush prototype** (copied, checked for every reference to its origin):
 grid curves and their generator, the forecast model, the electricity price formula, the embodied and SCI

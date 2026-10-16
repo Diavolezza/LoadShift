@@ -56,6 +56,9 @@ public struct Simulation: Sendable {
     public private(set) var tick: Int
     public private(set) var totals = Totals()
     public private(set) var history: [TickRecord] = []
+    /// Set in a projection: from here on the simulation knows only what the operator knows at that tick –
+    /// the grid forecast made then and the expected demand without noise (`projected(with:)`).
+    public private(set) var plannedAt: Int?
 
     public init(scenario: Scenario, policy: Policy) {
         self.scenario = scenario
@@ -87,6 +90,18 @@ public struct Simulation: Sendable {
         return simulation
     }
 
+    /// What the scenario will probably bring with a policy from now on: the rest of the scenario simulated
+    /// with the forecast made now and the expected demand (CONCEPT.md, principle 4). The totals include what
+    /// has already happened, so two projections can be compared directly.
+    public func projected(with policy: Policy) -> Totals {
+        var copy = self
+        copy.policy = policy
+        copy.plannedAt = tick
+        copy.history = []
+        copy.run()
+        return copy.totals
+    }
+
     // MARK: - One tick
 
     public mutating func step() {
@@ -94,7 +109,8 @@ public struct Simulation: Sendable {
         finishBooting()
         applyCapacityPolicy()
 
-        let demand = scenario.interactive.actual(tick: tick, seed: scenario.seed)
+        let demand = plannedAt == nil ? scenario.interactive.actual(tick: tick, seed: scenario.seed)
+                                      : scenario.interactive.expected(tick: tick)
         let capacity = readyCapacity
         let served = min(demand, capacity)
         let fast = capacity * InteractiveLoad.slowAbove / 1_000
@@ -115,7 +131,8 @@ public struct Simulation: Sendable {
             if servers[i].state.isPowered { poweredOn += 1 }
         }
         let facilityPower = scenario.facility.facilityPower(itPower: itPower)
-        let intensity = grid.intensityTenths(tick: tick)
+        let intensity = plannedAt.map { grid.forecastTenths(tick: tick, madeAt: $0) }
+            ?? grid.intensityTenths(tick: tick)
         let facilityEnergy = facilityPower * Units.milliwattHoursPerWattTick
 
         totals.ticks += 1

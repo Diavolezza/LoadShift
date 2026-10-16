@@ -80,4 +80,20 @@ final class SimulationTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(scaled.totals.sla, Scenario.nightShift.slaTarget)
         XCTAssertEqual(scaled.totals.embodied, reference.totals.embodied, "switching off saves no embodied emissions")
     }
+
+    func testProjectionUsesTheForecastAndLeavesTheSimulationUntouched() {
+        var simulation = Simulation(scenario: .nightShift, policy: .reference)
+        for _ in 0..<20 { simulation.step() }
+        let before = simulation.totals
+        let projected = simulation.projected(with: Policy(capacity: .autoscale(targetUtilization: 700)))
+        XCTAssertEqual(simulation.totals, before)
+        XCTAssertEqual(simulation.tick, Scenario.nightShift.startTick + 20)
+        XCTAssertEqual(projected.ticks, GameTime.ticksPerDay)
+        XCTAssertLessThan(projected.emissions, simulation.projected(with: .reference).emissions)
+        // Projected and real end differ only by forecast error and noise: within a fifth.
+        var real = simulation
+        real.policy = Policy(capacity: .autoscale(targetUtilization: 700))
+        real.run()
+        XCTAssertLessThan(abs(real.totals.emissions - projected.emissions) * 5, real.totals.emissions)
+    }
 }

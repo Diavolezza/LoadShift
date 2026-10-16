@@ -1,12 +1,325 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "A game day has %lld steps of %lld minutes." : {
+    "%@ CO₂ until the end of the day" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ein Spieltag hat %1$lld Schritte zu je %2$lld Minuten."
+            "value" : "%@ CO₂ bis zum Ende des Tages"
+          }
+        }
+      }
+    },
+    "%lld days" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Tage"
+          }
+        }
+      }
+    },
+    "%lld of %lld servers on" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld von %2$lld Servern an"
+          }
+        }
+      }
+    },
+    "%lld of %lld servers on · %@ kW IT power" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld von %2$lld Servern an · %3$@ kW IT-Leistung"
+          }
+        }
+      }
+    },
+    "%lld servers" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Server"
+          }
+        }
+      }
+    },
+    "%lld servers run" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Server laufen"
+          }
+        }
+      }
+    },
+    "1 day" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 Tag"
+          }
+        }
+      }
+    },
+    "All on" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle an"
+          }
+        }
+      }
+    },
+    "An idle server still draws about a quarter of its maximum power. Decide how many servers run. Switching a server on takes 30 minutes." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Server im Leerlauf zieht noch etwa ein Viertel seiner Maximalleistung. Lege fest, wie viele Server laufen. Das Einschalten eines Servers dauert 30 Minuten."
+          }
+        }
+      }
+    },
+    "An idle server still draws about a quarter of its maximum power. Servers that are not needed should be off – but switching one on takes 30 minutes, so plan ahead." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Server im Leerlauf zieht noch etwa ein Viertel seiner Maximalleistung. Was nicht gebraucht wird, sollte aus sein – aber das Einschalten dauert 30 Minuten, also plane voraus."
+          }
+        }
+      }
+    },
+    "Apply" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Übernehmen"
+          }
+        }
+      }
+    },
+    "Autoscale" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoscaling"
+          }
+        }
+      }
+    },
+    "Autumn" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herbst"
+          }
+        }
+      }
+    },
+    "Back" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zurück"
+          }
+        }
+      }
+    },
+    "Back to the briefing" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zurück zum Briefing"
+          }
+        }
+      }
+    },
+    "Booting" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Startet"
+          }
+        }
+      }
+    },
+    "Capacity" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kapazität"
+          }
+        }
+      }
+    },
+    "Carbon intensity of the grid, g CO₂/kWh – dashed: forecast" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CO₂-Intensität des Stroms, g CO₂/kWh – gestrichelt: Prognose"
+          }
+        }
+      }
+    },
+    "CO₂ (kg)" : {
+      "shouldTranslate" : false
+    },
+    "CO₂ %@ kg · SLA %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CO₂ %1$@ kg · SLA %2$@"
+          }
+        }
+      }
+    },
+    "CO₂ so far" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CO₂ bisher"
+          }
+        }
+      }
+    },
+    "compared with the reference operator, who leaves every server on." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "im Vergleich zum Referenzbetreiber, der alle Server laufen lässt."
+          }
+        }
+      }
+    },
+    "Day %lld" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tag %lld"
+          }
+        }
+      }
+    },
+    "Day complete" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tag geschafft"
+          }
+        }
+      }
+    },
+    "Demand (line) and capacity of the running servers (area), 1,000 requests per 15 min" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last (Linie) und Kapazität der laufenden Server (Fläche), 1.000 Requests pro 15 min"
+          }
+        }
+      }
+    },
+    "Energy (kWh)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Energie (kWh)"
+          }
+        }
+      }
+    },
+    "Every server runs all the time – like the reference operator." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Server laufen ständig – wie beim Referenzbetreiber."
+          }
+        }
+      }
+    },
+    "Expected at the end of the day" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erwartet am Ende des Tages"
+          }
+        }
+      }
+    },
+    "Fixed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fest"
+          }
+        }
+      }
+    },
+    "France" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Frankreich"
+          }
+        }
+      }
+    },
+    "Germany" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deutschland"
+          }
+        }
+      }
+    },
+    "Great Britain" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Großbritannien"
+          }
+        }
+      }
+    },
+    "Grid now" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Netz jetzt"
           }
         }
       }
@@ -14,12 +327,355 @@
     "Load Shift" : {
       "shouldTranslate" : false
     },
-    "Run a greener data center" : {
+    "new" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ein Rechenzentrum klimafreundlich betreiben"
+            "value" : "neu"
+          }
+        }
+      }
+    },
+    "Night shift" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nachtschicht"
+          }
+        }
+      }
+    },
+    "Norway" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Norwegen"
+          }
+        }
+      }
+    },
+    "now" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "jetzt"
+          }
+        }
+      }
+    },
+    "of it embodied (kg)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "davon Herstellung (kg)"
+          }
+        }
+      }
+    },
+    "Off" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus"
+          }
+        }
+      }
+    },
+    "On – the green bar shows the load" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An – der grüne Balken zeigt die Last"
+          }
+        }
+      }
+    },
+    "On the screen" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auf dem Bildschirm"
+          }
+        }
+      }
+    },
+    "Play again" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch einmal"
+          }
+        }
+      }
+    },
+    "Poland" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Polen"
+          }
+        }
+      }
+    },
+    "Power" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leistung"
+          }
+        }
+      }
+    },
+    "Reference" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Referenz"
+          }
+        }
+      }
+    },
+    "Rule" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regel"
+          }
+        }
+      }
+    },
+    "Scenario %lld: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szenario %1$lld: %2$@"
+          }
+        }
+      }
+    },
+    "Serve the users reliably – at least 99 % of the requests in time (SLA) – and emit less CO₂ than the reference operator, who simply leaves every server on." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bediene die Nutzer zuverlässig – mindestens 99 % der Requests rechtzeitig (SLA) – und stoße weniger CO₂ aus als der Referenzbetreiber, der einfach alle Server laufen lässt."
+          }
+        }
+      }
+    },
+    "Servers on (mean)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Server an (Mittel)"
+          }
+        }
+      }
+    },
+    "Situation" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ausgangslage"
+          }
+        }
+      }
+    },
+    "SLA" : {
+      "shouldTranslate" : false
+    },
+    "SLA target of %@ met." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SLA-Ziel von %@ erreicht."
+          }
+        }
+      }
+    },
+    "SLA target of %@ missed." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SLA-Ziel von %@ verfehlt."
+          }
+        }
+      }
+    },
+    "Spain" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spanien"
+          }
+        }
+      }
+    },
+    "Spring" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Frühling"
+          }
+        }
+      }
+    },
+    "Start" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start"
+          }
+        }
+      }
+    },
+    "Summer" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sommer"
+          }
+        }
+      }
+    },
+    "Switching servers off saves energy, not hardware: the embodied emissions stay the same." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abschalten spart Strom, aber keine Hardware: Die Herstellungsemissionen bleiben gleich."
+          }
+        }
+      }
+    },
+    "Target utilization: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zielauslastung: %@"
+          }
+        }
+      }
+    },
+    "The game starts paused at 06:00. Top: clock and speed – pause, 1×, 4×, 16×. Middle: your racks; grey servers are off, the green bar shows how busy a server is. Right: the capacity rules with their expected effect. Bottom: carbon intensity of the grid with the forecast, and the load over the day." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Spiel beginnt pausiert um 06:00. Oben: Uhr und Tempo – Pause, 1×, 4×, 16×. Mitte: deine Racks; graue Server sind aus, der grüne Balken zeigt, wie ausgelastet ein Server ist. Rechts: die Regeln für die Kapazität mit ihrer erwarteten Wirkung. Unten: die CO₂-Intensität des Stroms mit Prognose und die Last über den Tag."
+          }
+        }
+      }
+    },
+    "The idea" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Idee"
+          }
+        }
+      }
+    },
+    "The reference operator, who leaves every server on, emitted less." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Referenzbetreiber, der alle Server laufen lässt, hat weniger ausgestoßen."
+          }
+        }
+      }
+    },
+    "The same number day and night. Too few, and the evening peak gets slow." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tag und Nacht gleich viele. Sind es zu wenige, wird die Abendspitze langsam."
+          }
+        }
+      }
+    },
+    "The servers needed for the expected load of the next hour run. A low target leaves headroom for peaks but more servers idle; a high target is efficient but gets slow at peaks." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es laufen die Server, die für die erwartete Last der nächsten Stunde nötig sind. Ein niedriges Ziel lässt Reserve für Spitzen, aber mehr Server stehen im Leerlauf; ein hohes Ziel ist effizient, wird aber bei Spitzen langsam."
+          }
+        }
+      }
+    },
+    "Whole year" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ganzes Jahr"
+          }
+        }
+      }
+    },
+    "Winter" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Winter"
+          }
+        }
+      }
+    },
+    "You" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du"
+          }
+        }
+      }
+    },
+    "You run the data center of a web shop in Germany. Its 20 servers are sized for the Christmas season. Today is an ordinary autumn day: in the evening many people shop, at night hardly anyone." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du betreibst das Rechenzentrum eines Webshops in Deutschland. Seine 20 Server sind für das Weihnachtsgeschäft ausgelegt. Heute ist ein gewöhnlicher Herbsttag: Abends kaufen viele ein, nachts kaum jemand."
+          }
+        }
+      }
+    },
+    "Your goal" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Ziel"
           }
         }
       }

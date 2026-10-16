@@ -9,9 +9,10 @@ The game is a simulation, not a race: pause at any time, plan in peace, and let 
 needs to be decided. Ten scenarios introduce one idea each; a debrief compares your result with a reference
 operator and measures it with the Software Carbon Intensity (SCI, ISO/IEC 21031:2024).
 
-Status: step 1 of the concept (`docs/CONCEPT.md`, section 12): the simulation core runs scenario 1 headless
-(grid mix with weather and forecast, interactive load, servers, autoscaling, SLA, energy, emissions); the
-lesson report is written to `build/lesson-report.txt`. The app shows a start screen only.
+Status: step 2 of the concept (`docs/CONCEPT.md`, section 12): scenario 1 "Night shift" is playable – briefing,
+time control, isometric hall, timeline with grid forecast and load, capacity rules with their expected effect,
+comparison with the reference operator at the end. The lesson report of the core tests is written to
+`build/lesson-report.txt`.
 
 ## Project layout
 
