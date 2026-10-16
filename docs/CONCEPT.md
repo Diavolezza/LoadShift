@@ -395,7 +395,7 @@ After each step the game is played by a person before the next step begins (**pl
 | Step | Content | Done when |
 |---|---|---|
 | 0 | Repo, build script with watcher, Xcode project, empty core package, README, license | builds and tests run on the Mac – **done** (version 0.0) |
-| 1 | Core: clock, grid curves and forecast, interactive load, servers with power, autoscaling, SLA, emissions | headless run of scenario 1 prints plausible numbers; tests green |
+| 1 | Core: clock, grid curves and forecast, interactive load, servers with power, autoscaling, SLA, emissions | headless run of scenario 1 prints plausible numbers; tests green – **done** (version 0.1) |
 | 2 | Minimal UI: top bar with speed control, timeline, capacity tab, simple hall | scenario 1 playable; **play test** |
 | 3 | Batch with policies and deadline safety; reference operator; debrief | scenarios 2 and 3 playable; **play test** |
 | 4 | Money, events, automatic pause | scenario 4; **play test** |
@@ -405,6 +405,32 @@ After each step the game is played by a person before the next step begins (**pl
 | 8 | Two sites | scenarios 9 and 10; **play test** |
 | 9 | Free play, scenario codes, result cards, lexicon | **play test in a lecture** |
 | 10 | Look and sound, App Store texts and screenshots | release |
+
+**As built in step 1** (`LoadShiftCore`):
+
+- Units: power in W, energy in mWh (1 W for one tick = 250 mWh), carbon intensity in tenths of g/kWh, emissions
+  in µg CO₂e, shares in per mille; integers only.
+- Grid, weather and forecast as in section 4, on 15-minute ticks (`Grid.swift`, curves from
+  `tools/grid/curves.py`).
+- Interactive load: one work unit = 1,000 requests. Daily curve in per mille of the evening peak (hours 0–23):
+  380, 300, 240, 210, 200, 220, 300, 420, 540, 620, 660, 690, 720, 700, 670, 660, 680, 730, 800, 900, 1,000,
+  960, 780, 560; noise ±5 % per tick. A current CPU server handles 20 units per tick at full load (about 22
+  requests per second, game value).
+- SLA: of the work served, the part above 85 % of the capacity counts half (slow).
+- Capacity policies: all on (reference), manual (a number of servers), autoscale (target utilization 40–90 %).
+  The autoscaler plans for the highest expected demand within the boot time plus one hour, uses the most
+  efficient servers first and keeps a surplus server running until its replacement has booted.
+- Facility fixed to room air conditioning (PUE 1.52) until step 5.
+- Embodied emissions are booked for every server owned, on or off: switching off saves energy, not hardware.
+- Scenario 1 (Germany, autumn, 20 current CPU servers, peak 240 units, seed 1 – a day with a high carbon
+  intensity of 480 g/kWh on average), `build/lesson-report.txt`:
+
+| Policy | CO₂ kg | of it embodied | kWh | SLA | Servers on (mean) | vs. reference |
+|---|---:|---:|---:|---:|---:|---:|
+| all on (reference) | 113.6 | 5.0 | 226 | 100 % | 20.0 | – |
+| autoscale 70 % | 91.8 | 5.0 | 177 | 100 % | 11.4 | −19 % |
+| autoscale 90 % | 85.0 | 5.0 | 163 | 99.3 % | 8.9 | −25 % |
+| manual, 10 servers | 85.6 | 5.0 | 167 | 95.5 % | 10.0 | −25 %, misses the SLA at the evening peak |
 
 **Taken over from the Carbon Rush prototype** (copied, checked for every reference to its origin):
 grid curves and their generator, the forecast model, the electricity price formula, the embodied and SCI
