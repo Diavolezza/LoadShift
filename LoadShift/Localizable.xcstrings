@@ -1,0 +1,29 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "A game day has %lld steps of %lld minutes." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Spieltag hat %1$lld Schritte zu je %2$lld Minuten."
+          }
+        }
+      }
+    },
+    "Load Shift" : {
+      "shouldTranslate" : false
+    },
+    "Run a greener data center" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Rechenzentrum klimafreundlich betreiben"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

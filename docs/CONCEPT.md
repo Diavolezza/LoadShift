@@ -394,7 +394,7 @@ After each step the game is played by a person before the next step begins (**pl
 
 | Step | Content | Done when |
 |---|---|---|
-| 0 | Repo, build script with watcher, Xcode project, empty core package, README, license | builds and tests run on the Mac |
+| 0 | Repo, build script with watcher, Xcode project, empty core package, README, license | builds and tests run on the Mac – **done** (version 0.0) |
 | 1 | Core: clock, grid curves and forecast, interactive load, servers with power, autoscaling, SLA, emissions | headless run of scenario 1 prints plausible numbers; tests green |
 | 2 | Minimal UI: top bar with speed control, timeline, capacity tab, simple hall | scenario 1 playable; **play test** |
 | 3 | Batch with policies and deadline safety; reference operator; debrief | scenarios 2 and 3 playable; **play test** |
