@@ -464,6 +464,10 @@ After each step the game is played by a person before the next step begins (**pl
 | fixed 10 servers | 86.7 | −25 % | 95.5 % | 68 % | – |
 | autoscaling 70 % (scenario 4) | 92.7 | −20 % | 100 % | 63 % | ★★★ |
 
+- Second play test: the capacity of a server is shown in the panel ("Capacity: 400 load units", one server = 20
+  load units) and in the briefing (fleet, evening peak); the load lane of the timeline has dotted lines with
+  "5 servers", "10 servers" … on the right. The briefing uses two columns on wide screens and larger type; its goal
+  lines have no check circles. "What if" says what is the same: the load and the grid mix.
 - Launch arguments for screenshots: `-play`, `-ticks N`, `-fixed N`, `-careful 1`, `-autoscale P`.
 
 **Taken over from the Carbon Rush prototype** (copied, checked for every reference to its origin):

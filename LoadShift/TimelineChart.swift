@@ -19,7 +19,7 @@ struct TimelineChart: View {
         let start = scenario.startTick, end = scenario.endTick
         let now = min(simulation.tick, end)
         let grid = simulation.grid
-        let left = 44.0, right = size.width - 8, labelBand = 18.0
+        let left = 44.0, right = size.width - 74, labelBand = 18.0
         let laneGap = 26.0
         let usable = size.height - labelBand - laneGap
         let topLane = (top: 16.0, bottom: 16.0 + usable * 0.52 - 16)
@@ -102,6 +102,20 @@ struct TimelineChart: View {
             line.move(to: CGPoint(x: x(expected[0].0), y: yU(expected[0].1)))
             for (t, v) in expected.dropFirst() { line.addLine(to: CGPoint(x: x(t), y: yU(v))) }
             context.stroke(line, with: .color(Theme.demand.opacity(0.6)), style: StrokeStyle(lineWidth: 1.5, dash: [2, 3]))
+        }
+        // Right axis: how many servers that capacity is (one line every five servers).
+        let perServer = simulation.servers.first { $0.kind.servesInteractive }?.kind.capacity ?? 0
+        if perServer > 0 {
+            var count = 5
+            while Double(count * perServer) <= unitsTop {
+                let y = yU(count * perServer)
+                var line = Path()
+                line.move(to: CGPoint(x: left, y: y)); line.addLine(to: CGPoint(x: right, y: y))
+                context.stroke(line, with: .color(Theme.capacity.opacity(0.9)), style: StrokeStyle(lineWidth: 1, dash: [2, 4]))
+                context.draw(Text("\(count) servers").font(.caption2.monospacedDigit()).foregroundStyle(Theme.demand),
+                             at: CGPoint(x: right + 6, y: y), anchor: .leading)
+                count += 5
+            }
         }
         // Slow or dropped requests: a red mark under the lane.
         for r in history where r.inTime < r.demand {

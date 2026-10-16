@@ -52,6 +52,13 @@ struct ManualCapacity: View {
                     .disabled(wanted >= total || game.isFinished)
             }
             .frame(maxWidth: .infinity)
+            let perServer = game.scenario.fleet.first?.kind.capacity ?? 0
+            Text("Capacity: \(wanted * perServer) load units")
+                .font(.headline.monospacedDigit())
+                .frame(maxWidth: .infinity)
+            Text("One server handles \(perServer) load units (\(perServer),000 requests per 15 minutes). Above 85 % utilization requests get slow.")
+                .font(.callout)
+                .fixedSize(horizontal: false, vertical: true)
             Text("Takes effect at once. Switched-off servers stop immediately; switched-on servers boot for 30 minutes.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -188,6 +195,7 @@ struct NowBox: View {
         let running = simulation.servers.filter { $0.state.isOn }.count
         let booting = simulation.servers.filter { if case .booting = $0.state { return true } else { return false } }.count
         let last = simulation.history.last
+        let demandNow = last?.demand ?? simulation.scenario.interactive.expected(tick: simulation.tick)
         let inAnHour = simulation.scenario.interactive.expected(tick: simulation.tick + GameTime.ticksPerHour)
         VStack(alignment: .leading, spacing: 8) {
             Text("Right now")
@@ -199,12 +207,13 @@ struct NowBox: View {
                 }
                 GridRow {
                     Text("Load / capacity")
-                    Text(verbatim: "\(last?.demand ?? 0) / \(last?.capacity ?? simulation.readyCapacity)").bold()
+                    Text(verbatim: "\(demandNow) / \(last?.capacity ?? simulation.readyCapacity)").bold()
                 }
                 GridRow {
                     Text("Utilization")
-                    let capacity = last?.capacity ?? 0
-                    Text(verbatim: capacity == 0 ? "–" : Format.wholePercent((last?.served ?? 0) * 1_000 / capacity)).bold()
+                    let capacity = last?.capacity ?? simulation.readyCapacity
+                    let served = last?.served ?? min(demandNow, capacity)
+                    Text(verbatim: capacity == 0 ? "–" : Format.wholePercent(served * 1_000 / capacity)).bold()
                 }
                 GridRow {
                     Text("Expected load in 1 h")
@@ -212,14 +221,11 @@ struct NowBox: View {
                 }
                 GridRow {
                     Text("IT power")
-                    Text(verbatim: "\(Format.kilowatts(last?.itPower ?? 0)) kW").bold()
+                    let itPower = simulation.servers.reduce(0) { $0 + $1.power(utilization: $1.utilization) }
+                    Text(verbatim: "\(Format.kilowatts(itPower)) kW").bold()
                 }
             }
             .font(.callout.monospacedDigit())
-            Text("A server handles 20 load units (20,000 requests per 15 minutes). Above 85 % utilization requests get slow.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)

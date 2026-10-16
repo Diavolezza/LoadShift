@@ -1,12 +1,12 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "%lld days" : {
+    "%lld days, from 00:00" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld Tage"
+            "value" : "%lld Tage, ab 00:00"
           }
         }
       }
@@ -61,22 +61,22 @@
         }
       }
     },
-    "1 day" : {
+    "%lld servers, %lld load units each" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "1 Tag"
+            "value" : "%1$lld Server mit je %2$lld Lasteinheiten"
           }
         }
       }
     },
-    "A server handles 20 load units (20,000 requests per 15 minutes). Above 85 % utilization requests get slow." : {
+    "1 day, from 00:00" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ein Server schafft 20 Lasteinheiten (20.000 Requests pro 15 Minuten). Über 85 % Auslastung werden Requests langsam."
+            "value" : "1 Tag, ab 00:00"
           }
         }
       }
@@ -242,6 +242,16 @@
         }
       }
     },
+    "Capacity: %lld load units" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kapazität: %lld Lasteinheiten"
+          }
+        }
+      }
+    },
     "Carbon intensity of the grid, g CO₂/kWh – dashed: forecast" : {
       "localizations" : {
         "de" : {
@@ -351,6 +361,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Energie (kWh)"
+          }
+        }
+      }
+    },
+    "Evening peak about %lld load units" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abendspitze etwa %lld Lasteinheiten"
           }
         }
       }
@@ -583,6 +603,16 @@
         }
       }
     },
+    "One server handles %lld load units (%lld,000 requests per 15 minutes). Above 85 %% utilization requests get slow." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Server schafft %1$lld Lasteinheiten (%2$lld.000 Requests pro 15 Minuten). Über 85 %% Auslastung werden Requests langsam."
+          }
+        }
+      }
+    },
     "One star opens the next scenario." : {
       "localizations" : {
         "de" : {
@@ -800,12 +830,12 @@
         }
       }
     },
-    "The game starts paused. Top: clock and speed – pause, 1×, 4×, 16× – and below it your goals. Middle: your racks; grey servers are off, amber ones are booting, the green bar shows how busy a server is. Right: plus and minus for the servers, and the situation right now. Bottom: carbon intensity of the grid with the forecast, the load so far and the expected load (dotted)." : {
+    "The game starts paused. Top: clock and speed – pause, 1×, 4×, 16× – and below it your goals. Middle: your racks; grey servers are off, amber ones are booting, the green bar shows how busy a server is. Right: plus and minus for the servers, and the situation right now. Bottom: carbon intensity of the grid with the forecast, the load so far and the expected load (dotted); the dotted lines with \"5 servers\", \"10 servers\" … show how many servers a load needs." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Das Spiel beginnt pausiert. Oben: Uhr und Tempo – Pause, 1×, 4×, 16× – und darunter deine Ziele. Mitte: deine Racks; graue Server sind aus, orange starten gerade, der grüne Balken zeigt, wie ausgelastet ein Server ist. Rechts: Plus und Minus für die Server und die Lage gerade jetzt. Unten: die CO₂-Intensität des Stroms mit Prognose, die Last bisher und die erwartete Last (gepunktet)."
+            "value" : "Das Spiel beginnt pausiert. Oben: Uhr und Tempo – Pause, 1×, 4×, 16× – und darunter deine Ziele. Mitte: deine Racks; graue Server sind aus, orange starten gerade, der grüne Balken zeigt, wie ausgelastet ein Server ist. Rechts: Plus und Minus für die Server und die Lage gerade jetzt. Unten: die CO₂-Intensität des Stroms mit Prognose, die Last bisher und die erwartete Last (gepunktet); die gepunkteten Linien mit „5 Server“, „10 Server“ … zeigen, wie viele Server eine Last braucht."
           }
         }
       }
@@ -820,12 +850,12 @@
         }
       }
     },
-    "The same day with other rules, with the real weather and load:" : {
+    "The same day with exactly the same load and grid mix – only the rules differ:" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Derselbe Tag mit anderen Regeln, mit dem echten Wetter und der echten Last:"
+            "value" : "Derselbe Tag mit genau derselben Last und demselben Strommix – nur die Regeln sind anders:"
           }
         }
       }

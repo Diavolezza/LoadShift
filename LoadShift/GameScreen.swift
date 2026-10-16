@@ -303,25 +303,30 @@ struct EndCard: View {
 }
 
 struct GoalLine: View {
-    let ok: Bool
+    /// Nil: no check mark (briefing).
+    let ok: Bool?
     let stars: Int
     let text: LocalizedStringKey
+    var font: Font = .callout
 
     var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: ok ? "checkmark.circle.fill" : "circle")
-                .foregroundStyle(ok ? Theme.accent : Color.secondary)
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            if let ok {
+                Image(systemName: ok ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(ok ? Theme.accent : Color.secondary)
+            }
             Text(verbatim: String(repeating: "★", count: stars))
                 .foregroundStyle(Theme.amber)
                 .fixedSize()
-                .frame(width: 58, alignment: .leading)
+                .frame(width: 64, alignment: .leading)
             Text(text)
+                .fixedSize(horizontal: false, vertical: true)
         }
-        .font(.callout)
+        .font(font)
     }
 }
 
-/// The same day replayed with other rules – with the real weather and load.
+/// The same day replayed with other rules: the same load and the same grid mix, so only the rules differ.
 struct WhatIf: View {
     let game: GameController
 
@@ -331,7 +336,7 @@ struct WhatIf: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("What if …")
                 .font(.headline)
-            Text("The same day with other rules, with the real weather and load:")
+            Text("The same day with exactly the same load and grid mix – only the rules differ:")
                 .font(.callout)
                 .foregroundStyle(.secondary)
             SwiftUI.Grid(alignment: .trailing, horizontalSpacing: 16, verticalSpacing: 5) {
