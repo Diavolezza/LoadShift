@@ -16,7 +16,22 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -53,7 +68,11 @@ fun PlacementBoard(game: GameController, modifier: Modifier = Modifier) {
     val vms = game.scenario.vms
     val placement = game.placement ?: return
     val selected = game.selectedVm
-    BoxWithConstraints(modifier.padding(16.dp)) {
+    // Drag and drop: where each host column is, where the dragged VM is (root coordinates).
+    val hostBounds = remember { mutableStateMapOf<Int, Rect>() }
+    var dragPos by remember { mutableStateOf<Offset?>(null) }
+    var origin by remember { mutableStateOf(Offset.Zero) }
+    BoxWithConstraints(modifier.padding(16.dp).onGloballyPositioned { origin = it.positionInRoot() }) {
         val chartHeight = 74.dp
         val binHeight = (maxHeight - chartHeight - 92.dp).coerceAtLeast(160.dp)
         Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -66,7 +85,7 @@ fun PlacementBoard(game: GameController, modifier: Modifier = Modifier) {
                 val safe = server.kind.capacity * Packing.SAFE
                 val fits = selected != null && placement[selected] != host && vms[selected].ramGb <= ram - ramUsed
                 Column(
-                    Modifier.weight(1f).clip(RoundedCornerShape(10.dp))
+                    Modifier.weight(1f).onGloballyPositioned { hostBounds[host] = it.boundsInRoot() }.clip(RoundedCornerShape(10.dp))
                         .background(
                             when {
                                 selected == null || placement[selected] == host -> Color.Transparent
@@ -88,11 +107,27 @@ fun PlacementBoard(game: GameController, modifier: Modifier = Modifier) {
                             .padding(3.dp),
                         verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.Bottom),
                     ) {
-                        for (vm in onHost.sortedByDescending { vms[it].ramGb }) {
+                        for (vm in onHost.sortedByDescending { vms[it].ramGb }) key(vm) {
                             val kind = vms[vm]
                             val isSelected = vm == selected
+                            var coords by remember { mutableStateOf<LayoutCoordinates?>(null) }
                             Box(
                                 Modifier.fillMaxWidth().height(binHeight * (kind.ramGb.toFloat() / ram) - 2.dp)
+                                    .onGloballyPositioned { coords = it }
+                                    .pointerInput(vm, game.canPlace) {
+                                        if (!game.canPlace) return@pointerInput
+                                        detectDragGestures(
+                                            onDragStart = { o -> game.pickVm(vm); dragPos = coords?.localToRoot(o) },
+                                            onDrag = { change, amount -> change.consume(); dragPos = dragPos?.plus(amount) },
+                                            onDragEnd = {
+                                                val p = dragPos
+                                                val target = hostBounds.entries.firstOrNull { p != null && it.value.contains(p) }?.key
+                                                if (target != null) game.moveSelectedTo(target) else game.dropVm()
+                                                dragPos = null
+                                            },
+                                            onDragCancel = { dragPos = null; game.dropVm() },
+                                        )
+                                    }
                                     .clip(RoundedCornerShape(4.dp))
                                     .background(vmColor(kind).copy(alpha = if (isSelected) 1f else 0.8f))
                                     .border(if (isSelected) 2.5.dp else 0.dp, if (isSelected) Palette.ink else Color.Transparent, RoundedCornerShape(4.dp))
@@ -109,6 +144,18 @@ fun PlacementBoard(game: GameController, modifier: Modifier = Modifier) {
                         Type.style(11, FontWeight.SemiBold, if (peak > safe) Palette.red else Palette.secondary),
                     )
                 }
+            }
+        }
+        // The dragged VM follows the mouse.
+        val p = dragPos
+        if (p != null && selected != null) {
+            val kind = vms[selected]
+            Box(
+                Modifier.offset { IntOffset((p.x - origin.x).toInt() - 36.dp.roundToPx(), (p.y - origin.y).toInt() - 14.dp.roundToPx()) }
+                    .size(72.dp, 28.dp).alpha(0.9f).background(vmColor(kind), RoundedCornerShape(4.dp)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Txt(t(kind.short), Type.style(11, FontWeight.SemiBold, Color.White))
             }
         }
     }
@@ -164,7 +211,7 @@ fun PlacementPanel(game: GameController) {
     val servers = game.simulation.servers
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Txt(t("Placement"), Type.heading)
-        Txt(t("The previous team spread the 24 VMs over all ten hosts. Pack them onto fewer hosts – a host without a VM is switched off. Click a VM, then the host it should move to. Once the day runs, the placement is fixed."), Type.style(15, color = Palette.secondary))
+        Txt(t("The previous team spread the 24 VMs over all ten hosts. Pack them onto fewer hosts – a host without a VM is switched off. Drag a VM onto another host, or click it and then the host. Once the day runs, the placement is fixed."), Type.style(15, color = Palette.secondary))
         val used = placement.toSet()
         val ramUsed = vms.sumOf { it.ramGb }
         val ramAll = used.sumOf { servers[it].kind.ramGb }

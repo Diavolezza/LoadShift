@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import de.wannerit.loadshift.core.BatchMode
 import de.wannerit.loadshift.core.CapacityMode
 import de.wannerit.loadshift.core.Control
+import de.wannerit.loadshift.core.Engineering
 import de.wannerit.loadshift.core.GameTime
 import de.wannerit.loadshift.core.Packing
 import de.wannerit.loadshift.core.Policy
@@ -14,6 +15,7 @@ import de.wannerit.loadshift.core.ScheduledMinimum
 import de.wannerit.loadshift.core.Scenario
 import de.wannerit.loadshift.core.Simulation
 import de.wannerit.loadshift.core.Totals
+import de.wannerit.loadshift.core.VmKind
 
 /** Speed of the game clock: ticks (15 game minutes) per real second. */
 enum class Speed(val ticksPerSecond: Int) { PAUSED(0), X1(1), X4(4), X16(16) }
@@ -74,8 +76,61 @@ class GameController(val scenario: Scenario) {
         if (simulation.isFinished) finish() else {
             checkUrgentJobs()
             checkForecast()
+            checkSprint()
         }
         changed()
+    }
+
+    // Sprints (engineering track): one sprint plan at the start of every day
+
+    /** Items done so far, with the sprint (day index) they were done in. */
+    var sprintDone by mutableStateOf(mapOf<Int, Int>())
+        private set
+    /** The items the player has picked for the coming sprint. */
+    var sprintDraft by mutableStateOf(setOf<Int>())
+        private set
+    /** Day of the last sprint started (-1: none yet). */
+    private var sprintStartedDay = -1
+    /** Plans of this run by day, kept for the next run. */
+    private val sprintPlans = mutableMapOf<Int, Set<Int>>()
+
+    val hasSprints: Boolean get() = Control.SPRINTS in scenario.controls
+    val currentDay: Int get() = (current.tick - scenario.startTick) / GameTime.TICKS_PER_DAY
+    val canPlanSprint: Boolean
+        get() = hasSprints && !isFinished && (current.tick - scenario.startTick) % GameTime.TICKS_PER_DAY == 0 && sprintStartedDay < currentDay
+    val profiled: Boolean get() = sprintDone.keys.any { scenario.backlog[it].profiling }
+    val sprintPointsPicked: Int get() = sprintDraft.sumOf { scenario.backlog[it].effort }
+
+    /** Launch options: a whole plan at once. */
+    fun planSprint(items: Set<Int>) {
+        if (canPlanSprint) sprintDraft = items - sprintDone.keys
+    }
+
+    fun toggleSprintItem(item: Int) {
+        if (!canPlanSprint || item in sprintDone) return
+        sprintDraft = if (item in sprintDraft) sprintDraft - item else sprintDraft + item
+    }
+
+    fun startSprint() {
+        if (!canPlanSprint || sprintPointsPicked > scenario.sprintPoints) return
+        val day = currentDay
+        sprintDone = sprintDone + sprintDraft.associateWith { day }
+        sprintPlans[day] = sprintDraft
+        sprintStartedDay = day
+        sprintDraft = emptySet()
+        setPolicy(current.policy.copy(workPermille = Engineering.work(scenario.backlog, sprintDone.keys)))
+    }
+
+    /** Pauses at the start of every sprint, with the last run's plan for that day ready. */
+    private fun checkSprint() {
+        if (!hasSprints || (current.tick - scenario.startTick) % GameTime.TICKS_PER_DAY != 0) return
+        speed = Speed.PAUSED
+        prefillSprint()
+    }
+
+    private fun prefillSprint() {
+        val last = lastSprintPlans[scenario.number]?.get(currentDay) ?: return
+        sprintDraft = last.filter { it !in sprintDone }.toSet()
     }
 
     /** Pauses when the forecast is revised (CONCEPT.md 3.3). */
@@ -231,6 +286,7 @@ class GameController(val scenario: Scenario) {
     init {
         resetDraft()
         restoreDraft()
+        if (hasSprints) prefillSprint()
     }
 
     /** The draft of the last run of this scenario (kept while the app runs). */
@@ -242,10 +298,12 @@ class GameController(val scenario: Scenario) {
 
     private companion object {
         val drafts = mutableMapOf<Int, Draft>()
+        val lastSprintPlans = mutableMapOf<Int, Map<Int, Set<Int>>>()
     }
 
     /** Keeps the panel's settings for the next run (a new run starts with the scenario's rules, the panel keeps yours). */
     fun saveDraft() {
+        if (hasSprints && sprintPlans.isNotEmpty()) lastSprintPlans[scenario.number] = sprintPlans.toMap()
         drafts[scenario.number] = Draft(draftKind, draftHour, draftThreshold, draftSafety, capKind, capFixed, capTarget,
             capMinimumOn, capMinimum, capFrom, capTo, startPolicy ?: current.policy.takeIf { current.history.isEmpty() })
     }
@@ -256,7 +314,7 @@ class GameController(val scenario: Scenario) {
         capKind = d.capKind; capFixed = d.capFixed; capTarget = d.capTarget; capMinimumOn = d.capMinimumOn
         capMinimum = d.capMinimum; capFrom = d.capFrom; capTo = d.capTo
         // A new run starts with the rules the last run started with (the panel shows the last run's final ones).
-        if (d.startPolicy != null && current.history.isEmpty()) {
+        if (d.startPolicy != null && current.history.isEmpty() && !hasSprints) {
             current.policy = d.startPolicy
             current.applyPolicy()
         }
@@ -275,6 +333,17 @@ class GameController(val scenario: Scenario) {
 
     /** VMs can be moved until the day starts. */
     val canPlace: Boolean get() = simulation.history.isEmpty() && placement != null
+
+    /** Picks a VM up for dragging (always selects it). */
+    fun pickVm(vm: Int) {
+        if (!canPlace) return
+        selectedVm = vm
+        placementMessage = null
+    }
+
+    fun dropVm() {
+        selectedVm = null
+    }
 
     fun selectVm(vm: Int) {
         if (!canPlace) return
@@ -362,17 +431,26 @@ class GameController(val scenario: Scenario) {
                 t("Planned by the forecast (from scenario 3)") to replay(BatchMode.Greenest),
             )
         }
+        if (hasSprints) {
+            fun run(plans: List<Set<Int>>) = Simulation.replay(scenario, scenario.initialPolicy, changes = Engineering.changes(scenario, plans)).totals
+            return listOf(
+                t("The team changes nothing (reference)") to reference.totals,
+                t("By the team's estimates") to run(Engineering.greedy(scenario.backlog, scenario.sprintPoints, scenario.days, profileFirst = false)),
+                t("Profiling first, then by the measurements") to run(Engineering.greedy(scenario.backlog, scenario.sprintPoints, scenario.days, profileFirst = true)),
+            )
+        }
         if (Control.PLACEMENT in scenario.controls) {
             val vms = scenario.vms
             val host = scenario.fleet.first().kind
+            val fleet = scenario.serverCount
+            val both = { k: VmKind -> k.ramGb * 1_000 / host.ramGb + k.peak * 1_000 / host.capacity }
             fun replay(p: List<Int>) = Simulation.replay(scenario, Policy(CapacityMode.Placed(p))).totals
             return listOf(
                 t("Spread over all hosts (reference)") to reference.totals,
-                t("First Fit Decreasing, RAM only") to replay(Packing.firstFitDecreasing(vms, host, Packing.Check.RAM_ONLY) { it.ramGb }),
-                t("First Fit Decreasing, sum of the peaks") to replay(Packing.firstFitDecreasing(vms, host, Packing.Check.PEAK_SUM) { it.ramGb }),
-                t("First Fit Decreasing, daily profiles") to replay(Packing.firstFitDecreasing(vms, host, Packing.Check.PROFILES) { it.ramGb }),
-                t("First Fit Decreasing, profiles, sorted by RAM and CPU") to
-                    replay(Packing.firstFitDecreasing(vms, host, Packing.Check.PROFILES) { it.ramGb * 1_000 / host.ramGb + it.peak * 1_000 / host.capacity }),
+                t("First Fit Decreasing, RAM only") to replay(Packing.firstFitDecreasing(vms, host, fleet, Packing.Check.RAM_ONLY) { it.ramGb }),
+                t("First Fit Decreasing, sum of the peaks") to replay(Packing.firstFitDecreasing(vms, host, fleet, Packing.Check.PEAK_SUM) { it.ramGb }),
+                t("First Fit Decreasing, daily profiles up to 85 %") to replay(Packing.firstFitDecreasing(vms, host, fleet, Packing.Check.PROFILES, key = both)),
+                t("First Fit Decreasing, daily profiles up to 100 %") to replay(Packing.firstFitDecreasing(vms, host, fleet, Packing.Check.PROFILES, 1_000, both)),
             )
         }
         if (Control.CAPACITY_RULES in scenario.controls) {
@@ -406,6 +484,11 @@ class GameController(val scenario: Scenario) {
         current = Simulation(scenario)
         restoreDraft()
         startPolicy = null
+        sprintDone = emptyMap()
+        sprintDraft = emptySet()
+        sprintStartedDay = -1
+        sprintPlans.clear()
+        if (hasSprints) prefillSprint()
         stars = 0
         showEnd = false
         urgentJob = null

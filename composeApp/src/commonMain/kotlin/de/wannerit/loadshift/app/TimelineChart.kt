@@ -132,9 +132,11 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
         }
 
         // Hours and now
+        // Hour labels: every 3 hours, every 6 from three days on (so they do not overlap).
+        val labelHours = if (scenario.days >= 3) 6 else 3
         for (tick in start..end) {
             val time = GameTime(tick)
-            if (time.minute == 0 && time.hour % 3 == 0) {
+            if (time.minute == 0 && time.hour % labelHours == 0) {
                 val anchor = if (tick == start) 0f else if (tick == end) 1f else 0.5f
                 text(time.clockText, Offset(x(tick), size.height - labelBand / 2), anchorX = anchor)
                 drawLine(Color.Gray.copy(alpha = 0.15f), Offset(x(tick), topTop), Offset(x(tick), lowBottom), 1f)
@@ -171,7 +173,7 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
             lines += t("Load %lld, capacity %lld (%lld servers on)", record.demand, record.capacity, record.serversOn)
             if (record.inTime < record.demand) lines += t("In time: %@", Format.wholePercent(record.inTime * 1_000 / maxOf(1, record.demand)))
         } else {
-            lines += t("Expected load %lld", scenario.expectedDemand(tick))
+            lines += t("Expected load %lld", simulation.expectedDemand(tick))
         }
         val xLine = x(tick) + (x(tick + 1) - x(tick)) / 2
         drawLine(Palette.accent, Offset(xLine, top), Offset(xLine, bottom), 1.2f * density)
@@ -200,7 +202,7 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
 
     private fun DrawScope.drawLoad(top: Float, bottom: Float, future: List<Int>) {
         val history = simulation.history
-        val expected = future.map { it to scenario.expectedDemand(it) }
+        val expected = future.map { it to simulation.expectedDemand(it) }
         val fleetCapacity = simulation.servers.sumOf { it.kind.capacity }
         val maxUnits = maxOf(10, maxOf(fleetCapacity, (history.map { it.demand } + expected.map { it.second }).maxOrNull() ?: 10))
         val unitsTop = niceCeiling(maxUnits).toFloat()

@@ -51,6 +51,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import de.wannerit.loadshift.core.Scenario
+import de.wannerit.loadshift.core.Track
 
 /** The app's mark: a server rack drawn in the accent color. */
 @Composable
@@ -87,6 +88,21 @@ fun AboutContent(modifier: Modifier = Modifier) {
     }
 }
 
+/** A square check box. */
+@Composable
+fun CheckBox(on: Boolean) {
+    Canvas(Modifier.size(22.dp)) {
+        val w = size.width
+        if (on) {
+            drawRoundRect(Palette.accent, cornerRadius = CornerRadius(w * 0.2f))
+            val p = androidx.compose.ui.graphics.Path().apply { moveTo(w * 0.25f, w * 0.52f); lineTo(w * 0.43f, w * 0.7f); lineTo(w * 0.76f, w * 0.32f) }
+            drawPath(p, Color.White, style = Stroke(w * 0.12f))
+        } else {
+            drawRoundRect(Palette.secondary, cornerRadius = CornerRadius(w * 0.2f), style = Stroke(w * 0.08f))
+        }
+    }
+}
+
 /** The campaign: all scenarios with their stars; a scenario opens when the one before has a star. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -105,12 +121,25 @@ fun ScenarioListScreen(onSelect: (Scenario) -> Unit) {
                     Txt(t("Green IT – from code to data center"), Type.style(22, color = Palette.secondary))
                 }
             }
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                for (scenario in Scenario.ALL) {
-                    ScenarioCard(scenario, Progress.isUnlocked(scenario.number)) { onSelect(scenario) }
+            for ((track, title) in listOf(Track.OPERATIONS to t("Operations"), Track.ENGINEERING to t("Engineering"))) {
+                Txt(title, Type.title)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                    for (scenario in Scenario.ALL.filter { it.track == track }) {
+                        ScenarioCard(scenario, Progress.isUnlocked(scenario)) { onSelect(scenario) }
+                    }
                 }
             }
-            Txt(t("More scenarios follow: headroom and autoscaling, consolidation, cooling, hardware, AI training, eco mode, two sites – and an engineering track: profiling and growing data."), Type.style(20, color = Palette.secondary))
+            Txt(t("More scenarios follow – operations: cooling, hardware, AI training, eco mode, two sites; engineering: growing data."), Type.style(20, color = Palette.secondary))
+            Row(
+                Modifier.clip(RoundedCornerShape(10.dp)).clickable { Progress.changeUnlockAll(!Progress.unlockAll) }.padding(4.dp),
+                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                CheckBox(Progress.unlockAll)
+                Column {
+                    Txt(t("Open all scenarios"), Type.style(16, FontWeight.SemiBold))
+                    Txt(t("For courses that take the topics in another order. Stars still count."), Type.callout)
+                }
+            }
             Txt(t("About Load Shift"), Type.style(16, FontWeight.SemiBold, Palette.accent), Modifier.clip(RoundedCornerShape(6.dp)).clickable { about = true }.padding(vertical = 4.dp, horizontal = 2.dp))
         }
         if (about) {
@@ -137,13 +166,16 @@ private fun ScenarioCard(scenario: Scenario, unlocked: Boolean, onClick: () -> U
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Txt("${scenario.number}", Type.style(34, FontWeight.Bold, if (unlocked) Palette.accent else Palette.secondary), Modifier.weight(1f))
+            Txt(scenario.label, Type.style(34, FontWeight.Bold, if (unlocked) Palette.accent else Palette.secondary), Modifier.weight(1f))
             if (unlocked) StarRow(Progress.stars(scenario.number), 22.dp) else LockIcon(22.dp)
         }
         Txt(t(scenario.title), Type.heading)
         Txt(ScenarioTexts.of(scenario).term, Type.style(16, FontWeight.SemiBold, Palette.accent))
         Txt("${t(scenario.setting.region.title)} · ${t(scenario.setting.season.title)} · ${days(scenario.days)}", Type.style(17, color = Palette.secondary))
-        if (!unlocked) Txt(t("Earn a star in the scenario before."), Type.callout)
+        if (!unlocked) {
+            val before = Scenario.ALL.firstOrNull { it.number == scenario.unlockAfter }?.label ?: ""
+            Txt(t("Earn a star in scenario %@ first.", before), Type.callout)
+        }
     }
 }
 
@@ -164,7 +196,7 @@ fun BriefingScreen(scenario: Scenario, onStart: () -> Unit, onBack: () -> Unit) 
                 RackIcon(56.dp)
                 Column(Modifier.weight(1f)) {
                     Txt("Load Shift", Type.style(22, FontWeight.SemiBold, Palette.secondary))
-                    Txt(t("Scenario %lld: %@", scenario.number, t(scenario.title)), Type.display)
+                    Txt(t("Scenario %@: %@", scenario.label, t(scenario.title)), Type.display)
                 }
                 val best = Progress.stars(scenario.number)
                 if (best > 0) Column(horizontalAlignment = Alignment.End) {

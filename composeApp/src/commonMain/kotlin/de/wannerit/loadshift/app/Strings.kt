@@ -32,6 +32,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "%1\$lld von %2\$lld Servern an · %3\$@ kW IT-Leistung",
     "%lld of %lld servers on" to
         "%1\$lld von %2\$lld Servern an",
+    "%lld of %lld story points" to
+        "%1\$lld von %2\$lld Story Points",
     "%lld of %lld" to
         "%1\$lld von %2\$lld",
     "%lld of 3 stars" to
@@ -48,6 +50,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "%lld Server",
     "%lld servers, %lld load units each" to
         "%1\$lld Server mit je %2\$lld Lasteinheiten",
+    "%lld SP" to
+        "%lld SP",
     "1 day" to
         "1 Tag",
     "1 day, from 00:00" to
@@ -80,6 +84,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Alle Server an (Referenz)",
     "All servers on" to
         "Alle Server an",
+    "All sprints are done." to
+        "Alle Sprints sind vorbei.",
     "An idle server still draws about a quarter of its maximum power. Switch off the servers that are not needed – and switch them on again in time: a server takes 30 minutes before it can work." to
         "Ein Server im Leerlauf zieht noch etwa ein Viertel seiner Maximalleistung. Schalte die Server ab, die nicht gebraucht werden – und rechtzeitig wieder ein: Ein Server braucht 30 Minuten, bis er arbeiten kann.",
     "An idle server still draws about a quarter of its maximum power. Switch off what is not needed – but a server you switch on takes 30 minutes before it can work." to
@@ -122,6 +128,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Herbst",
     "Back to the briefing" to
         "Zurück zum Briefing",
+    "Back to the web shop – this time to its code. Autoscaling keeps the servers in line with the load, so less CPU work per request means fewer servers. Your team has 8 story points per sprint and a backlog of ideas, each with the team's estimate of what it saves. Four sprints; each game day shows the week after a sprint." to
+        "Zurück zum Webshop – diesmal zu seinem Code. Das Autoscaling hält die Server passend zur Last; weniger CPU-Arbeit pro Request heißt also weniger Server. Dein Team hat 8 Story Points pro Sprint und einen Backlog voller Ideen, jede mit der Schätzung des Teams, was sie spart. Vier Sprints; jeder Spieltag zeigt die Woche nach einem Sprint.",
     "Back" to
         "Zurück",
     "Batch job" to
@@ -154,8 +162,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Unter einem Schwellwert",
     "Best result" to
         "Bestes Ergebnis",
-    "Bin packing is a hard problem: the best placement cannot be computed quickly for large fleets (NP-hard). Simple heuristics like First Fit Decreasing get close – if they look at the right things: RAM and CPU together, and the daily profiles instead of the peaks. Schedulers like Kubernetes do this all the time; spreading for safety is their default, packing for energy has to be switched on." to
-        "Bin Packing ist ein schweres Problem: Die beste Verteilung lässt sich für große Flotten nicht schnell berechnen (NP-schwer). Einfache Heuristiken wie First Fit Decreasing kommen nahe heran – wenn sie auf das Richtige schauen: RAM und CPU zusammen und die Tagesprofile statt der Spitzen. Scheduler wie Kubernetes tun das ständig; Verteilen aus Sicherheit ist ihre Voreinstellung, Packen für Energie muss man einschalten.",
+    "Bin packing is a hard problem (NP-hard): for large fleets the best placement cannot be computed quickly. Simple heuristics like First Fit Decreasing are fast, but with strict rules they leave hosts half empty, and with loose ones the peaks collide – here a careful placement by hand beats them. Real schedulers combine such heuristics with daily profiles and some headroom; spreading for safety is their default." to
+        "Bin Packing ist ein schweres Problem (NP-schwer): Für große Flotten lässt sich die beste Verteilung nicht schnell berechnen. Einfache Heuristiken wie First Fit Decreasing sind schnell, lassen mit strengen Regeln aber Hosts halb leer, und mit lockeren kollidieren die Spitzen – hier schlägt eine sorgfältige Verteilung von Hand sie. Echte Scheduler verbinden solche Heuristiken mit Tagesprofilen und etwas Reserve; Verteilen aus Sicherheit ist ihre Voreinstellung.",
     "Booting" to
         "Startet",
     "booting" to
@@ -164,6 +172,12 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Gebaut mit Kotlin und Compose Multiplatform",
     "by hand" to
         "von Hand",
+    "By the team's estimates" to
+        "Nach den Schätzungen des Teams",
+    "Cache the catalog responses" to
+        "Katalog-Antworten cachen",
+    "Cache the resized images" to
+        "Skalierte Bilder cachen",
     "Campaign" to
         "Kampagne",
     "Capacity follows the load automatically: servers are added when the utilization rises above a target and removed when it falls. The target decides the headroom. Scheduled scaling adds capacity for known events in advance." to
@@ -188,6 +202,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "im Vergleich zum Referenzbetreiber, der alle Server laufen lässt.",
     "compared with the reference operator, who starts every job as soon as it arrives." to
         "im Vergleich zum Referenzbetreiber, der jeden Job sofort bei Ankunft startet.",
+    "compared with the reference operator, whose team changes nothing in the code." to
+        "im Vergleich zum Referenzbetreiber, dessen Team nichts am Code ändert.",
     "Consolidation" to
         "Konsolidierung",
     "CO₂ %@ or better" to
@@ -202,12 +218,16 @@ internal val GERMAN: Map<String, String> = mapOf(
         "CO₂ ggü. Referenz: %@",
     "CO₂ vs. you" to
         "CO₂ ggü. dir",
+    "CPU time per request" to
+        "CPU-Zeit pro Request",
     "Daily report" to
         "Tagesreport",
     "Data import" to
         "Datenimport",
     "Database replica" to
         "Datenbank-Replikat",
+    "Database: N+1 queries in the product list" to
+        "Datenbank: N+1-Abfragen in der Produktliste",
     "Day %lld" to
         "Tag %lld",
     "Day %lld, %@" to
@@ -220,12 +240,16 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Fristen verpasst: %lld",
     "done %@" to
         "fertig %@",
+    "done in sprint %lld" to
+        "erledigt in Sprint %lld",
+    "Each game day stands for the week after a sprint. Your team has %lld story points per sprint. Pick items from the backlog and start the sprint – their effect counts from this day on." to
+        "Jeder Spieltag steht für die Woche nach einem Sprint. Dein Team hat %lld Story Points pro Sprint. Wähle Punkte aus dem Backlog und starte den Sprint – ihre Wirkung zählt ab diesem Tag.",
     "Each host: %lld GB RAM, %lld load units." to
         "Jeder Host: %1\$lld GB RAM, %2\$lld Lasteinheiten.",
     "Each job needs servers for some hours and must be finished by its deadline. When it starts, its servers switch on and boot for 30 minutes first; servers without a job are off." to
         "Jeder Job braucht einige Stunden lang Server und muss bis zu seiner Frist fertig sein. Beim Start schalten sich seine Server ein und starten zuerst 30 Minuten lang; Server ohne Job sind aus.",
-    "Earn a star in the scenario before." to
-        "Hol dir einen Stern im Szenario davor.",
+    "Earn a star in scenario %@ first." to
+        "Hol dir zuerst einen Stern in Szenario %@.",
     "Energy (kWh)" to
         "Energie (kWh)",
     "Evening peak about %lld load units" to
@@ -252,16 +276,18 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Erwartete Last %lld",
     "Expected load in 1 h" to
         "Erwartete Last in 1 h",
-    "Fewer hosts, less idle power: pack the VMs tighter. Two things decide whether a VM fits: its RAM, which is often full before the CPU, and its CPU over the day. VMs whose peaks come at different times – batch at night, reporting in the morning, the shop in the evening – fit together; VMs that peak at the same time do not." to
-        "Weniger Hosts, weniger Leerlaufstrom: Packe die VMs dichter. Zwei Dinge entscheiden, ob eine VM passt: ihr RAM, der oft vor der CPU voll ist, und ihre CPU über den Tag. VMs, deren Spitzen zu verschiedenen Zeiten kommen – Batch nachts, Reporting morgens, der Shop abends –, passen zusammen; VMs mit gleichzeitiger Spitze nicht.",
-    "First Fit Decreasing, daily profiles" to
-        "First Fit Decreasing, Tagesprofile",
-    "First Fit Decreasing, profiles, sorted by RAM and CPU" to
-        "First Fit Decreasing, Profile, sortiert nach RAM und CPU",
+    "Fewer hosts, less idle power: pack the VMs tighter. Two things decide whether a VM fits: its RAM and its CPU over the day. By RAM alone five hosts would do – but then the peaks collide. VMs whose peaks come at different times – batch at night, reporting in the morning, the shop in the evening – fit together; VMs that peak at the same time do not." to
+        "Weniger Hosts, weniger Leerlaufstrom: Packe die VMs dichter. Zwei Dinge entscheiden, ob eine VM passt: ihr RAM und ihre CPU über den Tag. Nach RAM allein würden fünf Hosts reichen – aber dann kollidieren die Spitzen. VMs, deren Spitzen zu verschiedenen Zeiten kommen – Batch nachts, Reporting morgens, der Shop abends –, passen zusammen; VMs mit gleichzeitiger Spitze nicht.",
+    "First Fit Decreasing, daily profiles up to 100 %" to
+        "First Fit Decreasing, Tagesprofile bis 100 %",
+    "First Fit Decreasing, daily profiles up to 85 %" to
+        "First Fit Decreasing, Tagesprofile bis 85 %",
     "First Fit Decreasing, RAM only" to
         "First Fit Decreasing, nur RAM",
     "First Fit Decreasing, sum of the peaks" to
         "First Fit Decreasing, Summe der Spitzen",
+    "Fix the N+1 queries in the product list" to
+        "N+1-Abfragen in der Produktliste beheben",
     "fixed %lld servers" to
         "fest %lld Server",
     "Fixed number" to
@@ -272,12 +298,16 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Fest: %lld Server den ganzen Tag",
     "Font: Inter, SIL Open Font License 1.1" to
         "Schrift: Inter, SIL Open Font License 1.1",
+    "For courses that take the topics in another order. Stars still count." to
+        "Für Lehrveranstaltungen, die die Themen in anderer Reihenfolge behandeln. Sterne zählen weiter.",
     "Forecast update: the wind drops about 12 hours earlier than forecast." to
         "Neue Prognose: Der Wind lässt etwa 12 Stunden früher nach als vorhergesagt.",
     "Forecast while it runs: %lld g/kWh · start by %@" to
         "Prognose während der Laufzeit: %1\$lld g/kWh · spätestens %2\$@",
     "Forecast: %lld g/kWh, ±%lld %%" to
         "Prognose: %1\$lld g/kWh, ±%2\$lld %%",
+    "Framework and the rest" to
+        "Framework und der Rest",
     "France" to
         "Frankreich",
     "from %@" to
@@ -314,6 +344,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Hosts in Benutzung, RAM, Warnungen für Hosts, die zu voll werden, die VM-Arten mit ihren Tagesprofilen.",
     "Image conversion" to
         "Bildkonvertierung",
+    "Image resizing on every request" to
+        "Bildskalierung bei jedem Request",
     "In time: %@" to
         "Rechtzeitig: %@",
     "IT power" to
@@ -322,6 +354,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Jobs fertig",
     "Jobs on time" to
         "Jobs rechtzeitig",
+    "JSON for the product catalog, built on every request" to
+        "JSON für den Produktkatalog, bei jedem Request neu gebaut",
     "Keeps enough servers on for the expected load of the next hour – or the measured load, if it is higher – at %@ utilization. The rest is headroom." to
         "Hält genug Server für die erwartete Last der nächsten Stunde – oder die gemessene, falls sie höher ist – bei %@ Auslastung. Der Rest ist Reserve.",
     "late, %@" to
@@ -332,18 +366,32 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Last (Linie) und Kapazität der laufenden Server (Fläche) – rot: langsame Requests",
     "Load / capacity" to
         "Last / Kapazität",
+    "Log at INFO instead of DEBUG in production" to
+        "In Produktion auf INFO statt DEBUG loggen",
+    "Logging at DEBUG level" to
+        "Logging auf DEBUG-Level",
     "mean utilization at least %@" to
         "mittlere Auslastung mindestens %@",
     "Mean utilization" to
         "Mittlere Auslastung",
+    "Measure before you optimize: the big items on the team's list hardly mattered, while a one-line change of the log level saved a tenth of the CPU. Less work per request lowers the energy and – with autoscaling – the number of servers; a data center that needs fewer servers also needs less hardware. The SCI per 1,000 requests shows the effect independent of the load." to
+        "Erst messen, dann optimieren: Die großen Punkte auf der Liste des Teams brachten kaum etwas, eine einzige Zeile beim Log-Level dagegen ein Zehntel der CPU. Weniger Arbeit pro Request senkt die Energie und – mit Autoscaling – die Zahl der Server; ein Rechenzentrum, das weniger Server braucht, braucht auch weniger Hardware. Die SCI pro 1.000 Requests zeigt den Effekt unabhängig von der Last.",
+    "Measure first" to
+        "Erst messen",
+    "measured: −%@" to
+        "gemessen: −%@",
+    "measures where the time goes" to
+        "misst, wohin die Zeit geht",
+    "Measuring where a program spends its time and memory, function by function. A profiler shows the hot spots – often not where the team expects them. Without measuring, optimization is guesswork (premature optimization)." to
+        "Messen, wo ein Programm seine Zeit und seinen Speicher verbraucht, Funktion für Funktion. Ein Profiler zeigt die Hotspots – oft nicht dort, wo das Team sie vermutet. Ohne Messung ist Optimieren Raten (Premature Optimization).",
     "Minimum in a time window" to
         "Minimum in einem Zeitfenster",
     "Missed" to
         "Verpasst",
     "MIT License" to
         "MIT-Lizenz",
-    "More scenarios follow: headroom and autoscaling, consolidation, cooling, hardware, AI training, eco mode, two sites – and an engineering track: profiling and growing data." to
-        "Weitere Szenarien folgen: Reserve und Autoscaling, Konsolidierung, Kühlung, Hardware, KI-Training, Eco-Modus, zwei Standorte – und ein Engineering-Strang: Profiling und wachsende Daten.",
+    "More scenarios follow – operations: cooling, hardware, AI training, eco mode, two sites; engineering: growing data." to
+        "Weitere Szenarien folgen – Betrieb: Kühlung, Hardware, KI-Training, Eco-Modus, zwei Standorte; Engineering: wachsende Daten.",
     "Moving flexible work into the hours when the grid is cleanest. Together with Location Shifting it is called Demand Shifting – part of the Green Software Foundation principle Carbon Awareness." to
         "Flexible Arbeit in die Stunden verschieben, in denen der Strom am saubersten ist. Zusammen mit Location Shifting heißt das Demand Shifting – ein Teil des Prinzips Carbon Awareness der Green Software Foundation.",
     "New rule" to
@@ -358,6 +406,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Norwegen",
     "not planned" to
         "nicht geplant",
+    "Now %@ of the original." to
+        "Jetzt %@ des ursprünglichen Werts.",
     "of %lld servers on" to
         "von %lld Servern an",
     "of it embodied (kg)" to
@@ -372,6 +422,12 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Ein Server schafft %1\$lld Lasteinheiten (%2\$lld.000 Requests pro 15 Minuten). Über 85 %% Auslastung werden Requests langsam.",
     "One star opens the next scenario." to
         "Ein Stern schaltet das nächste Szenario frei.",
+    "Open all scenarios" to
+        "Alle Szenarien freigeben",
+    "Operations" to
+        "Betrieb",
+    "Optimizing by gut feeling is a gamble: the team expects the most from the image resizing and from rewriting the checkout. Whether that is true, only a measurement shows. Profiling costs a few story points and shows where the CPU time really goes – then you fix the hot spots first." to
+        "Optimieren nach Bauchgefühl ist ein Glücksspiel: Das Team erwartet am meisten vom Bildskalieren und vom Neuschreiben des Checkouts. Ob das stimmt, zeigt nur eine Messung. Profiling kostet ein paar Story Points und zeigt, wohin die CPU-Zeit wirklich geht – dann behebst du zuerst die Hotspots.",
     "peak %@" to
         "Spitze %@",
     "Picked up: %@ (%lld GB). Now click a host." to
@@ -404,6 +460,10 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Polen",
     "Power" to
         "Leistung",
+    "Profile the shop" to
+        "Den Shop profilen",
+    "Profiling first, then by the measurements" to
+        "Erst Profiling, dann nach den Messwerten",
     "RAM in use" to
         "RAM belegt",
     "Recommendations" to
@@ -412,6 +472,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Referenz",
     "Remove the plan" to
         "Plan entfernen",
+    "Rewrite the checkout in a compiled language" to
+        "Checkout in einer kompilierten Sprache neu schreiben",
     "Right now" to
         "Gerade jetzt",
     "Rule" to
@@ -424,8 +486,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Läuft: %@",
     "runs until %@" to
         "läuft bis %@",
-    "Scenario %lld: %@" to
-        "Szenario %1\$lld: %2\$@",
+    "Scenario %@: %@" to
+        "Szenario %1\$@: %2\$@",
     "Scenario complete" to
         "Szenario geschafft",
     "Search index" to
@@ -436,6 +498,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Server an (Mittel)",
     "Servers working" to
         "Server in Betrieb",
+    "Sessions and encryption" to
+        "Sessions und Verschlüsselung",
     "Shop front end" to
         "Shop-Frontend",
     "Situation" to
@@ -454,10 +518,20 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Auf alle Hosts verteilt (Referenz)",
     "Spring" to
         "Frühling",
+    "Sprint %lld is running." to
+        "Sprint %lld läuft.",
+    "Sprint %lld of %lld" to
+        "Sprint %1\$lld von %2\$lld",
+    "Sprint %lld: plan it now – the game is paused." to
+        "Sprint %lld: Jetzt planen – das Spiel ist pausiert.",
+    "Sprint planning: where the CPU time per request goes (once measured), the backlog with the team's estimates, your story points. Below it the situation right now." to
+        "Sprint-Planung: wohin die CPU-Zeit pro Request geht (sobald gemessen), der Backlog mit den Schätzungen des Teams, deine Story Points. Darunter die Lage gerade jetzt.",
     "start by %@" to
         "spätestens %@",
     "Start now" to
         "Jetzt starten",
+    "Start sprint" to
+        "Sprint starten",
     "Summer" to
         "Sommer",
     "Switching servers off saves energy, not hardware: the embodied emissions stay the same." to
@@ -468,6 +542,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Zielauslastung",
     "Target utilization: %@" to
         "Zielauslastung: %@",
+    "team: −%@" to
+        "Team: −%@",
     "Technical term" to
         "Fachbegriff",
     "The batch rule: choose one, set it and apply it. Below it the jobs with their deadlines and what the rule has planned for them." to
@@ -478,26 +554,30 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Die CO₂-Intensität mit Prognose und darunter eine Zeile pro Job – hell: die Zeit zwischen Ankunft und Frist, umrandet: geplant, gefüllt: läuft oder fertig.",
     "The day is running: the placement is fixed." to
         "Der Tag läuft: Die Verteilung steht fest.",
+    "The game starts paused and pauses at the start of every sprint. Clock and speed – pause, 1×, 4×, 16× – and below it your goals." to
+        "Das Spiel beginnt pausiert und hält zu Beginn jedes Sprints an. Uhr und Tempo – Pause, 1×, 4×, 16× – und darunter deine Ziele.",
     "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals. The game also pauses when a job must start within the hour." to
         "Das Spiel beginnt pausiert. Uhr und Tempo – Pause, 1×, 4×, 16× – und darunter deine Ziele. Das Spiel hält auch an, wenn ein Job innerhalb der nächsten Stunde starten muss.",
     "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals." to
         "Das Spiel beginnt pausiert. Uhr und Tempo – Pause, 1×, 4×, 16× – und darunter deine Ziele.",
-    "The hosts as columns: the height is the RAM, the VMs are stacked in it. Below each host its CPU over the day – dotted the expected work, the area what has happened, red dashed the line above which requests get slow. Click a VM, then a host." to
-        "Die Hosts als Säulen: Die Höhe ist der RAM, die VMs sind darin gestapelt. Unter jedem Host seine CPU über den Tag – gepunktet die erwartete Arbeit, die Fläche das, was passiert ist, rot gestrichelt die Linie, ab der Requests langsam werden. Klick eine VM an, dann einen Host.",
+    "The hosts as columns: the height is the RAM, the VMs are stacked in it. Below each host its CPU over the day – dotted the expected work, the area what has happened, red dashed the line above which requests get slow. Drag a VM onto a host." to
+        "Die Hosts als Säulen: Die Höhe ist der RAM, die VMs sind darin gestapelt. Unter jedem Host seine CPU über den Tag – gepunktet die erwartete Arbeit, die Fläche das, was passiert ist, rot gestrichelt die Linie, ab der Requests langsam werden. Zieh eine VM auf einen Host.",
     "The idea" to
         "Die Idee",
     "The jobs with their size and deadline. Plan a start time for each job with plus and minus, or start it now; a planned job starts by itself." to
         "Die Jobs mit Größe und Frist. Plane für jeden Job mit Plus und Minus eine Startzeit oder starte ihn sofort; ein geplanter Job startet von selbst.",
     "The night is not clean everywhere: in a solar grid the midday hours are the cleanest. Part of the CO₂ is the hardware's manufacturing – it stays the same whenever the jobs run." to
         "Die Nacht ist nicht überall sauber: Im Solarnetz sind die Mittagsstunden am saubersten. Ein Teil des CO₂ stammt aus der Herstellung der Hardware – er bleibt gleich, egal wann die Jobs laufen.",
-    "The previous team spread the 24 VMs over all ten hosts. Pack them onto fewer hosts – a host without a VM is switched off. Click a VM, then the host it should move to. Once the day runs, the placement is fixed." to
-        "Das vorige Team hat die 24 VMs auf alle zehn Hosts verteilt. Packe sie auf weniger Hosts – ein Host ohne VM wird abgeschaltet. Klick eine VM an, dann den Host, auf den sie soll. Sobald der Tag läuft, steht die Verteilung fest.",
+    "The previous team spread the 24 VMs over all ten hosts. Pack them onto fewer hosts – a host without a VM is switched off. Drag a VM onto another host, or click it and then the host. Once the day runs, the placement is fixed." to
+        "Das vorige Team hat die 24 VMs auf alle zehn Hosts verteilt. Packe sie auf weniger Hosts – ein Host ohne VM wird abgeschaltet. Zieh eine VM auf einen anderen Host oder klick sie an und dann den Host. Sobald der Tag läuft, steht die Verteilung fest.",
     "The same job emits less CO₂ when the grid is clean. In Spain's solar grid the cleanest hours are around midday, not at night. Plan every job into clean hours before its deadline – and keep in mind that only ten servers are there." to
         "Derselbe Job stößt weniger CO₂ aus, wenn der Strom sauber ist. Im spanischen Solarnetz sind die saubersten Stunden um die Mittagszeit, nicht nachts. Plane jeden Job vor seiner Frist in saubere Stunden – und denk daran, dass nur zehn Server da sind.",
     "The same run with exactly the same load and grid mix – only the rules differ:" to
         "Derselbe Ablauf mit genau derselben Last und demselben Strommix – nur die Regeln sind anders:",
     "The servers needed for the expected load of the next hour run. A low target leaves headroom for peaks but more servers idle; a high target is efficient but gets slow at peaks." to
         "Es laufen die Server, die für die erwartete Last der nächsten Stunde nötig sind. Ein niedriges Ziel lässt Reserve für Spitzen, aber mehr Server stehen im Leerlauf; ein hohes Ziel ist effizient, wird aber bei Spitzen langsam.",
+    "The team changes nothing (reference)" to
+        "Das Team ändert nichts (Referenz)",
     "The VMs" to
         "Die VMs",
     "The web shop again, now in winter and with 30 servers. Autoscaling is on: at 80 % target utilization it keeps just enough servers running. On day 2 marketing sends a newsletter at 19:00 – for three hours twice as many people will shop as usual." to
@@ -512,10 +592,14 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Diese Regel ist aktiv.",
     "to %@" to
         "bis %@",
-    "To scenario %lld" to
-        "Weiter zu Szenario %lld",
+    "To scenario %@" to
+        "Weiter zu Szenario %@",
     "Too late for the deadline – start by %@." to
         "Zu spät für die Frist – spätestens %@ starten.",
+    "too many story points" to
+        "zu viele Story Points",
+    "Upgrade the web framework" to
+        "Web-Framework aktualisieren",
     "utilization ≥ %@" to
         "Auslastung ≥ %@",
     "Utilization" to
@@ -534,6 +618,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Was du gemacht hast, heißt %1\$@. %2\$@",
     "When the wind drops" to
         "Wenn der Wind nachlässt",
+    "Where it goes is not measured yet." to
+        "Wohin sie geht, ist noch nicht gemessen.",
     "Whole year" to
         "Jahresmittel",
     "You run the data center of a web shop in Germany. Its 20 servers are sized for the Christmas season. Today is an ordinary autumn day: in the evening many people shop, at night hardly anyone. It is midnight, and the previous shift has left every server on." to

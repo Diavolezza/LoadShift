@@ -47,6 +47,9 @@ fun ControlPanel(game: GameController, modifier: Modifier = Modifier) {
     ) {
         if (Control.BATCH_BY_HAND in game.scenario.controls || Control.BATCH_RULES in game.scenario.controls) {
             BatchPanel(game)
+        } else if (Control.SPRINTS in game.scenario.controls) {
+            SprintPanel(game)
+            NowBox(game)
         } else if (Control.PLACEMENT in game.scenario.controls) {
             PlacementPanel(game)
         } else if (Control.CAPACITY_RULES in game.scenario.controls) {

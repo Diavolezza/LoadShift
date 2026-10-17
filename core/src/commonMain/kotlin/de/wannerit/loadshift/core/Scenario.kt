@@ -1,5 +1,8 @@
 package de.wannerit.loadshift.core
 
+/** The two strands of the campaign (docs/CONCEPT.md 9, D17). */
+enum class Track { OPERATIONS, ENGINEERING }
+
 /** A scenario: region, season, length, fleet, load, the controls it unlocks and its goals (docs/CONCEPT.md 8.3 and 9). */
 data class FleetEntry(val kind: ServerKind, val count: Int)
 
@@ -19,6 +22,9 @@ enum class Control {
 
     /** Placing VMs on hosts by hand (before the day starts). */
     PLACEMENT,
+
+    /** Engineering track: a sprint plan from the backlog at the start of every day. */
+    SPRINTS,
 }
 
 /** The special goal of a scenario: the third star. */
@@ -69,6 +75,15 @@ data class Scenario(
     val forecastMiss: ForecastMiss? = null,
     /** Virtual machines to place on the hosts (scenario 5). */
     val vms: List<VmKind> = emptyList(),
+    val track: Track = Track.OPERATIONS,
+    /** The name in the list: "5", "E1". */
+    val label: String = number.toString(),
+    /** The scenario whose star opens this one (null: always open). */
+    val unlockAfter: Int? = if (number <= 1) null else number - 1,
+    /** Engineering track: where the CPU time per request goes, the backlog and the team's story points per sprint. */
+    val hotSpots: List<HotSpot> = emptyList(),
+    val backlog: List<BacklogItem> = emptyList(),
+    val sprintPoints: Int = 0,
 ) {
     /** Expected interactive work at a tick: the web load or the VMs' profiles (what an operator can plan with). */
     fun expectedDemand(tick: Int): Int = interactive.expected(tick) + vms.sumOf { it.expectedMilli(tick) } / 1_000
@@ -210,10 +225,45 @@ data class Scenario(
             controls = setOf(Control.PLACEMENT),
             initialPolicy = Policy(CapacityMode.Placed(Packing.spread(SHOP_VMS, 10))),
             referencePolicy = Policy(CapacityMode.Placed(Packing.spread(SHOP_VMS, 10))),
-            goals = StarGoals(150, SpecialGoal.MaxServersOn(6)),
+            goals = StarGoals(100, SpecialGoal.MaxServersOn(6)),
             vms = SHOP_VMS,
         )
 
-        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION)
+        /**
+         * E1, "Measure first": the web shop's code. A team with 8 story points per sprint and a backlog of
+         * improvements; each game day stands for the week after a sprint. The team's estimates of where the CPU
+         * time goes are wrong – profiling shows it. Autoscaling turns less work per request into fewer servers.
+         */
+        val MEASURE_FIRST = Scenario(
+            number = 101, label = "E1", track = Track.ENGINEERING, unlockAfter = 1,
+            title = "Measure first", setting = GridSetting(GridRegion.GERMANY, Season.AUTUMN), days = 4,
+            seed = 11, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 20)),
+            interactive = InteractiveLoad(peak = 240),
+            controls = setOf(Control.SPRINTS),
+            initialPolicy = Policy(CapacityMode.Autoscale(700)),
+            referencePolicy = Policy(CapacityMode.Autoscale(700)),
+            goals = StarGoals(300, SpecialGoal.Reduction(400)),
+            hotSpots = listOf(
+                HotSpot("Database: N+1 queries in the product list", 300),
+                HotSpot("JSON for the product catalog, built on every request", 220),
+                HotSpot("Logging at DEBUG level", 120),
+                HotSpot("Sessions and encryption", 100),
+                HotSpot("Image resizing on every request", 80),
+                HotSpot("Checkout", 50),
+                HotSpot("Framework and the rest", 130),
+            ),
+            backlog = listOf(
+                BacklogItem("Profile the shop", 3, 0, 0, profiling = true),
+                BacklogItem("Cache the resized images", 3, 300, 70, hotSpot = 4),
+                BacklogItem("Rewrite the checkout in a compiled language", 8, 400, 40, hotSpot = 5),
+                BacklogItem("Upgrade the web framework", 5, 100, 30, hotSpot = 6),
+                BacklogItem("Cache the catalog responses", 8, 100, 180, hotSpot = 1),
+                BacklogItem("Fix the N+1 queries in the product list", 5, 50, 240, hotSpot = 0),
+                BacklogItem("Log at INFO instead of DEBUG in production", 1, 10, 100, hotSpot = 2),
+            ),
+            sprintPoints = 8,
+        )
+
+        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, MEASURE_FIRST)
     }
 }

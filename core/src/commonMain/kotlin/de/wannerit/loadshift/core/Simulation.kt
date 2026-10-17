@@ -16,6 +16,8 @@ data class Totals(
     var demand: Long = 0,
     var served: Long = 0,
     var inTime: Long = 0,
+    /** Requests served, in units of 1,000 – the functional unit; with less work per request more than [served]. */
+    var requestsServed: Long = 0,
     /** Energy of the servers and of the facility, mWh. */
     var itEnergy: Long = 0,
     var facilityEnergy: Long = 0,
@@ -43,7 +45,7 @@ data class Totals(
     val emissions: Long get() = operational + embodied
 
     /** SCI per interactive work unit (= 1,000 requests), µg CO₂e (GSF SCI: (O + M) per R [S2]). */
-    val sciPerUnit: Long get() = if (served == 0L) 0 else emissions / served
+    val sciPerUnit: Long get() = if (requestsServed == 0L) 0 else emissions / requestsServed
 
     /** Mean utilization of the running servers' capacity, per mille. */
     val meanUtilization: Int get() = if (capacityTicks == 0L) 0 else (served * 1_000 / capacityTicks).toInt()
@@ -109,6 +111,10 @@ class Simulation private constructor(
     val servers: List<Server> get() = serverList
     val jobs: List<BatchJob> get() = jobList
     val history: List<TickRecord> get() = historyList
+
+    /** Expected work at a tick with the code as it is now (engineering track: less work per request). */
+    fun expectedDemand(tick: Int): Int = scenario.interactive.expected(tick) * policy.workPermille / 1_000 +
+        scenario.vms.sumOf { it.expectedMilli(tick) } / 1_000
 
     /** Scenario 5: the CPU work of one host's VMs tick by tick so far, thousandths of a work unit. */
     fun hostHistory(host: Int): List<Int> = historyList.map { it.hostDemandMilli?.getOrNull(host) ?: 0 }
@@ -205,8 +211,8 @@ class Simulation private constructor(
         applyCapacityPolicy()
         startBatchJobs()
 
-        var demand = if (plannedAt == null) scenario.interactive.actual(tick, scenario.seed)
-        else scenario.interactive.expected(tick)
+        var demand = (if (plannedAt == null) scenario.interactive.actual(tick, scenario.seed)
+        else scenario.interactive.expected(tick)) * policy.workPermille / 1_000
         var capacity = readyCapacity
         var served = minOf(demand, capacity)
         val fast = capacity * InteractiveLoad.SLOW_ABOVE / 1_000
@@ -267,6 +273,7 @@ class Simulation private constructor(
         totals.ticks += 1
         totals.demand += demand
         totals.served += served
+        totals.requestsServed += served.toLong() * 1_000 / maxOf(1, policy.workPermille)
         totals.inTime += inTime
         totals.itEnergy += itPower * Units.MILLIWATT_HOURS_PER_WATT_TICK
         totals.facilityEnergy += facilityEnergy
@@ -333,7 +340,7 @@ class Simulation private constructor(
                 // autoscaler also reacts to what it measures – a campaign is not in the expected demand).
                 val recent = historyList.lastOrNull()?.demand ?: 0
                 val expected = maxOf(recent, (tick..tick + ServerKind.BOOT_TICKS + Policy.LOOKAHEAD)
-                    .maxOf { scenario.interactive.expected(it) })
+                    .maxOf { scenario.interactive.expected(it) * policy.workPermille / 1_000 })
                 val needed = maxOf(1, ceilDiv(expected * 1_000, utilization))
                 val minimum = mode.minimum?.takeIf { it.activeAt(tick) }?.servers ?: 0
                 // The most efficient servers that together reach the needed capacity (at least one).
@@ -348,7 +355,7 @@ class Simulation private constructor(
                 // Surplus servers go off, but only as long as the wanted ones that are ready cover the need:
                 // a server keeps running until its replacement has finished booting.
                 var ready = order.filter { it in wanted && serverList[it].state.isOn }.sumOf { serverList[it].kind.capacity }
-                val neededNow = ceilDiv(maxOf(recent, scenario.interactive.expected(tick)) * 1_000, utilization)
+                val neededNow = ceilDiv(maxOf(recent, scenario.interactive.expected(tick) * policy.workPermille / 1_000) * 1_000, utilization)
                 for (i in order.reversed()) {
                     if (i in wanted || !serverList[i].state.isPowered) continue
                     if (ready >= neededNow) {

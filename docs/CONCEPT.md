@@ -605,20 +605,43 @@ After each step the game is played by a person before the next step begins (**pl
   database replica, cache), `CapacityMode.Placed` (host per VM; hosts without a VM are off), per-host CPU with
   slow requests above 85 %, `Packing` (spread, First Fit Decreasing with three checks: RAM only, sum of the peaks,
   daily profiles), special goal "at most N servers on".
-- Scenario 5: Germany, autumn, 1 day, 10 hosts (256 GB, 20 load units), 24 VMs (1,472 GB). As found: spread over
-  all ten hosts. Goals: ★★ −15 %, ★★★ at most 6 hosts.
+- Scenario 5: Germany, autumn, 1 day, 10 hosts (256 GB, 20 load units), 24 VMs (1,248 GB: by RAM five hosts
+  would do, by CPU they do not). As found: spread over all ten hosts. Goals: ★★ −10 %, ★★★ at most 6 hosts.
+  Retuned after the play test so that five hosts fit the RAM but miss the SLA, and six fit with a little air.
 
 | Placement | Hosts | CO₂ vs. reference | SLA | Stars |
 |---|---:|---:|---:|---:|
 | spread (reference) | 10 | – | 100 % | – |
-| FFD, RAM only | 6 | −24 % | 89 % | – |
-| FFD, sum of the peaks | 9 | −5 % | 100 % | ★ |
-| FFD, daily profiles | 7 | −16 % | 100 % | ★★ |
-| FFD, profiles, sorted by RAM and CPU | 6 | −21 % | 100 % | ★★★ |
+| FFD, RAM only | 5 | −37 % | 69 % | – |
+| FFD, daily profiles up to 85 % | 9 | −4 % | 100 % | ★ |
+| FFD, daily profiles up to 90 % | 8 | −9 % | 99.2 % | ★ |
+| by hand: one batch worker per host, peaks spread | 6 | −18 % | 99.5 % | ★★★ |
+| by hand, 5 hosts (RAM fits) | 5 | −24 % | 92.9 % | – |
 
 - App: the hall is replaced by a board of hosts as bins (RAM as height, VMs stacked, CPU chart per host with the
-  slow line); click a VM, then a host; fixed once the day runs; warnings for hosts whose expected peak is above
+  slow line); drag a VM onto a host, or click it and then the host; fixed once the day runs; warnings for hosts whose expected peak is above
   85 %. The placement is kept for the next run. Timeline tooltips with the values at the time under the mouse.
+
+**As built in step 4, part 3** (E1, scenario list):
+
+- Core: `Policy.workPermille` (CPU work per request; demand and autoscaler scale with it), `BacklogItem`,
+  `HotSpot`, `Engineering` (work after the items done, a greedy team by estimates or by measurements), SCI per
+  1,000 requests counts the requests (not the smaller work), `Scenario.track`, `label`, `unlockAfter`.
+- E1 "Measure first": the web shop with autoscaling at 70 %, 4 days, each day the week after a sprint; 8 story
+  points per sprint; backlog: profiling (3), cache resized images (3, team −30 %, real −7 %), rewrite the checkout
+  (8, −40 % / −4 %), framework upgrade (5, −10 % / −3 %), cache catalog responses (8, −10 % / −18 %), fix N+1
+  queries (5, −5 % / −24 %), log level INFO (1, −1 % / −10 %). Goals: ★★ −30 %, ★★★ −40 %.
+
+| Team | CO₂ vs. reference | Stars |
+|---|---:|---:|
+| changes nothing (reference) | – | – |
+| by its estimates | −27 % | ★ |
+| profiling first, then by the measurements | −41 % | ★★★ |
+| lucky guess without profiling | −49 % | ★★★ |
+
+- App: sprint panel (CPU profile once measured, backlog with estimates and measurements, story points, "Start
+  sprint"), the game pauses at every sprint; the last run's plans are offered again. Scenario list in two sections
+  (Operations, Engineering) with labels; "Open all scenarios" switch (D19).
 
 **Taken over from the Carbon Rush prototype** (copied, checked for every reference to its origin):
 grid curves and their generator, the forecast model, the electricity price formula, the embodied and SCI
@@ -649,6 +672,7 @@ music. Not taken over: maps, paths, the tower-and-creep rules, opponents, networ
 | D16 | Technical terms | every scenario names the term for what the player does (briefing, scenario card, debrief), in English in both languages |
 | D17 | Engineering | a second track "Engineering" (E1 profiling, E2 growing data) next to the operations scenarios; backlog with team capacity, coarser time steps; no real code in the game |
 | D18 | Bin packing | scenario 5 "Consolidation": VMs on hosts by hand, two dimensions (CPU, RAM), heuristics in "what if"; the operations scenarios after it move up by one |
+| D19 | Order of the scenarios | a star opens the next scenario (the story), but a switch "Open all scenarios" opens everything for courses that take the topics in another order; stars still count |
 
 ---
 

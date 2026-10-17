@@ -235,12 +235,17 @@ class LessonTest {
         val host = ServerKind.CPU_CURRENT
         val reference = Simulation.reference(scenario)
         fun placed(p: List<Int>) = Simulation.replay(scenario, Policy(CapacityMode.Placed(p)))
+        val fleet = scenario.serverCount
+        val both = { k: VmKind -> k.ramGb * 1_000 / host.ramGb + k.peak * 1_000 / host.capacity }
         val heuristics = listOf(
-            "FFD by RAM, RAM only" to Packing.firstFitDecreasing(vms, host, Packing.Check.RAM_ONLY) { it.ramGb },
-            "FFD by RAM, peak sum" to Packing.firstFitDecreasing(vms, host, Packing.Check.PEAK_SUM) { it.ramGb },
-            "FFD by RAM, profiles" to Packing.firstFitDecreasing(vms, host, Packing.Check.PROFILES) { it.ramGb },
-            "FFD by CPU, profiles" to Packing.firstFitDecreasing(vms, host, Packing.Check.PROFILES) { it.peak },
-            "FFD by both, profiles" to Packing.firstFitDecreasing(vms, host, Packing.Check.PROFILES) { it.ramGb * 1_000 / host.ramGb + it.peak * 1_000 / host.capacity },
+            "FFD by RAM, RAM only" to Packing.firstFitDecreasing(vms, host, fleet, Packing.Check.RAM_ONLY) { it.ramGb },
+            "FFD by RAM, peak sum" to Packing.firstFitDecreasing(vms, host, fleet, Packing.Check.PEAK_SUM) { it.ramGb },
+            "FFD both, profiles 85" to Packing.firstFitDecreasing(vms, host, fleet, Packing.Check.PROFILES, key = both),
+            "FFD both, profiles 90" to Packing.firstFitDecreasing(vms, host, fleet, Packing.Check.PROFILES, 900, both),
+            "FFD both, profiles 100" to Packing.firstFitDecreasing(vms, host, fleet, Packing.Check.PROFILES, 1_000, both),
+            // By hand: one batch worker per host, the peaks of the others spread (found by a local search).
+            "by hand, 6 hosts" to listOf(0, 0, 1, 2, 3, 4, 4, 5, 0, 1, 2, 3, 4, 5, 0, 2, 4, 5, 1, 3, 2, 2, 5, 5),
+            "by hand, 5 hosts" to listOf(0, 0, 1, 2, 3, 4, 4, 0, 0, 1, 2, 3, 4, 1, 0, 2, 0, 3, 1, 3, 2, 2, 4, 4),
         )
         val runs = mutableListOf("reference: spread" to reference)
         for ((name, p) in heuristics) runs += name to placed(p)
@@ -260,11 +265,41 @@ class LessonTest {
         fun stars(name: String) = scenario.stars(run.getValue(name).totals, reference.totals)
         // Packed by RAM alone, the peaks collide: requests get slow, no star.
         assertEquals(0, stars("FFD by RAM, RAM only"))
-        // Packed by the sum of the peaks: safe, but hardly better than the reference.
-        assertEquals(1, stars("FFD by RAM, peak sum"))
-        // With the daily profiles seven hosts suffice; looking at RAM and CPU together, six.
-        assertEquals(2, stars("FFD by RAM, profiles"))
-        assertEquals(3, stars("FFD by both, profiles"))
+        // Six hosts by hand earn three stars; five fit by RAM, but not by CPU.
+        assertEquals(3, stars("by hand, 6 hosts"))
+        assertEquals(0, stars("by hand, 5 hosts"))
+    }
+
+    @Test fun e1MeasureFirst() {
+        val scenario = Scenario.MEASURE_FIRST
+        val reference = Simulation.reference(scenario)
+        val backlog = scenario.backlog
+        fun run(plans: List<Set<Int>>) = Simulation.replay(scenario, scenario.initialPolicy, changes = Engineering.changes(scenario, plans))
+        val byEstimate = Engineering.greedy(backlog, scenario.sprintPoints, scenario.days, profileFirst = false)
+        val profileFirst = Engineering.greedy(backlog, scenario.sprintPoints, scenario.days, profileFirst = true)
+        val i = { title: String -> backlog.indexOfFirst { it.title == title } }
+        val lucky = listOf(setOf(i("Fix the N+1 queries in the product list"), i("Log at INFO instead of DEBUG in production")),
+            setOf(i("Cache the catalog responses")), setOf(i("Cache the resized images"), i("Upgrade the web framework")),
+            setOf(i("Rewrite the checkout in a compiled language")))
+        val runs = listOf("reference: nothing" to reference, "by the estimates" to run(byEstimate),
+            "profile first" to run(profileFirst), "lucky guess, no profile" to run(lucky))
+        val lines = mutableListOf(title(scenario), HEADER)
+        for ((name, simulation) in runs) {
+            lines += line(name, simulation.totals, reference.totals) + "  " + "★".repeat(scenario.stars(simulation.totals, reference.totals))
+        }
+        for ((name, plans) in listOf("by the estimates" to byEstimate, "profile first" to profileFirst)) {
+            lines += "  $name: " + plans.joinToString("  |  ") { p -> p.joinToString(", ") { backlog[it].title.take(24) } }
+        }
+        report(101, lines)
+
+        assertTrue(reference.totals.sla >= scenario.slaTarget)
+        assertEquals(0, scenario.stars(reference.totals, reference.totals))
+        val byName = runs.toMap()
+        fun stars(name: String) = scenario.stars(byName.getValue(name).totals, reference.totals)
+        // Optimizing by the team's estimates saves something, but the big items hardly matter: one star.
+        assertEquals(1, stars("by the estimates"))
+        // Profiling first, then the measured hot spots: three stars.
+        assertEquals(3, stars("profile first"))
     }
 
     private companion object {

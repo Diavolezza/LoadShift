@@ -8,6 +8,7 @@ import androidx.compose.runtime.setValue
 import de.wannerit.loadshift.core.BatchMode
 import de.wannerit.loadshift.core.CapacityMode
 import de.wannerit.loadshift.core.Control
+import de.wannerit.loadshift.core.Engineering
 import de.wannerit.loadshift.core.Packing
 import de.wannerit.loadshift.core.ScheduledMinimum
 import de.wannerit.loadshift.core.GameTime
@@ -67,12 +68,20 @@ private fun initialScreen(options: LaunchOptions): Screen {
         // Plan like a careful player: every job into the greenest hours of the forecast.
         game.setPolicy(Policy(scenario.initialPolicy.capacity, BatchMode.Greenest))
         game.advance(options.ticks)
+    } else if (options.careful && Control.SPRINTS in scenario.controls) {
+        // Like a careful team: profiling first, then by the measurements.
+        var left = options.ticks
+        for (plan in Engineering.greedy(scenario.backlog, scenario.sprintPoints, scenario.days, profileFirst = true)) {
+            if (left <= 0) break
+            game.planSprint(plan)
+            game.startSprint()
+            val n = minOf(left, GameTime.TICKS_PER_DAY)
+            game.advance(n)
+            left -= n
+        }
     } else if (options.careful && Control.PLACEMENT in scenario.controls) {
-        // Like a careful player: packed by RAM and CPU with the daily profiles.
-        val host = scenario.fleet.first().kind
-        game.setPolicy(Policy(CapacityMode.Placed(Packing.firstFitDecreasing(scenario.vms, host, Packing.Check.PROFILES) {
-            it.ramGb * 1_000 / host.ramGb + it.peak * 1_000 / host.capacity
-        })))
+        // Like a careful player: one batch worker per host, the peaks of the others spread – six hosts.
+        game.setPolicy(Policy(CapacityMode.Placed(listOf(0, 0, 1, 2, 3, 4, 4, 5, 0, 1, 2, 3, 4, 5, 0, 2, 4, 5, 1, 3, 2, 2, 5, 5))))
         game.advance(options.ticks)
     } else if (options.careful && Control.CAPACITY_RULES in scenario.controls) {
         // Like a careful player: autoscaling with a minimum for the campaign.

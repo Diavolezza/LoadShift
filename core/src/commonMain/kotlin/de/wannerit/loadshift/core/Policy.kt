@@ -58,7 +58,13 @@ sealed interface BatchMode {
  * The rules for capacity and batch work. [deadlineSafety] (CONCEPT.md 5.2): whatever the batch rule, a job starts
  * when waiting longer would miss its deadline (fixed hour and threshold; the other rules never wait that long).
  */
-data class Policy(val capacity: CapacityMode, val batch: BatchMode = BatchMode.Asap, val deadlineSafety: Boolean = true) {
+data class Policy(
+    val capacity: CapacityMode,
+    val batch: BatchMode = BatchMode.Asap,
+    val deadlineSafety: Boolean = true,
+    /** CPU work per request, per mille of the original code (the engineering track makes it smaller). */
+    val workPermille: Int = 1_000,
+) {
     companion object {
         /**
          * What the reference operator does unless a scenario says otherwise: all servers on, batch jobs as soon as

@@ -248,9 +248,10 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
             }
             Row(Modifier.fillMaxWidth().padding(horizontal = 30.dp, vertical = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 // The next scenario, once a star has opened it.
-                val next = Scenario.ALL.firstOrNull { it.number == scenario.number + 1 }?.takeIf { Progress.isUnlocked(it.number) }
+                val sameTrack = Scenario.ALL.filter { it.track == scenario.track }
+                val next = sameTrack.getOrNull(sameTrack.indexOf(scenario) + 1)?.takeIf { Progress.isUnlocked(it) }
                 if (next != null && onNext != null) {
-                    PrimaryButton(t("To scenario %lld", next.number)) { onNext(next) }
+                    PrimaryButton(t("To scenario %@", next.label)) { onNext(next) }
                     SecondaryButton(t("Play again")) { game.restart() }
                 } else {
                     PrimaryButton(t("Play again")) { game.restart() }

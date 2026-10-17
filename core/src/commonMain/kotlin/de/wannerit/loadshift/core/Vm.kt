@@ -8,17 +8,17 @@ package de.wannerit.loadshift.core
 
 /** Kinds of VM with their RAM, their CPU peak (work units per tick) and their daily profile (per mille of the peak). */
 enum class VmKind(val title: String, val short: String, val ramGb: Int, val peak: Int, val profile: List<Int>) {
-    FRONT_END("Shop front end", "Shop", 32, 5, InteractiveLoad.DAILY_CURVE),
-    BATCH_WORKER("Batch worker", "Batch", 64, 6, listOf(
+    FRONT_END("Shop front end", "Shop", 32, 7, InteractiveLoad.DAILY_CURVE),
+    BATCH_WORKER("Batch worker", "Batch", 48, 8, listOf(
         1_000, 1_000, 1_000, 1_000, 1_000, 900, 500, 200, 100, 100, 100, 100,
         100, 100, 100, 100, 100, 100, 100, 150, 300, 600, 900, 1_000,
     )),
-    REPORTING("Reporting", "Report", 48, 6, listOf(
+    REPORTING("Reporting", "Report", 48, 8, listOf(
         100, 100, 100, 100, 100, 150, 400, 800, 1_000, 1_000, 900, 600,
         300, 200, 150, 150, 150, 150, 100, 100, 100, 100, 100, 100,
     )),
-    DATABASE("Database replica", "DB", 128, 4, InteractiveLoad.DAILY_CURVE.map { 500 + it / 2 }),
-    CACHE("Cache", "Cache", 96, 1, List(24) { 1_000 });
+    DATABASE("Database replica", "DB", 128, 6, InteractiveLoad.DAILY_CURVE.map { 500 + it / 2 }),
+    CACHE("Cache", "Cache", 64, 2, List(24) { 1_000 });
 
     /** Expected CPU work at a tick, in thousandths of a work unit (profile linear between the full hours). */
     fun expectedMilli(tick: Int): Int {
@@ -53,13 +53,16 @@ object Packing {
     enum class Check { RAM_ONLY, PEAK_SUM, PROFILES }
 
     /**
-     * First Fit Decreasing: VMs sorted by [key] (largest first), each onto the first host where it fits by [check];
-     * a new host when it fits nowhere. Returns the host per VM.
+     * First Fit Decreasing: VMs sorted by [key] (largest first), each onto the first host where it fits by [check]
+     * (CPU up to [limit] per mille of the host); a new host when it fits nowhere. When all [fleet] hosts are in use,
+     * the VM goes to the host with the most free RAM. Returns the host per VM.
      */
-    fun firstFitDecreasing(vms: List<VmKind>, host: ServerKind, check: Check, key: (VmKind) -> Int): List<Int> {
+    fun firstFitDecreasing(
+        vms: List<VmKind>, host: ServerKind, fleet: Int, check: Check, limit: Int = SAFE, key: (VmKind) -> Int,
+    ): List<Int> {
         val placement = MutableList(vms.size) { -1 }
         var hosts = 0
-        val safeMilli = host.capacity * SAFE
+        val safeMilli = host.capacity * limit
         for (i in vms.indices.sortedByDescending { key(vms[it]) }) {
             val vm = vms[i]
             var chosen = -1
@@ -74,7 +77,9 @@ object Packing {
                 }
                 if (fits) { chosen = h; break }
             }
-            if (chosen < 0) chosen = hosts++
+            if (chosen < 0) {
+                chosen = if (hosts < fleet) hosts++ else (0 until hosts).maxBy { host.ramGb - ramUsed(vms, placement, it) }
+            }
             placement[i] = chosen
         }
         return placement
