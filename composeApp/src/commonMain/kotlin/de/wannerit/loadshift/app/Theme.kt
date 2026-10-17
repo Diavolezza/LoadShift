@@ -33,6 +33,8 @@ object Palette {
     val slab = Color(0xFF404D4A)
     val booting = Color(0xFFB8D1EB)
     val cache = Color(0xFF8E6FD8)
+    /** O7: the mark of an old server. */
+    val old = Color(0xFFB0741A)
     /** E3: one color per kind of cached data (images, catalog, rates, search, balance). */
     val cacheKinds = listOf(Color(0xFF8E6FD8), Color(0xFF1F8F66), Color(0xFFE8A33A), Color(0xFFCC4D40), Color(0xFF295CAD))
     val interactiveLoad = Color(0xFF5C9EF2)
@@ -92,6 +94,9 @@ object Format {
 
     /** µg CO₂e as kg with one decimal. */
     fun kilograms(micrograms: Long) = number(micrograms / 1e9, 1)
+
+    /** Tonnes with one decimal (O7: three years of two data centers). */
+    fun tonnes(micrograms: Long) = number(micrograms / 1e12, 1)
 
     /** Per mille as percent with one decimal ("99,3 %"). */
     fun percent(permille: Int) = number(permille / 10.0, 1) + NNBSP + "%"

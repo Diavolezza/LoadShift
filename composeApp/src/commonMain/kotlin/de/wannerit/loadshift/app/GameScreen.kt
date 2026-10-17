@@ -94,15 +94,17 @@ private fun TopBar(game: GameController, onExit: () -> Unit) {
             SpeedControl(game)
         }
         Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
-            Txt(t("Day %lld", time.day - GameTime.START.day + 1), Type.caption)
+            val day = minOf(time.day - GameTime.START.day + 1, game.scenario.days)
+            Txt(if (game.hasRenewal) t("Quarter %lld, year %lld", (day - 1) % 4 + 1, (day - 1) / 4 + 1) else t("Day %lld", day), Type.caption)
             Txt(time.clockText, Type.style(30, FontWeight.SemiBold).copy(fontFeatureSettings = "tnum"))
         }
         Row(Modifier.align(Alignment.CenterEnd), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(22.dp)) {
         Metric(t("Grid now"), "$intensity g/kWh", Palette.intensity(intensity))
-        Metric(t("CO₂ so far"), "${Format.kilograms(simulation.totals.emissions)} kg")
+        val totals = game.totals
+        Metric(t("CO₂ so far"), if (game.hasRenewal) "${Format.tonnes(totals.emissions)} t" else "${Format.kilograms(totals.emissions)} kg")
         if (game.hasInteractive) {
-            Metric(t("SLA"), Format.percent(simulation.totals.sla),
-                if (simulation.totals.sla >= simulation.scenario.slaTarget) Palette.ink else Palette.red)
+            Metric(t("SLA"), Format.percent(totals.sla),
+                if (totals.sla >= simulation.scenario.slaTarget) Palette.ink else Palette.red)
         }
         if (game.hasBatch) {
             Metric(t("Jobs done"), "${simulation.totals.jobsDone} / ${simulation.jobs.size}",
@@ -162,7 +164,7 @@ fun specialLong(goal: SpecialGoal): String = when (goal) {
 @Composable
 private fun GoalBar(game: GameController) {
     val scenario = game.scenario
-    val totals = game.simulation.totals
+    val totals = game.totals
     val change = game.changeSoFar
     Row(
         Modifier.fillMaxWidth().background(Palette.panel).padding(horizontal = 20.dp, vertical = 6.dp),
@@ -214,8 +216,8 @@ private fun GoalItem(ok: Boolean, started: Boolean, text: String) {
 @Composable
 private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario) -> Unit)?, onOverview: (() -> Unit)? = null) {
     val scenario = game.scenario
-    val you = game.simulation.totals
-    val ref = game.reference.totals
+    val you = game.totals
+    val ref = game.referenceTotals
     val met = scenario.goalsMet(you, ref)
     val texts = ScenarioTexts.of(scenario)
     Box(
@@ -240,9 +242,16 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
                     GoalLine(met.special, 3, specialLong(scenario.goals.special))
                 }
                 val rows = buildList {
-                    add(t("CO₂ (kg)") to (Format.kilograms(you.emissions) to Format.kilograms(ref.emissions)))
-                    add(t("of it embodied (kg)") to (Format.kilograms(you.embodied) to Format.kilograms(ref.embodied)))
-                    add(t("Energy (kWh)") to (Format.kilowattHours(you.facilityEnergy) to Format.kilowattHours(ref.facilityEnergy)))
+                    if (game.hasRenewal) {
+                        add(t("CO₂ (t)") to (Format.tonnes(you.emissions) to Format.tonnes(ref.emissions)))
+                        add(t("of it embodied (t)") to (Format.tonnes(you.embodied) to Format.tonnes(ref.embodied)))
+                        add(t("of it for servers retired early (t)") to (Format.tonnes(you.retiredEmbodied) to Format.tonnes(ref.retiredEmbodied)))
+                        add(t("Energy (MWh)") to (Format.number(you.facilityEnergy / 1e9, 0) to Format.number(ref.facilityEnergy / 1e9, 0)))
+                    } else {
+                        add(t("CO₂ (kg)") to (Format.kilograms(you.emissions) to Format.kilograms(ref.emissions)))
+                        add(t("of it embodied (kg)") to (Format.kilograms(you.embodied) to Format.kilograms(ref.embodied)))
+                        add(t("Energy (kWh)") to (Format.kilowattHours(you.facilityEnergy) to Format.kilowattHours(ref.facilityEnergy)))
+                    }
                     if (scenario.cooling != null) add(t("PUE") to (Format.number(you.pue / 1_000.0, 2) to Format.number(ref.pue / 1_000.0, 2)))
                     if (scenario.staleLimit != null) {
                         add(t("Stale answers (‰)") to (Format.number(you.stale.toDouble() / maxOf(1, you.requests), 2) to Format.number(ref.stale.toDouble() / maxOf(1, ref.requests), 2)))
@@ -305,8 +314,8 @@ private fun Table(header: List<String>, rows: List<List<String>>, firstWidth: Fl
 /** The same run replayed with other rules: the same load and grid mix, so only the rules differ. */
 @Composable
 private fun WhatIf(game: GameController) {
-    val you = game.simulation.totals
-    val ref = game.reference.totals
+    val you = game.totals
+    val ref = game.referenceTotals
     val alternatives = remember(game.version) { game.whatIf() }
     Card(Modifier.fillMaxWidth(), color = Palette.background, padding = 14.dp) {
         Txt(t("What if …"), Type.subheading)

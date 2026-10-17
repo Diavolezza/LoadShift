@@ -71,6 +71,11 @@ private fun initialScreen(options: LaunchOptions): Screen {
         // Plan like a careful player: every job into the greenest hours of the forecast.
         game.setPolicy(Policy(scenario.initialPolicy.capacity, BatchMode.Greenest))
         game.advance(options.ticks)
+    } else if (options.careful && Control.RENEWAL in scenario.controls) {
+        // Like a careful player: the whole budget into Warsaw at once.
+        game.changeRenewal(0, scenario.renewal?.budget ?: 0)
+        game.startQuarter()
+        game.advance(options.ticks)
     } else if (options.careful && Control.COOLING in scenario.controls) {
         // Like a careful player: autoscaling at 80 %, setpoint 25 °C.
         game.setPolicy(scenario.initialPolicy.copy(capacity = CapacityMode.Autoscale(800), setpoint = 25))

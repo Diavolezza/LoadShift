@@ -57,6 +57,9 @@ fun ControlPanel(game: GameController, modifier: Modifier = Modifier) {
             NowBox(game)
         } else if (Control.PLACEMENT in game.scenario.controls) {
             PlacementPanel(game)
+        } else if (Control.RENEWAL in game.scenario.controls) {
+            RenewalPanel(game)
+            NowBox(game)
         } else if (Control.COOLING in game.scenario.controls) {
             CoolingPanel(game)
             CapacityRules(game)

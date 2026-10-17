@@ -145,7 +145,8 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
             val time = GameTime(tick)
             if (time.minute == 0 && time.hour % labelHours == 0) {
                 val anchor = if (tick == start) 0f else if (tick == end) 1f else 0.5f
-                val label = if (labelHours == 24) (if (tick == end) "" else t("Day %lld", time.day - GameTime.START.day + 1)) else time.clockText
+                val dayNumber = time.day - GameTime.START.day + 1
+                val label = if (labelHours == 24) (if (tick == end) "" else if (scenario.renewal != null) t("Q%lld/%lld", (dayNumber - 1) % 4 + 1, (dayNumber - 1) / 4 + 1) else t("Day %lld", dayNumber)) else time.clockText
                 text(label, Offset(if (labelHours == 24) x(tick) + 3f * density else x(tick), size.height - labelBand / 2), anchorX = if (labelHours == 24) 0f else anchor)
                 drawLine(Color.Gray.copy(alpha = 0.15f), Offset(x(tick), topTop), Offset(x(tick), lowBottom), 1f)
             }

@@ -23,6 +23,21 @@ class ScenarioTexts(
 ) {
     companion object {
         fun of(scenario: Scenario): ScenarioTexts = when (scenario.number) {
+            7 -> ScenarioTexts(
+                situation = "The company runs two data centers, in Warsaw and in Paris, with the same hardware: 24 servers each, bought four years ago. Both carry the same web shop load. Finance has approved a budget for 12 new servers over the next three years – enough to renew one site completely, or both by half.",
+                idea = "New hardware does more work per kilowatt-hour – a new server does the work of two old ones. But making a server emits CO₂ too, and an old one retired early wastes the rest of its life. Whether renewing pays off depends on the grid: where electricity is dirty, the energy saved soon outweighs the hardware; where it is clean, the hardware dominates.",
+                screen = listOf(
+                    "The game starts paused and pauses at the start of every quarter. Clock and speed – pause, 1×, 4×, 16× – and below it your goals. Each game day is a typical day of a quarter.",
+                    "The racks of the site you have chosen: an orange mark shows an old server.",
+                    "Hardware renewal: the budget and both sites – grid, servers, CO₂ so far, and how many new servers they get this quarter. Click a site to see it in the hall and the timeline.",
+                    "Carbon intensity of the chosen site's grid, quarter by quarter, and the load with the capacity of the running servers.",
+                ),
+                comparedWith = "compared with the reference operator, who keeps the old servers.",
+                rules = "SLA at least 99 % and less CO₂ than the reference",
+                remark = "In Warsaw a new server saves many times its embodied emissions; in Paris the same server saves little, because the electricity is almost free of CO₂ – there the old servers can run to the end of their life. The question is not “new or old?” but “where does new hardware replace dirty electricity?”. The earlier the budget goes to the dirty grid, the more it saves; every quarter of waiting costs.",
+                term = "Embodied Carbon",
+                termText = "The emissions of making, shipping and disposing of hardware, as opposed to those of the electricity it uses. The SCI books them over the hardware's life; in a clean grid they can be the larger part. Hardware efficiency means using hardware long and well – and replacing it where the energy saved outweighs them.",
+            )
             6 -> ScenarioTexts(
                 situation = "The web shop in a German summer, with 40 servers. A heat wave is coming: 28 °C today, 35 °C tomorrow, 37 °C the day after. Autoscaling runs at 50 % target utilization, the cooling keeps 20 °C at the server inlets – the way the last shift left it. Management watches the PUE: the Energy Efficiency Act asks existing data centers for at most 1.5 from July 2027.",
                 idea = "Cooling is the biggest part of the facility's own power. Outside air cools for free when it is cooler than the server inlets; in a heat wave the chiller does the work, and the hotter it is outside, the more power it needs. Servers tolerate warmer air than most data centers give them – up to 27 °C – but above 25 °C their fans speed up. And the PUE, facility power divided by IT power, does not always point the right way.",

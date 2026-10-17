@@ -94,8 +94,15 @@ class Grid(
     private val seed: Long,
     val weatherMode: WeatherMode = WeatherMode.Drawn,
     val forecastMiss: ForecastMiss? = null,
+    /** O7: one season per day (a day stands for a quarter); null: the setting's season every day. */
+    val seasons: List<Season>? = null,
 ) {
     val curve: GridCurve = GridCurve.of(setting)
+
+    /** The curve of a day: its season's, or the setting's. */
+    private val curves: List<GridCurve>? = seasons?.map { GridCurve.of(GridSetting(setting.region, it)) }
+
+    private fun curveOf(tick: Int): GridCurve = curves?.let { it[(tick / GameTime.TICKS_PER_DAY).coerceIn(0, it.size - 1)] } ?: curve
 
     /** Range of the drawn weather factor, per mille of the curve. */
     internal val weatherLow: Int
@@ -146,7 +153,8 @@ class Grid(
         val inDay = tick % GameTime.TICKS_PER_DAY
         val hour = inDay / perHour
         val r = inDay % perHour
-        val base = curve.hourly[hour] * (perHour - r) + curve.hourly[(hour + 1) % 24] * r
+        val c = curveOf(tick)
+        val base = c.hourly[hour] * (perHour - r) + c.hourly[(hour + 1) % 24] * r
         val denominator = perHour * 1_000
         return (base * weather + denominator / 2) / denominator
     }

@@ -63,7 +63,13 @@ data class Server(
     val utilization: Int = 0,
     /** The batch job the server works for, if any. */
     val job: Int? = null,
+    /** Age when it was installed, days, and the tick it was installed at (O7: old servers and their end of life). */
+    val ageDays: Int = 0,
+    val installedAt: Int = 0,
 ) {
+    /** Age at a tick, real days; [scale]: real days per game day. */
+    fun ageAt(tick: Int, scale: Long = 1): Int = ageDays + ((tick - installedAt) * scale / GameTime.TICKS_PER_DAY).toInt()
+
     /**
      * Power drawn at the given utilization, W: idle plus the dynamic part in proportion to the load. A booting
      * server draws idle power, a switched-off one nothing.

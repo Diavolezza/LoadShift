@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.unit.dp
 import de.wannerit.loadshift.core.Server
+import de.wannerit.loadshift.core.ServerKind
 import de.wannerit.loadshift.core.ServerState
 
 /**
@@ -45,6 +46,7 @@ fun HallView(
             if (interactive) LegendSwatch(Palette.slab, t("Web requests"), Palette.interactiveLoad)
             if (batch) LegendSwatch(Palette.slab, t("Batch job"), Palette.batchLoad)
             if (cacheSlots > 0) LegendSwatch(Palette.cache, t("Cache server"))
+            if (servers.any { it.kind == ServerKind.CPU_OLD }) LegendSwatch(Palette.old, t("Old server"))
             Spacer(Modifier.weight(1f))
             Txt(
                 if (cacheSlots > 0) t("%lld of %lld servers on + %lld cache servers · %@ kW IT power", on, servers.size, cacheOn, Format.kilowatts(itPower))
@@ -114,6 +116,8 @@ private fun DrawScope.drawHall(servers: List<Server>, cacheSlots: Int, cacheOn: 
             val z0 = 0.1 + slot * slotHeight + 0.025; val z1 = z0 + slotHeight - 0.05
             val sx0 = x0 + 0.07; val sx1 = x1 - 0.07
             val slab = polygon(p(sx0, y1, z0), p(sx1, y1, z0), p(sx1, y1, z1), p(sx0, y1, z1))
+            // O7: an old server gets a mark on its left.
+            val markOld = server.kind == ServerKind.CPU_OLD
             when (server.state) {
                 ServerState.Off -> drawPath(slab, Palette.off)
                 is ServerState.Booting -> drawPath(slab, Palette.booting)
@@ -127,6 +131,7 @@ private fun DrawScope.drawHall(servers: List<Server>, cacheSlots: Int, cacheOn: 
                     )
                 }
             }
+            if (markOld) drawPath(polygon(p(sx0, y1, z0), p(sx0 + 0.05, y1, z0), p(sx0 + 0.05, y1, z1), p(sx0, y1, z1)), Palette.old)
         }
     }
 }

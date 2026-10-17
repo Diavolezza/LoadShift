@@ -40,6 +40,8 @@ data class Totals(
     /** Batch jobs finished, and deadlines missed. */
     var jobsDone: Int = 0,
     var deadlinesMissed: Int = 0,
+    /** O7: embodied emissions booked at once for servers retired before the end of their life, µg CO₂e (in [embodied]). */
+    var retiredEmbodied: Long = 0,
 ) {
     /** Share of the demand served in time, per mille. */
     val sla: Int get() = if (demand == 0L) 1_000 else (inTime * 1_000 / demand).toInt()
@@ -161,9 +163,9 @@ class Simulation private constructor(
     constructor(scenario: Scenario, policy: Policy = scenario.initialPolicy) : this(
         scenario = scenario,
         policy = policy,
-        grid = Grid(scenario.setting, scenario.seed, scenario.weather, scenario.forecastMiss),
-        serverList = scenario.fleet.flatMap { e -> List(e.count) { e.kind } }
-            .mapIndexed { i, kind -> Server(i, kind, ServerState.On) }.toMutableList(),
+        grid = Grid(scenario.setting, scenario.seed, scenario.weather, scenario.forecastMiss, scenario.renewal?.seasons(scenario.days)),
+        serverList = scenario.fleet.flatMap { e -> List(e.count) { e } }
+            .mapIndexed { i, e -> Server(i, e.kind, ServerState.On, ageDays = e.ageYears * 365, installedAt = scenario.startTick) }.toMutableList(),
         jobList = scenario.batchJobs.mapIndexed { i, spec -> BatchJob(i, spec) }.toMutableList(),
         tick = scenario.startTick,
         totals = Totals(),
@@ -192,6 +194,7 @@ class Simulation private constructor(
      */
     fun applyPolicy() {
         if (isFinished) return
+        applyRenewal()
         applyCapacityPolicy()
         planBatchJobs()
     }
@@ -302,7 +305,8 @@ class Simulation private constructor(
                 if (updated.state.isPowered) batchServers += 1
             }
             itPower += power
-            embodied += updated.kind.embodiedPerTick
+            // Embodied emissions are booked over the server's life (six years), not beyond it.
+            if (updated.ageAt(tick, scale) < Units.LIFESPAN_DAYS) embodied += updated.kind.embodiedPerTick * scale
             if (updated.state.isPowered) poweredOn += 1
         }
         // E3: the cache servers run all the time, and they were built too.
@@ -330,12 +334,12 @@ class Simulation private constructor(
         totals.demand += demand
         totals.served += served
         // Requests served (units of 1,000): the share of the demand served, applied to the requests.
-        totals.requestsServed += if (scenario.vms.isNotEmpty()) served.toLong()
+        totals.requestsServed += scale * if (scenario.vms.isNotEmpty()) served.toLong()
         else if (demand == 0) 0 else requests.toLong() * served / demand
         totals.inTime += inTime
-        totals.itEnergy += itPower * Units.MILLIWATT_HOURS_PER_WATT_TICK
-        totals.facilityEnergy += facilityEnergy
-        totals.operational += Units.emissions(facilityEnergy, intensity)
+        totals.itEnergy += scale * itPower * Units.MILLIWATT_HOURS_PER_WATT_TICK
+        totals.facilityEnergy += scale * facilityEnergy
+        totals.operational += scale * Units.emissions(facilityEnergy, intensity)
         totals.embodied += embodied
         totals.serverTicks += poweredOn
         totals.capacityTicks += capacity
@@ -424,6 +428,34 @@ class Simulation private constructor(
                     }
                 }
             }
+        }
+    }
+
+    /** Real days one tick stands for, in ticks of a real day: 1, or a quarter's 91 in O7. */
+    private val scale: Long get() = (scenario.renewal?.daysPerStep ?: 1).toLong()
+
+    /**
+     * O7: as many new servers as the policy says; each replaces old ones. An old server retired before the end of its
+     * life books the rest of its embodied emissions at once.
+     */
+    private fun applyRenewal() {
+        val model = scenario.renewal ?: return
+        var installed = serverList.count { it.kind == ServerKind.CPU_CURRENT }
+        while (installed < policy.renewed) {
+            repeat(model.replacedPerNew) {
+                // The old server that is off, or the last one.
+                val i = serverList.indices.lastOrNull { serverList[it].kind == ServerKind.CPU_OLD && !serverList[it].state.isPowered }
+                    ?: serverList.indices.lastOrNull { serverList[it].kind == ServerKind.CPU_OLD } ?: return
+                val old = serverList.removeAt(i)
+                val left = Units.LIFESPAN_DAYS - old.ageAt(tick, scale)
+                if (left > 0) {
+                    val booked = old.kind.embodiedKilograms * 1_000_000_000L * left / Units.LIFESPAN_DAYS
+                    totals.embodied += booked
+                    totals.retiredEmbodied += booked
+                }
+            }
+            serverList += Server((serverList.maxOfOrNull { it.id } ?: -1) + 1, ServerKind.CPU_CURRENT, ServerState.Off, installedAt = tick)
+            installed++
         }
     }
 

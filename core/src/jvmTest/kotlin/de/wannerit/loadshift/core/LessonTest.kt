@@ -328,6 +328,52 @@ class LessonTest {
         assertEquals(0, stars("all on, 27 °C"))
     }
 
+    @Test fun scenario7OldIron() {
+        val scenario = Scenario.OLD_IRON
+        val sites = scenario.renewal!!.sites.indices
+        val references = sites.map { Simulation.reference(scenario.forSite(it)) }
+        val reference = references.map { it.totals }.reduce { a, b -> a + b }
+        /** A site's run: [plan] = new servers installed by the start of each quarter (day). */
+        fun site(site: Int, plan: Map<Int, Int>): Simulation {
+            val s = scenario.forSite(site)
+            val changes = plan.entries.associate { (day, n) -> GameTime.at(day, 0).tick to s.initialPolicy.copy(renewed = n) }
+            return Simulation.replay(s, s.initialPolicy, changes = changes)
+        }
+        val now = mapOf(0 to 12)
+        val never = emptyMap<Int, Int>()
+        val endOfLife = mapOf(8 to 12)
+        val runs = listOf(
+            "keep all (reference)" to listOf(never, never),
+            "Warsaw now, Paris never" to listOf(now, never),
+            "Warsaw now, Paris at end" to listOf(now, endOfLife),
+            "Warsaw half now" to listOf(mapOf(0 to 6), never),
+            "Warsaw in year 2" to listOf(mapOf(4 to 12), never),
+            "Paris now, Warsaw never" to listOf(never, now),
+            "Warsaw from Q2" to listOf(mapOf(1 to 12), never),
+            "6 and 6 now" to listOf(mapOf(0 to 6), mapOf(0 to 6)),
+            "Warsaw 6 now, 6 in Q5" to listOf(mapOf(0 to 6, 4 to 12), never),
+        ).map { (name, plans) -> name to sites.map { site(it, plans[it]) } }
+        val lines = mutableListOf(title(scenario), HEADER + "  Warsaw  Paris  retired kg")
+        for ((name, sims) in runs) {
+            val total = sims.map { it.totals }.reduce { a, b -> a + b }
+            val perSite = sims.mapIndexed { i, sim ->
+                val r = references[i].totals.emissions
+                String.format(Locale.ROOT, "%+6.1f%%", (sim.totals.emissions - r) * 100.0 / r)
+            }
+            lines += line(name, total, reference) + "  " + perSite.joinToString("  ") +
+                String.format(Locale.ROOT, "  %6.0f", total.retiredEmbodied / 1e9) + "  " + "★".repeat(scenario.stars(total, reference))
+        }
+        report(7, lines)
+        val byName = runs.toMap()
+        fun stars(name: String) = scenario.stars(byName.getValue(name).map { it.totals }.reduce { a, b -> a + b }, reference)
+        // The budget (12 new servers) in the coal grid at once: three stars; in the nuclear grid it hardly matters.
+        assertEquals(3, stars("Warsaw now, Paris never"))
+        assertEquals(1, stars("Paris now, Warsaw never"))
+        // Splitting or waiting: two stars.
+        assertEquals(2, stars("6 and 6 now"))
+        assertEquals(2, stars("Warsaw in year 2"))
+    }
+
     @Test fun e1MeasureFirst() {
         val scenario = Scenario.MEASURE_FIRST
         val reference = Simulation.reference(scenario)

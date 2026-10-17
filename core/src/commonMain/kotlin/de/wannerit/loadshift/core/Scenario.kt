@@ -4,7 +4,7 @@ package de.wannerit.loadshift.core
 enum class Track { OPERATIONS, ENGINEERING }
 
 /** A scenario: region, season, length, fleet, load, the controls it unlocks and its goals (docs/CONCEPT.md 8.3 and 9). */
-data class FleetEntry(val kind: ServerKind, val count: Int)
+data class FleetEntry(val kind: ServerKind, val count: Int, val ageYears: Int = 0)
 
 /** Controls a scenario offers (one new idea at a time, CONCEPT.md principle 3). */
 enum class Control {
@@ -31,6 +31,9 @@ enum class Control {
 
     /** Scenario 6: the inlet temperature setpoint of the cooling. */
     COOLING,
+
+    /** O7: replacing old servers by new ones, per site and quarter. */
+    RENEWAL,
 }
 
 /** The special goal of a scenario: the third star. */
@@ -98,6 +101,8 @@ data class Scenario(
     val staleLimit: Int? = null,
     /** Scenario 6: cooling with outside temperature and setpoint instead of a fixed PUE. */
     val cooling: CoolingModel? = null,
+    /** O7: two sites with old fleets; one game day is a quarter. */
+    val renewal: RenewalModel? = null,
 ) {
     /** Expected interactive work at a tick: the web load or the VMs' profiles (what an operator can plan with). */
     fun expectedDemand(tick: Int): Int = interactive.expected(tick) + vms.sumOf { it.expectedMilli(tick) } / 1_000
@@ -241,6 +246,23 @@ data class Scenario(
             cooling = CoolingModel(days = listOf(17 to 28, 21 to 35, 23 to 37)),
         )
 
+        /**
+         * Scenario 7, "Old iron": the company's two data centers, in Warsaw and in Paris, each with 24 old servers, four
+         * years old. Over three years (one game day per quarter) the player decides where and when to put the budget
+         * of twelve new servers; one new server does the work of two old ones. In the coal-heavy Polish grid the energy
+         * saved is many times the embodied emissions; in the nuclear French grid it hardly makes a difference.
+         */
+        val OLD_IRON = Scenario(
+            number = 7, title = "Old iron", setting = GridSetting(GridRegion.POLAND, Season.WINTER), days = 12,
+            seed = 7, fleet = listOf(FleetEntry(ServerKind.CPU_OLD, 24, ageYears = 4)),
+            interactive = InteractiveLoad(peak = 160),
+            controls = setOf(Control.RENEWAL),
+            initialPolicy = Policy(CapacityMode.Autoscale(700)),
+            referencePolicy = Policy(CapacityMode.Autoscale(700)),
+            goals = StarGoals(300, SpecialGoal.Reduction(420)),
+            renewal = RenewalModel(listOf(Site("Warsaw", GridRegion.POLAND), Site("Paris", GridRegion.FRANCE))),
+        )
+
         /** The 24 VMs of scenario 5. */
         private val SHOP_VMS = List(8) { VmKind.FRONT_END } + List(6) { VmKind.BATCH_WORKER } + List(4) { VmKind.REPORTING } +
             List(2) { VmKind.DATABASE } + List(4) { VmKind.CACHE }
@@ -374,6 +396,6 @@ data class Scenario(
             staleLimit = 5,
         )
 
-        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS)
+        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, OLD_IRON, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS)
     }
 }
