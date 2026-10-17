@@ -26,7 +26,6 @@ import de.wannerit.loadshift.core.BatchPlanner
 import de.wannerit.loadshift.core.Control
 import de.wannerit.loadshift.core.GameTime
 import de.wannerit.loadshift.core.ServerState
-import de.wannerit.loadshift.core.Simulation
 
 /** The controls on the right (docs/CONCEPT.md 10.1): only what the scenario unlocks. */
 @Composable
@@ -40,7 +39,7 @@ fun ControlPanel(game: GameController, modifier: Modifier = Modifier) {
         } else {
             Txt(t("Capacity"), Type.heading)
             ManualCapacity(game)
-            NowBox(game.simulation)
+            NowBox(game)
         }
     }
 }
@@ -69,7 +68,8 @@ fun ManualCapacity(game: GameController) {
 
 /** The situation right now: running servers, load and capacity, the expected load in an hour. */
 @Composable
-fun NowBox(simulation: Simulation) {
+fun NowBox(game: GameController) {
+    val simulation = game.simulation
     val running = simulation.servers.count { it.state.isOn }
     val booting = simulation.servers.count { it.state is ServerState.Booting }
     val last = simulation.history.lastOrNull()
@@ -136,7 +136,7 @@ private fun JobRow(game: GameController, job: BatchJob) {
     Card(Modifier.fillMaxWidth(), color = Palette.background, padding = 12.dp) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Txt(t(spec.name), Type.subheading, Modifier.weight(1f))
-            JobStatus(job, now)
+            JobStatus(game, job, now)
         }
         Txt(t("%lld servers · %lld h · due %@", spec.servers, spec.duration / GameTime.TICKS_PER_HOUR, timeText(spec.deadline)), Type.caption)
         if (!job.state.isStarted) {
@@ -175,7 +175,8 @@ private fun JobRow(game: GameController, job: BatchJob) {
 }
 
 @Composable
-private fun JobStatus(job: BatchJob, now: Int) {
+private fun JobStatus(game: GameController, job: BatchJob, now: Int) {
+    game.simulation // redraws when the job changes without a tick (planned, unplanned)
     val (text, color) = when (val state = job.state) {
         BatchJobState.Waiting ->
             if (job.spec.arrival > now) t("arrives %@", timeText(job.spec.arrival)) to Palette.secondary

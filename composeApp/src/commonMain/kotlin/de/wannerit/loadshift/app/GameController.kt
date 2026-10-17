@@ -18,11 +18,12 @@ enum class Speed(val ticksPerSecond: Int) { PAUSED(0), X1(1), X4(4), X16(16) }
 
 /**
  * Runs a scenario for the screen: the simulation, the clock and the player's controls. The simulation is mutable;
- * [version] changes with every change, so the screen redraws.
+ * [version] changes with every change. Reading [simulation] reads [version], so every composable that looks at the
+ * simulation redraws after a change – Compose skips a composable whose arguments are the same objects as before.
  */
 class GameController(val scenario: Scenario) {
-    var simulation = Simulation(scenario)
-        private set
+    private var current = Simulation(scenario)
+    val simulation: Simulation get() = version.let { current }
 
     /** The reference operator's run of the same scenario, for the comparison. */
     val reference: Simulation = Simulation.reference(scenario)
@@ -167,7 +168,7 @@ class GameController(val scenario: Scenario) {
 
     fun restart() {
         speed = Speed.PAUSED
-        simulation = Simulation(scenario)
+        current = Simulation(scenario)
         stars = 0
         showEnd = false
         urgentJob = null

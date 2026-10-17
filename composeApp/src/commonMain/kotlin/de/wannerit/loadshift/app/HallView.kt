@@ -25,11 +25,14 @@ import de.wannerit.loadshift.core.ServerState
  * is, blue for interactive work, amber for a batch job.
  */
 @Composable
-fun HallView(servers: List<Server>, interactive: Boolean, batch: Boolean, modifier: Modifier = Modifier) {
+fun HallView(servers: List<Server>, version: Int, interactive: Boolean, batch: Boolean, modifier: Modifier = Modifier) {
     val on = servers.count { it.state.isPowered }
     val itPower = servers.sumOf { it.power() }
     Column(modifier.padding(16.dp)) {
-        Canvas(Modifier.fillMaxWidth().weight(1f)) { drawHall(servers) }
+        Canvas(Modifier.fillMaxWidth().weight(1f)) {
+            // The server list is the same object after every tick; reading the version redraws the hall.
+            if (version >= 0) drawHall(servers)
+        }
         Row(
             Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(18.dp),

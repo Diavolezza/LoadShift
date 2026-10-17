@@ -38,6 +38,8 @@ kotlin {
 compose.desktop {
     application {
         mainClass = "de.wannerit.loadshift.app.MainKt"
+        // The app name in the macOS menu bar and Dock, also for "./gradlew :composeApp:run".
+        if (System.getProperty("os.name").startsWith("Mac")) jvmArgs += listOf("-Xdock:name=Load Shift")
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "LoadShift"

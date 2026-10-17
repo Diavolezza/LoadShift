@@ -56,7 +56,7 @@ fun GameScreen(game: GameController, onExit: () -> Unit) {
             GoalBar(game)
             HDivider()
             Row(Modifier.fillMaxWidth().weight(1f)) {
-                HallView(game.simulation.servers, game.hasInteractive, game.hasBatch, Modifier.weight(1f).fillMaxHeight())
+                HallView(game.simulation.servers, game.version, game.hasInteractive, game.hasBatch, Modifier.weight(1f).fillMaxHeight())
                 VDivider()
                 ControlPanel(game, Modifier.width(panelWidth).fillMaxHeight())
             }
