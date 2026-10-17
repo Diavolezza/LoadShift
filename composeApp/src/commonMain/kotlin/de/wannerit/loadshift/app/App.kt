@@ -1,0 +1,78 @@
+package de.wannerit.loadshift.app
+
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import de.wannerit.loadshift.core.BatchMode
+import de.wannerit.loadshift.core.GameTime
+import de.wannerit.loadshift.core.Policy
+import de.wannerit.loadshift.core.Scenario
+import de.wannerit.loadshift.core.ServerKind
+
+/**
+ * Options from the command line (desktop) or the address (web), for screenshots and tests:
+ * scenario=N opens its briefing, play starts it, ticks=N runs N ticks, careful plays like a careful player while
+ * running them, lang=de|en sets the language.
+ */
+data class LaunchOptions(
+    val scenario: Int? = null,
+    val play: Boolean = false,
+    val ticks: Int = 0,
+    val careful: Boolean = false,
+    val language: String? = null,
+) {
+    companion object {
+        /** From "key=value" or "key" pairs (also "-key value" on the command line). */
+        fun parse(pairs: Map<String, String?>) = LaunchOptions(
+            scenario = pairs["scenario"]?.toIntOrNull(),
+            play = "play" in pairs || "ticks" in pairs,
+            ticks = pairs["ticks"]?.toIntOrNull() ?: 0,
+            careful = "careful" in pairs,
+            language = pairs["lang"],
+        )
+    }
+}
+
+private sealed interface Screen {
+    data object List : Screen
+    data class Briefing(val scenario: Scenario) : Screen
+    data class Game(val controller: GameController) : Screen
+}
+
+@Composable
+fun App(options: LaunchOptions = LaunchOptions()) {
+    options.language?.let { Language.german = it == "de" }
+    val family = interFamily()
+    if (Type.family != family) Type.family = family
+    var screen by remember { mutableStateOf(initialScreen(options)) }
+    when (val s = screen) {
+        Screen.List -> ScenarioListScreen { screen = Screen.Briefing(it) }
+        is Screen.Briefing -> BriefingScreen(s.scenario, onStart = { screen = Screen.Game(GameController(s.scenario)) }, onBack = { screen = Screen.List })
+        is Screen.Game -> GameScreen(s.controller) { screen = Screen.Briefing(s.controller.scenario) }
+    }
+}
+
+private fun initialScreen(options: LaunchOptions): Screen {
+    val scenario = Scenario.ALL.firstOrNull { it.number == options.scenario } ?: if (options.play) Scenario.NIGHT_SHIFT else null
+    scenario ?: return Screen.List
+    if (!options.play) return Screen.Briefing(scenario)
+    val game = GameController(scenario)
+    if (options.careful && game.hasBatch) {
+        // Plan like a careful player: every job into the greenest hours of the forecast.
+        game.setPolicy(Policy(scenario.initialPolicy.capacity, BatchMode.Greenest))
+        game.advance(options.ticks)
+    } else if (options.careful) {
+        // Switch like a careful player: enough servers for the next 90 minutes at 80 % utilization.
+        repeat(options.ticks) {
+            val tick = game.simulation.tick
+            val expected = (tick..tick + ServerKind.BOOT_TICKS + GameTime.TICKS_PER_HOUR).maxOf { scenario.interactive.expected(it) }
+            game.setWantedServers((expected * 1_000 + 15_999) / 16_000)
+            game.advance(1)
+        }
+    } else {
+        game.advance(options.ticks)
+    }
+    return Screen.Game(game)
+}

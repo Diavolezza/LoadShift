@@ -8,6 +8,10 @@
 #          ./build.sh commit  commit everything with the message in build/commit-msg.txt and push
 #          ./build.sh push    push again after a failed push
 #          ./build.sh script  run the one-off script build/script.sh
+#          ./build.sh ktest   Kotlin: test the simulation core (JVM and Wasm), lesson report in build/lesson-report.txt
+#          ./build.sh web     Kotlin: build the web app (Wasm) into build/web
+#          ./build.sh serve   Kotlin: build the web app and open it in the browser (http://localhost:8080)
+#          ./build.sh desktop Kotlin: build and start the desktop app
 #          ./build.sh watch   wait for build requests from Claude (file build/request) and run them;
 #                             stop with Ctrl-C
 set -uo pipefail
@@ -40,6 +44,30 @@ build() {
   local mode extra
   read -r mode extra <<< "${1:-}"
   case "$mode" in
+    ktest)
+      ./gradlew :core:allTests --console=plain -q 2>&1 | grep -E "^e:|FAILED|Test.*>|AssertionError" | head -40
+      local result=${PIPESTATUS[0]}
+      grep -h -o 'tests="[0-9]*" skipped="[0-9]*" failures="[0-9]*" errors="[0-9]*"' core/build/test-results/*/*.xml \
+        | awk -F'"' '{ t += $2; f += $6 + $8 } END { print "▸ " t " tests, " f " failed" }'
+      return $result ;;
+    web|serve)
+      ./gradlew :composeApp:wasmJsBrowserDistribution --console=plain -q 2>&1 | grep -E "^e:|error" | head -40
+      [ "${PIPESTATUS[0]}" = 0 ] || { echo "** WEB BUILD FAILED **"; return 1; }
+      rm -rf build/web && mkdir -p build/web && cp -R composeApp/build/dist/wasmJs/productionExecutable/. build/web/
+      echo "✓ web app in build/web"
+      if [ "$mode" = "serve" ]; then
+        pkill -f "http.server 8080" >/dev/null 2>&1 || true
+        (cd build/web && nohup python3 -m http.server 8080 >/dev/null 2>&1 &)
+        sleep 1
+        open "http://localhost:8080/index.html${extra:+?$extra}"
+        echo "✓ serving on http://localhost:8080"
+      fi
+      return 0 ;;
+    desktop)
+      # In the background, so the watcher keeps running; extra words are passed to the app.
+      nohup ./gradlew :composeApp:run --console=plain -q ${extra:+--args="$extra"} > build/desktop.log 2>&1 &
+      echo "✓ the desktop app starts (log: build/desktop.log)"
+      return 0 ;;
     stop)
       xcrun simctl shutdown all
       osascript -e 'tell application id "com.apple.iphonesimulator" to quit' >/dev/null 2>&1

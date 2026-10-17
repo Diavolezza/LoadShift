@@ -345,7 +345,7 @@ Each scenario has:
 
 ## 10 Screen
 
-### 10.1 Layout (iPad and Mac, landscape)
+### 10.1 Layout (large screens, landscape)
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
@@ -382,10 +382,17 @@ Each scenario has:
 
 ## 11 Architecture and tests
 
-- **LoadShiftCore** (Swift package, no UI): deterministic simulation with integer arithmetic, seeded random
-  numbers, `Scenario`, `Policy`, `Simulation.step()`. Runs headless in tests and in the background for the reference
-  operator and the effect preview.
-- **App** (SwiftUI, iPadOS/macOS/iOS): views on the simulation state; commands change policies.
+- **Technology (D14):** Kotlin Multiplatform with Compose Multiplatform, so the same code runs in the browser
+  (Wasm), on Windows, macOS and Linux (desktop, JVM) and later on Android and iOS. The browser matters most for
+  teaching: a link or QR code in the lecture, no installation, the scenario code in the address.
+- **`:core`** (Kotlin, common code, no UI): deterministic simulation with integer arithmetic (Long for energy and
+  emissions), seeded random numbers, `Scenario`, `Policy`, `Simulation.step()`. The same results on every
+  platform; the tests run on the JVM and in Wasm. Runs headless in tests and in the background for the reference
+  operator and "what if".
+- **`:composeApp`** (Compose Multiplatform, foundation only, font Inter): screens on the simulation state;
+  German texts keyed by the English text (`Strings.kt`).
+- The first version was written in Swift/SwiftUI (iPad and Mac, versions up to 0.3.0); its core was ported 1:1 –
+  the lesson report of the Kotlin core reproduces its numbers exactly.
 - **Lesson tests:** for every scenario the tests run the reference operator and a scripted "good operator" and
   check that (1) the reference meets the SLA (the scenario is fair), (2) the good operator is at least X % better in
   CO₂ (the lesson works), (3) a deliberately bad policy shows the expected failure (e.g. a fixed batch window misses a
@@ -514,7 +521,7 @@ music. Not taken over: maps, paths, the tower-and-creep rules, opponents, networ
 
 | # | Question | Decision |
 |---|---|---|
-| D1 | Platforms | iPad and Mac first (the timeline needs width); iPhone from step 9 |
+| D1 | Platforms | large screens first (the timeline needs width): browser and desktop, tablets; phones from step 9 (revised by D14) |
 | D2 | Hall view or pure dashboard | isometric hall with racks, timeline below, policies on the right |
 | D3 | Names of the workloads in the app | Interactive, Batch, AI training, Streaming – English IT terms in both languages |
 | D4 | Money | from scenario 4; before that only CO₂ and SLA |
@@ -527,6 +534,7 @@ music. Not taken over: maps, paths, the tower-and-creep rules, opponents, networ
 | D11 | Scenario 1 | switching by hand only; autoscaling comes with scenario 4 |
 | D12 | Preview of the day's result | not during the run; "what if" in the debrief instead (principle 4) |
 | D13 | Scenario 2 | batch jobs planned by hand; batch rules come with scenario 3 (same pattern as D11) |
+| D14 | Technology | Kotlin Multiplatform + Compose Multiplatform instead of Swift: web (Wasm) and desktop first, Android and iOS later; close to Java for lecturer and students |
 
 ---
 

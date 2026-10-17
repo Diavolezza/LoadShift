@@ -1,0 +1,191 @@
+package de.wannerit.loadshift.app
+
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import de.wannerit.loadshift.core.Scenario
+
+/** The app's mark: a server rack drawn in the accent color. */
+@Composable
+fun RackIcon(size: Dp) {
+    Canvas(Modifier.size(size)) {
+        val w = this.size.width
+        val stroke = w * 0.07f
+        val h = w * 0.78f
+        val top = (this.size.height - h) / 2
+        drawRoundRect(Palette.accent, Offset(stroke / 2, top), Size(w - stroke, h), CornerRadius(w * 0.12f), style = Stroke(stroke))
+        for (i in 1..2) drawLine(Palette.accent, Offset(stroke, top + h * i / 3), Offset(w - stroke, top + h * i / 3), stroke)
+        for (i in 0..2) drawCircle(Palette.accent, stroke * 0.8f, Offset(w * 0.78f, top + h * (i + 0.5f) / 3))
+    }
+}
+
+/** The campaign: all scenarios with their stars; a scenario opens when the one before has a star. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun ScenarioListScreen(onSelect: (Scenario) -> Unit) {
+    BoxWithConstraints(Modifier.fillMaxSize().background(Palette.background)) {
+        val side = (maxWidth * 0.05f).coerceAtLeast(32.dp)
+        Column(
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = side, vertical = 48.dp),
+            verticalArrangement = Arrangement.spacedBy(28.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp)) {
+                RackIcon(64.dp)
+                Column {
+                    Txt("Load Shift", Type.style(52, FontWeight.Bold))
+                    Txt(t("Run a greener data center"), Type.style(22, color = Palette.secondary))
+                }
+            }
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                for (scenario in Scenario.ALL) {
+                    ScenarioCard(scenario, Progress.isUnlocked(scenario.number)) { onSelect(scenario) }
+                }
+            }
+            Txt(t("More scenarios follow: forecasts and wind, headroom and autoscaling, cooling, hardware, AI training, eco mode, two sites."), Type.style(20, color = Palette.secondary))
+        }
+    }
+}
+
+private fun days(n: Int) = if (n == 1) t("1 day") else t("%lld days", n)
+
+@Composable
+private fun ScenarioCard(scenario: Scenario, unlocked: Boolean, onClick: () -> Unit) {
+    Column(
+        Modifier.width(360.dp).alpha(if (unlocked) 1f else 0.6f)
+            .background(Palette.panel, RoundedCornerShape(18.dp))
+            .clickable(enabled = unlocked, onClick = onClick).padding(22.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Txt("${scenario.number}", Type.style(34, FontWeight.Bold, if (unlocked) Palette.accent else Palette.secondary), Modifier.weight(1f))
+            if (unlocked) StarRow(Progress.stars(scenario.number), 22.dp) else LockIcon(22.dp)
+        }
+        Txt(t(scenario.title), Type.heading)
+        Txt("${t(scenario.setting.region.title)} · ${t(scenario.setting.season.title)} · ${days(scenario.days)}", Type.style(17, color = Palette.secondary))
+        if (!unlocked) Txt(t("Earn a star in the scenario before."), Type.callout)
+    }
+}
+
+/** Briefing before a scenario (CONCEPT.md 9): situation, the one idea, the screen; facts, goals and start beside it. */
+@Composable
+fun BriefingScreen(scenario: Scenario, onStart: () -> Unit, onBack: () -> Unit) {
+    val texts = ScenarioTexts.of(scenario)
+    BoxWithConstraints(Modifier.fillMaxSize().background(Palette.background)) {
+        val wide = maxWidth > 900.dp
+        val side = (maxWidth * 0.05f).coerceAtLeast(32.dp)
+        val sideCardWidth = (maxWidth * 0.38f).coerceAtMost(440.dp)
+        Column(
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = side, vertical = 40.dp),
+            verticalArrangement = Arrangement.spacedBy(28.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp)) {
+                Txt("‹", Type.style(40, FontWeight.SemiBold), Modifier.clickable(onClick = onBack).padding(horizontal = 8.dp))
+                RackIcon(56.dp)
+                Column(Modifier.weight(1f)) {
+                    Txt("Load Shift", Type.style(22, FontWeight.SemiBold, Palette.secondary))
+                    Txt(t("Scenario %lld: %@", scenario.number, t(scenario.title)), Type.display)
+                }
+                val best = Progress.stars(scenario.number)
+                if (best > 0) Column(horizontalAlignment = Alignment.End) {
+                    Txt(t("Best result"), Type.callout)
+                    StarRow(best, 30.dp)
+                }
+            }
+            if (wide) {
+                Row(horizontalArrangement = Arrangement.spacedBy(40.dp)) {
+                    Story(texts, Modifier.weight(1f))
+                    SideCard(scenario, texts, onStart, Modifier.width(sideCardWidth))
+                }
+            } else {
+                Story(texts, Modifier.fillMaxWidth())
+                SideCard(scenario, texts, onStart, Modifier.fillMaxWidth())
+            }
+        }
+    }
+}
+
+@Composable
+private fun Story(texts: ScenarioTexts, modifier: Modifier) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(26.dp)) {
+        for ((title, text) in listOf(t("Situation") to texts.situation, t("The idea") to texts.idea, t("On the screen") to texts.screen)) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Txt(title, Type.heading)
+                Txt(t(text), Type.bodyLarge)
+            }
+        }
+    }
+}
+
+@Composable
+private fun SideCard(scenario: Scenario, texts: ScenarioTexts, onStart: () -> Unit, modifier: Modifier) {
+    val perServer = scenario.fleet.firstOrNull()?.kind?.capacity ?: 0
+    Column(modifier.background(Palette.panel, RoundedCornerShape(20.dp)).padding(28.dp), verticalArrangement = Arrangement.spacedBy(22.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Fact(t(scenario.setting.region.title))
+            Fact(t(scenario.setting.season.title))
+            Fact(if (scenario.days == 1) t("1 day, from 00:00") else t("%lld days, from 00:00", scenario.days))
+            if (scenario.interactive.peak > 0) {
+                Fact(t("%lld servers, %lld load units each", scenario.serverCount, perServer))
+                Fact(t("Evening peak about %lld load units", scenario.interactive.peak))
+            } else {
+                Fact(t("%lld servers for batch jobs", scenario.serverCount))
+                Fact(t("%lld jobs with deadlines", scenario.batchJobs.size))
+            }
+        }
+        HDivider()
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Txt(t("Goals"), Type.heading)
+            GoalLine(null, 1, t(texts.rules), Type.style(19))
+            GoalLine(null, 2, t("CO₂ %@ or better", Format.changePermille(-scenario.goals.reduction.toLong())), Type.style(19))
+            GoalLine(null, 3, specialLong(scenario.goals.special), Type.style(19))
+            Txt(t("One star opens the next scenario."), Type.style(16, color = Palette.secondary))
+        }
+        PrimaryButton("▶  " + t("Start"), Modifier.fillMaxWidth(), large = true, onClick = onStart)
+    }
+}
+
+@Composable
+private fun Fact(text: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Canvas(Modifier.size(8.dp)) { drawCircle(Palette.accent) }
+        Txt(text, Type.style(19))
+    }
+}
+
+/** A closed padlock. */
+@Composable
+fun LockIcon(size: Dp) {
+    Canvas(Modifier.size(size)) {
+        val w = this.size.width
+        drawRoundRect(Palette.secondary, Offset(w * 0.15f, w * 0.45f), Size(w * 0.7f, w * 0.5f), CornerRadius(w * 0.08f))
+        drawArc(Palette.secondary, 180f, 180f, false, Offset(w * 0.28f, w * 0.12f), Size(w * 0.44f, w * 0.6f), style = Stroke(w * 0.1f))
+    }
+}
