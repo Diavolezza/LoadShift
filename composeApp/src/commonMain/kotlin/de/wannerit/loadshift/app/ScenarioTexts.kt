@@ -25,7 +25,7 @@ class ScenarioTexts(
         fun of(scenario: Scenario): ScenarioTexts = when (scenario.number) {
             11 -> ScenarioTexts(
                 situation = "A week in January. A high-pressure area lies over Germany: hardly any wind, hardly any sun – a dark doldrums. Coal and gas carry the grid, around 500 g CO₂ per kWh. The forecast expects the wind back on day 5. In the data center: the web shop on 40 CPU servers, six batch jobs, and an AI model that must be trained on 4 GPU servers by the end of the week. The previous shift has left everything as it was: all servers on, every job at once, the training at full power.",
-                idea = "Everything you have learned, together. Waiting for clean hours within a day does not help now – every hour is dirty. What helps: use less (size the shop with autoscaling) and move what can wait for days into the wind: the training is due only at the end of the week, three of the batch jobs too. The others cannot wait. And a forecast five days ahead is a bet – look at it again when it changes.",
+                idea = "Everything you have learned, together. Waiting for clean hours within a day does not help now – every hour is dirty. What helps: use less (size the shop with autoscaling) and move what can wait for days into the wind: the training is due only at the end of the week, three of the batch jobs too. The others cannot wait.",
                 screen = listOf(
                     "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals: SLA, every deadline, the training done and less CO₂.",
                     "The hall: 40 CPU servers for the shop and the batch jobs (at most 16 for batch), 4 GPU servers for the training.",

@@ -276,8 +276,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Batch-Worker",
     "batch ≤ %lld g/kWh" to
         "Batch ≤ %lld g/kWh",
-    "Before the start you decide which jobs run in Oslo: the grid there is almost free of CO₂, but only %lld servers are free. A job that moves needs its data there first – the transfer takes time, and the network needs energy in the German grid." to
-        "Vor dem Start entscheidest du, welche Jobs in Oslo laufen: Der Strom dort ist fast CO₂-frei, aber nur %lld Server sind frei. Ein Job, der umzieht, braucht dort zuerst seine Daten – die Übertragung dauert, und das Netz braucht Energie im deutschen Strommix.",
+    "Before the start you decide which jobs run in Oslo: the grid there is almost free of CO₂, but only %lld servers are free. A job that moves needs its data there first – the transfer takes time, and the network needs energy in the German grid. A busy server draws about 0.6 kW." to
+        "Vor dem Start entscheidest du, welche Jobs in Oslo laufen: Der Strom dort ist fast CO₂-frei, aber nur %lld Server sind frei. Ein Job, der umzieht, braucht dort zuerst seine Daten – die Übertragung dauert, und das Netz braucht Energie im deutschen Strommix. Ein ausgelasteter Server zieht rund 0,6 kW.",
     "below %lld g/kWh" to
         "unter %lld g/kWh",
     "Below 150 g/kWh, with deadline safety" to
@@ -436,8 +436,6 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Kundendaten ins Ausland verschoben",
     "Customer data stays in Germany" to
         "Kundendaten bleiben in Deutschland",
-    "Customer data: by contract it must stay in Germany." to
-        "Kundendaten: Laut Vertrag müssen sie in Deutschland bleiben.",
     "Daily report" to
         "Tagesbericht",
     "Dark doldrums" to
@@ -520,8 +518,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Alle Server laufen ständig – wie beim Referenzbetreiber.",
     "Everything allowed, search too, 4 cache servers (the team's plan)" to
         "Alles wie erlaubt, auch die Suche, 4 Cache-Server (Plan des Teams)",
-    "Everything you have learned, together. Waiting for clean hours within a day does not help now – every hour is dirty. What helps: use less (size the shop with autoscaling) and move what can wait for days into the wind: the training is due only at the end of the week, three of the batch jobs too. The others cannot wait. And a forecast five days ahead is a bet – look at it again when it changes." to
-        "Alles, was du gelernt hast, zusammen. Auf saubere Stunden innerhalb eines Tages zu warten hilft jetzt nicht – jede Stunde ist schmutzig. Was hilft: weniger verbrauchen (den Shop mit Autoscaling passend dimensionieren) und das, was Tage warten kann, in den Wind verschieben: Das Training ist erst am Ende der Woche fällig, drei der Batch-Jobs auch. Die anderen können nicht warten. Und eine Prognose fünf Tage voraus ist eine Wette – schau sie dir wieder an, wenn sie sich ändert.",
+    "Everything you have learned, together. Waiting for clean hours within a day does not help now – every hour is dirty. What helps: use less (size the shop with autoscaling) and move what can wait for days into the wind: the training is due only at the end of the week, three of the batch jobs too. The others cannot wait." to
+        "Alles, was du gelernt hast, zusammen. Auf saubere Stunden innerhalb eines Tages zu warten hilft jetzt nicht – jede Stunde ist schmutzig. Was hilft: weniger verbrauchen (den Shop mit Autoscaling passend dimensionieren) und das, was Tage warten kann, in den Wind verschieben: Das Training ist erst am Ende der Woche fällig, drei der Batch-Jobs auch. Die anderen können nicht warten.",
     "Exchange rates" to
         "Wechselkurse",
     "Expected load %lld" to
@@ -644,6 +642,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Rechtzeitig: %@",
     "In Warsaw a new server saves many times its embodied emissions; in Paris it saves little, because the electricity is almost free of CO₂ – there it only has to carry the growth and replace the failed servers, and later generations do that better. The question is not “new or old?” but “where does new hardware replace dirty electricity?”. The earlier the budget goes to the dirty grid, the more it saves – as long as the clean site keeps enough capacity." to
         "In Warschau spart ein neuer Server ein Vielfaches seiner Herstellungsemissionen; in Paris spart er wenig, weil der Strom fast frei von CO₂ ist – dort muss er nur das Wachstum tragen und die ausgefallenen Server ersetzen, und das können spätere Generationen besser. Die Frage ist nicht „neu oder alt?“, sondern „wo ersetzt neue Hardware schmutzigen Strom?“. Je früher das Budget in den schmutzigen Strommix geht, desto mehr spart es – solange der saubere Standort genug Kapazität behält.",
+    "Input: the orders of the last year, with the customers' names and addresses." to
+        "Eingabe: die Bestellungen des letzten Jahres, mit Namen und Adressen der Kunden.",
     "Invalidate the catalog pages when the prices change" to
         "Katalogseiten bei Preisänderung invalidieren",
     "invalidation" to
@@ -884,6 +884,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Bewertung jetzt",
     "Read from the core banking system." to
         "Aus dem Kernbankensystem gelesen.",
+    "Reads current prices and stock from the shop's live database in Frankfurt while it runs – many thousands of small queries." to
+        "Liest während des Laufs aktuelle Preise und Bestände aus der Live-Datenbank des Shops in Frankfurt – viele tausend kleine Abfragen.",
     "Recommendation model training" to
         "Training Empfehlungsmodell",
     "Recommendations" to
@@ -996,8 +998,6 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Abschalten spart Strom, aber keine Hardware: Die Herstellungsemissionen bleiben gleich.",
     "Takes effect at once. Switched-off servers stop immediately; switched-on servers boot for 30 minutes." to
         "Wirkt sofort. Abgeschaltete Server stoppen sofort, eingeschaltete starten 30 Minuten lang.",
-    "Talks to the live database in Frankfurt all the time: far away it takes %@ times as long." to
-        "Spricht ständig mit der Live-Datenbank in Frankfurt: Aus der Ferne dauert er %@-mal so lange.",
     "Target utilization" to
         "Zielauslastung",
     "Target utilization: %@" to

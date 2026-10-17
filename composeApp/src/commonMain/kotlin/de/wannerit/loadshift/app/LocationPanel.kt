@@ -27,7 +27,7 @@ fun LocationPanel(game: GameController) {
     val greenest = game.simulation.policy.batch == BatchMode.Greenest
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Txt(t("Location"), Type.heading)
-        Txt(t("Before the start you decide which jobs run in Oslo: the grid there is almost free of CO₂, but only %lld servers are free. A job that moves needs its data there first – the transfer takes time, and the network needs energy in the German grid.", model.servers[1]), Type.style(15, color = Palette.secondary))
+        Txt(t("Before the start you decide which jobs run in Oslo: the grid there is almost free of CO₂, but only %lld servers are free. A job that moves needs its data there first – the transfer takes time, and the network needs energy in the German grid. A busy server draws about 0.6 kW.", model.servers[1]), Type.style(15, color = Palette.secondary))
 
         Txt(t("Batch rule at both sites"), Type.style(15, FontWeight.SemiBold))
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -52,13 +52,9 @@ fun LocationPanel(game: GameController) {
                 Txt(t("%lld servers · %lld h · %@ – %@", job.spec.servers, job.spec.duration / GameTime.TICKS_PER_HOUR,
                     timeText(job.spec.arrival), timeText(job.spec.deadline)), Type.caption)
                 Txt(t("Data: %@ TB", Format.number(job.dataTenthsTb / 10.0, 1)), Type.caption)
-                if (job.stay == StayReason.RESIDENCY) {
-                    Txt(t("Customer data: by contract it must stay in Germany."), Type.style(12, FontWeight.SemiBold, Palette.red))
-                }
-                if (job.remoteDuration > 1_000) {
-                    Txt(t("Talks to the live database in Frankfurt all the time: far away it takes %@ times as long.",
-                        Format.number(job.remoteDuration / 1_000.0, 0)), Type.style(12, FontWeight.SemiBold, Palette.old))
-                }
+                // Facts, not verdicts: what follows from them is the player's to work out.
+                if (job.stay == StayReason.RESIDENCY) Txt(t("Input: the orders of the last year, with the customers' names and addresses."), Type.caption)
+                if (job.remoteDuration > 1_000) Txt(t("Reads current prices and stock from the shop's live database in Frankfurt while it runs – many thousands of small queries."), Type.caption)
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                     for ((s, site) in model.sites.withIndex()) {
                         Chip(t(site.title), (s == 1) == moved, enabled = game.canMove) { if ((s == 1) != moved) game.toggleMove(i) }
