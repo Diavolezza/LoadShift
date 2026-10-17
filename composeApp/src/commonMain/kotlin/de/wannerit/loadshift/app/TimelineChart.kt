@@ -35,7 +35,7 @@ import de.wannerit.loadshift.core.Simulation
  * uncertainty band – and below it the load and capacity, or one row per batch job. The vertical line is now.
  */
 @Composable
-fun TimelineChart(simulation: Simulation, version: Int, modifier: Modifier = Modifier) {
+fun TimelineChart(simulation: Simulation, version: Int, modifier: Modifier = Modifier, other: Pair<String, Simulation>? = null) {
     val measurer = rememberTextMeasurer()
     // Where the mouse is: the chart shows the values at that time.
     var hover by remember { mutableStateOf<Offset?>(null) }
@@ -50,11 +50,11 @@ fun TimelineChart(simulation: Simulation, version: Int, modifier: Modifier = Mod
         },
     ) {
         // Reading the version redraws the chart after every tick.
-        if (version >= 0) TimelineDrawing(simulation, measurer, this, hover).draw()
+        if (version >= 0) TimelineDrawing(simulation, measurer, this, hover, other).draw()
     }
 }
 
-private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeasurer, val scope: DrawScope, val hover: Offset?) {
+private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeasurer, val scope: DrawScope, val hover: Offset?, val other: Pair<String, Simulation>? = null) {
     val scenario = simulation.scenario
     val start = scenario.startTick
     val end = scenario.endTick
@@ -91,7 +91,10 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
                 val past = simulation.history.map { it.tick to it.intensityTenths }.toMutableList()
                 if (past.isNotEmpty() && past.last().first < now) past += now to grid.intensityTenths(now)
                 val forecast = future.map { Triple(it, grid.forecastTenths(it, now), grid.band(it - now)) }
-                val maxTenths = maxOf(10, (past.map { it.second } + forecast.map { it.second * (1_000 + it.third) / 1_000 }).maxOrNull() ?: 10)
+                // O10: the other site's grid as a thin line – the gap between the two is what moving a job saves.
+                val otherLine = other?.second?.let { o -> (start..end).map { it to if (it <= now) o.grid.intensityTenths(it) else o.grid.forecastTenths(it, now) } }
+                val maxTenths = maxOf(10, (past.map { it.second } + forecast.map { it.second * (1_000 + it.third) / 1_000 } +
+                    (otherLine?.map { it.second } ?: emptyList())).maxOrNull() ?: 10)
                 val scaleTop = niceCeiling(maxTenths / 10).toFloat()
                 fun yI(tenths: Int) = topBottom - (topBottom - topTop) * (tenths / 10f / scaleTop)
                 if (forecast.size > 1) {
@@ -124,6 +127,15 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
                         past.drop(1).forEach { lineTo(x(it.first), yI(it.second)) }
                     }
                     drawPath(line, Palette.ink.copy(alpha = 0.8f), style = Stroke(1.5f * density))
+                }
+                if (otherLine != null) {
+                    val color = Palette.accent
+                    val line = Path().apply {
+                        moveTo(x(otherLine[0].first), yI(otherLine[0].second))
+                        otherLine.drop(1).forEach { lineTo(x(it.first), yI(it.second)) }
+                    }
+                    drawPath(line, color.copy(alpha = 0.85f), style = Stroke(1.5f * density))
+                    text(other!!.first, Offset(right + 6f * density, yI(otherLine.last().second)), Type.style(11, FontWeight.SemiBold, color))
                 }
                 // O9: the eco threshold and the hours the eco mode was on.
                 scenario.streaming?.let { model ->

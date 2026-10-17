@@ -454,6 +454,48 @@ class LessonTest {
         assertEquals(3, stars("by device + eco 550"))
     }
 
+    @Test fun scenario10TwoSites() {
+        val scenario = Scenario.TWO_SITES
+        val ref = scenario.runLocation(emptySet(), scenario.referencePolicy)
+        val reference = ref.map { it.totals }.reduce { a, b -> a + b }
+        val asap = scenario.initialPolicy
+        val greenest = asap.copy(batch = BatchMode.Greenest)
+        val smart = setOf(0, 1, 5, 6, 7, 8)
+        val runs = listOf(
+            "all in Frankfurt, greenest" to (emptySet<Int>() to greenest),
+            "trainings to Oslo" to (setOf(1, 7) to asap),
+            "smart, asap" to (smart to asap),
+            "smart, greenest" to (smart to greenest),
+            "smart + videos" to (smart + 2 to asap),
+            "smart + price calc" to (smart + 4 + 9 to asap),
+            "smart + customer data" to (smart + 3 to asap),
+            "everything movable" to ((0..9).toSet() - 3 to asap),
+            "reports only" to (setOf(0, 5, 8) to asap),
+            "trainings + index" to (setOf(1, 6, 7) to asap),
+            "trainings + index, greenest" to (setOf(1, 6, 7) to greenest),
+        ).map { (name, p) -> name to scenario.runLocation(p.first, p.second) }
+        val lines = mutableListOf(title(scenario), HEADER + "  missed  transfer kWh  rules")
+        for ((name, sims) in listOf("reference: all in Frankfurt, asap" to ref) + runs) {
+            val total = sims.map { it.totals }.reduce { a, b -> a + b }
+            lines += line(name, total, reference) + "  " + total.deadlinesMissed + "  " + (total.transferEnergy / 1_000_000) +
+                "  " + total.rulesBroken + "  " + "★".repeat(scenario.stars(total, reference))
+        }
+        report(10, lines)
+        val byName = runs.toMap()
+        fun stars(name: String) = scenario.stars(byName.getValue(name).map { it.totals }.reduce { a, b -> a + b }, reference)
+        // Time shifting alone in the German grid, or only the trainings moved: one star.
+        assertEquals(1, stars("all in Frankfurt, greenest"))
+        assertEquals(1, stars("trainings to Oslo"))
+        // The jobs with much computing and little data in Oslo: two stars; with the greenest hours: three.
+        assertEquals(2, stars("smart, asap"))
+        assertEquals(3, stars("smart, greenest"))
+        // Terabytes over the network eat the saving; the price calculation misses its deadline far from its
+        // database; customer data must stay in Germany.
+        assertTrue(stars("smart + videos") <= 1)
+        assertEquals(0, stars("smart + price calc"))
+        assertEquals(0, stars("smart + customer data"))
+    }
+
     @Test fun e1MeasureFirst() {
         val scenario = Scenario.MEASURE_FIRST
         val reference = Simulation.reference(scenario)

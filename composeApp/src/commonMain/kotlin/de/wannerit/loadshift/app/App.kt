@@ -67,9 +67,14 @@ private fun initialScreen(options: LaunchOptions): Screen {
     scenario ?: return Screen.List
     if (!options.play) return Screen.Briefing(scenario)
     val game = GameController(scenario)
-    if (options.careful && game.hasBatch) {
+    if (options.careful && game.hasBatch && scenario.location == null) {
         // Plan like a careful player: every job into the greenest hours of the forecast.
         game.setPolicy(Policy(scenario.initialPolicy.capacity, BatchMode.Greenest))
+        game.advance(options.ticks)
+    } else if (options.careful && Control.LOCATION in scenario.controls) {
+        // Like a careful player: trainings, reports and search index to Oslo, the greenest hours.
+        for (job in listOf(0, 1, 5, 6, 7, 8)) game.toggleMove(job)
+        game.setLocationRule(true)
         game.advance(options.ticks)
     } else if (options.careful && Control.STREAMING in scenario.controls) {
         // Like a careful player: HD on phones and laptops, eco mode HD above 550 g/kWh.

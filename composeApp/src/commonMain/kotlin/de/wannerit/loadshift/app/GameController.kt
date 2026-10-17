@@ -22,6 +22,8 @@ import de.wannerit.loadshift.core.StreamingConfig
 import de.wannerit.loadshift.core.TrainingConfig
 import de.wannerit.loadshift.core.VmKind
 import de.wannerit.loadshift.core.forSite
+import de.wannerit.loadshift.core.forLocation
+import de.wannerit.loadshift.core.runLocation
 import de.wannerit.loadshift.core.plus
 
 /** Speed of the game clock: ticks (15 game minutes) per real second. */
@@ -39,15 +41,49 @@ enum class Speed(val ticksPerSecond: Int) {
  */
 class GameController(val scenario: Scenario) {
     /** O7: one simulation per site, all in step; the screen shows the [site] chosen. Other scenarios: one. */
-    private val siteCount = scenario.renewal?.sites?.size ?: 1
-    private fun newSims() = List(siteCount) { Simulation(scenario.forSite(it)) }
+    private val siteCount = scenario.renewal?.sites?.size ?: scenario.location?.sites?.size ?: 1
+    /** O10: the jobs that run in Oslo (chosen before the start). */
+    var moved by mutableStateOf(setOf<Int>())
+        private set
+    private fun siteScenario(site: Int, moved: Set<Int>) =
+        if (scenario.location != null) scenario.forLocation(site, moved) else scenario.forSite(site)
+    private fun newSims(policy: Policy? = null) = List(siteCount) { i ->
+        val s = siteScenario(i, moved)
+        if (policy != null) Simulation(s, policy) else Simulation(s)
+    }
     private var sims: List<Simulation> = newSims()
     var site by mutableIntStateOf(0)
     private val current: Simulation get() = sims[site]
     val simulation: Simulation get() = version.let { current }
 
     /** The reference operator's runs of the same scenario (one per site), for the comparison. */
-    private val references: List<Simulation> = List(siteCount) { Simulation.reference(scenario.forSite(it)) }
+    private val references: List<Simulation> = List(siteCount) { Simulation.reference(siteScenario(it, emptySet())) }
+
+    /** Two or more sites (O7, O10). */
+    val multiSite: Boolean get() = siteCount > 1
+
+    /** O10: moves a job to the other site and back – only before the start. */
+    val canMove: Boolean get() = scenario.location != null && current.history.isEmpty()
+    fun toggleMove(job: Int) {
+        if (!canMove) return
+        moved = if (job in moved) moved - job else moved + job
+        val policy = current.policy
+        sims = newSims(policy)
+        changed()
+    }
+
+    /** O10: the batch rule at both sites (as soon as possible or the greenest hours). */
+    fun setLocationRule(greenest: Boolean) {
+        for (sim in sims) {
+            sim.policy = sim.policy.copy(batch = if (greenest) BatchMode.Greenest else BatchMode.Asap)
+            sim.applyPolicy()
+        }
+        changed()
+    }
+
+    /** Batch jobs of all sites: done, and all. */
+    val jobsDone: Int get() = version.let { sims.sumOf { it.totals.jobsDone } }
+    val jobsTotal: Int get() = sims.sumOf { it.jobs.size }
     val reference: Simulation get() = references[site]
 
     /** Totals of all sites (O7), else of the one simulation. */
@@ -79,7 +115,7 @@ class GameController(val scenario: Scenario) {
     private val warnedJobs = mutableSetOf<Int>()
 
     val isFinished: Boolean get() = simulation.isFinished
-    val hasBatch: Boolean get() = scenario.batchJobs.isNotEmpty()
+    val hasBatch: Boolean get() = scenario.batchJobs.isNotEmpty() || scenario.location != null
     val hasInteractive: Boolean get() = scenario.interactive.peak > 0 || scenario.vms.isNotEmpty()
 
     private fun changed() {
@@ -572,6 +608,19 @@ class GameController(val scenario: Scenario) {
 
     /** "What if" for the debrief: the whole scenario replayed with other rules, with the same load and grid mix. */
     fun whatIf(): List<Pair<String, Totals>> {
+        if (scenario.location != null) {
+            fun run(moved: Set<Int>, greenest: Boolean) = scenario.runLocation(moved,
+                scenario.initialPolicy.copy(batch = if (greenest) BatchMode.Greenest else BatchMode.Asap)).map { it.totals }.reduce { a, b -> a + b }
+            val smart = setOf(0, 1, 5, 6, 7, 8)
+            return listOf(
+                t("All in Frankfurt, as soon as possible (reference)") to referenceTotals,
+                t("All in Frankfurt, greenest hours") to run(emptySet(), true),
+                t("Both trainings to Oslo") to run(setOf(1, 7), false),
+                t("Trainings, reports and search index to Oslo") to run(smart, false),
+                t("The same, greenest hours") to run(smart, true),
+                t("The same plus the product videos") to run(smart + 2, true),
+            )
+        }
         if (scenario.streaming != null) {
             fun run(c: StreamingConfig) = Simulation.replay(scenario, scenario.initialPolicy.copy(streaming = c)).totals
             val byDevice = StreamingConfig(listOf(Quality.HD, Quality.HD, Quality.UHD))

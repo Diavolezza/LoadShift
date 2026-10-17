@@ -326,15 +326,22 @@ private fun SideCard(scenario: Scenario, texts: ScenarioTexts, onStart: () -> Un
     val perServer = scenario.fleet.firstOrNull()?.kind?.capacity ?: 0
     Column(modifier.background(Palette.panel, RoundedCornerShape(20.dp)).padding(28.dp), verticalArrangement = Arrangement.spacedBy(22.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Fact(t(scenario.setting.region.title))
+            val sites = scenario.location?.sites
+            Fact(if (sites != null) t("%@ and %@", t(sites[0].region.title), t(sites[1].region.title)) else t(scenario.setting.region.title))
             Fact(t(scenario.setting.season.title))
             Fact(if (scenario.days == 1) t("1 day, from 00:00") else t("%lld days, from 00:00", scenario.days))
             if (scenario.interactive.peak > 0) {
                 Fact(t("%lld servers, %lld load units each", scenario.serverCount, perServer))
                 Fact(t("Evening peak about %lld load units", scenario.interactive.peak))
             } else {
-                Fact(t("%lld servers for batch jobs", scenario.serverCount))
-                Fact(t("%lld jobs with deadlines", scenario.batchJobs.size))
+                val location = scenario.location
+                if (location != null) {
+                    Fact(t("%lld servers in %@, %lld in %@", location.servers[0], t(location.sites[0].title), location.servers[1], t(location.sites[1].title)))
+                    Fact(t("%lld jobs with deadlines", location.jobs.size))
+                } else {
+                    Fact(t("%lld servers for batch jobs", scenario.serverCount))
+                    Fact(t("%lld jobs with deadlines", scenario.batchJobs.size))
+                }
             }
         }
         HDivider()

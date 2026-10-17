@@ -26,6 +26,7 @@ The app speaks English and German (switch on the start page); everything in this
 | O7 | Old iron | Embodied Carbon |
 | O8 | Training run | Carbon-Aware Training (Power Capping) |
 | O9 | Eco mode | Demand Shaping |
+| O10 | Two sites | Location Shifting |
 
 | | Engineering | Term |
 |---|---|---|

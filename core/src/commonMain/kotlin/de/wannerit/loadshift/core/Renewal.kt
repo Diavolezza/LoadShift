@@ -53,4 +53,5 @@ operator fun Totals.plus(o: Totals): Totals = Totals(
     jobsDone = jobsDone + o.jobsDone, deadlinesMissed = deadlinesMissed + o.deadlinesMissed,
     retiredEmbodied = retiredEmbodied + o.retiredEmbodied, failedServers = failedServers + o.failedServers,
     worstSiteSla = minOf(worstSiteSla, sla, o.worstSiteSla, o.sla),
+    rulesBroken = rulesBroken + o.rulesBroken, transferEnergy = transferEnergy + o.transferEnergy,
 )

@@ -336,7 +336,7 @@ Engineering track opens after scenario 1, because it builds on the SCI per reque
 | 7 | Old iron | Warsaw and Paris | 3 years (12 quarters, one game day each) | where and when new servers go: a budget of four a year | Two data centers with the same old fleet (24 servers, four years old). The shop grows by 15 % a year; every year a generation that needs 17 % less power; from year 3 the old servers fail. A new server does the work of two old ones; making it emits 550 kg, booked over six years. In the Polish grid a new server saves many times that, in the French grid hardly anything: new hardware first where the grid is dirty, at the clean site only what the capacity needs, as late as possible (G6, G1, D22). Term: Embodied Carbon. |
 | 8 | Training run | Germany, spring (calm, windy, calm) | 3 days | GPU servers in parallel, power cap, schedule (without a break or greenest hours) | A model needs a fixed amount of GPU work by the end of day 3. The greenest hours move the work into wind and sun; a power cap saves energy for a little time [S7]; fewer servers waste less time waiting for each other. A pause costs a checkpoint load (G3, G6). Term: Carbon-Aware Training (Power Capping). |
 | 9 | Eco mode | Poland, summer | 2 days | highest quality per device (4K, HD, SD), eco mode with threshold and eco quality | A streaming service: phones 40 %, laptops 25 %, TVs 35 %; 4K needs four times the work of HD. HD on phones and laptops costs hardly any rating; an eco mode lowers TVs to HD while the grid is dirty – in the evening, when most watch. The viewers' rating must stay at 93 % (G7). Term: Demand Shaping. |
-| 10 | Two sites | Norway and Germany | 3 days | moving workloads between sites | Batch and training move to Norway; interactive stays close to the users (latency) (G8). Term: Location Shifting. |
+| 10 | Two sites | Frankfurt and Oslo, autumn | 3 days | where each job runs (before the start), batch rule for both sites | Ten batch jobs; Oslo's grid emits a tenth of Frankfurt's, but has only 8 servers. A moved job needs its data there first: the transfer takes hours and network energy in the German grid. Move what computes much and has little data (trainings, reports, the search index); the product videos (30 TB) cost more in the network than Oslo saves, the price calculation talks to the live database in Frankfurt and takes three times as long far from it, customer data must stay in Germany. Location saves CO₂, not energy (G8, D23). Term: Location Shifting. |
 | 11 | Dark doldrums | Germany, winter, windless | 7 days | all | Little sun, no wind, high prices – everything together, with a hard SCI target. |
 
 **Scenario 5 in more detail.** Ten hosts (current CPU servers with RAM as a second capacity) and about 24 VMs of
@@ -816,6 +816,34 @@ music. Not taken over: maps, paths, the tower-and-creep rules, opponents, networ
 | the same plus eco HD above 550 g/kWh | −57.3 % | 93.2 % | ★★★ |
 | the same plus eco SD above 650 g/kWh | −59.1 % | 78.9 % | 0 |
 
+**As built in step 5, part 5** (scenario 10, "Two sites"):
+
+- Core: `LocationModel` – two sites (Frankfurt, Germany, 14 servers; Oslo, Norway, 8 servers) and ten
+  `LocationJob`s with data size, a duration far from the database (`remoteDuration`, the price calculation 3×) and a
+  reason to stay (`StayReason.RESIDENCY`, customer analytics). `Scenario.forLocation(site, moved)` builds the site's
+  scenario: Frankfurt keeps the jobs that stay and books the transfers (`Transfer`, 4 TB/h, 5 kWh/TB [S24], in the
+  German grid, at the tick they happen); Oslo gets the moved jobs, arriving once their data are there.
+  `Totals.transferEnergy` and `Totals.rulesBroken`; the first star needs no broken rule.
+- App: the two halls side by side; location panel (batch rule for both sites, which site the timeline shows, a card
+  per job with servers, hours, window, data, the notes on residency and database, the site switch and the transfer
+  with hours, kWh and kg CO₂); the switch works only before the start. The carbon lane draws the other site's grid as
+  a thin line. Goal "customer data stays in Germany"; end card with the transfer energy.
+- Goals ★★ −35 %, ★★★ −45 %.
+
+| Jobs in Oslo, rule | CO₂ vs. reference | Missed | Transfer kWh | Stars |
+|---|---:|---:|---:|---:|
+| none, as soon as possible (reference) | – | 0 | 0 | – |
+| none, greenest hours | −8.4 % | 0 | 0 | ★ |
+| the two trainings, as soon as possible | −33.0 % | 0 | 7 | ★ |
+| trainings, reports, search index, as soon as possible | −41.7 % | 0 | 25 | ★★ |
+| the same, greenest hours | −48.6 % | 0 | 25 | ★★★ |
+| the same plus the product videos | −0.7 % | 0 | 175 | ★ |
+| the same plus a price calculation | −46.3 % | 2 | 26 | 0 |
+| the same plus the customer analytics | −44.9 % | 0 | 35 | 0 (rule) |
+
+Energy rises with every move (the transfers), CO₂ falls: the scenario shows that Location Shifting saves carbon,
+not energy.
+
 ---
 
 ## 13 Decisions
@@ -844,6 +872,7 @@ music. Not taken over: maps, paths, the tower-and-creep rules, opponents, networ
 | D20 | Caching | its own Engineering scenario E3 instead of a backlog item; the TTL is a business rule per kind of data, breaking it gives stale answers and no stars; all kinds share the memory of whole cache servers (LRU), so the decisions are what to cache and how many servers; HyperLogLog and the materialized view as extra measures |
 | D21 | PUE | shown everywhere in scenario 6, but the stars count CO₂: the scenario is built so that the best PUE and the least CO₂ need different decisions (fewer servers raise the PUE, faster fans lower it) |
 | D22 | Hardware renewal (scenario 7) | quarterly steps (a game day stands for a quarter) instead of monthly steps (revises D5); two sites with a yearly budget, growth, new generations and failures, so that decisions come up over the three years; the question is where new hardware replaces dirty electricity, while the clean site keeps enough capacity |
+| D23 | Location Shifting (scenario 10) | the player decides per job before the start, not during the game: moving work between sites is a planning decision, and the data must be moved first; the limits come from the jobs themselves (data size, database latency, data residency), so that "everything to Norway" is wrong and the choice needs judgement |
 
 ---
 
@@ -874,3 +903,4 @@ music. Not taken over: maps, paths, the tower-and-creep rules, opponents, networ
 | S21 | L. Breslau, P. Cao, L. Fan, G. Phillips, S. Shenker: *Web Caching and Zipf-like Distributions: Evidence and Implications*, IEEE INFOCOM 1999. |
 | S22 | P. Flajolet, É. Fusy, O. Gandouet, F. Meunier: *HyperLogLog: the analysis of a near-optimal cardinality estimation algorithm*, AofA 2007. |
 | S23 | H. Che, Y. Tung, Z. Wang: *Hierarchical Web caching systems: modeling, design and experimental results*, IEEE JSAC 20(7), 2002 (the characteristic time of an LRU cache). |
+| S24 | J. Aslan, K. Mayers, J. G. Koomey, C. France: *Electricity Intensity of Internet Data Transmission: Untangling the Estimates*, Journal of Industrial Ecology 22(4), 2018 (0.06 kWh/GB in 2015, halving about every two years; other studies differ by orders of magnitude, and the energy of fixed networks grows less than proportionally with the data). The game uses 5 kWh/TB for a transfer between data centers. |

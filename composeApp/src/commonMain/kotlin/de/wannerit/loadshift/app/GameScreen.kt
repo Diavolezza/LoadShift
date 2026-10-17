@@ -64,12 +64,13 @@ fun GameScreen(game: GameController, onExit: () -> Unit, onNext: ((Scenario) -> 
             Row(Modifier.fillMaxWidth().weight(1f)) {
                 if (Control.PLACEMENT in game.scenario.controls) {
                     PlacementBoard(game, Modifier.weight(1f).fillMaxHeight())
-                } else if (game.hasRenewal) {
-                    // O7: both sites side by side.
-                    for ((i, site) in game.scenario.renewal!!.sites.withIndex()) {
+                } else if (game.multiSite) {
+                    // O7, O10: both sites side by side.
+                    val sites = game.scenario.renewal?.sites ?: game.scenario.location?.sites ?: emptyList()
+                    for ((i, site) in sites.withIndex()) {
                         Column(Modifier.weight(1f).fillMaxHeight()) {
                             Txt(t("%@ · grid on average %lld g/kWh", t(site.title), (site.region.annualMean + 5) / 10), Type.style(16, FontWeight.SemiBold), Modifier.padding(start = 16.dp, top = 12.dp))
-                            HallView(game.simulationOf(i).servers, game.version, interactive = true, batch = false, modifier = Modifier.weight(1f).fillMaxWidth(), compact = true)
+                            HallView(game.simulationOf(i).servers, game.version, interactive = game.hasRenewal, batch = !game.hasRenewal, modifier = Modifier.weight(1f).fillMaxWidth(), compact = true)
                         }
                     }
                 } else {
@@ -85,7 +86,8 @@ fun GameScreen(game: GameController, onExit: () -> Unit, onNext: ((Scenario) -> 
             }
             HDivider()
             if (game.hasRenewal) QuarterChart(game, Modifier.fillMaxWidth().height(timelineHeight).background(Palette.panel))
-            else TimelineChart(game.simulation, game.version, Modifier.fillMaxWidth().height(timelineHeight).background(Palette.panel))
+            else TimelineChart(game.simulation, game.version, Modifier.fillMaxWidth().height(timelineHeight).background(Palette.panel),
+                other = game.scenario.location?.let { m -> val o = 1 - game.site; t(m.sites[o].title) to game.simulationOf(o) })
         }
         if (game.showEnd) EndCard(game, onExit, onNext, onOverview)
     }
@@ -119,8 +121,8 @@ private fun TopBar(game: GameController, onExit: () -> Unit) {
                 if (sla >= simulation.scenario.slaTarget) Palette.ink else Palette.red)
         }
         if (game.hasBatch) {
-            Metric(t("Jobs done"), "${simulation.totals.jobsDone} / ${simulation.jobs.size}",
-                if (simulation.totals.deadlinesMissed == 0) Palette.ink else Palette.red)
+            Metric(t("Jobs done"), "${game.jobsDone} / ${game.jobsTotal}",
+                if (totals.deadlinesMissed == 0) Palette.ink else Palette.red)
         }
         simulation.scenario.streaming?.let { model ->
             val rating = simulation.totals.meanRating
@@ -219,13 +221,16 @@ private fun GoalBar(game: GameController) {
             GoalItem((change ?: 0) < 0, change != null,
                 if (change == null) t("CO₂ vs. reference") else t("CO₂ vs. reference: %@", Format.changePermille(change)))
         }
+        if (scenario.location != null) {
+            GoalItem(totals.rulesBroken == 0, true, if (totals.rulesBroken == 0) t("Customer data stays in Germany") else t("Customer data moved abroad"))
+        }
         if (game.hasBatch) {
             val missed = totals.deadlinesMissed
             GoalItem(missed == 0, change != null, if (missed == 0) t("No deadline missed") else t("Deadlines missed: %lld", missed))
             if (!game.hasInteractive) {
                 // CO₂ so far would favour waiting; the intensity of the work done is a fair measure.
                 val mine = totals.meanBatchIntensityTenths
-                val ref = game.reference.totals.meanBatchIntensityTenths
+                val ref = game.referenceTotals.meanBatchIntensityTenths
                 GoalItem(mine <= ref, totals.batchEnergy > 0,
                     if (totals.batchEnergy > 0) t("Batch work Ø %lld g/kWh (reference %lld)", (mine + 5) / 10, (ref + 5) / 10)
                     else t("Batch work: no job has run yet"))
@@ -307,7 +312,8 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
                         add(t("Resumed after a pause") to ("${you.trainingRestarts}" to "${ref.trainingRestarts}"))
                     }
                     if (game.hasBatch) {
-                        val n = game.simulation.jobs.size
+                        val n = game.jobsTotal
+                        if (game.scenario.location != null) add(t("Data transfers (kWh)") to (Format.number(you.transferEnergy / 1e6, 0) to Format.number(ref.transferEnergy / 1e6, 0)))
                         add(t("Jobs on time") to ("${n - you.deadlinesMissed} / $n" to "${n - ref.deadlinesMissed} / $n"))
                         add(t("Batch work, mean g/kWh") to ("${(you.meanBatchIntensityTenths + 5) / 10}" to "${(ref.meanBatchIntensityTenths + 5) / 10}"))
                     }

@@ -53,6 +53,9 @@ data class Totals(
     /** O9: the viewers' rating, summed over the streams (units of 1,000 streams × per mille), and the streams. */
     var ratingSum: Long = 0,
     var ratedStreams: Long = 0,
+    /** O10: rules broken by the choice of sites; energy of data transfers (mWh, in [facilityEnergy]). */
+    var rulesBroken: Int = 0,
+    var transferEnergy: Long = 0,
 ) {
     /** O9: the viewers' mean rating, per mille. */
     val meanRating: Int get() = if (ratedStreams == 0L) 1_000 else (ratingSum / ratedStreams).toInt()
@@ -196,6 +199,7 @@ class Simulation private constructor(
         missedCounted = mutableSetOf(),
         batchRuleSeen = null,
     ) {
+        totals.rulesBroken = scenario.rulesBroken
         // The start shows the servers and the batch plans as the policy wants them (the first tick would do the same).
         applyCapacityPolicy()
         planBatchJobs()
@@ -370,6 +374,12 @@ class Simulation private constructor(
         val intensity = plannedAt?.let { grid.forecastTenths(tick, it) } ?: grid.intensityTenths(tick)
         val facilityEnergy = facilityPower * Units.MILLIWATT_HOURS_PER_WATT_TICK
 
+        // O10: data transfers leaving this site now, in its grid.
+        for (transfer in scenario.transfers) if (transfer.tick == tick) {
+            totals.facilityEnergy += transfer.energy
+            totals.transferEnergy += transfer.energy
+            totals.operational += Units.emissions(transfer.energy, intensity)
+        }
         totals.ticks += 1
         totals.demand += demand
         totals.served += served

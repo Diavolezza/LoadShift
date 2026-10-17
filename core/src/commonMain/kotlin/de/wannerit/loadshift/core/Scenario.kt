@@ -40,6 +40,9 @@ enum class Control {
 
     /** O9: the highest quality per device and the eco mode of a streaming service. */
     STREAMING,
+
+    /** O10: which batch jobs run at which site, and the batch rule. */
+    LOCATION,
 }
 
 /** The special goal of a scenario: the third star. */
@@ -113,6 +116,12 @@ data class Scenario(
     val training: TrainingModel? = null,
     /** O9: a video streaming service. */
     val streaming: StreamingModel? = null,
+    /** O10: two sites for the batch work; the jobs that move are the player's choice. */
+    val location: LocationModel? = null,
+    /** O10: data transfers this site books (energy at its grid). */
+    val transfers: List<Transfer> = emptyList(),
+    /** O10: rules broken by the choice of sites (a job with customer data moved abroad). */
+    val rulesBroken: Int = 0,
 ) {
     /** Expected interactive work at a tick: the web load or the VMs' profiles (what an operator can plan with). */
     fun expectedDemand(tick: Int): Int = interactive.expected(tick) + vms.sumOf { it.expectedMilli(tick) } / 1_000
@@ -130,7 +139,8 @@ data class Scenario(
     fun goalsMet(totals: Totals, reference: Totals): GoalsMet {
         val rules = totals.sla >= slaTarget && totals.worstSiteSla >= slaTarget &&
             (training == null || totals.trainingFinishedAt != null) &&
-            (streaming == null || totals.meanRating >= streaming.ratingTarget) && totals.deadlinesMissed == 0 && totals.emissions < reference.emissions &&
+            (streaming == null || totals.meanRating >= streaming.ratingTarget) &&
+            totals.rulesBroken == 0 && totals.deadlinesMissed == 0 && totals.emissions < reference.emissions &&
             (staleLimit == null || totals.stalePerTenThousand <= staleLimit)
         val reduction = rules && totals.emissions * 1_000 <= reference.emissions * (1_000 - goals.reduction)
         val special = rules && when (val goal = goals.special) {
@@ -317,6 +327,39 @@ data class Scenario(
             ),
         )
 
+        /**
+         * Scenario 10, "Two sites": the batch work of the company runs in Frankfurt; a hydro-powered data center in Oslo
+         * has eight servers free. Which jobs should move? Those with a lot of computing and little data; not the ones
+         * with terabytes of data, not the ones that talk to the database in Frankfurt all the time, and not the one
+         * with customer data that must stay in Germany.
+         */
+        val TWO_SITES = Scenario(
+            number = 10, title = "Two sites", setting = GridSetting(GridRegion.GERMANY, Season.AUTUMN), days = 3,
+            seed = 10, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 14)),
+            interactive = InteractiveLoad(peak = 0),
+            controls = setOf(Control.LOCATION),
+            batchJobs = emptyList(),
+            initialPolicy = Policy(CapacityMode.Manual(0), BatchMode.Asap),
+            referencePolicy = Policy(CapacityMode.Manual(0), BatchMode.Asap),
+            goals = StarGoals(350, SpecialGoal.Reduction(450)),
+            location = LocationModel(
+                sites = listOf(Site("Frankfurt", GridRegion.GERMANY), Site("Oslo", GridRegion.NORWAY)),
+                servers = listOf(14, 8),
+                jobs = listOf(
+                    LocationJob(BatchJobSpec.of("Daily report", 4, 3, GameTime.at(0, 0), GameTime.at(0, 18)), 2),
+                    LocationJob(BatchJobSpec.of("Recommendation model training", 8, 10, GameTime.at(0, 6), GameTime.at(2, 12)), 10),
+                    LocationJob(BatchJobSpec.of("Product video encoding", 6, 5, GameTime.at(0, 8), GameTime.at(1, 20)), 300),
+                    LocationJob(BatchJobSpec.of("Customer analytics", 5, 4, GameTime.at(0, 12), GameTime.at(1, 12)), 20, stay = StayReason.RESIDENCY),
+                    LocationJob(BatchJobSpec.of("Price calculation", 4, 3, GameTime.at(1, 0), GameTime.at(1, 7)), 1, remoteDuration = 3_000),
+                    LocationJob(BatchJobSpec.of("Daily report", 4, 3, GameTime.at(1, 0), GameTime.at(1, 18)), 2),
+                    LocationJob(BatchJobSpec.of("Search index", 4, 4, GameTime.at(1, 6), GameTime.at(2, 18)), 30),
+                    LocationJob(BatchJobSpec.of("Image recognition training", 6, 8, GameTime.at(1, 12), GameTime.at(2, 22)), 5),
+                    LocationJob(BatchJobSpec.of("Daily report", 4, 3, GameTime.at(2, 0), GameTime.at(2, 18)), 2),
+                    LocationJob(BatchJobSpec.of("Price calculation", 4, 3, GameTime.at(2, 0), GameTime.at(2, 7)), 1, remoteDuration = 3_000),
+                ),
+            ),
+        )
+
         /** The 24 VMs of scenario 5. */
         private val SHOP_VMS = List(8) { VmKind.FRONT_END } + List(6) { VmKind.BATCH_WORKER } + List(4) { VmKind.REPORTING } +
             List(2) { VmKind.DATABASE } + List(4) { VmKind.CACHE }
@@ -450,6 +493,6 @@ data class Scenario(
             staleLimit = 5,
         )
 
-        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, OLD_IRON, TRAINING_RUN, ECO_MODE, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS)
+        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, OLD_IRON, TRAINING_RUN, ECO_MODE, TWO_SITES, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS)
     }
 }

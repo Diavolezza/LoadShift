@@ -23,6 +23,21 @@ class ScenarioTexts(
 ) {
     companion object {
         fun of(scenario: Scenario): ScenarioTexts = when (scenario.number) {
+            10 -> ScenarioTexts(
+                situation = "The web shop's batch cluster in Frankfurt: 14 servers in Germany's autumn grid, about 335 g CO₂ per kWh. The company also rents 8 servers in Oslo – Norway's grid runs on hydropower and emits about 30 g, a tenth. Over three days ten jobs arrive: daily reports, two AI trainings, video encoding, customer analytics, a search index and price calculations.",
+                idea = "Location Shifting: let the work run where the electricity is clean. But work does not travel alone – its data must go along. Moving terabytes takes hours and energy in the network; a job that talks to a database all the time becomes slow far away from it; and some data may not leave the country at all. Move what needs much computing and little data.",
+                screen = listOf(
+                    "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals: every job on time, customer data in Germany and less CO₂.",
+                    "Both sites side by side: grey servers are off, light blue ones are booting, the amber bar shows a server working on a job.",
+                    "Location: for every job its servers, duration, time window and data – and where it runs. Decide before the start; above it the batch rule for both sites.",
+                    "Carbon intensity of the grid at the chosen site with the forecast, and below it one row per job of that site – light: the time between arrival and deadline, filled: running or done.",
+                ),
+                comparedWith = "compared with the reference operator, who runs every job in Frankfurt as soon as it arrives.",
+                rules = "every job by its deadline, customer data in Germany and less CO₂ than the reference",
+                remark = "Location saves more than time here: no hour in the German grid comes close to Norway's hydropower. Look at the energy: it rose – the transfers need energy too – and still the CO₂ fell. Location Shifting saves carbon, not energy. The trainings were the best candidates – hours of computing for little data. The videos were the worst: 30 terabytes through the network cost more CO₂ than Oslo saved, and the transfer took most of a working day. The price calculation needs its database in Frankfurt and misses its deadline far from it; customer data may not leave the country by contract. How much energy a terabyte in the network needs is uncertain – estimates differ by a factor of ten and more [S24] – but the lesson stays: data have weight. And clean electricity is not unlimited: if everyone moves to Norway, it runs short there. Location Shifting works best with capacity that is there anyway.",
+                term = "Location Shifting",
+                termText = "Moving flexible work to the place where the electricity is cleanest. Together with Time Shifting it is called Demand Shifting – part of the Green Software Foundation principle Carbon Awareness. Its limits: moving the data, the latency to users and other systems, and where data may be stored.",
+            )
             9 -> ScenarioTexts(
                 situation = "A video streaming service with its servers in Poland. It is summer: the sun makes the middays cleaner, but in the evening – when most people watch – coal carries the grid. The viewers watch on phones (40 %), laptops (25 %) and TVs (35 %). Today every device gets 4K.",
                 idea = "The cleanest energy is the energy not used. 4K needs four times the work of HD – and on a phone screen nobody sees the difference. Demand shaping goes one step further: while the grid is dirty, the service lowers the quality a little, as far as the viewers accept it. Their rating is the limit.",

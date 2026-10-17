@@ -44,7 +44,7 @@ fun HallView(
             horizontalArrangement = Arrangement.spacedBy(18.dp),
         ) {
             if (compact) {
-                LegendSwatch(Palette.old, t("Old server"))
+                if (batch) LegendSwatch(Palette.slab, t("Batch job"), Palette.batchLoad) else LegendSwatch(Palette.old, t("Old server"))
                 Spacer(Modifier.weight(1f))
                 Txt(t("%lld of %lld servers on", on, servers.size), Type.callout, maxLines = 1)
                 return@Row
