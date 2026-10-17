@@ -35,6 +35,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -61,10 +64,32 @@ fun RackIcon(size: Dp) {
     }
 }
 
+/** What Load Shift is, who made it, which data and font it uses (About window on the desktop, overlay on the web). */
+@Composable
+fun AboutContent(modifier: Modifier = Modifier) {
+    Column(modifier.padding(28.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+            RackIcon(48.dp)
+            Column {
+                Txt("Load Shift", Type.style(30, FontWeight.Bold))
+                Txt(t("Version %@", BuildInfo.VERSION), Type.callout)
+            }
+        }
+        Txt(t("A teaching game about Green IT: run a data center so that it serves its users reliably and emits as little CO₂ as possible – by switching servers, shifting work in time and, later, writing better software."), Type.body)
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Txt("© 2026 Gerhard Wanner · " + t("MIT License"), Type.callout)
+            Txt(t("Grid data: Electricity Maps, Grid Review 2025 (life-cycle, imports included)"), Type.caption)
+            Txt(t("Font: Inter, SIL Open Font License 1.1"), Type.caption)
+            Txt(t("Built with Kotlin and Compose Multiplatform"), Type.caption)
+        }
+    }
+}
+
 /** The campaign: all scenarios with their stars; a scenario opens when the one before has a star. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ScenarioListScreen(onSelect: (Scenario) -> Unit) {
+    var about by remember { mutableStateOf(false) }
     BoxWithConstraints(Modifier.fillMaxSize().background(Palette.background)) {
         val side = (maxWidth * 0.05f).coerceAtLeast(32.dp)
         Column(
@@ -83,7 +108,16 @@ fun ScenarioListScreen(onSelect: (Scenario) -> Unit) {
                     ScenarioCard(scenario, Progress.isUnlocked(scenario.number)) { onSelect(scenario) }
                 }
             }
-            Txt(t("More scenarios follow: headroom and autoscaling, cooling, hardware, AI training, eco mode, two sites."), Type.style(20, color = Palette.secondary))
+            Txt(t("More scenarios follow: headroom and autoscaling, consolidation, cooling, hardware, AI training, eco mode, two sites – and an engineering track: profiling and growing data."), Type.style(20, color = Palette.secondary))
+            Txt(t("About Load Shift"), Type.style(16, FontWeight.SemiBold, Palette.accent), Modifier.clickable { about = true }.padding(vertical = 4.dp))
+        }
+        if (about) {
+            Box(
+                Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.35f)).clickable { about = false },
+                contentAlignment = Alignment.Center,
+            ) {
+                AboutContent(Modifier.widthIn(max = 520.dp).background(Palette.panel, RoundedCornerShape(20.dp)))
+            }
         }
     }
 }

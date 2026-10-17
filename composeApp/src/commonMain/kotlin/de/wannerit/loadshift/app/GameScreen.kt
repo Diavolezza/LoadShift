@@ -75,17 +75,17 @@ private fun TopBar(game: GameController, onExit: () -> Unit) {
     val time = GameTime(shown)
     val intensity = simulation.grid.intensity(minOf(shown, simulation.scenario.endTick - 1))
     val last = simulation.history.lastOrNull()
-    Row(
-        Modifier.fillMaxWidth().background(Palette.panel).padding(horizontal = 20.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(22.dp),
-    ) {
-        Txt("‹", Type.style(34, FontWeight.SemiBold), Modifier.clickable(onClick = onExit).padding(horizontal = 6.dp))
-        Column {
-            Txt(t("Day %lld", time.day - GameTime.START.day + 1), Type.caption)
-            Txt(time.clockText, Type.style(30, FontWeight.SemiBold))
+    // Left the controls, the clock in the middle, the figures on the right: the buttons stay where they are.
+    Box(Modifier.fillMaxWidth().background(Palette.panel).padding(horizontal = 20.dp, vertical = 10.dp)) {
+        Row(Modifier.align(Alignment.CenterStart), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(22.dp)) {
+            Txt("‹", Type.style(34, FontWeight.SemiBold), Modifier.clickable(onClick = onExit).padding(horizontal = 6.dp))
+            SpeedControl(game)
         }
-        SpeedControl(game)
-        Spacer(Modifier.weight(1f))
+        Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
+            Txt(t("Day %lld", time.day - GameTime.START.day + 1), Type.caption)
+            Txt(time.clockText, Type.style(30, FontWeight.SemiBold).copy(fontFeatureSettings = "tnum"))
+        }
+        Row(Modifier.align(Alignment.CenterEnd), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(22.dp)) {
         Metric(t("Grid now"), "$intensity g/kWh", Palette.intensity(intensity))
         Metric(t("CO₂ so far"), "${Format.kilograms(simulation.totals.emissions)} kg")
         if (game.hasInteractive) {
@@ -97,6 +97,7 @@ private fun TopBar(game: GameController, onExit: () -> Unit) {
                 if (simulation.totals.deadlinesMissed == 0) Palette.ink else Palette.red)
         }
         Metric(t("Power"), "${Format.kilowatts(last?.facilityPower ?: 0)} kW")
+        }
     }
 }
 

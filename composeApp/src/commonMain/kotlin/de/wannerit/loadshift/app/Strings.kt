@@ -48,6 +48,10 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Eine Regel entscheidet, wann jeder Job startet – du planst nicht mehr jeden Job von Hand. Wähle eine Regel und übernimm sie; du kannst sie jederzeit ändern.",
     "A scheduler starts jobs by rules that look at the carbon intensity – now or in the forecast. It automates Time Shifting; Google shifts flexible work in its data centers this way, with day-ahead forecasts." to
         "Ein Scheduler startet Jobs nach Regeln, die auf die CO₂-Intensität schauen – jetzt oder in der Prognose. Das automatisiert Time Shifting; Google verschiebt so flexible Arbeit in seinen Rechenzentren, mit Prognosen für den nächsten Tag.",
+    "A teaching game about Green IT: run a data center so that it serves its users reliably and emits as little CO₂ as possible – by switching servers, shifting work in time and, later, writing better software." to
+        "Ein Lernspiel zu Green IT: Betreibe ein Rechenzentrum so, dass es seine Nutzer zuverlässig bedient und möglichst wenig CO₂ ausstößt – durch Schalten von Servern, Verschieben von Arbeit in der Zeit und später durch bessere Software.",
+    "About Load Shift" to
+        "Über Load Shift",
     "Active: %@" to
         "Aktiv: %@",
     "All on" to
@@ -116,6 +120,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Startet",
     "booting" to
         "startet",
+    "Built with Kotlin and Compose Multiplatform" to
+        "Gebaut mit Kotlin und Compose Multiplatform",
     "by hand" to
         "von Hand",
     "Capacity" to
@@ -190,6 +196,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Fest",
     "Fixed: %lld servers all day" to
         "Fest: %lld Server den ganzen Tag",
+    "Font: Inter, SIL Open Font License 1.1" to
+        "Schrift: Inter, SIL Open Font License 1.1",
     "Forecast while it runs: %lld g/kWh · start by %@" to
         "Prognose während der Laufzeit: %1\$lld g/kWh · spätestens %2\$@",
     "France" to
@@ -206,6 +214,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Sauberste Stunden nach Prognose",
     "greenest hours" to
         "sauberste Stunden",
+    "Grid data: Electricity Maps, Grid Review 2025 (life-cycle, imports included)" to
+        "Netzdaten: Electricity Maps, Grid Review 2025 (Lebenszyklus, Importe eingerechnet)",
     "Grid now" to
         "Netz jetzt",
     "Image conversion" to
@@ -228,8 +238,10 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Mittlere Auslastung",
     "Missed" to
         "Verpasst",
-    "More scenarios follow: headroom and autoscaling, cooling, hardware, AI training, eco mode, two sites." to
-        "Weitere Szenarien folgen: Reserve und Autoscaling, Kühlung, Hardware, KI-Training, Eco-Modus, zwei Standorte.",
+    "MIT License" to
+        "MIT-Lizenz",
+    "More scenarios follow: headroom and autoscaling, consolidation, cooling, hardware, AI training, eco mode, two sites – and an engineering track: profiling and growing data." to
+        "Weitere Szenarien folgen: Reserve und Autoscaling, Konsolidierung, Kühlung, Hardware, KI-Training, Eco-Modus, zwei Standorte – und ein Engineering-Strang: Profiling und wachsende Daten.",
     "Moving flexible work into the hours when the grid is cleanest. Together with Location Shifting it is called Demand Shifting – part of the Green Software Foundation principle Carbon Awareness." to
         "Flexible Arbeit in die Stunden verschieben, in denen der Strom am saubersten ist. Zusammen mit Location Shifting heißt das Demand Shifting – ein Teil des Prinzips Carbon Awareness der Green Software Foundation.",
     "New rule" to
@@ -360,6 +372,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Auslastung ≥ %@",
     "Utilization" to
         "Auslastung",
+    "Version %@" to
+        "Version %@",
     "Wait for the sun" to
         "Warten auf die Sonne",
     "waiting" to

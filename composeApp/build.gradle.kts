@@ -7,6 +7,19 @@ plugins {
     alias(libs.plugins.composeCompiler)
 }
 
+// The version from gradle.properties (written by "./build.sh commit"), for the About window.
+val generateBuildInfo by tasks.registering {
+    val out = layout.buildDirectory.dir("generated/buildinfo/kotlin")
+    val appVersion = project.version.toString()
+    inputs.property("version", appVersion)
+    outputs.dir(out)
+    doLast {
+        val file = out.get().file("de/wannerit/loadshift/app/BuildInfo.kt").asFile
+        file.parentFile.mkdirs()
+        file.writeText("package de.wannerit.loadshift.app\n\ninternal object BuildInfo {\n    const val VERSION = \"$appVersion\"\n}\n")
+    }
+}
+
 kotlin {
     jvm("desktop")
     @OptIn(ExperimentalWasmDsl::class)
@@ -19,6 +32,7 @@ kotlin {
     }
 
     sourceSets {
+        commonMain.configure { kotlin.srcDir(generateBuildInfo) }
         commonMain.dependencies {
             implementation(project(":core"))
             implementation(libs.compose.runtime)

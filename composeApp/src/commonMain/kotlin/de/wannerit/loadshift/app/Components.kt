@@ -166,7 +166,7 @@ fun Card(modifier: Modifier = Modifier, color: Color = Palette.panel, padding: D
 fun Metric(title: String, value: String, color: Color = Palette.ink) {
     Column {
         Txt(title, Type.caption)
-        Txt(value, Type.style(21, FontWeight.SemiBold, color))
+        Txt(value, Type.style(21, FontWeight.SemiBold, color).copy(fontFeatureSettings = "tnum"))
     }
 }
 

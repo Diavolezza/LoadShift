@@ -223,7 +223,7 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
     private fun niceCeiling(value: Int): Int {
         var magnitude = 1
         while (magnitude * 10 <= value) magnitude *= 10
-        for (step in listOf(1, 2, 5, 10)) if (step * magnitude >= value) return step * magnitude
+        for (step in listOf(1, 2, 3, 4, 6, 8, 10)) if (step * magnitude >= value) return step * magnitude
         return 10 * magnitude
     }
 }

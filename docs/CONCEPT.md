@@ -25,10 +25,11 @@ the yardstick before the first optimisation.
 | G2 | Energy efficiency | Idle servers draw power too. Switch off what is not needed; size capacity to the load. | 1 |
 | G3 | Carbon awareness: time shifting | The same work emits less CO₂ when the grid is clean. Flexible work waits for the clean hours. | 2 |
 | G4 | Trade-offs | Reliability (SLA), money and CO₂ pull in different directions. There is no setting that wins everywhere. | 4 |
-| G5 | Facility efficiency | Cooling costs energy; PUE shows how much. | 5 |
-| G6 | Hardware efficiency | High utilization and a long service life; manufacturing emissions count too. | 6 |
-| G7 | Demand shaping | When the grid is dirty, do less: lower quality, fewer extras. | 8 |
-| G8 | Carbon awareness: location shifting | Where the work runs matters even more than when: Poland emits about 22 times as much per kWh as Norway. It comes last because it needs a second site; scenario 1's debrief already names it as an outlook. | 9 |
+| G5 | Facility efficiency | Cooling costs energy; PUE shows how much. | 6 |
+| G6 | Hardware efficiency | High utilization (consolidation) and a long service life; manufacturing emissions count too. | 5 |
+| G7 | Demand shaping | When the grid is dirty, do less: lower quality, fewer extras. | 9 |
+| G8 | Carbon awareness: location shifting | Where the work runs matters even more than when: Poland emits about 22 times as much per kWh as Norway. It comes last because it needs a second site; scenario 1's debrief already names it as an outlook. | 10 |
+| G9 | Software efficiency | Less work per request and per job: measure first (profiling), then fix the hot spots; algorithms and data structures matter more as the data grows. Less work also means fewer servers. | E1 (Engineering track) |
 
 **Audience:** students in a Green IT lecture and people who want to understand why software and operations
 decisions change emissions. No prior knowledge is needed; every term is explained where it appears.
@@ -318,20 +319,54 @@ account are needed; the lecturer collects the cards. No online ranking at first 
 
 ## 9 Scenarios (campaign)
 
-Ten scenarios, each introducing one idea. Region and season are chosen so that the idea has a clear effect.
+Two tracks (D17): **Operations** – running the data center – and **Engineering** – the software that runs in it.
+Each scenario introduces one idea. Region and season are chosen so that the idea has a clear effect. The
+Engineering track opens after scenario 1, because it builds on the SCI per request from the first debrief.
+
+### 9.1 Operations
 
 | # | Title | Region, season | Length | New controls | Idea |
 |---|---|---|---|---|---|
-| 1 | Night shift | Germany, autumn | 1 day | servers on/off by hand | Idle power: at night 20 % load, all servers on wastes energy; switching on takes 30 minutes, so plan ahead (G2). |
-| 2 | Wait for the sun | Spain (annual profile) | 2 days | batch jobs planned by hand, forecast | Reports and backups move into the midday dip – the night is not clean in a solar grid (G3). |
-| 3 | When the wind drops | Great Britain, winter | 3 days | batch rules (fixed hour, greenest hours, threshold), deadline safety | The rules automate what the player planned by hand in scenario 2. A fixed threshold works while the wind blows and fails when it drops: without the deadline safety jobs miss their deadlines, with it they start at the last moment in dirty hours. A rule that compares the hours of the (uncertain) forecast adapts to the weather (G3, D15). |
-| 4 | Headroom | Germany, winter | 2 days | capacity rules with autoscaling (target utilization), money, SLA penalty | Autoscaling automates what the player did by hand in scenario 1; a marketing campaign doubles the load: too little headroom costs SLA, too much costs energy (G4). |
-| 5 | Heat wave | Germany, summer | 3 days | cooling type, setpoint | PUE rises with the outside temperature; setpoint and free cooling (G5). |
-| 6 | Old iron | France and Poland | 3 years (monthly steps) | buying and retiring servers | Replacing hardware pays off in Poland, hardly in France (G6, G1). |
-| 7 | Training run | Germany, spring | 3 days | AI training, power cap | Run the training in clean hours and cap the GPUs (G3, G6). |
-| 8 | Eco mode | Poland, summer | 2 days | streaming eco mode | Lower quality when the grid is dirty (G7). |
-| 9 | Two sites | Norway and Germany | 3 days | moving workloads between sites | Batch and training move to Norway; interactive stays close to the users (latency) (G8). |
-| 10 | Dark doldrums | Germany, winter, windless | 7 days | all | Little sun, no wind, high prices – everything together, with a hard SCI target. |
+| 1 | Night shift | Germany, autumn | 1 day | servers on/off by hand | Idle power: at night 20 % load, all servers on wastes energy; switching on takes 30 minutes, so plan ahead (G2). Term: Rightsizing. |
+| 2 | Wait for the sun | Spain (annual profile) | 2 days | batch jobs planned by hand, forecast | Reports and backups move into the midday dip – the night is not clean in a solar grid (G3). Term: Time Shifting. |
+| 3 | When the wind drops | Great Britain, winter | 3 days | batch rules (fixed hour, greenest hours, threshold), deadline safety | The rules automate what the player planned by hand in scenario 2. A fixed threshold works while the wind blows and fails when it drops: without the deadline safety jobs miss their deadlines, with it they start at the last moment in dirty hours. A rule that compares the hours of the (uncertain) forecast adapts to the weather (G3, D15). Term: Carbon-Aware Scheduling. |
+| 4 | Headroom | Germany, winter | 2 days | capacity rules with autoscaling (target utilization), money, SLA penalty | Autoscaling automates what the player did by hand in scenario 1; a marketing campaign doubles the load: too little headroom costs SLA, too much costs energy (G4). Term: Autoscaling. |
+| 5 | Consolidation | Germany, autumn | 1 day | placing VMs on hosts by hand (two dimensions: CPU and RAM) | Bin packing: fewer hosts running means less idle power. Pack by the peaks, not the means; VMs with opposite daily profiles fit together; often the RAM is full before the CPU; packing too tight lets the peaks collide (G6, D18). Term: Consolidation (Bin Packing). |
+| 6 | Heat wave | Germany, summer | 3 days | cooling type, setpoint | PUE rises with the outside temperature; setpoint and free cooling (G5). |
+| 7 | Old iron | France and Poland | 3 years (monthly steps) | buying and retiring servers | Replacing hardware pays off in Poland, hardly in France (G6, G1). |
+| 8 | Training run | Germany, spring | 3 days | AI training, power cap | Run the training in clean hours and cap the GPUs (G3, G6). |
+| 9 | Eco mode | Poland, summer | 2 days | streaming eco mode | Lower quality when the grid is dirty (G7). Term: Demand Shaping. |
+| 10 | Two sites | Norway and Germany | 3 days | moving workloads between sites | Batch and training move to Norway; interactive stays close to the users (latency) (G8). Term: Location Shifting. |
+| 11 | Dark doldrums | Germany, winter, windless | 7 days | all | Little sun, no wind, high prices – everything together, with a hard SCI target. |
+
+**Scenario 5 in more detail.** Ten hosts (current CPU servers with RAM as a second capacity) and about 24 VMs of
+the web shop, each with a RAM size and a daily CPU profile: shop front ends peak in the evening, batch VMs at
+night, reporting in the morning. The player drags the VMs onto hosts before the day starts; hosts without a VM are
+off. During the day a host whose VMs together need more CPU than it has makes requests slow (SLA). The debrief's
+"what if" shows the classic heuristics – one VM per host, First Fit Decreasing by mean CPU, by peak CPU, by RAM,
+and by peak CPU and RAM together – so the player sees that bin packing is a hard problem (NP-hard) where a simple
+heuristic gets close. A later rule ("place automatically") follows the pattern of D11 and D13.
+
+### 9.2 Engineering
+
+The time scale is coarser: one step is a sprint (a week) or a month; within a step the day simulation runs as
+before. The player has a backlog of improvements and a team with a fixed capacity per step. Each item changes the
+work per request or per job; the effect shows in the SCI per 1,000 requests and in the servers needed.
+
+| # | Title | Setting | Length | New controls | Idea |
+|---|---|---|---|---|---|
+| E1 | Measure first | web shop, Germany | 4 weeks (weekly sprints) | engineering backlog, team capacity, profiling | The team's estimates of where the energy goes are wrong. One sprint of profiling shows the real hot spots (for example an N+1 database query and JSON serialization, not the image service everybody suspects). Optimizing by guess wastes sprints; less work per request also means fewer servers and less hardware (G9, G1). Term: Profiling. |
+| E2 | Growing data | web shop, Germany | 12 months (monthly steps) | backlog with algorithmic complexity | The data grows every month. A batch job with O(n²) and a lookup in a list instead of a hash map get more expensive month by month; a database index stops a query from scanning everything. Fixing early saves the most; waiting costs energy and, at some point, hardware (G9, G6). Term: Algorithmic Complexity. |
+
+Backlog items (game values, to be tuned in the lesson tests): database index, removing an N+1 query, a cache
+(saves work, but the cache server draws power too), compressing images, pagination instead of loading
+everything, a faster algorithm or data structure, rewriting a CPU-bound service in a compiled language. For the
+last one the game cites Pereira et al. [S19] and the critique of such rankings [S20] and says what the numbers do not show: they come from CPU-bound
+benchmarks; for a typical web service waiting on the database the language matters much less.
+
+**Not in the game:** writing or reading real code and measuring it. That belongs in exercises of the lecture
+(for example measuring Java code with RAPL-based tools); measured numbers from such exercises can become the values
+of backlog items.
 
 Each scenario has:
 
@@ -340,7 +375,7 @@ Each scenario has:
 - the play,
 - a **debrief** (section 8.2) with a short explanation of the idea and one source.
 
-**Free play** (after scenario 5): choose region, season, length, workload mix and fleet; all unlocked controls.
+**Free play** (after scenario 6): choose region, season, length, workload mix and fleet; all unlocked controls.
 
 ---
 
@@ -565,6 +600,8 @@ music. Not taken over: maps, paths, the tower-and-creep rules, opponents, networ
 | D14 | Technology | Kotlin Multiplatform + Compose Multiplatform instead of Swift: web (Wasm) and desktop first, Android and iOS later; close to Java for lecturer and students |
 | D15 | Lesson of scenario 3 | relative rule (greenest hours of the forecast) beats an absolute threshold; the deadline safety is a switch, so its effect can be seen |
 | D16 | Technical terms | every scenario names the term for what the player does (briefing, scenario card, debrief), in English in both languages |
+| D17 | Engineering | a second track "Engineering" (E1 profiling, E2 growing data) next to the operations scenarios; backlog with team capacity, coarser time steps; no real code in the game |
+| D18 | Bin packing | scenario 5 "Consolidation": VMs on hosts by hand, two dimensions (CPU, RAM), heuristics in "what if"; the operations scenarios after it move up by one |
 
 ---
 
@@ -590,3 +627,5 @@ music. Not taken over: maps, paths, the tower-and-creep rules, opponents, networ
 | S16 | CMS: *Der Bundestag verabschiedet Energieeffizienzgesetz – das erwartet Rechenzentrumsbetreiber*. https://cms.law/de/deu/legal-updates/der-bundestag-verabschiedet-energieeffizienzgesetz-das-erwartet-rechenzentrumsbetreiber |
 | S17 | ASHRAE TC 9.9, *Thermal Guidelines for Data Processing Environments*, 5th ed., 2021, summarised by GreenCalculus. https://greencalculus.com/standards/ashrae-tc-9-9-thermal-guidelines/ |
 | S18 | Network World: *Microsoft extends Azure server lifetimes by 50%*, 2022; DatacenterDynamics: *Google increases server life to six years*, 2022. https://www.networkworld.com/article/3670737/microsoft-extends-azure-server-lifetimes-by-50.html , https://datacenterdynamics.com/en/news/google-increases-server-life-to-six-years-will-save-billions-of-dollars |
+| S19 | R. Pereira et al.: *Ranking programming languages by energy efficiency*, Science of Computer Programming, 2021. https://web.fe.up.pt/~jacome/downloads/SCP21.pdf |
+| S20 | *It's Not Easy Being Green: On the Energy Efficiency of Programming Languages*, arXiv:2410.05460 (the language matters less than the implementation and the runtime setup). https://arxiv.org/abs/2410.05460 |
