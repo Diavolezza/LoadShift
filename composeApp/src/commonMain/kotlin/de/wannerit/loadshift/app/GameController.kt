@@ -8,6 +8,7 @@ import de.wannerit.loadshift.core.BatchMode
 import de.wannerit.loadshift.core.CapacityMode
 import de.wannerit.loadshift.core.Control
 import de.wannerit.loadshift.core.Engineering
+import de.wannerit.loadshift.core.Team
 import de.wannerit.loadshift.core.GameTime
 import de.wannerit.loadshift.core.Packing
 import de.wannerit.loadshift.core.Policy
@@ -83,42 +84,60 @@ class GameController(val scenario: Scenario) {
 
     // Sprints (engineering track): one sprint plan at the start of every day
 
+    /** The team and its progress through the backlog (carry-over of started items). */
+    private var team = Team(scenario.backlog, scenario.sprintPoints)
+
     /** Items done so far, with the sprint (day index) they were done in. */
-    var sprintDone by mutableStateOf(mapOf<Int, Int>())
-        private set
-    /** The items the player has picked for the coming sprint. */
-    var sprintDraft by mutableStateOf(setOf<Int>())
+    val sprintDone: Map<Int, Int> get() = version.let { team.done }
+    /** The items the player has picked for the coming sprint, in the order the team works on them. */
+    var sprintDraft by mutableStateOf(listOf<Int>())
         private set
     /** Day of the last sprint started (-1: none yet). */
     private var sprintStartedDay = -1
     /** Plans of this run by day, kept for the next run. */
-    private val sprintPlans = mutableMapOf<Int, Set<Int>>()
+    private val sprintPlans = mutableMapOf<Int, List<Int>>()
 
     val hasSprints: Boolean get() = Control.SPRINTS in scenario.controls
     val currentDay: Int get() = (current.tick - scenario.startTick) / GameTime.TICKS_PER_DAY
     val canPlanSprint: Boolean
         get() = hasSprints && !isFinished && (current.tick - scenario.startTick) % GameTime.TICKS_PER_DAY == 0 && sprintStartedDay < currentDay
-    val profiled: Boolean get() = sprintDone.keys.any { scenario.backlog[it].profiling }
-    val sprintPointsPicked: Int get() = sprintDraft.sumOf { scenario.backlog[it].effort }
+    val profiled: Boolean get() = scenario.growth != null || sprintDone.keys.any { scenario.backlog[it].profiling }
+
+    /** Items started in an earlier sprint and not finished: the team continues them first. */
+    val sprintCarried: List<Int> get() = version.let { team.started }
+    fun remaining(item: Int): Int = version.let { team.remaining(item) }
+
+    /** Story points of the carried items and the draft. */
+    val sprintPointsPicked: Int get() = sprintCarried.sumOf { team.remaining(it) } + sprintDraft.sumOf { scenario.backlog[it].effort }
 
     /** Launch options: a whole plan at once. */
-    fun planSprint(items: Set<Int>) {
-        if (canPlanSprint) sprintDraft = items - sprintDone.keys
+    fun planSprint(items: List<Int>) {
+        if (canPlanSprint) sprintDraft = items.filter { it !in sprintDone && it !in sprintCarried }
     }
 
     fun toggleSprintItem(item: Int) {
-        if (!canPlanSprint || item in sprintDone) return
+        if (!canPlanSprint || item in sprintDone || item in sprintCarried) return
         sprintDraft = if (item in sprintDraft) sprintDraft - item else sprintDraft + item
     }
 
+    /** Starts the sprint and lets the week run (fast: a sprint shows its effect over a whole day). */
     fun startSprint() {
-        if (!canPlanSprint || sprintPointsPicked > scenario.sprintPoints) return
+        if (!canPlanSprint) return
         val day = currentDay
-        sprintDone = sprintDone + sprintDraft.associateWith { day }
         sprintPlans[day] = sprintDraft
+        team.sprint(day, sprintDraft)
         sprintStartedDay = day
-        sprintDraft = emptySet()
-        setPolicy(current.policy.copy(workPermille = Engineering.work(scenario.backlog, sprintDone.keys)))
+        sprintDraft = emptyList()
+        setPolicy(current.policy.copy(done = team.done.keys.toSet()))
+        speed = Speed.X16
+    }
+
+    /** E2: what an item saves today (per mille of today's work) – "measured" with today's data. */
+    fun savingToday(item: Int): Int {
+        val done = sprintDone.keys
+        val before = Engineering.dailyWork(scenario, currentDay.coerceAtMost(scenario.days - 1), done)
+        val after = Engineering.dailyWork(scenario, currentDay.coerceAtMost(scenario.days - 1), done + item)
+        return if (before == 0L) 0 else ((before - after) * 1_000 / before).toInt()
     }
 
     /** Pauses at the start of every sprint, with the last run's plan for that day ready. */
@@ -130,7 +149,7 @@ class GameController(val scenario: Scenario) {
 
     private fun prefillSprint() {
         val last = lastSprintPlans[scenario.number]?.get(currentDay) ?: return
-        sprintDraft = last.filter { it !in sprintDone }.toSet()
+        sprintDraft = last.filter { it !in sprintDone && it !in sprintCarried }
     }
 
     /** Pauses when the forecast is revised (CONCEPT.md 3.3). */
@@ -298,7 +317,7 @@ class GameController(val scenario: Scenario) {
 
     private companion object {
         val drafts = mutableMapOf<Int, Draft>()
-        val lastSprintPlans = mutableMapOf<Int, Map<Int, Set<Int>>>()
+        val lastSprintPlans = mutableMapOf<Int, Map<Int, List<Int>>>()
     }
 
     /** Keeps the panel's settings for the next run (a new run starts with the scenario's rules, the panel keeps yours). */
@@ -432,11 +451,20 @@ class GameController(val scenario: Scenario) {
             )
         }
         if (hasSprints) {
-            fun run(plans: List<Set<Int>>) = Simulation.replay(scenario, scenario.initialPolicy, changes = Engineering.changes(scenario, plans)).totals
+            fun run(plans: List<List<Int>>) = Simulation.replay(scenario, scenario.initialPolicy, changes = Engineering.changes(scenario, plans)).totals
+            if (scenario.growth != null) {
+                val backlog = scenario.backlog
+                return listOf(
+                    t("The team changes nothing (reference)") to reference.totals,
+                    t("The biggest saving today first") to run(Engineering.greedy(scenario) { i, _, _, _ -> backlog[i].effect }),
+                    t("By today's saving per story point") to run(Engineering.greedy(scenario, value = Engineering.byToday(scenario))),
+                    t("By the saving in a year per story point") to run(Engineering.greedy(scenario, value = Engineering.byLastDay(scenario))),
+                )
+            }
             return listOf(
                 t("The team changes nothing (reference)") to reference.totals,
-                t("By the team's estimates") to run(Engineering.greedy(scenario.backlog, scenario.sprintPoints, scenario.days, profileFirst = false)),
-                t("Profiling first, then by the measurements") to run(Engineering.greedy(scenario.backlog, scenario.sprintPoints, scenario.days, profileFirst = true)),
+                t("By the team's estimates") to run(Engineering.greedy(scenario, value = Engineering.byEstimates(scenario))),
+                t("Profiling first, then by the measurements") to run(Engineering.greedy(scenario, profileFirst = true, value = Engineering.byEstimates(scenario))),
             )
         }
         if (Control.PLACEMENT in scenario.controls) {
@@ -484,8 +512,8 @@ class GameController(val scenario: Scenario) {
         current = Simulation(scenario)
         restoreDraft()
         startPolicy = null
-        sprintDone = emptyMap()
-        sprintDraft = emptySet()
+        team = Team(scenario.backlog, scenario.sprintPoints)
+        sprintDraft = emptyList()
         sprintStartedDay = -1
         sprintPlans.clear()
         if (hasSprints) prefillSprint()

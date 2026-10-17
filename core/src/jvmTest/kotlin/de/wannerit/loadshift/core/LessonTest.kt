@@ -274,13 +274,13 @@ class LessonTest {
         val scenario = Scenario.MEASURE_FIRST
         val reference = Simulation.reference(scenario)
         val backlog = scenario.backlog
-        fun run(plans: List<Set<Int>>) = Simulation.replay(scenario, scenario.initialPolicy, changes = Engineering.changes(scenario, plans))
-        val byEstimate = Engineering.greedy(backlog, scenario.sprintPoints, scenario.days, profileFirst = false)
-        val profileFirst = Engineering.greedy(backlog, scenario.sprintPoints, scenario.days, profileFirst = true)
+        fun run(plans: List<List<Int>>) = Simulation.replay(scenario, scenario.initialPolicy, changes = Engineering.changes(scenario, plans))
+        val byEstimate = Engineering.greedy(scenario, profileFirst = false, value = Engineering.byEstimates(scenario))
+        val profileFirst = Engineering.greedy(scenario, profileFirst = true, value = Engineering.byEstimates(scenario))
         val i = { title: String -> backlog.indexOfFirst { it.title == title } }
-        val lucky = listOf(setOf(i("Fix the N+1 queries in the product list"), i("Log at INFO instead of DEBUG in production")),
-            setOf(i("Cache the catalog responses")), setOf(i("Cache the resized images"), i("Upgrade the web framework")),
-            setOf(i("Rewrite the checkout in a compiled language")))
+        val lucky = listOf(listOf(i("Fix the N+1 queries in the product list"), i("Log at INFO instead of DEBUG in production"), i("Cache the catalog responses")),
+            listOf(), listOf(i("Cache the resized images"), i("Upgrade the web framework")),
+            listOf(i("Rewrite the checkout in a compiled language")))
         val runs = listOf("reference: nothing" to reference, "by the estimates" to run(byEstimate),
             "profile first" to run(profileFirst), "lucky guess, no profile" to run(lucky))
         val lines = mutableListOf(title(scenario), HEADER)
@@ -300,6 +300,47 @@ class LessonTest {
         assertEquals(1, stars("by the estimates"))
         // Profiling first, then the measured hot spots: three stars.
         assertEquals(3, stars("profile first"))
+    }
+
+    @Test fun e2GrowingData() {
+        val scenario = Scenario.GROWING_DATA
+        val reference = Simulation.reference(scenario)
+        val backlog = scenario.backlog
+        fun run(plans: List<List<Int>>) = Simulation.replay(scenario, scenario.initialPolicy, changes = Engineering.changes(scenario, plans))
+        val today = Engineering.greedy(scenario, value = Engineering.byToday(scenario))
+        val later = Engineering.greedy(scenario, value = Engineering.byLastDay(scenario))
+        // A player who starts the quadratic job first, then the linear ones, then the constant cuts.
+        val growthFirst = listOf(listOf(2), listOf(), listOf(), listOf(), listOf(0), listOf(1), listOf(), listOf(4), listOf(3), listOf(), listOf(5), listOf())
+        val constantFirst = Engineering.greedy(scenario) { item, _, _, _ -> backlog[item].effect }
+        val runs = listOf("reference: nothing" to reference, "by today's savings" to run(today),
+            "by the savings in a year" to run(later), "growth first" to run(growthFirst), "constant cuts first" to run(constantFirst))
+        val lines = mutableListOf(title(scenario), HEADER)
+        for ((name, simulation) in runs) {
+            lines += line(name, simulation.totals, reference.totals) + "  " + "★".repeat(scenario.stars(simulation.totals, reference.totals))
+        }
+        for ((name, plans) in listOf("by today's savings" to today, "by the savings in a year" to later)) {
+            lines += "  $name: " + plans.joinToString(" | ") { p -> p.joinToString(",") }
+        }
+        val growth = scenario.growth!!
+        lines += "  n by day: " + (0 until scenario.days).joinToString(" ") { "%.2f".format(Locale.ROOT, growth.n(it) / 1_000.0) }
+        lines += "  per request (nothing / all fixed): " + (0 until scenario.days).joinToString(" ") { d ->
+            "${growth.perRequest(d, backlog, emptySet())}/${growth.perRequest(d, backlog, backlog.indices.toSet())}"
+        }
+        lines += "  servers on per day (reference): " + (0 until scenario.days).joinToString(" ") { d ->
+            val h = reference.history.filter { it.tick / GameTime.TICKS_PER_DAY == d }
+            "%.1f".format(Locale.ROOT, h.sumOf { it.serversOn } / h.size.toDouble())
+        }
+        report(102, lines)
+        assertTrue(reference.totals.sla >= scenario.slaTarget, "the reference meets the SLA")
+        assertEquals(0, scenario.stars(reference.totals, reference.totals))
+        val byName = runs.toMap()
+        fun stars(name: String) = scenario.stars(byName.getValue(name).totals, reference.totals)
+        // The biggest saving today first: the constant cuts block the team while the quadratic job grows.
+        assertTrue(stars("constant cuts first") <= 1)
+        // By today's savings per story point: good, but the quadratic job comes late.
+        assertEquals(2, stars("by today's savings"))
+        // The growing parts first, the quadratic one before all: three stars.
+        assertEquals(3, stars("growth first"))
     }
 
     private companion object {

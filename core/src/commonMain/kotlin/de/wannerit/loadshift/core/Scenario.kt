@@ -84,6 +84,8 @@ data class Scenario(
     val hotSpots: List<HotSpot> = emptyList(),
     val backlog: List<BacklogItem> = emptyList(),
     val sprintPoints: Int = 0,
+    /** E2: the data grows, and parts of the work with it. */
+    val growth: GrowthModel? = null,
 ) {
     /** Expected interactive work at a tick: the web load or the VMs' profiles (what an operator can plan with). */
     fun expectedDemand(tick: Int): Int = interactive.expected(tick) + vms.sumOf { it.expectedMilli(tick) } / 1_000
@@ -264,6 +266,40 @@ data class Scenario(
             sprintPoints = 8,
         )
 
-        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, MEASURE_FIRST)
+        /**
+         * E2, "Growing data": the shop's data grows by 15 % a month; each game day stands for a month, one sprint
+         * per month with 3 story points for performance (the rest goes into features). Parts of the work grow
+         * with the data – a lookup in a list, a query without an index, a nightly job that compares all pairs.
+         * Measured today they hardly matter; in a year they dominate.
+         */
+        val GROWING_DATA = Scenario(
+            number = 102, label = "E2", track = Track.ENGINEERING, unlockAfter = 101,
+            title = "Growing data", setting = GridSetting(GridRegion.GERMANY, Season.AUTUMN), days = 12,
+            seed = 12, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 80)),
+            interactive = InteractiveLoad(peak = 240),
+            controls = setOf(Control.SPRINTS),
+            initialPolicy = Policy(CapacityMode.Autoscale(700)),
+            referencePolicy = Policy(CapacityMode.Autoscale(700)),
+            goals = StarGoals(150, SpecialGoal.Reduction(240)),
+            growth = GrowthModel(
+                ratePermille = 150, constant = 920,
+                parts = listOf(
+                    GrowthPart("Product lookup in a list", 40, Complexity.LINEAR, Complexity.CONSTANT, 35),
+                    GrowthPart("Order history without an index", 40, Complexity.LINEAR, Complexity.LOGARITHMIC, 35),
+                    GrowthPart("Search index, rebuilt every night", 40, Complexity.QUADRATIC, Complexity.LINEAR, 8, night = true),
+                ),
+            ),
+            backlog = listOf(
+                BacklogItem("Add an index to the order table", 2, fixes = 1),
+                BacklogItem("Use a hash map for the product lookup", 3, fixes = 0),
+                BacklogItem("Update the search index incrementally instead of comparing all pairs", 8, fixes = 2),
+                BacklogItem("Faster string handling in the templates", 3, effect = 40),
+                BacklogItem("Upgrade the JSON library", 2, effect = 30),
+                BacklogItem("Rewrite the image service in a compiled language", 8, effect = 60),
+            ),
+            sprintPoints = 2,
+        )
+
+        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, MEASURE_FIRST, GROWING_DATA)
     }
 }

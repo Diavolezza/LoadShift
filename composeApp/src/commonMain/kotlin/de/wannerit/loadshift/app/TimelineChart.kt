@@ -132,13 +132,14 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
         }
 
         // Hours and now
-        // Hour labels: every 3 hours, every 6 from three days on (so they do not overlap).
-        val labelHours = if (scenario.days >= 3) 6 else 3
+        // Hour labels: every 3 hours, every 6 from three days on; from six days on one label per day.
+        val labelHours = when { scenario.days >= 6 -> 24; scenario.days >= 3 -> 6; else -> 3 }
         for (tick in start..end) {
             val time = GameTime(tick)
             if (time.minute == 0 && time.hour % labelHours == 0) {
                 val anchor = if (tick == start) 0f else if (tick == end) 1f else 0.5f
-                text(time.clockText, Offset(x(tick), size.height - labelBand / 2), anchorX = anchor)
+                val label = if (labelHours == 24) (if (tick == end) "" else t("Day %lld", time.day - GameTime.START.day + 1)) else time.clockText
+                text(label, Offset(if (labelHours == 24) x(tick) + 3f * density else x(tick), size.height - labelBand / 2), anchorX = if (labelHours == 24) 0f else anchor)
                 drawLine(Color.Gray.copy(alpha = 0.15f), Offset(x(tick), topTop), Offset(x(tick), lowBottom), 1f)
             }
         }
@@ -204,7 +205,9 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
         val history = simulation.history
         val expected = future.map { it to simulation.expectedDemand(it) }
         val fleetCapacity = simulation.servers.sumOf { it.kind.capacity }
-        val maxUnits = maxOf(10, maxOf(fleetCapacity, (history.map { it.demand } + expected.map { it.second }).maxOrNull() ?: 10))
+        // The scale: what happened and what is expected; the whole fleet only if it is not much more than that.
+        val dataMax = ((history.map { maxOf(it.demand, it.capacity) } + expected.map { it.second }).maxOrNull() ?: 10) * 11 / 10
+        val maxUnits = maxOf(10, if (fleetCapacity <= dataMax * 16 / 10) maxOf(fleetCapacity, dataMax) else dataMax)
         val unitsTop = niceCeiling(maxUnits).toFloat()
         fun yU(units: Int) = bottom - (bottom - top) * (units / unitsTop)
         // Campaigns: marked, although the expected load does not know them.
@@ -236,13 +239,15 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
         // Right axis: how many servers that capacity is (one line every five servers).
         val perServer = simulation.servers.firstOrNull { it.kind.servesInteractive }?.kind?.capacity ?: 0
         if (perServer > 0) {
-            var count = 5
+            val servers = (unitsTop / perServer).toInt()
+            val stepServers = when { servers <= 30 -> 5; servers <= 60 -> 10; else -> 20 }
+            var count = stepServers
             while (count * perServer <= unitsTop) {
                 val y = yU(count * perServer)
                 drawLine(Palette.capacity.copy(alpha = 0.45f), Offset(left, y), Offset(right, y), 1f,
                     pathEffect = PathEffect.dashPathEffect(floatArrayOf(1f * density, 5f * density)))
                 text(t("%lld servers", count), Offset(right + 6f * density, y))
-                count += 5
+                count += stepServers
             }
         }
         // Slow or dropped requests: a red mark under the lane.

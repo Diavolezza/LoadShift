@@ -356,7 +356,7 @@ work per request or per job; the effect shows in the SCI per 1,000 requests and 
 | # | Title | Setting | Length | New controls | Idea |
 |---|---|---|---|---|---|
 | E1 | Measure first | web shop, Germany | 4 weeks (weekly sprints) | engineering backlog, team capacity, profiling | The team's estimates of where the energy goes are wrong. One sprint of profiling shows the real hot spots (for example an N+1 database query and JSON serialization, not the image service everybody suspects). Optimizing by guess wastes sprints; less work per request also means fewer servers and less hardware (G9, G1). Term: Profiling. |
-| E2 | Growing data | web shop, Germany | 12 months (monthly steps) | backlog with algorithmic complexity | The data grows every month. A batch job with O(n²) and a lookup in a list instead of a hash map get more expensive month by month; a database index stops a query from scanning everything. Fixing early saves the most; waiting costs energy and, at some point, hardware (G9, G6). Term: Algorithmic Complexity. |
+| E2 | Growing data | web shop, Germany | 12 months (one game day each) | backlog with algorithmic complexity, carry-over | The data grows every month. A batch job with O(n²) and a lookup in a list instead of a hash map get more expensive month by month; a database index stops a query from scanning everything. Fixing early saves the most; waiting costs energy and, at some point, hardware (G9, G6). Term: Algorithmic Complexity. |
 
 Backlog items (game values, to be tuned in the lesson tests): database index, removing an N+1 query, a cache
 (saves work, but the cache server draws power too), compressing images, pagination instead of loading
@@ -642,6 +642,26 @@ After each step the game is played by a person before the next step begins (**pl
 - App: sprint panel (CPU profile once measured, backlog with estimates and measurements, story points, "Start
   sprint"), the game pauses at every sprint; the last run's plans are offered again. Scenario list in two sections
   (Operations, Engineering) with labels; "Open all scenarios" switch (D19).
+
+**As built in step 4, part 4** (play test of E1, E2):
+
+- Sprints: items that do not fit into a sprint carry over; started items are continued first (`Team`). "Start
+  sprint" also starts the clock at 16× – a sprint shows its effect over a whole day, 1× would show nothing.
+- Core: `Policy.done` (items finished) instead of a work factor; `GrowthModel` with parts that grow by their
+  complexity (`Complexity`: O(1), O(log n), O(n), O(n log n), O(n²)) and nightly jobs.
+- E2 "Growing data": data +15 % a month, 12 game days = 12 months, 2 story points per sprint for performance, 80
+  servers with autoscaling. Growing parts: product lookup in a list O(n) → hash map O(1); order history without
+  an index O(n) → O(log n); search index rebuilt every night O(n²) → incremental O(n). Constant cuts: string
+  handling, JSON library, image service rewrite (8 SP). Goals: ★★ −15 %, ★★★ −24 %.
+
+| Team | CO₂ vs. reference | Stars |
+|---|---:|---:|
+| changes nothing (reference) | – | – |
+| biggest saving today first (the rewrite blocks the team) | −8 % | ★ |
+| by today's saving per story point | −22 % | ★★ |
+| the growing parts first, the quadratic one before all | −25 % | ★★★ |
+
+- Timeline: the scale follows the data, server lines every 5, 10 or 20 servers, one label per day from six days on.
 
 **Taken over from the Carbon Rush prototype** (copied, checked for every reference to its origin):
 grid curves and their generator, the forecast model, the electricity price formula, the embodied and SCI

@@ -62,8 +62,8 @@ data class Policy(
     val capacity: CapacityMode,
     val batch: BatchMode = BatchMode.Asap,
     val deadlineSafety: Boolean = true,
-    /** CPU work per request, per mille of the original code (the engineering track makes it smaller). */
-    val workPermille: Int = 1_000,
+    /** Engineering track: the backlog items finished (they change the work per request). */
+    val done: Set<Int> = emptySet(),
 ) {
     companion object {
         /**

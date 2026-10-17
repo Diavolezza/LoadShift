@@ -14,6 +14,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "%@, mit Fristsicherung",
     "%@, without deadline safety" to
         "%@, ohne Fristsicherung",
+    "%@: %@ → %@" to
+        "%1\$@: %2\$@ → %3\$@",
     "%lld days" to
         "%lld Tage",
     "%lld days, from 00:00" to
@@ -32,6 +34,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "%1\$lld von %2\$lld Servern an · %3\$@ kW IT-Leistung",
     "%lld of %lld servers on" to
         "%1\$lld von %2\$lld Servern an",
+    "%lld of %lld story points – %lld carry over" to
+        "%1\$lld von %2\$lld Story Points – %3\$lld laufen weiter",
     "%lld of %lld story points" to
         "%1\$lld von %2\$lld Story Points",
     "%lld of %lld" to
@@ -74,6 +78,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Über Load Shift",
     "Active: %@" to
         "Aktiv: %@",
+    "Add an index to the order table" to
+        "Index auf die Bestelltabelle legen",
     "All %lld servers run all the time." to
         "Alle %lld Server laufen die ganze Zeit.",
     "All on" to
@@ -172,8 +178,12 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Gebaut mit Kotlin und Compose Multiplatform",
     "by hand" to
         "von Hand",
+    "By the saving in a year per story point" to
+        "Nach der Einsparung in einem Jahr pro Story Point",
     "By the team's estimates" to
         "Nach den Schätzungen des Teams",
+    "By today's saving per story point" to
+        "Nach der heutigen Einsparung pro Story Point",
     "Cache the catalog responses" to
         "Katalog-Antworten cachen",
     "Cache the resized images" to
@@ -220,10 +230,14 @@ internal val GERMAN: Map<String, String> = mapOf(
         "CO₂ ggü. dir",
     "CPU time per request" to
         "CPU-Zeit pro Request",
+    "CPU work of a day" to
+        "CPU-Arbeit eines Tages",
     "Daily report" to
         "Tagesreport",
     "Data import" to
         "Datenimport",
+    "Data: %@ × the start, growing %@ a month." to
+        "Daten: %1\$@ × der Anfang, Wachstum %2\$@ pro Monat.",
     "Database replica" to
         "Datenbank-Replikat",
     "Database: N+1 queries in the product list" to
@@ -242,8 +256,10 @@ internal val GERMAN: Map<String, String> = mapOf(
         "fertig %@",
     "done in sprint %lld" to
         "erledigt in Sprint %lld",
-    "Each game day stands for the week after a sprint. Your team has %lld story points per sprint. Pick items from the backlog and start the sprint – their effect counts from this day on." to
-        "Jeder Spieltag steht für die Woche nach einem Sprint. Dein Team hat %lld Story Points pro Sprint. Wähle Punkte aus dem Backlog und starte den Sprint – ihre Wirkung zählt ab diesem Tag.",
+    "Each game day stands for a month, with one sprint at its start. The team has %lld story points per sprint for performance – the rest goes into features. Items bigger than a sprint carry over; started items are continued first." to
+        "Jeder Spieltag steht für einen Monat mit einem Sprint am Anfang. Das Team hat %lld Story Points pro Sprint für Performance – der Rest geht in Features. Größere Punkte laufen über mehrere Sprints; Begonnenes wird zuerst fortgesetzt.",
+    "Each game day stands for the week after a sprint. Your team has %lld story points per sprint. Pick items from the backlog and start the sprint – their effect counts from this day on. Items that do not fit carry over into the next sprint." to
+        "Jeder Spieltag steht für die Woche nach einem Sprint. Dein Team hat %lld Story Points pro Sprint. Wähle Punkte aus dem Backlog und starte den Sprint – ihre Wirkung zählt ab diesem Tag. Was nicht mehr passt, läuft in den nächsten Sprint weiter.",
     "Each host: %lld GB RAM, %lld load units." to
         "Jeder Host: %1\$lld GB RAM, %2\$lld Lasteinheiten.",
     "Each job needs servers for some hours and must be finished by its deadline. When it starts, its servers switch on and boot for 30 minutes first; servers without a job are off." to
@@ -276,6 +292,10 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Erwartete Last %lld",
     "Expected load in 1 h" to
         "Erwartete Last in 1 h",
+    "faster by a constant factor" to
+        "schneller um einen konstanten Faktor",
+    "Faster string handling in the templates" to
+        "Schnellere String-Verarbeitung in den Templates",
     "Fewer hosts, less idle power: pack the VMs tighter. Two things decide whether a VM fits: its RAM and its CPU over the day. By RAM alone five hosts would do – but then the peaks collide. VMs whose peaks come at different times – batch at night, reporting in the morning, the shop in the evening – fit together; VMs that peak at the same time do not." to
         "Weniger Hosts, weniger Leerlaufstrom: Packe die VMs dichter. Zwei Dinge entscheiden, ob eine VM passt: ihr RAM und ihre CPU über den Tag. Nach RAM allein würden fünf Hosts reichen – aber dann kollidieren die Spitzen. VMs, deren Spitzen zu verschiedenen Zeiten kommen – Batch nachts, Reporting morgens, der Shop abends –, passen zusammen; VMs mit gleichzeitiger Spitze nicht.",
     "First Fit Decreasing, daily profiles up to 100 %" to
@@ -334,6 +354,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Netz jetzt",
     "Grid: %lld g/kWh" to
         "Strom: %lld g/kWh",
+    "Growing data" to
+        "Wachsende Daten",
     "Headroom is insurance: it costs energy every hour, whether the peak comes or not. When a peak is known in advance, scheduled scaling is cheaper – cloud platforms offer it next to the autoscaler. Predictive autoscaling goes one step further and learns such peaks from the past." to
         "Reserve ist eine Versicherung: Sie kostet jede Stunde Energie, ob die Spitze kommt oder nicht. Ist eine Spitze vorher bekannt, ist Scheduled Scaling günstiger – Cloud-Plattformen bieten das neben dem Autoscaling an. Predictive Autoscaling geht einen Schritt weiter und lernt solche Spitzen aus der Vergangenheit.",
     "Host %lld: expected peak %@ of %lld load units – above %@ requests get slow." to
@@ -342,10 +364,14 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Hosts in Benutzung",
     "Hosts in use, RAM, warnings for hosts that will be too busy, the VM kinds with their daily profiles." to
         "Hosts in Benutzung, RAM, Warnungen für Hosts, die zu voll werden, die VM-Arten mit ihren Tagesprofilen.",
+    "How the work of an algorithm grows with the amount of data n, written in Big O notation: O(1) stays the same, O(n) grows in step with the data, O(n²) with its square. For small data the difference hardly shows; for growing data it decides." to
+        "Wie die Arbeit eines Algorithmus mit der Datenmenge n wächst, geschrieben in O-Notation: O(1) bleibt gleich, O(n) wächst im Gleichschritt mit den Daten, O(n²) mit ihrem Quadrat. Bei kleinen Daten fällt der Unterschied kaum auf; bei wachsenden Daten entscheidet er.",
     "Image conversion" to
         "Bildkonvertierung",
     "Image resizing on every request" to
         "Bildskalierung bei jedem Request",
+    "in progress: %lld of %lld story points left" to
+        "in Arbeit: noch %1\$lld von %2\$lld Story Points",
     "In time: %@" to
         "Rechtzeitig: %@",
     "IT power" to
@@ -378,6 +404,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Erst messen, dann optimieren: Die großen Punkte auf der Liste des Teams brachten kaum etwas, eine einzige Zeile beim Log-Level dagegen ein Zehntel der CPU. Weniger Arbeit pro Request senkt die Energie und – mit Autoscaling – die Zahl der Server; ein Rechenzentrum, das weniger Server braucht, braucht auch weniger Hardware. Die SCI pro 1.000 Requests zeigt den Effekt unabhängig von der Last.",
     "Measure first" to
         "Erst messen",
+    "Measured today, some parts of the code hardly matter: a lookup in a list, a query without an index, a nightly job that compares every pair of products. But their work grows with the data – in step with it, or even with its square. Constant savings look bigger today; fixing the parts that grow pays off over the year. The complexity of an algorithm tells you how its work grows." to
+        "Heute gemessen spielen manche Teile des Codes kaum eine Rolle: eine Suche in einer Liste, eine Abfrage ohne Index, ein nächtlicher Job, der jedes Produktpaar vergleicht. Doch ihre Arbeit wächst mit den Daten – im Gleichschritt oder sogar mit dem Quadrat. Konstante Einsparungen sehen heute größer aus; über das Jahr zahlt es sich aus, die wachsenden Teile zu beheben. Die Komplexität eines Algorithmus sagt, wie seine Arbeit wächst.",
     "measured: −%@" to
         "gemessen: −%@",
     "measures where the time goes" to
@@ -428,6 +456,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Betrieb",
     "Optimizing by gut feeling is a gamble: the team expects the most from the image resizing and from rewriting the checkout. Whether that is true, only a measurement shows. Profiling costs a few story points and shows where the CPU time really goes – then you fix the hot spots first." to
         "Optimieren nach Bauchgefühl ist ein Glücksspiel: Das Team erwartet am meisten vom Bildskalieren und vom Neuschreiben des Checkouts. Ob das stimmt, zeigt nur eine Messung. Profiling kostet ein paar Story Points und zeigt, wohin die CPU-Zeit wirklich geht – dann behebst du zuerst die Hotspots.",
+    "Order history without an index" to
+        "Bestellhistorie ohne Index",
     "peak %@" to
         "Spitze %@",
     "Picked up: %@ (%lld GB). Now click a host." to
@@ -460,6 +490,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Polen",
     "Power" to
         "Leistung",
+    "Product lookup in a list" to
+        "Produktsuche in einer Liste",
     "Profile the shop" to
         "Den Shop profilen",
     "Profiling first, then by the measurements" to
@@ -474,6 +506,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Plan entfernen",
     "Rewrite the checkout in a compiled language" to
         "Checkout in einer kompilierten Sprache neu schreiben",
+    "Rewrite the image service in a compiled language" to
+        "Bild-Service in einer kompilierten Sprache neu schreiben",
     "Right now" to
         "Gerade jetzt",
     "Rule" to
@@ -492,6 +526,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Szenario geschafft",
     "Search index" to
         "Suchindex",
+    "Search index, rebuilt every night" to
+        "Suchindex, jede Nacht neu gebaut",
     "Servers in use: %lld of %lld" to
         "Server in Benutzung: %1\$lld von %2\$lld",
     "Servers on (mean)" to
@@ -524,6 +560,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Sprint %1\$lld von %2\$lld",
     "Sprint %lld: plan it now – the game is paused." to
         "Sprint %lld: Jetzt planen – das Spiel ist pausiert.",
+    "Sprint planning: the CPU work of a day by part with its complexity, the backlog with what each item saves today, your story points. Below it the situation right now." to
+        "Sprint-Planung: die CPU-Arbeit eines Tages nach Teilen mit ihrer Komplexität, der Backlog mit dem, was jeder Punkt heute spart, deine Story Points. Darunter die Lage gerade jetzt.",
     "Sprint planning: where the CPU time per request goes (once measured), the backlog with the team's estimates, your story points. Below it the situation right now." to
         "Sprint-Planung: wohin die CPU-Zeit pro Request geht (sobald gemessen), der Backlog mit den Schätzungen des Teams, deine Story Points. Darunter die Lage gerade jetzt.",
     "start by %@" to
@@ -546,8 +584,12 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Team: −%@",
     "Technical term" to
         "Fachbegriff",
+    "Templates, framework and the rest" to
+        "Templates, Framework und der Rest",
     "The batch rule: choose one, set it and apply it. Below it the jobs with their deadlines and what the rule has planned for them." to
         "Die Batch-Regel: wählen, einstellen, übernehmen. Darunter die Jobs mit ihren Fristen und was die Regel für sie geplant hat.",
+    "The biggest saving today first" to
+        "Die größte Einsparung von heute zuerst",
     "The capacity rule: all on, a fixed number, or autoscaling with a target utilization and, if you want, a minimum for a time window. Choose, set, apply. Below it the situation right now." to
         "Die Kapazitätsregel: alle an, eine feste Anzahl oder Autoscaling mit Zielauslastung und auf Wunsch einem Minimum für ein Zeitfenster. Wählen, einstellen, übernehmen. Darunter die Lage gerade jetzt.",
     "The carbon intensity with the forecast, and below it one row per job – light: the time between arrival and deadline, outlined: planned, filled: running or done." to
@@ -582,6 +624,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Die VMs",
     "The web shop again, now in winter and with 30 servers. Autoscaling is on: at 80 % target utilization it keeps just enough servers running. On day 2 marketing sends a newsletter at 19:00 – for three hours twice as many people will shop as usual." to
         "Wieder der Webshop, jetzt im Winter und mit 30 Servern. Autoscaling ist eingeschaltet: Mit 80 % Zielauslastung hält es gerade genug Server am Laufen. An Tag 2 verschickt das Marketing um 19:00 einen Newsletter – drei Stunden lang kaufen doppelt so viele Leute ein wie sonst.",
+    "The web shop is growing: every month 15 % more products, customers and orders – after a year almost five times as much data. Each game day stands for a month. The team spends most of its time on features; for performance it has 2 story points per sprint." to
+        "Der Webshop wächst: Jeden Monat 15 % mehr Produkte, Kunden und Bestellungen – nach einem Jahr fast fünfmal so viele Daten. Jeder Spieltag steht für einen Monat. Das Team arbeitet vor allem an Features; für Performance hat es 2 Story Points pro Sprint.",
     "The web shop's 24 virtual machines – front ends, batch workers, reporting, two database replicas and caches – run on ten hosts. The previous team spread them evenly: every host runs, none is busy. A host draws about a quarter of its maximum power even when idle." to
         "Die 24 virtuellen Maschinen des Webshops – Frontends, Batch-Worker, Reporting, zwei Datenbank-Replikate und Caches – laufen auf zehn Hosts. Das vorige Team hat sie gleichmäßig verteilt: Jeder Host läuft, keiner ist ausgelastet. Ein Host zieht auch im Leerlauf etwa ein Viertel seiner Maximalleistung.",
     "The web shop's analytics cluster in Great Britain: twelve servers, nine jobs in three days. It is winter, and the British grid depends on the wind. Today is an ordinary winter day; tomorrow a storm front brings plenty of wind power, the day after the wind drops and gas power plants take over." to
@@ -594,12 +638,20 @@ internal val GERMAN: Map<String, String> = mapOf(
         "bis %@",
     "To scenario %@" to
         "Weiter zu Szenario %@",
+    "today: −%@" to
+        "heute: −%@",
     "Too late for the deadline – start by %@." to
         "Zu spät für die Frist – spätestens %@ starten.",
     "too many story points" to
         "zu viele Story Points",
+    "Update the search index incrementally instead of comparing all pairs" to
+        "Suchindex inkrementell aktualisieren statt alle Paare zu vergleichen",
+    "Upgrade the JSON library" to
+        "JSON-Bibliothek aktualisieren",
     "Upgrade the web framework" to
         "Web-Framework aktualisieren",
+    "Use a hash map for the product lookup" to
+        "Hash-Map für die Produktsuche verwenden",
     "utilization ≥ %@" to
         "Auslastung ≥ %@",
     "Utilization" to
@@ -614,6 +666,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Web-Requests",
     "What if …" to
         "Was wäre, wenn …",
+    "What saves the most today is not what saves the most in a year. A job with O(n²) is a footnote at the start and a large share of the nights after a year; the rewrite in another language saves only a constant share and blocks the team for months. Ask how the work grows, not only how big it is today." to
+        "Was heute am meisten spart, spart nicht am meisten in einem Jahr. Ein Job mit O(n²) ist anfangs eine Fußnote und nach einem Jahr ein großer Teil der Nächte; das Neuschreiben in einer anderen Sprache spart nur einen konstanten Anteil und blockiert das Team für Monate. Frag, wie die Arbeit wächst, nicht nur, wie groß sie heute ist.",
     "What you did is called %@. %@" to
         "Was du gemacht hast, heißt %1\$@. %2\$@",
     "When the wind drops" to

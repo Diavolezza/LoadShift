@@ -71,7 +71,9 @@ private fun initialScreen(options: LaunchOptions): Screen {
     } else if (options.careful && Control.SPRINTS in scenario.controls) {
         // Like a careful team: profiling first, then by the measurements.
         var left = options.ticks
-        for (plan in Engineering.greedy(scenario.backlog, scenario.sprintPoints, scenario.days, profileFirst = true)) {
+        val plans = if (scenario.growth != null) Engineering.greedy(scenario, value = Engineering.byLastDay(scenario))
+        else Engineering.greedy(scenario, profileFirst = true, value = Engineering.byEstimates(scenario))
+        for (plan in plans) {
             if (left <= 0) break
             game.planSprint(plan)
             game.startSprint()
