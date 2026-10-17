@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -242,6 +244,7 @@ private fun GoalItem(ok: Boolean, started: Boolean, text: String) {
 }
 
 /** End of the scenario (CONCEPT.md 8.2, 8.3): stars, goals, the result next to the reference, "what if". */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario) -> Unit)?, onOverview: (() -> Unit)? = null) {
     val scenario = game.scenario
@@ -305,7 +308,11 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
                 Txt(t(texts.remark), Type.style(15, color = Palette.secondary))
                 WhatIf(game)
             }
-            Row(Modifier.fillMaxWidth().padding(horizontal = 30.dp, vertical = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            // The buttons wrap into a second line when the card is too narrow for all of them.
+            FlowRow(
+                Modifier.fillMaxWidth().padding(horizontal = 30.dp, vertical = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
                 // The next scenario, once a star has opened it.
                 val sameTrack = Scenario.ALL.filter { it.track == scenario.track }
                 val next = sameTrack.getOrNull(sameTrack.indexOf(scenario) + 1)?.takeIf { Progress.isUnlocked(it) }

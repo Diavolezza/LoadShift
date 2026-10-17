@@ -802,6 +802,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "SLA mindestens %@ und weniger CO₂ als der Referenzbetreiber, der alle Server laufen lässt",
     "SLA at least %@ and less CO₂ than the reference" to
         "SLA mindestens %@ und weniger CO₂ als die Referenz",
+    "SLA at least 99 % and less CO₂ than the reference" to
+        "SLA mindestens 99 % und weniger CO₂ als die Referenz",
     "SLA at least 99 % at each site and less CO₂ than the reference" to
         "SLA mindestens 99 % an jedem Standort und weniger CO₂ als die Referenz",
     "SLA at least 99 %, at most 0.5 ‰ stale answers and less CO₂ than the reference" to

@@ -51,7 +51,7 @@ fun PrimaryButton(text: String, modifier: Modifier = Modifier, enabled: Boolean 
             .padding(horizontal = 22.dp, vertical = if (large) 14.dp else 9.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Txt(text, Type.style(if (large) 22 else 16, FontWeight.SemiBold, Color.White))
+        Txt(text, Type.style(if (large) 22 else 16, FontWeight.SemiBold, Color.White), maxLines = 1)
     }
 }
 
@@ -67,7 +67,7 @@ fun SecondaryButton(text: String, modifier: Modifier = Modifier, enabled: Boolea
             .padding(horizontal = 18.dp, vertical = 9.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Txt(text, Type.style(16, FontWeight.Medium))
+        Txt(text, Type.style(16, FontWeight.Medium), maxLines = 1)
     }
 }
 
