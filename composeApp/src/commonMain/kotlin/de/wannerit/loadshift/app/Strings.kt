@@ -10,12 +10,16 @@ internal val GERMAN: Map<String, String> = mapOf(
         "%1\$@ hat keine Startzeit und muss bis %2\$@ starten, sonst verpasst er seine Frist.",
     "%@ needs %lld GB – host %lld has only %lld GB free." to
         "%1\$@ braucht %2\$lld GB – Host %3\$lld hat nur %4\$lld GB frei.",
+    "%@, setpoint %lld °C" to
+        "%1\$@, Sollwert %2\$lld °C",
     "%@, with deadline safety" to
         "%@, mit Fristsicherung",
     "%@, without deadline safety" to
         "%@, ohne Fristsicherung",
     "%@: %@ → %@" to
         "%1\$@: %2\$@ → %3\$@",
+    "%lld cache servers" to
+        "%lld Cache-Server",
     "%lld cache servers, %lld kinds cached" to
         "%1\$lld Cache-Server, %2\$lld Arten im Cache",
     "%lld days" to
@@ -112,6 +116,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Alle Server an (Referenz)",
     "All servers on" to
         "Alle Server an",
+    "All servers on, 27 °C (the best PUE)" to
+        "Alle Server an, 27 °C (die beste PUE)",
     "All sprints are done." to
         "Alle Sprints sind vorbei.",
     "An idle server still draws about a quarter of its maximum power. Switch off the servers that are not needed – and switch them on again in time: a server takes 30 minutes before it can work." to
@@ -130,6 +136,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "So früh wie möglich",
     "as soon as possible" to
         "so früh wie möglich",
+    "ASHRAE recommends 18 to 27 °C at the server inlets." to
+        "ASHRAE empfiehlt 18 bis 27 °C am Lufteinlass der Server.",
     "at %@" to
         "um %@ Uhr",
     "At a fixed hour" to
@@ -152,14 +160,20 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Autoscaling bei %1\$@, jeden Tag mindestens %2\$lld Server 18:00–22:00",
     "Autoscaling at %@, on day 2 at least %lld servers 18:00–22:00" to
         "Autoscaling bei %1\$@, an Tag 2 mindestens %2\$lld Server 18:00–22:00",
+    "Autoscaling at 50 %, 20 °C (reference)" to
+        "Autoscaling bei 50 %, 20 °C (Referenz)",
+    "Autoscaling at 50 %, 27 °C" to
+        "Autoscaling bei 50 %, 27 °C",
     "Autoscaling at 70 % (from scenario 4)" to
         "Autoscaling mit 70 % (ab Szenario 4)",
+    "Autoscaling at 80 %, 20 °C" to
+        "Autoscaling bei 80 %, 20 °C",
+    "Autoscaling at 80 %, 25 °C" to
+        "Autoscaling bei 80 %, 25 °C",
     "Autoscaling does what you did by hand in scenario 1: it switches servers on and off for the load. The target utilization decides how much headroom stays free. Little headroom saves energy – but a server takes 30 minutes to boot, and the autoscaler knows only the usual day; a sudden peak finds it unprepared. Headroom all the time costs energy all the time; a minimum for a known event costs it only when it is needed." to
         "Autoscaling macht, was du in Szenario 1 von Hand gemacht hast: Es schaltet Server passend zur Last ein und aus. Die Zielauslastung bestimmt, wie viel Reserve frei bleibt. Wenig Reserve spart Energie – aber ein Server braucht 30 Minuten zum Starten, und das Autoscaling kennt nur den gewöhnlichen Tag; eine plötzliche Spitze trifft es unvorbereitet. Reserve rund um die Uhr kostet rund um die Uhr Energie; ein Minimum für ein bekanntes Ereignis kostet sie nur, wenn sie gebraucht wird.",
     "Autumn" to
         "Herbst",
-    "Back to the briefing" to
-        "Zurück zum Briefing",
     "Back to the web shop – this time to its code. Autoscaling keeps the servers in line with the load, so less CPU work per request means fewer servers. Your team has 8 story points per sprint and a backlog of ideas, each with the team's estimate of what it saves. Four sprints; each game day shows the week after a sprint." to
         "Zurück zum Webshop – diesmal zu seinem Code. Das Autoscaling hält die Server passend zur Last; weniger CPU-Arbeit pro Request heißt also weniger Server. Dein Team hat 8 Story Points pro Sprint und einen Backlog voller Ideen, jede mit der Schätzung des Teams, was sie spart. Vier Sprints; jeder Spieltag zeigt die Woche nach einem Sprint.",
     "Back" to
@@ -210,6 +224,10 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Nach den Schätzungen des Teams",
     "By today's saving per story point" to
         "Nach der heutigen Einsparung pro Story Point",
+    "Cache memory, GB – line: used, area: memory of the running cache servers, dotted: expected" to
+        "Cache-Speicher, GB – Linie: belegt, Fläche: Speicher der laufenden Cache-Server, gepunktet: erwartet",
+    "Cache memory: what the running cache servers hold, what is used and what is expected (dotted). Below it the load and capacity of the web servers." to
+        "Cache-Speicher: was die laufenden Cache-Server fassen, was belegt ist und was erwartet wird (gepunktet). Darunter Last und Kapazität der Web-Server.",
     "Cache server" to
         "Cache-Server",
     "Cache servers" to
@@ -220,6 +238,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Skalierte Bilder cachen",
     "Cache the session lookups" to
         "Session-Abfragen cachen",
+    "Cache: %lld of %lld GB, %@ hits" to
+        "Cache: %1\$lld von %2\$lld GB, %3\$@ Treffer",
     "Caching: the cache servers and the memory used right now, for each kind of data whether it is cached, its TTL and what the business allows, two more measures. Below it the situation right now." to
         "Caching: die Cache-Server und der gerade belegte Speicher, für jede Art von Daten, ob sie in den Cache kommt, ihre TTL und was die Fachlichkeit erlaubt, zwei weitere Maßnahmen. Darunter die Lage gerade jetzt.",
     "Campaign" to
@@ -242,6 +262,12 @@ internal val GERMAN: Map<String, String> = mapOf(
         "CO₂-Intensität des Stroms, g CO₂/kWh – gestrichelt: Prognose",
     "Catalog pages" to
         "Katalogseiten",
+    "chiller %@, outside air" to
+        "Kältemaschine %@, Außenluft",
+    "chiller" to
+        "Kältemaschine",
+    "Chiller: %@" to
+        "Kältemaschine: %@",
     "compared with the reference operator, who caches nothing." to
         "im Vergleich zum Referenzbetreiber, der nichts cacht.",
     "compared with the reference operator, who keeps the VMs spread over all ten hosts." to
@@ -252,8 +278,18 @@ internal val GERMAN: Map<String, String> = mapOf(
         "im Vergleich zum Referenzbetreiber, der jeden Job sofort bei Ankunft startet.",
     "compared with the reference operator, whose team changes nothing in the code." to
         "im Vergleich zum Referenzbetreiber, dessen Team nichts am Code ändert.",
+    "compared with the reference operator: autoscaling at 50 %, setpoint 20 °C." to
+        "im Vergleich zum Referenzbetreiber: Autoscaling bei 50 %, Sollwert 20 °C.",
     "Consolidation" to
         "Konsolidierung",
+    "Cooled by" to
+        "Gekühlt mit",
+    "Cooling is the biggest part of the facility's own power. Outside air cools for free when it is cooler than the server inlets; in a heat wave the chiller does the work, and the hotter it is outside, the more power it needs. Servers tolerate warmer air than most data centers give them – up to 27 °C – but above 25 °C their fans speed up. And the PUE, facility power divided by IT power, does not always point the right way." to
+        "Die Kühlung ist der größte Teil des Eigenverbrauchs eines Rechenzentrums. Außenluft kühlt kostenlos, wenn sie kühler ist als die Luft am Servereinlass; in einer Hitzewelle arbeitet die Kältemaschine, und je heißer es draußen ist, desto mehr Strom braucht sie. Server vertragen wärmere Luft, als die meisten Rechenzentren ihnen geben – bis 27 °C –, aber über 25 °C drehen ihre Lüfter hoch. Und die PUE, die Leistung des Rechenzentrums geteilt durch die IT-Leistung, zeigt nicht immer in die richtige Richtung.",
+    "Cooling" to
+        "Kühlung",
+    "Cooling: the setpoint and what cools right now. Below it the capacity rule and the situation right now." to
+        "Kühlung: der Sollwert und womit gerade gekühlt wird. Darunter die Kapazitätsregel und die Lage gerade jetzt.",
     "Count unique visitors with HyperLogLog" to
         "Eindeutige Besucher mit HyperLogLog zählen",
     "CO₂ %@ or better" to
@@ -336,6 +372,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Erwartete Last %lld",
     "Expected load in 1 h" to
         "Erwartete Last in 1 h",
+    "Facility energy divided by IT energy: 1.0 would mean that all power goes to the servers. The worldwide average is about 1.5, hyperscalers reach 1.1. A warmer setpoint and cooling with outside air (free cooling) lower it." to
+        "Energie des Rechenzentrums geteilt durch die Energie der IT: 1,0 hieße, aller Strom geht an die Server. Weltweit liegt der Schnitt bei etwa 1,5, Hyperscaler erreichen 1,1. Ein wärmerer Sollwert und Kühlen mit Außenluft (Free Cooling) senken sie.",
     "faster by a constant factor" to
         "schneller um einen konstanten Faktor",
     "Faster string handling in the templates" to
@@ -402,8 +440,10 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Strom: %lld g/kWh",
     "Growing data" to
         "Wachsende Daten",
-    "Headroom is insurance: it costs energy every hour, whether the peak comes or not. When a peak is known in advance, scheduled scaling is cheaper – cloud platforms offer it next to the autoscaler. Predictive autoscaling goes one step further and learns such peaks from the past." to
-        "Reserve ist eine Versicherung: Sie kostet jede Stunde Energie, ob die Spitze kommt oder nicht. Ist eine Spitze vorher bekannt, ist Scheduled Scaling günstiger – Cloud-Plattformen bieten das neben dem Autoscaling an. Predictive Autoscaling geht einen Schritt weiter und lernt solche Spitzen aus der Vergangenheit.",
+    "Headroom is insurance: it costs energy every hour, whether the peak comes or not. When a peak is known in advance, scheduled scaling is cheaper – cloud platforms offer it next to the autoscaler. Predictive autoscaling goes one step further and learns such peaks from the past. Part of the 30 minutes is the software itself: a Java service often needs a while to start and warm up. GraalVM Native Image or CRaC (Coordinated Restore at Checkpoint) start it in a fraction of the time – the faster a server is ready, the less headroom the autoscaler needs." to
+        "Reserve ist eine Versicherung: Sie kostet jede Stunde Energie, ob die Spitze kommt oder nicht. Ist eine Spitze vorher bekannt, ist Scheduled Scaling günstiger – Cloud-Plattformen bieten das neben dem Autoscaling an. Predictive Autoscaling geht einen Schritt weiter und lernt solche Spitzen aus der Vergangenheit. Ein Teil der 30 Minuten ist die Software selbst: Ein Java-Dienst braucht oft eine Weile, bis er gestartet und warmgelaufen ist. GraalVM Native Image oder CRaC (Coordinated Restore at Checkpoint) starten ihn in einem Bruchteil der Zeit – je schneller ein Server bereit ist, desto weniger Reserve braucht das Autoscaling.",
+    "Heat wave" to
+        "Hitzewelle",
     "Hit or miss" to
         "Treffer oder nicht",
     "hits now: %@ · %lld GB" to
@@ -530,6 +570,16 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Optimieren nach Bauchgefühl ist ein Glücksspiel: Das Team erwartet am meisten vom Bildskalieren und vom Neuschreiben des Checkouts. Ob das stimmt, zeigt nur eine Messung. Profiling kostet ein paar Story Points und zeigt, wohin die CPU-Zeit wirklich geht – dann behebst du zuerst die Hotspots.",
     "Order history without an index" to
         "Bestellhistorie ohne Index",
+    "Outside %@ °C, setpoint %lld °C" to
+        "Außen %1\$@ °C, Sollwert %2\$lld °C",
+    "outside air" to
+        "Außenluft",
+    "Outside temperature with the forecast and the setpoint; green: hours in which the outside air cools. Below it the load and capacity." to
+        "Außentemperatur mit Vorhersage und Sollwert; grün: Stunden, in denen die Außenluft kühlt. Darunter Last und Kapazität.",
+    "Outside temperature, °C – dashed: forecast; black: setpoint; green: the outside air cools" to
+        "Außentemperatur, °C – gestrichelt: Vorhersage; schwarz: Sollwert; grün: die Außenluft kühlt",
+    "Outside" to
+        "Außen",
     "Pages of about 400 KB; most searches are typed only once." to
         "Seiten mit je etwa 400 KB; die meisten Suchen gibt es nur einmal.",
     "peak %@" to
@@ -574,6 +624,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Den Shop profilen",
     "Profiling first, then by the measurements" to
         "Erst Profiling, dann nach den Messwerten",
+    "PUE now" to
+        "PUE jetzt",
     "RAM in use" to
         "RAM belegt",
     "Read from the core banking system." to
@@ -620,6 +672,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Server in Betrieb",
     "Sessions and encryption" to
         "Sessions und Verschlüsselung",
+    "Setpoint" to
+        "Sollwert",
     "Shop front end" to
         "Shop-Frontend",
     "Situation" to
@@ -686,10 +740,14 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Die Kapazitätsregel: alle an, eine feste Anzahl oder Autoscaling mit Zielauslastung und auf Wunsch einem Minimum für ein Zeitfenster. Wählen, einstellen, übernehmen. Darunter die Lage gerade jetzt.",
     "The carbon intensity with the forecast, and below it one row per job – light: the time between arrival and deadline, outlined: planned, filled: running or done." to
         "Die CO₂-Intensität mit Prognose und darunter eine Zeile pro Job – hell: die Zeit zwischen Ankunft und Frist, umrandet: geplant, gefüllt: läuft oder fertig.",
+    "The cooling keeps the air at the server inlets at the setpoint. Outside air cools for free when it is at least 6 °C cooler than the setpoint; otherwise the chiller works – the hotter it is outside, the more power it needs. A warmer setpoint saves chiller power, but above 25 °C the server fans speed up." to
+        "Die Kühlung hält die Luft am Servereinlass auf dem Sollwert. Außenluft kühlt kostenlos, wenn sie mindestens 6 °C kühler ist als der Sollwert; sonst arbeitet die Kältemaschine – je heißer es draußen ist, desto mehr Strom braucht sie. Ein wärmerer Sollwert spart Strom für die Kältemaschine, aber über 25 °C drehen die Lüfter der Server hoch.",
     "The day is running: the placement is fixed." to
         "Der Tag läuft: Die Verteilung steht fest.",
     "The game starts paused and pauses at the start of every sprint. Clock and speed – pause, 1×, 4×, 16× – and below it your goals." to
         "Das Spiel beginnt pausiert und hält zu Beginn jedes Sprints an. Uhr und Tempo – Pause, 1×, 4×, 16× – und darunter deine Ziele.",
+    "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals. On the right the PUE right now." to
+        "Das Spiel startet pausiert. Uhr und Geschwindigkeit – Pause, 1×, 4×, 16× – und darunter deine Ziele. Rechts die PUE gerade jetzt.",
     "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals. The game also pauses when a job must start within the hour." to
         "Das Spiel beginnt pausiert. Uhr und Tempo – Pause, 1×, 4×, 16× – und darunter deine Ziele. Das Spiel hält auch an, wenn ein Job innerhalb der nächsten Stunde starten muss.",
     "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals." to
@@ -704,6 +762,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Die Nacht ist nicht überall sauber: Im Solarnetz sind die Mittagsstunden am saubersten. Ein Teil des CO₂ stammt aus der Herstellung der Hardware – er bleibt gleich, egal wann die Jobs laufen.",
     "The previous team spread the 24 VMs over all ten hosts. Pack them onto fewer hosts – a host without a VM is switched off. Drag a VM onto another host, or click it and then the host. Once the day runs, the placement is fixed." to
         "Das vorige Team hat die 24 VMs auf alle zehn Hosts verteilt. Packe sie auf weniger Hosts – ein Host ohne VM wird abgeschaltet. Zieh eine VM auf einen anderen Host oder klick sie an und dann den Host. Sobald der Tag läuft, steht die Verteilung fest.",
+    "The PUE is a ratio, not a goal. Fewer servers saved the most energy – and raised the PUE, because lighting, UPS and pumps draw the same power for fewer servers. A setpoint of 27 °C gives a better PUE than 25 °C, because the faster fans count as IT power – but it uses more energy. All servers on would have had the best PUE of all. Measure CO₂ or energy per request: the PUE only says how well the building serves the IT, not whether the IT does useful work." to
+        "Die PUE ist ein Verhältnis, kein Ziel. Weniger Server sparten am meisten Energie – und erhöhten die PUE, weil Licht, USV und Pumpen für weniger Server gleich viel Strom ziehen. Ein Sollwert von 27 °C ergibt eine bessere PUE als 25 °C, weil die schnelleren Lüfter als IT-Leistung zählen – verbraucht aber mehr Energie. Alle Server an hätte die beste PUE von allen gehabt. Miss CO₂ oder Energie pro Request: Die PUE sagt nur, wie gut das Gebäude der IT dient, nicht, ob die IT nützliche Arbeit tut.",
     "The same job emits less CO₂ when the grid is clean. In Spain's solar grid the cleanest hours are around midday, not at night. Plan every job into clean hours before its deadline – and keep in mind that only ten servers are there." to
         "Derselbe Job stößt weniger CO₂ aus, wenn der Strom sauber ist. Im spanischen Solarnetz sind die saubersten Stunden um die Mittagszeit, nicht nachts. Plane jeden Job vor seiner Frist in saubere Stunden – und denk daran, dass nur zehn Server da sind.",
     "The same run with exactly the same load and grid mix – only the rules differ:" to
@@ -718,6 +778,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Die VMs",
     "The web shop again, now in winter and with 30 servers. Autoscaling is on: at 80 % target utilization it keeps just enough servers running. On day 2 marketing sends a newsletter at 19:00 – for three hours twice as many people will shop as usual." to
         "Wieder der Webshop, jetzt im Winter und mit 30 Servern. Autoscaling ist eingeschaltet: Mit 80 % Zielauslastung hält es gerade genug Server am Laufen. An Tag 2 verschickt das Marketing um 19:00 einen Newsletter – drei Stunden lang kaufen doppelt so viele Leute ein wie sonst.",
+    "The web shop in a German summer, with 40 servers. A heat wave is coming: 28 °C today, 35 °C tomorrow, 37 °C the day after. Autoscaling runs at 50 % target utilization, the cooling keeps 20 °C at the server inlets – the way the last shift left it. Management watches the PUE: the Energy Efficiency Act asks existing data centers for at most 1.5 from July 2027." to
+        "Der Webshop im deutschen Sommer, mit 40 Servern. Eine Hitzewelle kommt: heute 28 °C, morgen 35 °C, übermorgen 37 °C. Das Autoscaling läuft mit 50 % Zielauslastung, die Kühlung hält 20 °C am Lufteinlass der Server – so hat es die letzte Schicht hinterlassen. Die Geschäftsleitung schaut auf die PUE: Das Energieeffizienzgesetz verlangt von bestehenden Rechenzentren ab Juli 2027 höchstens 1,5.",
     "The web shop is growing: every month 15 % more products, customers and orders – after a year almost five times as much data. Each game day stands for a month. The team spends most of its time on features; for performance it has 2 story points per sprint." to
         "Der Webshop wächst: Jeden Monat 15 % mehr Produkte, Kunden und Bestellungen – nach einem Jahr fast fünfmal so viele Daten. Jeder Spieltag steht für einen Monat. Das Team arbeitet vor allem an Features; für Performance hat es 2 Story Points pro Sprint.",
     "The web shop serves five kinds of data: product images, catalog pages, exchange rates, search results and, before a transfer, account balances. Today every request computes or fetches its answer anew. The team has ordered four cache servers with 64 GB each, to be on the safe side; nothing is cached yet. Autoscaling keeps the web servers in line with the work." to
@@ -734,6 +796,10 @@ internal val GERMAN: Map<String, String> = mapOf(
         "bis %@",
     "To scenario %@" to
         "Weiter zu Szenario %@",
+    "To the briefing" to
+        "Zum Briefing",
+    "To the overview" to
+        "Zur Übersicht",
     "today: −%@" to
         "heute: −%@",
     "Too late for the deadline – start by %@." to

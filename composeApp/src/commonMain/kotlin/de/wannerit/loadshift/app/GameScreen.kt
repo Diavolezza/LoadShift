@@ -40,7 +40,7 @@ import kotlinx.coroutines.delay
 
 /** The play screen (docs/CONCEPT.md 10.1): top bar with the goals, hall and controls, timeline. */
 @Composable
-fun GameScreen(game: GameController, onExit: () -> Unit, onNext: ((Scenario) -> Unit)? = null) {
+fun GameScreen(game: GameController, onExit: () -> Unit, onNext: ((Scenario) -> Unit)? = null, onOverview: (() -> Unit)? = null) {
     // The clock: one tick per 1/speed seconds while not paused.
     LaunchedEffect(game.speed) {
         val speed = game.speed
@@ -76,7 +76,7 @@ fun GameScreen(game: GameController, onExit: () -> Unit, onNext: ((Scenario) -> 
             HDivider()
             TimelineChart(game.simulation, game.version, Modifier.fillMaxWidth().height(timelineHeight).background(Palette.panel))
         }
-        if (game.showEnd) EndCard(game, onExit, onNext)
+        if (game.showEnd) EndCard(game, onExit, onNext, onOverview)
     }
 }
 
@@ -107,6 +107,9 @@ private fun TopBar(game: GameController, onExit: () -> Unit) {
         if (game.hasBatch) {
             Metric(t("Jobs done"), "${simulation.totals.jobsDone} / ${simulation.jobs.size}",
                 if (simulation.totals.deadlinesMissed == 0) Palette.ink else Palette.red)
+        }
+        if (simulation.scenario.cooling != null) {
+            Metric(t("PUE now"), if (last == null || last.itPower == 0) "–" else Format.number(last.facilityPower.toDouble() / last.itPower, 2))
         }
         Metric(t("Power"), "${Format.kilowatts(last?.facilityPower ?: 0)} kW")
         }
@@ -209,7 +212,7 @@ private fun GoalItem(ok: Boolean, started: Boolean, text: String) {
 
 /** End of the scenario (CONCEPT.md 8.2, 8.3): stars, goals, the result next to the reference, "what if". */
 @Composable
-private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario) -> Unit)?) {
+private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario) -> Unit)?, onOverview: (() -> Unit)? = null) {
     val scenario = game.scenario
     val you = game.simulation.totals
     val ref = game.reference.totals
@@ -240,6 +243,7 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
                     add(t("CO₂ (kg)") to (Format.kilograms(you.emissions) to Format.kilograms(ref.emissions)))
                     add(t("of it embodied (kg)") to (Format.kilograms(you.embodied) to Format.kilograms(ref.embodied)))
                     add(t("Energy (kWh)") to (Format.kilowattHours(you.facilityEnergy) to Format.kilowattHours(ref.facilityEnergy)))
+                    if (scenario.cooling != null) add(t("PUE") to (Format.number(you.pue / 1_000.0, 2) to Format.number(ref.pue / 1_000.0, 2)))
                     if (scenario.staleLimit != null) {
                         add(t("Stale answers (‰)") to (Format.number(you.stale * 1_000.0 / maxOf(1, you.requests), 2) to Format.number(ref.stale * 1_000.0 / maxOf(1, ref.requests), 2)))
                     }
@@ -269,7 +273,8 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
                 } else {
                     PrimaryButton(t("Play again")) { game.restart() }
                 }
-                SecondaryButton(t("Back to the briefing"), onClick = onExit)
+                SecondaryButton(t("To the briefing"), onClick = onExit)
+                if (onOverview != null) SecondaryButton(t("To the overview"), onClick = onOverview)
             }
         }
     }
@@ -307,16 +312,20 @@ private fun WhatIf(game: GameController) {
         Txt(t("What if …"), Type.subheading)
         Txt(t("The same run with exactly the same load and grid mix – only the rules differ:"), Type.style(15, color = Palette.secondary))
         Spacer(Modifier.height(8.dp))
+        val pue = game.scenario.cooling != null
+        val labelWeight = if (pue) 0.40f else 0.52f
         Row {
-            Spacer(Modifier.weight(0.52f))
+            Spacer(Modifier.weight(labelWeight))
             Txt(t("CO₂ vs. you"), Type.caption.copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.18f))
+            if (pue) Txt(t("PUE"), Type.caption.copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.12f))
             Txt(if (game.hasBatch) t("Missed") else t("SLA"), Type.caption.copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.14f))
             Spacer(Modifier.weight(0.16f))
         }
         for ((label, totals) in alternatives) {
             Row(Modifier.padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
-                Txt(label, Type.callout, Modifier.weight(0.52f))
+                Txt(label, Type.callout, Modifier.weight(labelWeight))
                 Txt(Format.change(totals.emissions, you.emissions), Type.callout.copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.18f))
+                if (pue) Txt(Format.number(totals.pue / 1_000.0, 2), Type.callout.copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.12f))
                 if (game.hasBatch) {
                     Txt("${totals.deadlinesMissed}", Type.style(15, color = if (totals.deadlinesMissed == 0) Palette.ink else Palette.red).copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.14f))
                 } else {

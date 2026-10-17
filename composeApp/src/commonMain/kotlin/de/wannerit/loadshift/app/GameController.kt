@@ -141,18 +141,10 @@ class GameController(val scenario: Scenario) {
         return if (before == 0L) 0 else ((before - after) * 1_000 / before).toInt()
     }
 
-    /** Pauses at the start of every sprint, with the last run's plan for that day ready. */
+    /** Pauses at the start of every sprint (the plan is the player's: nothing from the last run appears by itself). */
     private fun checkSprint() {
         if (!hasSprints || (current.tick - scenario.startTick) % GameTime.TICKS_PER_DAY != 0) return
         speed = Speed.PAUSED
-        prefillSprint()
-    }
-
-    private fun prefillSprint() {
-        // Not in E2: twelve sprints, a plan that appears by itself would surprise more than help.
-        if (scenario.growth != null) return
-        val last = lastSprintPlans[scenario.number]?.get(currentDay) ?: return
-        sprintDraft = last.filter { it !in sprintDone && it !in sprintCarried }
     }
 
     /** Pauses when the forecast is revised (CONCEPT.md 3.3). */
@@ -258,6 +250,10 @@ class GameController(val scenario: Scenario) {
     var capFrom by mutableIntStateOf(18)
     var capTo by mutableIntStateOf(22)
 
+    // Cooling (scenario 6)
+
+    var draftSetpoint by mutableIntStateOf(20)
+
     // Caching (E3)
 
     var cacheServers by mutableIntStateOf(0)
@@ -287,6 +283,7 @@ class GameController(val scenario: Scenario) {
             if (Control.BATCH_RULES in scenario.controls) policy = policy.copy(batch = draftBatch, deadlineSafety = draftSafety)
             if (Control.CAPACITY_RULES in scenario.controls) policy = policy.copy(capacity = draftCapacity)
             if (Control.CACHING in scenario.controls) policy = policy.copy(cache = draftCache)
+            if (Control.COOLING in scenario.controls) policy = policy.copy(setpoint = draftSetpoint)
             return policy
         }
 
@@ -312,6 +309,7 @@ class GameController(val scenario: Scenario) {
             is CapacityMode.Placed -> {}
         }
         draftSafety = policy.deadlineSafety
+        draftSetpoint = policy.setpoint
         scenario.caching?.let { model ->
             val c = policy.cache
             cacheServers = c.servers
@@ -330,26 +328,23 @@ class GameController(val scenario: Scenario) {
     init {
         resetDraft()
         restoreDraft()
-        if (hasSprints) prefillSprint()
     }
 
     /** The draft of the last run of this scenario (kept while the app runs). */
     private class Draft(
         val kind: RuleKind, val hour: Int, val threshold: Int, val safety: Boolean,
         val capKind: CapacityKind, val capFixed: Int, val capTarget: Int, val capMinimumOn: Boolean, val capMinimum: Int,
-        val capFrom: Int, val capTo: Int, val startPolicy: Policy?, val cache: CacheConfig,
+        val capFrom: Int, val capTo: Int, val startPolicy: Policy?, val cache: CacheConfig, val setpoint: Int,
     )
 
     private companion object {
         val drafts = mutableMapOf<Int, Draft>()
-        val lastSprintPlans = mutableMapOf<Int, Map<Int, List<Int>>>()
     }
 
     /** Keeps the panel's settings for the next run (a new run starts with the scenario's rules, the panel keeps yours). */
     fun saveDraft() {
-        if (hasSprints && sprintPlans.isNotEmpty()) lastSprintPlans[scenario.number] = sprintPlans.toMap()
         drafts[scenario.number] = Draft(draftKind, draftHour, draftThreshold, draftSafety, capKind, capFixed, capTarget,
-            capMinimumOn, capMinimum, capFrom, capTo, startPolicy ?: current.policy.takeIf { current.history.isEmpty() }, draftCache)
+            capMinimumOn, capMinimum, capFrom, capTo, startPolicy ?: current.policy.takeIf { current.history.isEmpty() }, draftCache, draftSetpoint)
     }
 
     private fun restoreDraft() {
@@ -360,6 +355,7 @@ class GameController(val scenario: Scenario) {
         cacheServers = d.cache.servers
         if (d.cache.ttlMinutes.isNotEmpty()) cacheTtl = d.cache.ttlMinutes
         cacheCount = d.cache.approximateCount; cacheView = d.cache.materializedView
+        draftSetpoint = d.setpoint
         // A new run starts with the rules the last run started with (the panel shows the last run's final ones).
         if (d.startPolicy != null && current.history.isEmpty() && !hasSprints) {
             current.policy = d.startPolicy
@@ -453,6 +449,16 @@ class GameController(val scenario: Scenario) {
 
     /** "What if" for the debrief: the whole scenario replayed with other rules, with the same load and grid mix. */
     fun whatIf(): List<Pair<String, Totals>> {
+        if (scenario.cooling != null) {
+            fun run(capacity: CapacityMode, setpoint: Int) = Simulation.replay(scenario, Policy(capacity, setpoint = setpoint)).totals
+            return listOf(
+                t("Autoscaling at 50 %, 20 °C (reference)") to reference.totals,
+                t("Autoscaling at 50 %, 27 °C") to run(CapacityMode.Autoscale(500), 27),
+                t("Autoscaling at 80 %, 20 °C") to run(CapacityMode.Autoscale(800), 20),
+                t("Autoscaling at 80 %, 25 °C") to run(CapacityMode.Autoscale(800), 25),
+                t("All servers on, 27 °C (the best PUE)") to run(CapacityMode.AllOn, 27),
+            )
+        }
         if (hasBatch && Control.BATCH_RULES in scenario.controls) {
             val capacity = scenario.referencePolicy.capacity
             fun replay(mode: BatchMode, safety: Boolean = true) = Simulation.replay(scenario, Policy(capacity, mode, safety)).totals
@@ -555,7 +561,6 @@ class GameController(val scenario: Scenario) {
         sprintDraft = emptyList()
         sprintStartedDay = -1
         sprintPlans.clear()
-        if (hasSprints) prefillSprint()
         stars = 0
         showEnd = false
         urgentJob = null

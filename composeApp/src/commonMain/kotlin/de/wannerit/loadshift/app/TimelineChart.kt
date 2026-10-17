@@ -62,7 +62,7 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
     val batchLane = scenario.interactive.peak == 0 && simulation.jobs.isNotEmpty()
     val density = scope.density
     val left = 44f * density
-    val right = scope.size.width - (if (batchLane) 130f else 74f) * density
+    val right = scope.size.width - (if (batchLane) 130f else if (scenario.caching != null) 100f else 74f) * density
     val labelBand = 18f * density
 
     fun x(tick: Int): Float = left + (right - left) * (tick - start) / (end - start).toFloat()
@@ -81,47 +81,54 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
         val lowBottom = size.height - labelBand
         val grid = simulation.grid
 
-        // Carbon intensity
-        val past = simulation.history.map { it.tick to it.intensityTenths }.toMutableList()
-        if (past.isNotEmpty() && past.last().first < now) past += now to grid.intensityTenths(now)
         val future = if (now < end) (now..end).toList() else emptyList()
-        val forecast = future.map { Triple(it, grid.forecastTenths(it, now), grid.band(it - now)) }
-        val maxTenths = maxOf(10, (past.map { it.second } + forecast.map { it.second * (1_000 + it.third) / 1_000 }).maxOrNull() ?: 10)
-        val scaleTop = niceCeiling(maxTenths / 10).toFloat()
-        fun yI(tenths: Int) = topBottom - (topBottom - topTop) * (tenths / 10f / scaleTop)
-        if (forecast.size > 1) {
-            val band = Path().apply {
-                moveTo(x(forecast[0].first), yI(forecast[0].second * (1_000 + forecast[0].third) / 1_000))
-                forecast.forEach { lineTo(x(it.first), yI(it.second * (1_000 + it.third) / 1_000)) }
-                forecast.reversed().forEach { lineTo(x(it.first), yI(it.second * (1_000 - it.third) / 1_000)) }
-                close()
+        // Upper lane: what matters for the scenario – the cache memory (E3), the outside temperature (6) or the grid.
+        when {
+            scenario.caching != null -> drawCache(topTop, topBottom, future)
+            scenario.cooling != null -> drawTemperature(topTop, topBottom)
+            else -> {
+                // Carbon intensity
+                val past = simulation.history.map { it.tick to it.intensityTenths }.toMutableList()
+                if (past.isNotEmpty() && past.last().first < now) past += now to grid.intensityTenths(now)
+                val forecast = future.map { Triple(it, grid.forecastTenths(it, now), grid.band(it - now)) }
+                val maxTenths = maxOf(10, (past.map { it.second } + forecast.map { it.second * (1_000 + it.third) / 1_000 }).maxOrNull() ?: 10)
+                val scaleTop = niceCeiling(maxTenths / 10).toFloat()
+                fun yI(tenths: Int) = topBottom - (topBottom - topTop) * (tenths / 10f / scaleTop)
+                if (forecast.size > 1) {
+                    val band = Path().apply {
+                        moveTo(x(forecast[0].first), yI(forecast[0].second * (1_000 + forecast[0].third) / 1_000))
+                        forecast.forEach { lineTo(x(it.first), yI(it.second * (1_000 + it.third) / 1_000)) }
+                        forecast.reversed().forEach { lineTo(x(it.first), yI(it.second * (1_000 - it.third) / 1_000)) }
+                        close()
+                    }
+                    drawPath(band, Color.Gray.copy(alpha = 0.16f))
+                    val line = Path().apply {
+                        moveTo(x(forecast[0].first), yI(forecast[0].second))
+                        forecast.drop(1).forEach { lineTo(x(it.first), yI(it.second)) }
+                    }
+                    drawPath(line, Color.Gray, style = Stroke(1.5f * density, pathEffect = PathEffect.dashPathEffect(floatArrayOf(5f * density, 4f * density))))
+                }
+                if (past.size > 1) {
+                    val area = Path().apply {
+                        moveTo(x(past[0].first), topBottom)
+                        past.forEach { lineTo(x(it.first), yI(it.second)) }
+                        lineTo(x(past.last().first), topBottom)
+                        close()
+                    }
+                    val stops = listOf(0, 150, 350, 500, 700)
+                        .map { g -> (1f - (g / scaleTop).coerceIn(0f, 1f)) to Palette.intensity(g).copy(alpha = 0.55f) }
+                        .sortedBy { it.first }.toTypedArray()
+                    drawPath(area, Brush.verticalGradient(*stops, startY = topTop, endY = topBottom))
+                    val line = Path().apply {
+                        moveTo(x(past[0].first), yI(past[0].second))
+                        past.drop(1).forEach { lineTo(x(it.first), yI(it.second)) }
+                    }
+                    drawPath(line, Palette.ink.copy(alpha = 0.8f), style = Stroke(1.5f * density))
+                }
+                axis(topTop, topBottom, scaleTop.toInt().toString())
+                text(t("Carbon intensity of the grid, g CO₂/kWh – dashed: forecast"), Offset(left, topTop - 12f * density), Type.style(12, FontWeight.SemiBold))
             }
-            drawPath(band, Color.Gray.copy(alpha = 0.16f))
-            val line = Path().apply {
-                moveTo(x(forecast[0].first), yI(forecast[0].second))
-                forecast.drop(1).forEach { lineTo(x(it.first), yI(it.second)) }
-            }
-            drawPath(line, Color.Gray, style = Stroke(1.5f * density, pathEffect = PathEffect.dashPathEffect(floatArrayOf(5f * density, 4f * density))))
         }
-        if (past.size > 1) {
-            val area = Path().apply {
-                moveTo(x(past[0].first), topBottom)
-                past.forEach { lineTo(x(it.first), yI(it.second)) }
-                lineTo(x(past.last().first), topBottom)
-                close()
-            }
-            val stops = listOf(0, 150, 350, 500, 700)
-                .map { g -> (1f - (g / scaleTop).coerceIn(0f, 1f)) to Palette.intensity(g).copy(alpha = 0.55f) }
-                .sortedBy { it.first }.toTypedArray()
-            drawPath(area, Brush.verticalGradient(*stops, startY = topTop, endY = topBottom))
-            val line = Path().apply {
-                moveTo(x(past[0].first), yI(past[0].second))
-                past.drop(1).forEach { lineTo(x(it.first), yI(it.second)) }
-            }
-            drawPath(line, Palette.ink.copy(alpha = 0.8f), style = Stroke(1.5f * density))
-        }
-        axis(topTop, topBottom, scaleTop.toInt().toString())
-        text(t("Carbon intensity of the grid, g CO₂/kWh – dashed: forecast"), Offset(left, topTop - 12f * density), Type.style(12, FontWeight.SemiBold))
 
         // Lower lane
         if (batchLane) {
@@ -154,7 +161,16 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
         val record = simulation.history.firstOrNull { it.tick == tick }
         val grid = simulation.grid
         val lines = mutableListOf(timeText(tick))
-        if (record != null) {
+        val cache = record?.cache
+        val cooling = scenario.cooling
+        if (scenario.caching != null) {
+            if (cache != null) lines += t("Cache: %lld of %lld GB, %@ hits", (cache.usedTenthsGb + 5) / 10, cache.capacityGb, Format.wholePercent(cache.hits))
+        } else if (cooling != null) {
+            val setpoint = record?.setpoint ?: simulation.policy.setpoint
+            lines += t("Outside %@ °C, setpoint %lld °C", Format.number(cooling.outsideTenths(tick) / 10.0, 1), setpoint)
+            lines += t("Chiller: %@", Format.wholePercent(cooling.mechanicalPermille(tick, setpoint)))
+            if (record != null && record.itPower > 0) lines += t("PUE: %@", Format.number(record.facilityPower.toDouble() / record.itPower, 2))
+        } else if (record != null) {
             lines += t("Grid: %lld g/kWh", (record.intensityTenths + 5) / 10)
         } else {
             lines += t("Forecast: %lld g/kWh, ±%lld %%", grid.forecast(tick, now), (grid.band(tick - now) + 5) / 10)
@@ -191,6 +207,86 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
             drawText(layout, topLeft = Offset(boxX + pad, y))
             y += layout.size.height
         }
+    }
+
+    /** E3: memory of the running cache servers (area), memory used (line), expected with the rules now (dotted). */
+    private fun DrawScope.drawCache(top: Float, bottom: Float, future: List<Int>) {
+        val model = scenario.caching ?: return
+        val records = simulation.history.mapNotNull { r -> r.cache?.let { r.tick to it } }
+        val config = simulation.policy.cache
+        val expected = future.map { it to (model.state(config, scenario.interactive.expected(it)).usedGb * 10).toInt() }
+        val capacityNow = model.servers(config) * model.gbPerServer
+        val maxGb = maxOf(16, (records.map { maxOf(it.second.capacityGb, it.second.usedTenthsGb / 10) } + capacityNow +
+            expected.map { it.second / 10 }).maxOrNull() ?: 16)
+        val scaleTop = niceCeiling(maxGb).toFloat()
+        fun yG(tenths: Int) = bottom - (bottom - top) * (tenths / 10f / scaleTop)
+        if (records.isNotEmpty()) {
+            val area = Path().apply {
+                moveTo(x(records[0].first), bottom)
+                records.forEach { (tick, c) -> lineTo(x(tick), yG(c.capacityGb * 10)); lineTo(x(tick + 1), yG(c.capacityGb * 10)) }
+                lineTo(x(records.last().first + 1), bottom)
+                close()
+            }
+            drawPath(area, Palette.cache.copy(alpha = 0.18f))
+            val line = Path().apply {
+                moveTo(x(records[0].first), yG(records[0].second.usedTenthsGb))
+                records.drop(1).forEach { (tick, c) -> lineTo(x(tick), yG(c.usedTenthsGb)) }
+            }
+            drawPath(line, Palette.cache, style = Stroke(1.8f * density))
+        }
+        if (expected.size > 1 && capacityNow > 0) {
+            val line = Path().apply {
+                moveTo(x(expected[0].first), yG(expected[0].second))
+                expected.drop(1).forEach { lineTo(x(it.first), yG(it.second)) }
+            }
+            drawPath(line, Palette.cache.copy(alpha = 0.6f), style = Stroke(1.5f * density, pathEffect = PathEffect.dashPathEffect(floatArrayOf(2f * density, 3f * density))))
+        }
+        // One dotted line per cache server.
+        var gb = model.gbPerServer
+        while (gb <= scaleTop) {
+            drawLine(Palette.cache.copy(alpha = 0.35f), Offset(left, yG(gb * 10)), Offset(right, yG(gb * 10)), 1f,
+                pathEffect = PathEffect.dashPathEffect(floatArrayOf(1f * density, 5f * density)))
+            text(t("%lld cache servers", gb / model.gbPerServer), Offset(right + 6f * density, yG(gb * 10)))
+            gb += model.gbPerServer
+        }
+        axis(top, bottom, scaleTop.toInt().toString())
+        text(t("Cache memory, GB – line: used, area: memory of the running cache servers, dotted: expected"), Offset(left, top - 12f * density), Type.style(12, FontWeight.SemiBold))
+    }
+
+    /** Scenario 6: outside temperature (line, dashed ahead), setpoint (step line), hours the outside air cools (green). */
+    private fun DrawScope.drawTemperature(top: Float, bottom: Float) {
+        val cooling = scenario.cooling ?: return
+        val scaleTop = 40f
+        fun yT(tenths: Int) = bottom - (bottom - top) * (tenths / 10f / scaleTop).coerceIn(0f, 1f)
+        val setpointAt = { tick: Int -> simulation.history.firstOrNull { it.tick == tick }?.setpoint ?: simulation.policy.setpoint }
+        // Hours in which outside air does (part of) the cooling.
+        for (tick in start until end) {
+            val m = cooling.mechanicalPermille(tick, setpointAt(tick))
+            if (m < 1_000) drawRect(Palette.accent.copy(alpha = 0.10f + 0.12f * (1_000 - m) / 1_000), Offset(x(tick), top), Size(x(tick + 1) - x(tick), bottom - top))
+        }
+        val past = Path().apply {
+            moveTo(x(start), yT(cooling.outsideTenths(start)))
+            for (tick in start + 1..now) lineTo(x(tick), yT(cooling.outsideTenths(tick)))
+        }
+        if (now > start) drawPath(past, Palette.red.copy(alpha = 0.85f), style = Stroke(1.8f * density))
+        if (now < end) {
+            val ahead = Path().apply {
+                moveTo(x(now), yT(cooling.outsideTenths(now)))
+                for (tick in now + 1..end) lineTo(x(tick), yT(cooling.outsideTenths(minOf(tick, end - 1))))
+            }
+            drawPath(ahead, Palette.red.copy(alpha = 0.6f), style = Stroke(1.5f * density, pathEffect = PathEffect.dashPathEffect(floatArrayOf(5f * density, 4f * density))))
+        }
+        val setpoint = Path().apply {
+            moveTo(x(start), yT(setpointAt(start) * 10))
+            for (tick in start until end) { lineTo(x(tick), yT(setpointAt(tick) * 10)); lineTo(x(tick + 1), yT(setpointAt(tick) * 10)) }
+        }
+        drawPath(setpoint, Palette.ink.copy(alpha = 0.7f), style = Stroke(1.5f * density))
+        for (degrees in listOf(10, 20, 30)) {
+            drawLine(Color.Gray.copy(alpha = 0.15f), Offset(left, yT(degrees * 10)), Offset(right, yT(degrees * 10)), 1f)
+            text("$degrees", Offset(left - 6f * density, yT(degrees * 10)), anchorX = 1f)
+        }
+        axis(top, bottom, scaleTop.toInt().toString())
+        text(t("Outside temperature, °C – dashed: forecast; black: setpoint; green: the outside air cools"), Offset(left, top - 12f * density), Type.style(12, FontWeight.SemiBold))
     }
 
     private fun DrawScope.axis(top: Float, bottom: Float, maxLabel: String) {

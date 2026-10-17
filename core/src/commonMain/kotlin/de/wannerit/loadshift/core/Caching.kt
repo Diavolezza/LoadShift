@@ -109,6 +109,10 @@ data class CacheModel(
         return CacheState(stay, each.map { (it.first * 1_000).roundToInt() }, each.map { it.second }, capacity)
     }
 
+    /** Hits over all kinds, per mille of the requests to them. */
+    fun overallHits(state: CacheState): Int =
+        kinds.indices.sumOf { kinds[it].share * state.hits[it] } / maxOf(1, kinds.sumOf { it.share })
+
     /** Hit rate of each kind, per mille. */
     fun hitRates(config: CacheConfig, requests: Int): List<Int> = state(config, requests).hits
 

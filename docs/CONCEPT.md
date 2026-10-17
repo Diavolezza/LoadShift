@@ -332,7 +332,7 @@ Engineering track opens after scenario 1, because it builds on the SCI per reque
 | 3 | When the wind drops | Great Britain, winter | 3 days | batch rules (fixed hour, greenest hours, threshold), deadline safety | The rules automate what the player planned by hand in scenario 2. A fixed threshold works while the wind blows and fails when it drops: without the deadline safety jobs miss their deadlines, with it they start at the last moment in dirty hours. A rule that compares the hours of the (uncertain) forecast adapts to the weather – if the plan is made again when the forecast changes (G3, D15). Term: Carbon-Aware Scheduling. |
 | 4 | Headroom | Germany, winter | 2 days | capacity rules: all on, fixed, autoscaling with target utilization and a scheduled minimum | Autoscaling automates what the player did by hand in scenario 1. A newsletter on day 2 doubles the load for three hours; the autoscaler knows only the usual day and reacts too late (30 minutes boot time). Headroom all the time costs energy all the time; a minimum for the known event costs it only when needed (G4). Term: Autoscaling (with Scheduled Scaling). |
 | 5 | Consolidation | Germany, autumn | 1 day | placing VMs on hosts by hand (two dimensions: CPU and RAM) | Bin packing: fewer hosts running means less idle power. Pack by the peaks, not the means; VMs with opposite daily profiles fit together; often the RAM is full before the CPU; packing too tight lets the peaks collide (G6, D18). Term: Consolidation (Bin Packing). |
-| 6 | Heat wave | Germany, summer | 3 days | cooling type, setpoint | PUE rises with the outside temperature; setpoint and free cooling (G5). |
+| 6 | Heat wave | Germany, summer | 3 days | inlet setpoint (18–27 °C), capacity rule | Outside air cools for free while it is 6 K below the setpoint; in the heat the chiller works, the hotter the more. A warmer setpoint saves chiller power, above 25 °C the server fans eat it up: the sweet spot is 25 °C. The PUE trap: fewer servers save the most energy but raise the PUE (fixed facility power); 27 °C and all servers on give the best PUE and more CO₂. The stars count CO₂ (G5, D21). Term: PUE (Power Usage Effectiveness). |
 | 7 | Old iron | France and Poland | 3 years (monthly steps) | buying and retiring servers | Replacing hardware pays off in Poland, hardly in France (G6, G1). |
 | 8 | Training run | Germany, spring | 3 days | AI training, power cap | Run the training in clean hours and cap the GPUs (G3, G6). |
 | 9 | Eco mode | Poland, summer | 2 days | streaming eco mode | Lower quality when the grid is dirty (G7). Term: Demand Shaping. |
@@ -698,8 +698,37 @@ After each step the game is played by a person before the next step begins (**pl
 - E1: twelve backlog items, 50 story points for 32 in four sprints – some items are left at the end (lazy loading,
   session cache, TLS session reuse, JVM update, precomputed shipping costs). By the estimates −22 % ★, profiling
   first −46 % ★★★.
-- E2: the last run's sprint plans are not offered again (twelve sprints: a plan that appears by itself surprises
-  more than it helps); E1 keeps them.
+- E1 and E2: the last run's sprint plans are not offered again – the plan is the player's.
+- E3: the upper lane of the timeline shows the cache memory (memory of the running cache servers, used, expected)
+  instead of the grid's carbon intensity, which the player cannot act on there.
+
+**As built in step 5, part 1** (scenario 6, "Heat wave"):
+
+- Core: `CoolingModel` – outside temperature per day (lowest at 05:00, highest at 15:00, cosine in between),
+  free cooling while the outside air is at least 6 K below the setpoint, the chiller fully above setpoint − 1 K,
+  linear in between. Chiller power per kW IT: 0.38 at 30 °C outside and 20 °C setpoint, +3 % per K outside, −5 % per
+  K setpoint (at least 0.12); free cooling 0.06; distribution 6 %; a fixed 1.5 kW for lighting, UPS and pumps. Server
+  fans: +3 % IT power per K above 25 °C. Game values in the range of [S14] and [S17].
+- `Policy.setpoint`, `Scenario.cooling`, `Control.COOLING`; the record of a tick keeps the setpoint.
+- App: cooling panel (setpoint, outside temperature, chiller share, PUE now) above the capacity rule; "PUE now" in
+  the top bar; the upper lane of the timeline shows the outside temperature, the setpoint and the hours the outside
+  air cools; PUE in the end card and in "what if".
+- Heat wave: 28, 35, 37 °C; 40 servers, peak 300 units; reference autoscaling at 50 %, 20 °C. Goals ★★ −13 %,
+  ★★★ −16.5 %.
+
+| Rules | CO₂ vs. reference | PUE | Stars |
+|---|---:|---:|---:|
+| 50 %, 20 °C (reference) | – | 1.64 | – |
+| 50 %, 25 °C | −5.5 % | 1.53 | ★ |
+| 50 %, 27 °C | −3.7 % | 1.48 | ★ |
+| 80 %, 20 °C | −12.4 % | 1.68 | ★ |
+| 80 %, 27 °C | −15.6 % | 1.52 | ★★ |
+| 80 %, 25 °C | −17.1 % | 1.58 | ★★★ |
+| all on, 27 °C | +25.9 % | 1.40 | – |
+
+- Scenario 4: the debrief adds the start time of the software (JVM; GraalVM Native Image, CRaC) – the faster a
+  server is ready, the less headroom the autoscaler needs.
+- End card: "To the overview" next to "To the briefing".
 - Debriefs: E1 names Amdahl's law (the checkout), E2 the rebound effect (freed capacity fills up with features).
 - Planned from the same lecture: scenario 6 "Heat wave" with the PUE trap (switching servers off raises the PUE,
   but CO₂ falls – the score counts CO₂, not PUE); a note on JVM start time (Native Image, CRaC) in scenario 4,
@@ -736,6 +765,7 @@ music. Not taken over: maps, paths, the tower-and-creep rules, opponents, networ
 | D18 | Bin packing | scenario 5 "Consolidation": VMs on hosts by hand, two dimensions (CPU, RAM), heuristics in "what if"; the operations scenarios after it move up by one |
 | D19 | Order of the scenarios | a star opens the next scenario (the story), but a switch "Open all scenarios" opens everything for courses that take the topics in another order; stars still count |
 | D20 | Caching | its own Engineering scenario E3 instead of a backlog item; the TTL is a business rule per kind of data, breaking it gives stale answers and no stars; all kinds share the memory of whole cache servers (LRU), so the decisions are what to cache and how many servers; HyperLogLog and the materialized view as extra measures |
+| D21 | PUE | shown everywhere in scenario 6, but the stars count CO₂: the scenario is built so that the best PUE and the least CO₂ need different decisions (fewer servers raise the PUE, faster fans lower it) |
 
 ---
 

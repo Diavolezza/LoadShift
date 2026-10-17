@@ -1,5 +1,7 @@
 package de.wannerit.loadshift.core
 
+import kotlin.math.roundToInt
+
 /*
  * The simulation of one data center through a scenario (docs/CONCEPT.md, sections 3, 5–7, 11).
  *
@@ -85,7 +87,14 @@ data class TickRecord(
     val emissionsSoFar: Long,
     /** Scenario 5: the CPU work the VMs of each host asked for, thousandths of a work unit. */
     val hostDemandMilli: IntArray? = null,
+    /** Scenario 6: the setpoint, °C. */
+    val setpoint: Int = 20,
+    /** E3: what the cache held. */
+    val cache: CacheRecord? = null,
 )
+
+/** E3: memory used (tenths of GB), memory of the running cache servers (GB), hits (per mille of the cacheable requests). */
+data class CacheRecord(val usedTenthsGb: Int, val capacityGb: Int, val hits: Int)
 
 class Simulation private constructor(
     val scenario: Scenario,
@@ -289,7 +298,10 @@ class Simulation private constructor(
             if (updated.state.isPowered) poweredOn += 1
         }
         // E3: the cache servers run all the time, and they were built too.
+        var cacheRecord: CacheRecord? = null
         scenario.caching?.let { caching ->
+            val state = caching.state(policy.cache, scenario.interactive.expected(tick))
+            cacheRecord = CacheRecord((state.usedGb * 10).roundToInt(), state.capacityGb, caching.overallHits(state))
             val cacheServers = caching.servers(policy.cache)
             itPower += caching.power(policy.cache)
             embodied += cacheServers * ServerKind.CPU_CURRENT.embodiedPerTick
@@ -297,7 +309,10 @@ class Simulation private constructor(
             totals.stale += requests.toLong() * caching.stale(policy.cache, scenario.interactive.expected(tick)) / 1_000
         }
         totals.requests += requests
-        val facilityPower = scenario.facility.facilityPower(itPower)
+        // Scenario 6: the server fans follow the setpoint; the cooling follows the outside temperature.
+        val cooling = scenario.cooling
+        if (cooling != null) itPower = itPower * cooling.fanPermille(policy.setpoint) / 1_000
+        val facilityPower = cooling?.facilityPower(itPower, tick, policy.setpoint) ?: scenario.facility.facilityPower(itPower)
         val intensity = plannedAt?.let { grid.forecastTenths(tick, it) } ?: grid.intensityTenths(tick)
         val facilityEnergy = facilityPower * Units.MILLIWATT_HOURS_PER_WATT_TICK
 
@@ -323,6 +338,7 @@ class Simulation private constructor(
                 tick = tick, intensityTenths = intensity, demand = demand, capacity = capacity, served = served,
                 inTime = inTime, serversOn = poweredOn, batchServers = batchServers, itPower = itPower,
                 facilityPower = facilityPower, emissionsSoFar = totals.emissions, hostDemandMilli = hostMilli,
+                setpoint = policy.setpoint, cache = cacheRecord,
             ),
         )
         tick += 1

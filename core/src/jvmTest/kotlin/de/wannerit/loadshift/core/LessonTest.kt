@@ -271,6 +271,63 @@ class LessonTest {
         assertEquals(0, stars("by hand, 5 hosts"))
     }
 
+    @Test fun scenario6HeatWave() {
+        val scenario = Scenario.HEAT_WAVE
+        val reference = Simulation.reference(scenario)
+        fun run(target: Int, setpoint: Int, all: Boolean = false) = Simulation.replay(
+            scenario, Policy(if (all) CapacityMode.AllOn else CapacityMode.Autoscale(target), setpoint = setpoint))
+        val runs = listOf(
+            "reference: 50 %, 20 °C" to reference,
+            "50 %, 18 °C" to run(500, 18),
+            "50 %, 24 °C" to run(500, 24),
+            "50 %, 25 °C" to run(500, 25),
+            "50 %, 26 °C" to run(500, 26),
+            "50 %, 27 °C" to run(500, 27),
+            "70 %, 20 °C" to run(700, 20),
+            "80 %, 20 °C" to run(800, 20),
+            "70 %, 24 °C" to run(700, 24),
+            "80 %, 24 °C" to run(800, 24),
+            "80 %, 25 °C" to run(800, 25),
+            "80 %, 26 °C" to run(800, 26),
+            "80 %, 27 °C" to run(800, 27),
+            "70 %, 25 °C" to run(700, 25),
+            "90 %, 25 °C" to run(900, 25),
+            "all on, 27 °C" to run(0, 27, all = true),
+            "40 %, 27 °C" to run(400, 27),
+        )
+        val lines = mutableListOf(title(scenario), HEADER)
+        for ((name, simulation) in runs) {
+            lines += line(name, simulation.totals, reference.totals) + "  " + "★".repeat(scenario.stars(simulation.totals, reference.totals))
+        }
+        val cooling = scenario.cooling!!
+        for (day in 0 until scenario.days) {
+            lines += "  day ${day + 1}: " + listOf(5, 10, 15, 20).joinToString("  ") { h ->
+                val tick = GameTime.at(day, h).tick
+                "%02d:00 %.1f °C mech 20/27: %d/%d ‰".format(Locale.ROOT, h, cooling.outsideTenths(tick) / 10.0,
+                    cooling.mechanicalPermille(tick, 20), cooling.mechanicalPermille(tick, 27))
+            }
+        }
+        report(6, lines)
+        assertTrue(reference.totals.sla >= scenario.slaTarget)
+        assertEquals(0, scenario.stars(reference.totals, reference.totals))
+        val byName = runs.toMap()
+        fun stars(name: String) = scenario.stars(byName.getValue(name).totals, reference.totals)
+        fun pue(name: String) = byName.getValue(name).totals.pue
+        // The setpoint alone: one star; its sweet spot is 25 °C – above it the fans eat the saving.
+        assertEquals(1, stars("50 %, 25 °C"))
+        assertTrue(byName.getValue("50 %, 25 °C").totals.emissions < byName.getValue("50 %, 27 °C").totals.emissions)
+        // Fewer servers alone: one star.
+        assertEquals(1, stars("80 %, 20 °C"))
+        // Both: two stars; at the sweet spot three.
+        assertEquals(2, stars("80 %, 27 °C"))
+        assertEquals(3, stars("80 %, 25 °C"))
+        // The PUE trap: fewer servers raise the PUE, the warmest setpoint and all servers on lower it.
+        assertTrue(pue("80 %, 20 °C") > pue("reference: 50 %, 20 °C"))
+        assertTrue(pue("50 %, 27 °C") < pue("50 %, 25 °C"))
+        assertTrue(pue("all on, 27 °C") < pue("80 %, 25 °C"))
+        assertEquals(0, stars("all on, 27 °C"))
+    }
+
     @Test fun e1MeasureFirst() {
         val scenario = Scenario.MEASURE_FIRST
         val reference = Simulation.reference(scenario)

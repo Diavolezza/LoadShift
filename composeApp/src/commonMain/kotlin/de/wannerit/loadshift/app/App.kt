@@ -56,7 +56,9 @@ fun App(options: LaunchOptions = LaunchOptions()) {
     when (val s = screen) {
         Screen.List -> ScenarioListScreen { screen = Screen.Briefing(it) }
         is Screen.Briefing -> BriefingScreen(s.scenario, onStart = { screen = Screen.Game(GameController(s.scenario)) }, onBack = { screen = Screen.List })
-        is Screen.Game -> GameScreen(s.controller, onExit = { s.controller.saveDraft(); screen = Screen.Briefing(s.controller.scenario) }, onNext = { screen = Screen.Briefing(it) })
+        is Screen.Game -> GameScreen(s.controller, onExit = { s.controller.saveDraft(); screen = Screen.Briefing(s.controller.scenario) },
+            onNext = { s.controller.saveDraft(); screen = Screen.Briefing(it) },
+            onOverview = { s.controller.saveDraft(); screen = Screen.List })
     }
 }
 
@@ -68,6 +70,10 @@ private fun initialScreen(options: LaunchOptions): Screen {
     if (options.careful && game.hasBatch) {
         // Plan like a careful player: every job into the greenest hours of the forecast.
         game.setPolicy(Policy(scenario.initialPolicy.capacity, BatchMode.Greenest))
+        game.advance(options.ticks)
+    } else if (options.careful && Control.COOLING in scenario.controls) {
+        // Like a careful player: autoscaling at 80 %, setpoint 25 °C.
+        game.setPolicy(scenario.initialPolicy.copy(capacity = CapacityMode.Autoscale(800), setpoint = 25))
         game.advance(options.ticks)
     } else if (options.careful && Control.CACHING in scenario.controls) {
         // Like a careful player: cached as allowed, one cache server, with HyperLogLog and the materialized view.

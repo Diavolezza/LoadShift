@@ -23,6 +23,21 @@ class ScenarioTexts(
 ) {
     companion object {
         fun of(scenario: Scenario): ScenarioTexts = when (scenario.number) {
+            6 -> ScenarioTexts(
+                situation = "The web shop in a German summer, with 40 servers. A heat wave is coming: 28 °C today, 35 °C tomorrow, 37 °C the day after. Autoscaling runs at 50 % target utilization, the cooling keeps 20 °C at the server inlets – the way the last shift left it. Management watches the PUE: the Energy Efficiency Act asks existing data centers for at most 1.5 from July 2027.",
+                idea = "Cooling is the biggest part of the facility's own power. Outside air cools for free when it is cooler than the server inlets; in a heat wave the chiller does the work, and the hotter it is outside, the more power it needs. Servers tolerate warmer air than most data centers give them – up to 27 °C – but above 25 °C their fans speed up. And the PUE, facility power divided by IT power, does not always point the right way.",
+                screen = listOf(
+                    "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals. On the right the PUE right now.",
+                    "Your racks: grey servers are off, light blue ones are booting, the blue bar shows how busy a server is.",
+                    "Cooling: the setpoint and what cools right now. Below it the capacity rule and the situation right now.",
+                    "Outside temperature with the forecast and the setpoint; green: hours in which the outside air cools. Below it the load and capacity.",
+                ),
+                comparedWith = "compared with the reference operator: autoscaling at 50 %, setpoint 20 °C.",
+                rules = "SLA at least 99 % and less CO₂ than the reference",
+                remark = "The PUE is a ratio, not a goal. Fewer servers saved the most energy – and raised the PUE, because lighting, UPS and pumps draw the same power for fewer servers. A setpoint of 27 °C gives a better PUE than 25 °C, because the faster fans count as IT power – but it uses more energy. All servers on would have had the best PUE of all. Measure CO₂ or energy per request: the PUE only says how well the building serves the IT, not whether the IT does useful work.",
+                term = "PUE (Power Usage Effectiveness)",
+                termText = "Facility energy divided by IT energy: 1.0 would mean that all power goes to the servers. The worldwide average is about 1.5, hyperscalers reach 1.1. A warmer setpoint and cooling with outside air (free cooling) lower it.",
+            )
             103 -> ScenarioTexts(
                 situation = "The web shop serves five kinds of data: product images, catalog pages, exchange rates, search results and, before a transfer, account balances. Today every request computes or fetches its answer anew. The team has ordered four cache servers with 64 GB each, to be on the safe side; nothing is cached yet. Autoscaling keeps the web servers in line with the work.",
                 idea = "A cache keeps answers for a while, so that the next request is cheap. It works because a few items get most of the requests – the bestsellers, the euro rate. Four things decide: what may be cached at all, how long an entry may live (the TTL – a business question, not a technical one), whether the same thing is asked again, and how much memory is worth its power.",
@@ -30,7 +45,7 @@ class ScenarioTexts(
                     "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals.",
                     "Your racks: grey servers are off, light blue ones are booting, the blue bar shows how busy a server is.",
                     "Caching: the cache servers and the memory used right now, for each kind of data whether it is cached, its TTL and what the business allows, two more measures. Below it the situation right now.",
-                    "Carbon intensity of the grid with the forecast, the load so far and the expected load (dotted); the lines on the right show how many servers a load needs.",
+                    "Cache memory: what the running cache servers hold, what is used and what is expected (dotted). Below it the load and capacity of the web servers.",
                 ),
                 comparedWith = "compared with the reference operator, who caches nothing.",
                 rules = "SLA at least 99 %, at most 1 ‰ stale answers and less CO₂ than the reference",
@@ -94,7 +109,7 @@ class ScenarioTexts(
                 ),
                 comparedWith = "compared with the reference operator, who leaves every server on.",
                 rules = "SLA at least 99 % and less CO₂ than the reference",
-                remark = "Headroom is insurance: it costs energy every hour, whether the peak comes or not. When a peak is known in advance, scheduled scaling is cheaper – cloud platforms offer it next to the autoscaler. Predictive autoscaling goes one step further and learns such peaks from the past.",
+                remark = "Headroom is insurance: it costs energy every hour, whether the peak comes or not. When a peak is known in advance, scheduled scaling is cheaper – cloud platforms offer it next to the autoscaler. Predictive autoscaling goes one step further and learns such peaks from the past. Part of the 30 minutes is the software itself: a Java service often needs a while to start and warm up. GraalVM Native Image or CRaC (Coordinated Restore at Checkpoint) start it in a fraction of the time – the faster a server is ready, the less headroom the autoscaler needs.",
                 term = "Autoscaling",
                 termText = "Capacity follows the load automatically: servers are added when the utilization rises above a target and removed when it falls. The target decides the headroom. Scheduled scaling adds capacity for known events in advance.",
             )

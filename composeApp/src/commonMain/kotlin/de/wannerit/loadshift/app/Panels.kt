@@ -57,6 +57,10 @@ fun ControlPanel(game: GameController, modifier: Modifier = Modifier) {
             NowBox(game)
         } else if (Control.PLACEMENT in game.scenario.controls) {
             PlacementPanel(game)
+        } else if (Control.COOLING in game.scenario.controls) {
+            CoolingPanel(game)
+            CapacityRules(game)
+            NowBox(game)
         } else if (Control.CAPACITY_RULES in game.scenario.controls) {
             CapacityRules(game)
             NowBox(game)
@@ -321,7 +325,10 @@ private fun CapacityRules(game: GameController) {
                     minus = { game.capTo = maxOf(game.capFrom + 1, game.capTo - 1) }, plus = { game.capTo = minOf(24, game.capTo + 1) })
             }
         }
-        ApplyRow(game) { capacityText(it.capacity) }
+        ApplyRow(game) { policy ->
+            if (Control.COOLING in game.scenario.controls) t("%@, setpoint %lld °C", capacityText(policy.capacity), policy.setpoint)
+            else capacityText(policy.capacity)
+        }
     }
 }
 

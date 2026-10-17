@@ -66,6 +66,8 @@ data class Policy(
     val done: Set<Int> = emptySet(),
     /** E3: what is cached, for how long, and in how much memory. */
     val cache: CacheConfig = CacheConfig(),
+    /** Scenario 6: the inlet temperature the cooling keeps, °C. */
+    val setpoint: Int = 20,
 ) {
     companion object {
         /**

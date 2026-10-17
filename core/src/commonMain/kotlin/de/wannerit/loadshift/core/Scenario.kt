@@ -28,6 +28,9 @@ enum class Control {
 
     /** E3: what to cache, for how long, in how much memory. */
     CACHING,
+
+    /** Scenario 6: the inlet temperature setpoint of the cooling. */
+    COOLING,
 }
 
 /** The special goal of a scenario: the third star. */
@@ -93,6 +96,8 @@ data class Scenario(
     val caching: CacheModel? = null,
     /** E3: stale answers allowed for the first star, per mille of the requests. */
     val staleLimit: Int? = null,
+    /** Scenario 6: cooling with outside temperature and setpoint instead of a fixed PUE. */
+    val cooling: CoolingModel? = null,
 ) {
     /** Expected interactive work at a tick: the web load or the VMs' profiles (what an operator can plan with). */
     fun expectedDemand(tick: Int): Int = interactive.expected(tick) + vms.sumOf { it.expectedMilli(tick) } / 1_000
@@ -217,6 +222,23 @@ data class Scenario(
             initialPolicy = Policy(CapacityMode.Autoscale(800)),
             referencePolicy = Policy(CapacityMode.AllOn),
             goals = StarGoals(300, SpecialGoal.MeanUtilization(700)),
+        )
+
+        /**
+         * Scenario 6, "Heat wave": the web shop in a German summer, 30 to 37 °C outside. The cooling works hard; a
+         * warmer setpoint lets the outside air cool longer and the chiller work less, but above 24 °C the server fans
+         * draw more. The PUE trap: fewer servers mean less energy but a higher PUE (the facility draws a fixed power),
+         * and faster fans mean more energy but a lower PUE. The stars count CO₂, not the PUE.
+         */
+        val HEAT_WAVE = Scenario(
+            number = 6, title = "Heat wave", setting = GridSetting(GridRegion.GERMANY, Season.SUMMER), days = 3,
+            seed = 6, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 40)),
+            interactive = InteractiveLoad(peak = 300),
+            controls = setOf(Control.COOLING, Control.CAPACITY_RULES),
+            initialPolicy = Policy(CapacityMode.Autoscale(500)),
+            referencePolicy = Policy(CapacityMode.Autoscale(500)),
+            goals = StarGoals(130, SpecialGoal.Reduction(165)),
+            cooling = CoolingModel(days = listOf(17 to 28, 21 to 35, 23 to 37)),
         )
 
         /** The 24 VMs of scenario 5. */
@@ -347,6 +369,6 @@ data class Scenario(
             staleLimit = 1,
         )
 
-        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS)
+        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS)
     }
 }
