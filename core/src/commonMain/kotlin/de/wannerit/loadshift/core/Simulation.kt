@@ -18,6 +18,9 @@ data class Totals(
     var inTime: Long = 0,
     /** Requests served, in units of 1,000 – the functional unit; with less work per request more than [served]. */
     var requestsServed: Long = 0,
+    /** Requests asked for and answers older than allowed (E3), units of 1,000. */
+    var requests: Long = 0,
+    var stale: Long = 0,
     /** Energy of the servers and of the facility, mWh. */
     var itEnergy: Long = 0,
     var facilityEnergy: Long = 0,
@@ -37,6 +40,9 @@ data class Totals(
 ) {
     /** Share of the demand served in time, per mille. */
     val sla: Int get() = if (demand == 0L) 1_000 else (inTime * 1_000 / demand).toInt()
+
+    /** Stale answers per mille of the requests (E3). */
+    val stalePermille: Int get() = if (requests == 0L) 0 else (stale * 1_000 / requests).toInt()
 
     /** PUE over the scenario, per mille. */
     val pue: Int get() = if (itEnergy == 0L) 0 else (facilityEnergy * 1_000 / itEnergy).toInt()
@@ -119,7 +125,9 @@ class Simulation private constructor(
     /** Work per request at a tick, per mille of the original code (engineering track). */
     fun workPermille(tick: Int): Int {
         val growth = scenario.growth
+        val caching = scenario.caching
         return when {
+            caching != null -> caching.work(policy.cache, scenario.interactive.expected(tick))
             growth != null -> growth.perRequest((tick - scenario.startTick) / GameTime.TICKS_PER_DAY, scenario.backlog, policy.done)
             scenario.backlog.isNotEmpty() -> Engineering.work(scenario.backlog, policy.done)
             else -> 1_000
@@ -127,7 +135,8 @@ class Simulation private constructor(
     }
 
     /** Work that does not come from requests: the nightly jobs of E2, work units per tick. */
-    fun extraWork(tick: Int): Int = scenario.growth?.night(tick, scenario.backlog, policy.done) ?: 0
+    fun extraWork(tick: Int): Int =
+        scenario.growth?.night(tick, scenario.backlog, policy.done) ?: scenario.caching?.extraWork(policy.cache) ?: 0
 
     /** Scenario 5: the CPU work of one host's VMs tick by tick so far, thousandths of a work unit. */
     fun hostHistory(host: Int): List<Int> = historyList.map { it.hostDemandMilli?.getOrNull(host) ?: 0 }
@@ -279,6 +288,15 @@ class Simulation private constructor(
             embodied += updated.kind.embodiedPerTick
             if (updated.state.isPowered) poweredOn += 1
         }
+        // E3: the cache servers run all the time, and they were built too.
+        scenario.caching?.let { caching ->
+            val cacheServers = caching.servers(policy.cache)
+            itPower += caching.power(policy.cache)
+            embodied += cacheServers * ServerKind.CPU_CURRENT.embodiedPerTick
+            poweredOn += cacheServers
+            totals.stale += requests.toLong() * caching.stale(policy.cache, scenario.interactive.expected(tick)) / 1_000
+        }
+        totals.requests += requests
         val facilityPower = scenario.facility.facilityPower(itPower)
         val intensity = plannedAt?.let { grid.forecastTenths(tick, it) } ?: grid.intensityTenths(tick)
         val facilityEnergy = facilityPower * Units.MILLIWATT_HOURS_PER_WATT_TICK

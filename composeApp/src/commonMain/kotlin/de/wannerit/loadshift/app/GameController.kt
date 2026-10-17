@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import de.wannerit.loadshift.core.BatchMode
+import de.wannerit.loadshift.core.CacheConfig
 import de.wannerit.loadshift.core.CapacityMode
 import de.wannerit.loadshift.core.Control
 import de.wannerit.loadshift.core.Engineering
@@ -255,6 +256,20 @@ class GameController(val scenario: Scenario) {
     var capFrom by mutableIntStateOf(18)
     var capTo by mutableIntStateOf(22)
 
+    // Caching (E3)
+
+    var cacheSize by mutableIntStateOf(32)
+    var cacheTtl by mutableStateOf(listOf(0, 0, 0, 0))
+    var cacheCount by mutableStateOf(false)
+    var cacheView by mutableStateOf(false)
+
+    val draftCache: CacheConfig
+        get() = CacheConfig(cacheSize, cacheTtl, cacheCount, cacheView)
+
+    fun setTtl(kind: Int, minutes: Int) {
+        cacheTtl = cacheTtl.toMutableList().also { while (it.size <= kind) it += 0; it[kind] = minutes }
+    }
+
     /** The capacity rule of the draft. */
     val draftCapacity: CapacityMode
         get() = when (capKind) {
@@ -269,6 +284,7 @@ class GameController(val scenario: Scenario) {
             var policy = simulation.policy
             if (Control.BATCH_RULES in scenario.controls) policy = policy.copy(batch = draftBatch, deadlineSafety = draftSafety)
             if (Control.CAPACITY_RULES in scenario.controls) policy = policy.copy(capacity = draftCapacity)
+            if (Control.CACHING in scenario.controls) policy = policy.copy(cache = draftCache)
             return policy
         }
 
@@ -294,6 +310,13 @@ class GameController(val scenario: Scenario) {
             is CapacityMode.Placed -> {}
         }
         draftSafety = policy.deadlineSafety
+        scenario.caching?.let { model ->
+            val c = policy.cache
+            if (c.sizeGb > 0) cacheSize = c.sizeGb
+            cacheTtl = model.kinds.indices.map { c.ttlMinutes.getOrElse(it) { 0 } }
+            cacheCount = c.approximateCount
+            cacheView = c.materializedView
+        }
         draftKind = when (val mode = policy.batch) {
             is BatchMode.AtHour -> RuleKind.HOUR.also { draftHour = mode.hour }
             BatchMode.Greenest -> RuleKind.GREENEST
@@ -312,7 +335,7 @@ class GameController(val scenario: Scenario) {
     private class Draft(
         val kind: RuleKind, val hour: Int, val threshold: Int, val safety: Boolean,
         val capKind: CapacityKind, val capFixed: Int, val capTarget: Int, val capMinimumOn: Boolean, val capMinimum: Int,
-        val capFrom: Int, val capTo: Int, val startPolicy: Policy?,
+        val capFrom: Int, val capTo: Int, val startPolicy: Policy?, val cache: CacheConfig,
     )
 
     private companion object {
@@ -324,7 +347,7 @@ class GameController(val scenario: Scenario) {
     fun saveDraft() {
         if (hasSprints && sprintPlans.isNotEmpty()) lastSprintPlans[scenario.number] = sprintPlans.toMap()
         drafts[scenario.number] = Draft(draftKind, draftHour, draftThreshold, draftSafety, capKind, capFixed, capTarget,
-            capMinimumOn, capMinimum, capFrom, capTo, startPolicy ?: current.policy.takeIf { current.history.isEmpty() })
+            capMinimumOn, capMinimum, capFrom, capTo, startPolicy ?: current.policy.takeIf { current.history.isEmpty() }, draftCache)
     }
 
     private fun restoreDraft() {
@@ -332,6 +355,9 @@ class GameController(val scenario: Scenario) {
         draftKind = d.kind; draftHour = d.hour; draftThreshold = d.threshold; draftSafety = d.safety
         capKind = d.capKind; capFixed = d.capFixed; capTarget = d.capTarget; capMinimumOn = d.capMinimumOn
         capMinimum = d.capMinimum; capFrom = d.capFrom; capTo = d.capTo
+        cacheSize = d.cache.sizeGb.takeIf { it > 0 } ?: cacheSize
+        if (d.cache.ttlMinutes.isNotEmpty()) cacheTtl = d.cache.ttlMinutes
+        cacheCount = d.cache.approximateCount; cacheView = d.cache.materializedView
         // A new run starts with the rules the last run started with (the panel shows the last run's final ones).
         if (d.startPolicy != null && current.history.isEmpty() && !hasSprints) {
             current.policy = d.startPolicy
@@ -448,6 +474,17 @@ class GameController(val scenario: Scenario) {
                 t("Every job at night, at 01:00") to replay(BatchMode.AtHour(1)),
                 t("Every job at 11:00") to replay(BatchMode.AtHour(11)),
                 t("Planned by the forecast (from scenario 3)") to replay(BatchMode.Greenest),
+            )
+        }
+        if (scenario.caching != null) {
+            fun run(c: CacheConfig) = Simulation.replay(scenario, scenario.initialPolicy.copy(cache = c)).totals
+            val careful = CacheConfig(32, listOf(1_440, 15, 1, 0))
+            return listOf(
+                t("No cache (reference)") to reference.totals,
+                t("Everything cached for a day") to run(CacheConfig(64, listOf(1_440, 1_440, 1_440, 1_440))),
+                t("Cached as allowed, 32 GB") to run(careful),
+                t("Cached as allowed, 256 GB") to run(careful.copy(sizeGb = 256)),
+                t("Cached as allowed, 32 GB, with HyperLogLog and materialized view") to run(careful.copy(approximateCount = true, materializedView = true)),
             )
         }
         if (hasSprints) {

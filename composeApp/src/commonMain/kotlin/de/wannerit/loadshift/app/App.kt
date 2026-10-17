@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import de.wannerit.loadshift.core.BatchMode
+import de.wannerit.loadshift.core.CacheConfig
 import de.wannerit.loadshift.core.CapacityMode
 import de.wannerit.loadshift.core.Control
 import de.wannerit.loadshift.core.Engineering
@@ -67,6 +68,10 @@ private fun initialScreen(options: LaunchOptions): Screen {
     if (options.careful && game.hasBatch) {
         // Plan like a careful player: every job into the greenest hours of the forecast.
         game.setPolicy(Policy(scenario.initialPolicy.capacity, BatchMode.Greenest))
+        game.advance(options.ticks)
+    } else if (options.careful && Control.CACHING in scenario.controls) {
+        // Like a careful player: cached as allowed, 32 GB, with HyperLogLog and the materialized view.
+        game.setPolicy(scenario.initialPolicy.copy(cache = CacheConfig(32, listOf(1_440, 15, 1, 0), approximateCount = true, materializedView = true)))
         game.advance(options.ticks)
     } else if (options.careful && Control.SPRINTS in scenario.controls) {
         // Like a careful team: profiling first, then by the measurements.

@@ -64,6 +64,8 @@ data class Policy(
     val deadlineSafety: Boolean = true,
     /** Engineering track: the backlog items finished (they change the work per request). */
     val done: Set<Int> = emptySet(),
+    /** E3: what is cached, for how long, and in how much memory. */
+    val cache: CacheConfig = CacheConfig(),
 ) {
     companion object {
         /**

@@ -25,6 +25,9 @@ enum class Control {
 
     /** Engineering track: a sprint plan from the backlog at the start of every day. */
     SPRINTS,
+
+    /** E3: what to cache, for how long, in how much memory. */
+    CACHING,
 }
 
 /** The special goal of a scenario: the third star. */
@@ -86,6 +89,10 @@ data class Scenario(
     val sprintPoints: Int = 0,
     /** E2: the data grows, and parts of the work with it. */
     val growth: GrowthModel? = null,
+    /** E3: kinds of data that can be cached. */
+    val caching: CacheModel? = null,
+    /** E3: stale answers allowed for the first star, per mille of the requests. */
+    val staleLimit: Int? = null,
 ) {
     /** Expected interactive work at a tick: the web load or the VMs' profiles (what an operator can plan with). */
     fun expectedDemand(tick: Int): Int = interactive.expected(tick) + vms.sumOf { it.expectedMilli(tick) } / 1_000
@@ -101,7 +108,8 @@ data class Scenario(
 
     /** The goals a result reaches. */
     fun goalsMet(totals: Totals, reference: Totals): GoalsMet {
-        val rules = totals.sla >= slaTarget && totals.deadlinesMissed == 0 && totals.emissions < reference.emissions
+        val rules = totals.sla >= slaTarget && totals.deadlinesMissed == 0 && totals.emissions < reference.emissions &&
+            (staleLimit == null || totals.stalePermille <= staleLimit)
         val reduction = rules && totals.emissions * 1_000 <= reference.emissions * (1_000 - goals.reduction)
         val special = rules && when (val goal = goals.special) {
             is SpecialGoal.MeanUtilization -> totals.meanUtilization >= goal.permille
@@ -300,6 +308,35 @@ data class Scenario(
             sprintPoints = 2,
         )
 
-        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, MEASURE_FIRST, GROWING_DATA)
+        /**
+         * E3, "Hit or miss": caching in the web shop (Green IT LE06). Four kinds of data – product images, catalog
+         * pages, exchange rates, account balances – each with its own cost, popularity and allowed age. Caching saves
+         * work while it hits; the cache servers draw power all the time, an answer older than allowed is wrong, and
+         * an account balance must never come from the cache. Two more measures: counting unique visitors
+         * approximately (HyperLogLog) and a materialized view for the sales dashboard.
+         */
+        val HIT_OR_MISS = Scenario(
+            number = 103, label = "E3", track = Track.ENGINEERING, unlockAfter = 102,
+            title = "Hit or miss", setting = GridSetting(GridRegion.GERMANY, Season.AUTUMN), days = 2,
+            seed = 13, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 30)),
+            interactive = InteractiveLoad(peak = 240),
+            controls = setOf(Control.CACHING),
+            initialPolicy = Policy(CapacityMode.Autoscale(700)),
+            referencePolicy = Policy(CapacityMode.Autoscale(700)),
+            goals = StarGoals(450, SpecialGoal.Reduction(600)),
+            caching = CacheModel(
+                kinds = listOf(
+                    CacheKind("Product images", 400, 300, 20_000, 2_000, 1_440),
+                    CacheKind("Catalog pages", 350, 1_400, 50_000, 500, 15),
+                    CacheKind("Exchange rates", 150, 800, 20, 1, 1),
+                    CacheKind("Account balance before a transfer", 100, 600, 200_000, 10, 0),
+                ),
+                exactCount = 40, approximateCount = 3,
+                report = 12, reportWithView = 2,
+            ),
+            staleLimit = 1,
+        )
+
+        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS)
     }
 }

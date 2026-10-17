@@ -23,6 +23,21 @@ class ScenarioTexts(
 ) {
     companion object {
         fun of(scenario: Scenario): ScenarioTexts = when (scenario.number) {
+            103 -> ScenarioTexts(
+                situation = "The web shop serves four kinds of data: product images, catalog pages, exchange rates and, before a transfer, account balances. Today every request computes or fetches its answer anew. Autoscaling keeps the servers in line with the work.",
+                idea = "A cache keeps answers for a while, so that the next request is cheap. It works because a few items get most of the requests – the bestsellers, the euro rate. Three things decide: what may be cached at all, how long an entry may live (the TTL – a business question, not a technical one), and how much memory is worth its power.",
+                screen = listOf(
+                    "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals.",
+                    "Your racks: grey servers are off, light blue ones are booting, the blue bar shows how busy a server is.",
+                    "Caching: the cache size, for each kind of data whether it is cached, its TTL and what the business allows, two more measures. Below it the situation right now.",
+                    "Carbon intensity of the grid with the forecast, the load so far and the expected load (dotted); the lines on the right show how many servers a load needs.",
+                ),
+                comparedWith = "compared with the reference operator, who caches nothing.",
+                rules = "SLA at least 99 %, at most 1 ‰ stale answers and less CO₂ than the reference",
+                remark = "A cache is a bet on repetition. It wins where many requests ask for the same thing – images, rates, popular pages – and loses where the answer must be current: a cached account balance is not a saving but an error. More memory brings fewer extra hits than it costs: the hot set is small. HyperLogLog and the materialized view follow the same idea: keep a little, compute less – as long as the business accepts the result.",
+                term = "Caching",
+                termText = "Keeping results for a while so that they need not be computed or fetched again. The time to live (TTL) says how long an entry counts, the hit rate how often a request finds its answer in the cache. A cache trades memory and freshness for computation.",
+            )
             102 -> ScenarioTexts(
                 situation = "The web shop is growing: every month 15 % more products, customers and orders – after a year almost five times as much data. Each game day stands for a month. The team spends most of its time on features; for performance it has 2 story points per sprint.",
                 idea = "Measured today, some parts of the code hardly matter: a lookup in a list, a query without an index, a nightly job that compares every pair of products. But their work grows with the data – in step with it, or even with its square. Constant savings look bigger today; fixing the parts that grow pays off over the year. The complexity of an algorithm tells you how its work grows.",
@@ -34,7 +49,7 @@ class ScenarioTexts(
                 ),
                 comparedWith = "compared with the reference operator, whose team changes nothing in the code.",
                 rules = "SLA at least 99 % and less CO₂ than the reference",
-                remark = "What saves the most today is not what saves the most in a year. A job with O(n²) is a footnote at the start and a large share of the nights after a year; the rewrite in another language saves only a constant share and blocks the team for months. Ask how the work grows, not only how big it is today.",
+                remark = "What saves the most today is not what saves the most in a year. A job with O(n²) is a footnote at the start and a large share of the nights after a year; the rewrite in another language saves only a constant share and blocks the team for months. Ask how the work grows, not only how big it is today. And watch for the rebound effect: capacity that is freed fills up quickly with new features.",
                 term = "Algorithmic complexity",
                 termText = "How the work of an algorithm grows with the amount of data n, written in Big O notation: O(1) stays the same, O(n) grows in step with the data, O(n²) with its square. For small data the difference hardly shows; for growing data it decides.",
             )
@@ -49,7 +64,7 @@ class ScenarioTexts(
                 ),
                 comparedWith = "compared with the reference operator, whose team changes nothing in the code.",
                 rules = "SLA at least 99 % and less CO₂ than the reference",
-                remark = "Measure before you optimize: the big items on the team's list hardly mattered, while a one-line change of the log level saved a tenth of the CPU. Less work per request lowers the energy and – with autoscaling – the number of servers; a data center that needs fewer servers also needs less hardware. The SCI per 1,000 requests shows the effect independent of the load.",
+                remark = "Measure before you optimize: the big items on the team's list hardly mattered, while a one-line change of the log level saved a tenth of the CPU. The checkout is Amdahl's law at work: however much faster a part gets, the whole gains at most its share. Less work per request lowers the energy and – with autoscaling – the number of servers; a data center that needs fewer servers also needs less hardware. The SCI per 1,000 requests shows the effect independent of the load.",
                 term = "Profiling",
                 termText = "Measuring where a program spends its time and memory, function by function. A profiler shows the hot spots – often not where the team expects them. Without measuring, optimization is guesswork (premature optimization).",
             )

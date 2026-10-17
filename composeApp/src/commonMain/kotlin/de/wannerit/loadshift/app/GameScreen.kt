@@ -160,6 +160,10 @@ private fun GoalBar(game: GameController) {
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         Txt(t("Goals"), Type.style(13, FontWeight.SemiBold, Palette.secondary))
+        scenario.staleLimit?.let { limit ->
+            GoalItem(totals.stalePermille <= limit, change != null, t("Stale answers: %@ (at most %@)",
+                Format.number(totals.stale * 1_000.0 / maxOf(1, totals.requests), 2) + " ‰", "$limit ‰"))
+        }
         if (game.hasInteractive) {
             GoalItem(totals.sla >= scenario.slaTarget, change != null, t("SLA ≥ %@", Format.percent(scenario.slaTarget)))
             GoalItem((change ?: 0) < 0, change != null,
@@ -230,6 +234,9 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
                     add(t("CO₂ (kg)") to (Format.kilograms(you.emissions) to Format.kilograms(ref.emissions)))
                     add(t("of it embodied (kg)") to (Format.kilograms(you.embodied) to Format.kilograms(ref.embodied)))
                     add(t("Energy (kWh)") to (Format.kilowattHours(you.facilityEnergy) to Format.kilowattHours(ref.facilityEnergy)))
+                    if (scenario.staleLimit != null) {
+                        add(t("Stale answers (‰)") to (Format.number(you.stale * 1_000.0 / maxOf(1, you.requests), 2) to Format.number(ref.stale * 1_000.0 / maxOf(1, ref.requests), 2)))
+                    }
                     if (game.hasInteractive) {
                         add(t("SLA") to (Format.percent(you.sla) to Format.percent(ref.sla)))
                         add(t("Servers on (mean)") to (Format.number(you.meanServersOn / 1_000.0, 1) to Format.number(ref.meanServersOn / 1_000.0, 1)))

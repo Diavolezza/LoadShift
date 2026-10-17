@@ -22,6 +22,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -47,6 +49,9 @@ fun ControlPanel(game: GameController, modifier: Modifier = Modifier) {
     ) {
         if (Control.BATCH_BY_HAND in game.scenario.controls || Control.BATCH_RULES in game.scenario.controls) {
             BatchPanel(game)
+        } else if (Control.CACHING in game.scenario.controls) {
+            CachePanel(game)
+            NowBox(game)
         } else if (Control.SPRINTS in game.scenario.controls) {
             SprintPanel(game)
             NowBox(game)
@@ -263,7 +268,7 @@ private fun BatchRules(game: GameController) {
 
 /** "Apply" and what runs now. */
 @Composable
-private fun ApplyRow(game: GameController, describe: (Policy) -> String) {
+fun ApplyRow(game: GameController, describe: (Policy) -> String) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         PrimaryButton(t("Apply"), enabled = !game.draftIsActive && !game.isFinished) { game.applyDraft() }
         Txt(
@@ -367,7 +372,7 @@ private fun RuleOption(chosen: Boolean, onChoose: () -> Unit, title: String, tex
 }
 
 @Composable
-private fun Stepper(value: String, minus: () -> Unit, plus: () -> Unit) {
+fun Stepper(value: String, minus: () -> Unit, plus: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         RoundButton(plus = false, size = 34.dp, onClick = minus)
         Txt(value, Type.style(16, FontWeight.SemiBold), Modifier.widthIn(min = 90.dp))
@@ -385,7 +390,7 @@ private fun Radio(on: Boolean) {
 }
 
 @Composable
-private fun Tick(on: Boolean) {
+fun Tick(on: Boolean) {
     Canvas(Modifier.size(20.dp)) {
         val w = size.width
         if (on) {
@@ -393,7 +398,9 @@ private fun Tick(on: Boolean) {
             val p = Path().apply { moveTo(w * 0.25f, w * 0.52f); lineTo(w * 0.43f, w * 0.7f); lineTo(w * 0.76f, w * 0.32f) }
             drawPath(p, Color.White, style = Stroke(w * 0.12f))
         } else {
-            drawRoundRect(Palette.secondary, cornerRadius = CornerRadius(w * 0.2f), style = Stroke(w * 0.08f))
+            // Inset by half the stroke, so that a clipping parent does not cut the left edge.
+            val s = w * 0.08f
+            drawRoundRect(Palette.secondary, Offset(s / 2, s / 2), Size(w - s, w - s), CornerRadius(w * 0.2f), style = Stroke(s))
         }
     }
 }
