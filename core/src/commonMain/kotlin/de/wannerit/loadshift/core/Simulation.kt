@@ -93,8 +93,8 @@ data class TickRecord(
     val cache: CacheRecord? = null,
 )
 
-/** E3: memory used (tenths of GB), memory of the running cache servers (GB), hits (per mille of the cacheable requests). */
-data class CacheRecord(val usedTenthsGb: Int, val capacityGb: Int, val hits: Int)
+/** E3: memory used (tenths of GB), memory of the running cache servers (GB), hits (per mille of the cacheable requests), memory per kind (tenths of GB). */
+data class CacheRecord(val usedTenthsGb: Int, val capacityGb: Int, val hits: Int, val kindTenthsGb: List<Int> = emptyList())
 
 class Simulation private constructor(
     val scenario: Scenario,
@@ -301,7 +301,8 @@ class Simulation private constructor(
         var cacheRecord: CacheRecord? = null
         scenario.caching?.let { caching ->
             val state = caching.state(policy.cache, scenario.interactive.expected(tick))
-            cacheRecord = CacheRecord((state.usedGb * 10).roundToInt(), state.capacityGb, caching.overallHits(state))
+            cacheRecord = CacheRecord((state.usedGb * 10).roundToInt(), state.capacityGb, caching.overallHits(state),
+                state.memoryGb.map { (it * 10).roundToInt() })
             val cacheServers = caching.servers(policy.cache)
             itPower += caching.power(policy.cache)
             embodied += cacheServers * ServerKind.CPU_CURRENT.embodiedPerTick

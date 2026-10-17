@@ -164,7 +164,13 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
         val cache = record?.cache
         val cooling = scenario.cooling
         if (scenario.caching != null) {
-            if (cache != null) lines += t("Cache: %lld of %lld GB, %@ hits", (cache.usedTenthsGb + 5) / 10, cache.capacityGb, Format.wholePercent(cache.hits))
+            if (cache != null) {
+                lines += t("Cache: %lld of %lld GB, %@ hits", (cache.usedTenthsGb + 5) / 10, cache.capacityGb, Format.wholePercent(cache.hits))
+                val kinds = scenario.caching?.kinds.orEmpty()
+                for ((k, tenths) in cache.kindTenthsGb.withIndex()) {
+                    if (tenths > 0 && k < kinds.size) lines += t("%@: %@ GB", t(kinds[k].title), Format.number(tenths / 10.0, 1))
+                }
+            }
         } else if (cooling != null) {
             val setpoint = record?.setpoint ?: simulation.policy.setpoint
             lines += t("Outside %@ °C, setpoint %lld °C", Format.number(cooling.outsideTenths(tick) / 10.0, 1), setpoint)
@@ -209,7 +215,10 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
         }
     }
 
-    /** E3: memory of the running cache servers (area), memory used (line), expected with the rules now (dotted). */
+    /**
+     * E3: the memory used, stacked by kind of data (areas), the memory of the running cache servers (step line),
+     * the memory expected with the rules now (dotted).
+     */
     private fun DrawScope.drawCache(top: Float, bottom: Float, future: List<Int>) {
         val model = scenario.caching ?: return
         val records = simulation.history.mapNotNull { r -> r.cache?.let { r.tick to it } }
@@ -220,37 +229,56 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
             expected.map { it.second / 10 }).maxOrNull() ?: 16)
         val scaleTop = niceCeiling(maxGb).toFloat()
         fun yG(tenths: Int) = bottom - (bottom - top) * (tenths / 10f / scaleTop)
+        fun kindColor(k: Int) = Palette.cacheKinds[k % Palette.cacheKinds.size]
         if (records.isNotEmpty()) {
-            val area = Path().apply {
-                moveTo(x(records[0].first), bottom)
+            // Stacked areas, the first kind at the bottom.
+            for (k in model.kinds.indices.reversed()) {
+                if (records.none { (it.second.kindTenthsGb.getOrElse(k) { 0 }) > 0 }) continue
+                val area = Path().apply {
+                    moveTo(x(records[0].first), bottom)
+                    for ((tick, c) in records) lineTo(x(tick), yG(c.kindTenthsGb.take(k + 1).sum()))
+                    lineTo(x(records.last().first + 1), yG(records.last().second.kindTenthsGb.take(k + 1).sum()))
+                    lineTo(x(records.last().first + 1), bottom)
+                    close()
+                }
+                drawPath(area, Color.White)
+                drawPath(area, kindColor(k).copy(alpha = 0.55f))
+            }
+            val capacity = Path().apply {
+                moveTo(x(records[0].first), yG(records[0].second.capacityGb * 10))
                 records.forEach { (tick, c) -> lineTo(x(tick), yG(c.capacityGb * 10)); lineTo(x(tick + 1), yG(c.capacityGb * 10)) }
-                lineTo(x(records.last().first + 1), bottom)
-                close()
             }
-            drawPath(area, Palette.cache.copy(alpha = 0.18f))
-            val line = Path().apply {
-                moveTo(x(records[0].first), yG(records[0].second.usedTenthsGb))
-                records.drop(1).forEach { (tick, c) -> lineTo(x(tick), yG(c.usedTenthsGb)) }
-            }
-            drawPath(line, Palette.cache, style = Stroke(1.8f * density))
+            drawPath(capacity, Palette.ink.copy(alpha = 0.7f), style = Stroke(1.5f * density))
         }
         if (expected.size > 1 && capacityNow > 0) {
             val line = Path().apply {
                 moveTo(x(expected[0].first), yG(expected[0].second))
                 expected.drop(1).forEach { lineTo(x(it.first), yG(it.second)) }
             }
-            drawPath(line, Palette.cache.copy(alpha = 0.6f), style = Stroke(1.5f * density, pathEffect = PathEffect.dashPathEffect(floatArrayOf(2f * density, 3f * density))))
+            drawPath(line, Palette.ink.copy(alpha = 0.5f), style = Stroke(1.5f * density, pathEffect = PathEffect.dashPathEffect(floatArrayOf(2f * density, 3f * density))))
         }
         // One dotted line per cache server.
         var gb = model.gbPerServer
         while (gb <= scaleTop) {
-            drawLine(Palette.cache.copy(alpha = 0.35f), Offset(left, yG(gb * 10)), Offset(right, yG(gb * 10)), 1f,
+            drawLine(Palette.ink.copy(alpha = 0.25f), Offset(left, yG(gb * 10)), Offset(right, yG(gb * 10)), 1f,
                 pathEffect = PathEffect.dashPathEffect(floatArrayOf(1f * density, 5f * density)))
             text(t("%lld cache servers", gb / model.gbPerServer), Offset(right + 6f * density, yG(gb * 10)))
             gb += model.gbPerServer
         }
         axis(top, bottom, scaleTop.toInt().toString())
-        text(t("Cache memory, GB – line: used, area: memory of the running cache servers, dotted: expected"), Offset(left, top - 12f * density), Type.style(12, FontWeight.SemiBold))
+        val title = t("Cache memory, GB – areas: used, by kind; line: memory of the running cache servers; dotted: expected")
+        text(title, Offset(left, top - 12f * density), Type.style(12, FontWeight.SemiBold))
+        // Legend: the kinds in the cache now, top right of the lane.
+        var lx = right
+        for (k in model.kinds.indices.reversed()) {
+            if (config.ttlMinutes.getOrElse(k) { 0 } <= 0 || capacityNow == 0) continue
+            val layout = measurer.measure(t(model.kinds[k].title), Type.style(11))
+            lx -= layout.size.width
+            drawText(layout, topLeft = Offset(lx, top + 2f * density))
+            lx -= 14f * density
+            drawRect(kindColor(k).copy(alpha = 0.7f), Offset(lx, top + 4f * density), Size(10f * density, 10f * density))
+            lx -= 12f * density
+        }
     }
 
     /** Scenario 6: outside temperature (line, dashed ahead), setpoint (step line), hours the outside air cools (green). */

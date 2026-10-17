@@ -33,6 +33,8 @@ object Palette {
     val slab = Color(0xFF404D4A)
     val booting = Color(0xFFB8D1EB)
     val cache = Color(0xFF8E6FD8)
+    /** E3: one color per kind of cached data (images, catalog, rates, search, balance). */
+    val cacheKinds = listOf(Color(0xFF8E6FD8), Color(0xFF1F8F66), Color(0xFFE8A33A), Color(0xFFCC4D40), Color(0xFF295CAD))
     val interactiveLoad = Color(0xFF5C9EF2)
     val batchLoad = amber
 

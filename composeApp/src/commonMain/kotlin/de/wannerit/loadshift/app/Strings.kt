@@ -16,6 +16,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "%@, mit Fristsicherung",
     "%@, without deadline safety" to
         "%@, ohne Fristsicherung",
+    "%@: %@ GB" to
+        "%1\$@: %2\$@ GB",
     "%@: %@ → %@" to
         "%1\$@: %2\$@ → %3\$@",
     "%lld cache servers" to
@@ -224,8 +226,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Nach den Schätzungen des Teams",
     "By today's saving per story point" to
         "Nach der heutigen Einsparung pro Story Point",
-    "Cache memory, GB – line: used, area: memory of the running cache servers, dotted: expected" to
-        "Cache-Speicher, GB – Linie: belegt, Fläche: Speicher der laufenden Cache-Server, gepunktet: erwartet",
+    "Cache memory, GB – areas: used, by kind; line: memory of the running cache servers; dotted: expected" to
+        "Cache-Speicher, GB – Flächen: belegt, je Art; Linie: Speicher der laufenden Cache-Server; gepunktet: erwartet",
     "Cache memory: what the running cache servers hold, what is used and what is expected (dotted). Below it the load and capacity of the web servers." to
         "Cache-Speicher: was die laufenden Cache-Server fassen, was belegt ist und was erwartet wird (gepunktet). Darunter Last und Kapazität der Web-Server.",
     "Cache server" to

@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import de.wannerit.loadshift.core.CacheModel
 import kotlin.math.roundToInt
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Box
 
 /** E3: what to cache, for how long, in how much memory – and two more measures. */
@@ -70,6 +71,8 @@ fun CachePanel(game: GameController) {
                 ) {
                     Tick(on)
                     Txt(t(kind.title), Type.style(15, FontWeight.SemiBold), Modifier.weight(1f))
+                    // The kind's color in the timeline.
+                    Box(Modifier.size(10.dp).background(Palette.cacheKinds[k % Palette.cacheKinds.size].copy(alpha = 0.7f)))
                     if (state.stay[k] > 0.0) Txt(t("hits now: %@ · %lld GB", Format.wholePercent(hits[k]), state.memoryGb[k].roundToInt()), Type.style(12, FontWeight.SemiBold, Palette.accent))
                 }
                 Txt(t(kind.note), Type.caption)
