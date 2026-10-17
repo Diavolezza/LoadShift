@@ -391,8 +391,9 @@ Each scenario has:
   operator and "what if".
 - **`:composeApp`** (Compose Multiplatform, foundation only, font Inter): screens on the simulation state;
   German texts keyed by the English text (`Strings.kt`).
-- The first version was written in Swift/SwiftUI (iPad and Mac, versions up to 0.3.0); its core was ported 1:1 –
-  the lesson report of the Kotlin core reproduces its numbers exactly.
+- The first version was written in Swift/SwiftUI (iPad and Mac, versions up to 0.3.0, tag `v0.3.0`); its core was
+  ported 1:1 – the lesson report of the Kotlin core reproduces its numbers exactly. The Swift code was removed
+  afterwards.
 - **Lesson tests:** for every scenario the tests run the reference operator and a scripted "good operator" and
   check that (1) the reference meets the SLA (the scenario is fair), (2) the good operator is at least X % better in
   CO₂ (the lesson works), (3) a deliberately bad policy shows the expected failure (e.g. a fixed batch window misses a
@@ -420,11 +421,11 @@ After each step the game is played by a person before the next step begins (**pl
 | 9 | Free play, scenario codes, result cards, lexicon | **play test in a lecture** |
 | 10 | Look and sound, App Store texts and screenshots | release |
 
-**As built in step 1** (`LoadShiftCore`):
+**As built in step 1** (simulation core, then in Swift; ported to Kotlin in `:core`, D14):
 
 - Units: power in W, energy in mWh (1 W for one tick = 250 mWh), carbon intensity in tenths of g/kWh, emissions
   in µg CO₂e, shares in per mille; integers only.
-- Grid, weather and forecast as in section 4, on 15-minute ticks (`Grid.swift`, curves from
+- Grid, weather and forecast as in section 4, on 15-minute ticks (`Grid.kt`, curves from
   `tools/grid/curves.py`).
 - Interactive load: one work unit = 1,000 requests. Daily curve in per mille of the evening peak (hours 0–23):
   380, 300, 240, 210, 200, 220, 300, 420, 540, 620, 660, 690, 720, 700, 670, 660, 680, 730, 800, 900, 1,000,
@@ -456,7 +457,8 @@ After each step the game is played by a person before the next step begins (**pl
   capacity, expected load, red marks for slow requests.
 - Scenario 1: plus and minus for the servers, effective at once, and a box "Right now" (servers working, load /
   capacity, utilization, expected load in an hour, IT power). The capacity rules (all on, fixed, autoscaling) with
-  "Active" and "Apply" are built for scenario 4. `Simulation.projected(with:)` stays in the core for later.
+  "Active" and "Apply" existed in the Swift version and are built again with scenario 4. `Simulation.projected()`
+  stays in the core for later.
 - End card: stars and the three goals, the result next to the reference operator's (CO₂, of it embodied, energy,
   SLA, mean servers on, mean utilization), and "what if": the same day replayed with all servers on, half and 70 %
   of the fleet all day, and autoscaling at 70 %. Best stars are kept on the device; one star opens the next

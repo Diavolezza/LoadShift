@@ -22,7 +22,6 @@ The app speaks English and German; everything in this repository is written in E
 | `composeApp/` | Compose Multiplatform app: web (Wasm) and desktop (JVM) |
 | `tools/` | helper scripts (grid curves, string migration) |
 | `docs/CONCEPT.md` | game concept, decisions and sources |
-| `LoadShift/`, `LoadShiftCore/`, `LoadShift.xcodeproj` | the first version in Swift (iPad and Mac); removed once the Kotlin app runs on iOS |
 
 ## Building
 
@@ -37,6 +36,8 @@ Requires JDK 21 or later. The Gradle wrapper downloads everything else.
 
 Launch options for screenshots and tests: desktop `-scenario 2 -play -ticks 40 -careful -lang de`, web
 `index.html?scenario=2&ticks=40&careful&lang=de`.
+
+The first version was written in Swift for iPad and Mac (tag `v0.3.0`); the Kotlin version replaced it.
 
 ## License
 
