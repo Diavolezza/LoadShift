@@ -669,4 +669,75 @@ class LessonTest {
             File(path).apply { parentFile.mkdirs() }.writeText(sections.values.flatten().joinToString("\n") + "\n")
         }
     }
+
+    @Test fun scenario11DarkDoldrums() {
+        val scenario = Scenario.DARK_DOLDRUMS
+        val reference = Simulation.reference(scenario)
+        val revised = setOfNotNull(scenario.forecastMiss?.revisedAt)
+        val shop = mapOf(
+            "all on" to CapacityMode.AllOn,
+            "auto 80" to CapacityMode.Autoscale(800),
+            "auto 80+min" to CapacityMode.Autoscale(800, ScheduledMinimum(30, 19, 23)),
+            "auto 70+min" to CapacityMode.Autoscale(700, ScheduledMinimum(30, 19, 23)),
+            "auto 60" to CapacityMode.Autoscale(600),
+            "auto 90" to CapacityMode.Autoscale(900),
+            "auto 70" to CapacityMode.Autoscale(700),
+        )
+        val trainings = mapOf(
+            "4/100/now" to TrainingConfig(4, 1_000, false),
+            "4/100/green" to TrainingConfig(4, 1_000, true),
+            "4/60/green" to TrainingConfig(4, 600, true),
+            "3/60/green" to TrainingConfig(3, 600, true),
+            "4/60/now" to TrainingConfig(4, 600, false),
+            "2/60/green" to TrainingConfig(2, 600, true),
+            "4/70/green" to TrainingConfig(4, 700, true),
+        )
+        fun run(s: String, b: String, tr: String): Simulation {
+            val batch = if (b == "asap") BatchMode.Asap else BatchMode.Greenest
+            val policy = Policy(shop.getValue(s), batch, training = trainings.getValue(tr))
+            return Simulation.replay(scenario, policy, if (b == "green+replan") revised else emptySet())
+        }
+        val combos = listOf(
+            Triple("auto 80", "asap", "4/100/now"), Triple("auto 80+min", "asap", "4/100/now"),
+            Triple("all on", "green+replan", "4/100/now"), Triple("all on", "asap", "4/60/green"),
+            Triple("all on", "asap", "4/100/green"),
+            Triple("auto 80+min", "green+replan", "4/100/now"), Triple("auto 80+min", "asap", "4/60/green"),
+            Triple("all on", "green+replan", "4/60/green"),
+            Triple("auto 80+min", "green", "4/60/green"), Triple("auto 80+min", "green+replan", "4/60/green"),
+            Triple("auto 80+min", "green+replan", "3/60/green"), Triple("auto 70+min", "green+replan", "4/60/green"),
+            Triple("auto 80", "green+replan", "4/60/green"), Triple("auto 60", "green+replan", "4/60/green"),
+            Triple("auto 80+min", "green+replan", "4/60/now"), Triple("auto 80+min", "green+replan", "4/100/green"),
+            Triple("auto 80+min", "green+replan", "2/60/green"),
+            Triple("auto 60", "asap", "4/100/now"), Triple("auto 90", "green+replan", "4/60/green"),
+            Triple("auto 70", "green+replan", "4/60/green"), Triple("auto 80", "green", "4/60/green"),
+            Triple("auto 80", "asap", "4/60/green"), Triple("auto 80", "green+replan", "4/100/green"),
+            Triple("auto 80", "green+replan", "3/60/green"), Triple("auto 80", "green+replan", "4/70/green"),
+        )
+        val runs = combos.map { (s, b, tr) -> "$s, $b, $tr" to run(s, b, tr) }
+        val lines = mutableListOf(title(scenario), HEADER + "  missed  training")
+        for ((name, sim) in listOf("reference: all on, asap, 4/100/now" to reference) + runs) {
+            val done = sim.totals.trainingFinishedAt?.let { GameTime(it).let { t -> "d${t.day + 1} ${t.clockText}" } } ?: "NOT DONE"
+            lines += line(name, sim.totals, reference.totals) + "  " + sim.totals.deadlinesMissed + "  " + done +
+                "  " + "★".repeat(scenario.stars(sim.totals, reference.totals))
+        }
+        val daily = (0 until scenario.days).map { d -> reference.history.filter { it.tick / GameTime.TICKS_PER_DAY == d }.map { it.intensityTenths }.average() / 10 }
+        lines += "  grid by day: " + daily.joinToString(" ") { "%.0f".format(it) }
+        report(11, lines)
+        val byName = runs.toMap()
+        fun stars(name: String) = scenario.stars(byName.getValue(name).totals, reference.totals)
+        // One lever alone: one star – autoscaling, the training in the wind, the batch jobs in the wind.
+        assertEquals(1, stars("auto 80, asap, 4/100/now"))
+        assertEquals(1, stars("all on, asap, 4/60/green"))
+        assertEquals(1, stars("all on, green+replan, 4/100/now"))
+        // Two levers: two stars; all three: three – if the plan is made again after the forecast update, the
+        // training is capped and the autoscaler leaves little headroom.
+        assertEquals(2, stars("auto 80, asap, 4/60/green"))
+        assertEquals(3, stars("auto 80, green+replan, 4/60/green"))
+        assertEquals(3, stars("auto 70, green+replan, 4/60/green"))
+        assertEquals(2, stars("auto 80, green, 4/60/green"))
+        assertEquals(2, stars("auto 80, green+replan, 4/100/green"))
+        assertEquals(2, stars("auto 60, green+replan, 4/60/green"))
+        // The training waits for the wind and is still done in time.
+        assertTrue(byName.getValue("auto 80, green+replan, 4/60/green").totals.trainingFinishedAt != null)
+    }
 }

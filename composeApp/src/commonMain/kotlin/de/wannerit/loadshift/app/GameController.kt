@@ -15,6 +15,7 @@ import de.wannerit.loadshift.core.Packing
 import de.wannerit.loadshift.core.Policy
 import de.wannerit.loadshift.core.ScheduledMinimum
 import de.wannerit.loadshift.core.Scenario
+import de.wannerit.loadshift.core.ServerKind
 import de.wannerit.loadshift.core.Simulation
 import de.wannerit.loadshift.core.Totals
 import de.wannerit.loadshift.core.Quality
@@ -273,6 +274,7 @@ class GameController(val scenario: Scenario) {
         if (scenario.forecastMiss?.revisedAt == current.tick) {
             forecastNews = true
             speed = Speed.PAUSED
+            if (isCapstone) panelTab = 1
         }
     }
 
@@ -387,6 +389,13 @@ class GameController(val scenario: Scenario) {
     // Training (O8)
 
     val hasTraining: Boolean get() = scenario.training != null
+
+    /** O11: everything together – the panel has tabs (shop, batch, training), the timeline follows the tab. */
+    val isCapstone: Boolean get() = scenario.controls.size > 1 && scenario.training != null
+    var panelTab by mutableIntStateOf(0)
+
+    /** GPU servers in the fleet. */
+    val gpuCount: Int get() = scenario.fleet.filter { it.kind == ServerKind.GPU_CURRENT }.sumOf { it.count }
     var trainServers by mutableIntStateOf(8)
     var trainCap by mutableIntStateOf(1_000)
     var trainGreenest by mutableStateOf(false)
@@ -601,10 +610,24 @@ class GameController(val scenario: Scenario) {
     val changeSoFar: Long?
         get() {
             val last = simulation.history.lastOrNull() ?: return null
+            // O11: the training waits for the wind – CO₂ so far would flatter; compare the expected end instead.
+            if (isCapstone && !isFinished) return expectedChange()
             val ref = references.sumOf { it.emissions(last.tick) }
             if (ref <= 0) return null
             return (sims.sumOf { it.emissions(last.tick) } - ref) * 1_000 / ref
         }
+
+    private var expectedAt = -1 to 0L
+
+    /** O11: the expected change at the end, with the rules now (computed once per tick). */
+    private fun expectedChange(): Long {
+        val key = version
+        if (expectedAt.first != key) {
+            val ref = referenceTotals.emissions
+            expectedAt = key to (current.projected(current.policy).emissions - ref) * 1_000 / maxOf(1, ref)
+        }
+        return expectedAt.second
+    }
 
     /** "What if" for the debrief: the whole scenario replayed with other rules, with the same load and grid mix. */
     fun whatIf(): List<Pair<String, Totals>> {
@@ -631,6 +654,23 @@ class GameController(val scenario: Scenario) {
                 t("The same, eco mode HD above 650 g/kWh") to run(byDevice.copy(eco = true, ecoAbove = 650)),
                 t("The same, eco mode HD above 550 g/kWh") to run(byDevice.copy(eco = true, ecoAbove = 550)),
                 t("The same, eco mode SD above 650 g/kWh") to run(byDevice.copy(eco = true, ecoAbove = 650, ecoQuality = Quality.SD)),
+            )
+        }
+        if (isCapstone) {
+            val revised = setOfNotNull(scenario.forecastMiss?.revisedAt)
+            val auto = CapacityMode.Autoscale(800)
+            val green = TrainingConfig(4, 600, true)
+            fun run(capacity: CapacityMode, batch: BatchMode, training: TrainingConfig, replan: Boolean = true) =
+                Simulation.replay(scenario, Policy(capacity, batch, training = training), if (replan) revised else emptySet()).totals
+            return listOf(
+                t("All on, jobs at once, training at once (reference)") to referenceTotals,
+                t("Only autoscaling at 80 %") to run(auto, BatchMode.Asap, scenario.referencePolicy.training),
+                t("Only the training in the wind (cap 60 %)") to run(CapacityMode.AllOn, BatchMode.Asap, green),
+                t("Only the batch jobs in the greenest hours") to run(CapacityMode.AllOn, BatchMode.Greenest, scenario.referencePolicy.training),
+                t("Autoscaling and training") to run(auto, BatchMode.Asap, green),
+                t("All three, without planning again after the forecast update") to run(auto, BatchMode.Greenest, green, replan = false),
+                t("All three, planned again") to run(auto, BatchMode.Greenest, green),
+                t("All three, training without a cap") to run(auto, BatchMode.Greenest, TrainingConfig(4, 1_000, true)),
             )
         }
         if (hasTraining) {

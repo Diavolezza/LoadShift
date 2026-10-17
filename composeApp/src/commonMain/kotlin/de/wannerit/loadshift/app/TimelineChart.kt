@@ -34,8 +34,11 @@ import de.wannerit.loadshift.core.Simulation
  * The timeline (docs/CONCEPT.md 10.1): carbon intensity of the grid – what happened so far and the forecast with its
  * uncertainty band – and below it the load and capacity, or one row per batch job. The vertical line is now.
  */
+/** What the lower lane shows when a scenario has more than one kind of work (O11: it follows the panel's tab). */
+enum class Lane { LOAD, JOBS, TRAINING }
+
 @Composable
-fun TimelineChart(simulation: Simulation, version: Int, modifier: Modifier = Modifier, other: Pair<String, Simulation>? = null) {
+fun TimelineChart(simulation: Simulation, version: Int, modifier: Modifier = Modifier, other: Pair<String, Simulation>? = null, lane: Lane? = null) {
     val measurer = rememberTextMeasurer()
     // Where the mouse is: the chart shows the values at that time.
     var hover by remember { mutableStateOf<Offset?>(null) }
@@ -50,16 +53,16 @@ fun TimelineChart(simulation: Simulation, version: Int, modifier: Modifier = Mod
         },
     ) {
         // Reading the version redraws the chart after every tick.
-        if (version >= 0) TimelineDrawing(simulation, measurer, this, hover, other).draw()
+        if (version >= 0) TimelineDrawing(simulation, measurer, this, hover, other, lane).draw()
     }
 }
 
-private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeasurer, val scope: DrawScope, val hover: Offset?, val other: Pair<String, Simulation>? = null) {
+private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeasurer, val scope: DrawScope, val hover: Offset?, val other: Pair<String, Simulation>? = null, val lane: Lane? = null) {
     val scenario = simulation.scenario
     val start = scenario.startTick
     val end = scenario.endTick
     val now = minOf(simulation.tick, end)
-    val batchLane = scenario.interactive.peak == 0 && simulation.jobs.isNotEmpty()
+    val batchLane = lane == Lane.JOBS || (lane == null && scenario.interactive.peak == 0 && simulation.jobs.isNotEmpty())
     val density = scope.density
     val left = 44f * density
     val right = scope.size.width - (if (batchLane) 130f else if (scenario.caching != null) 100f else 74f) * density
@@ -155,7 +158,7 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
         }
 
         // Lower lane
-        if (scenario.training != null) {
+        if (lane == Lane.TRAINING || (lane == null && scenario.training != null)) {
             drawTraining(lowTop, lowBottom)
         } else if (batchLane) {
             drawJobs(lowTop, lowBottom)
@@ -335,7 +338,7 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
         fun bars(records: List<de.wannerit.loadshift.core.TickRecord>, before: Long, planned: Boolean) {
             var last = before
             for (r in records) {
-                if (r.itPower > 0) {
+                if (r.training) {
                     val progressed = r.trainingDone > last
                     val color = (if (progressed) Palette.interactiveLoad else Palette.booting).copy(alpha = if (planned) 0.45f else 1f)
                     drawRect(color, Offset(x(r.tick), barTop), Size(maxOf(1f, x(r.tick + 1) - x(r.tick)), bottom - barTop))

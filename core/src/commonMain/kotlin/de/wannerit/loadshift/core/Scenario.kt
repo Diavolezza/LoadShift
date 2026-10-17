@@ -122,6 +122,8 @@ data class Scenario(
     val transfers: List<Transfer> = emptyList(),
     /** O10: rules broken by the choice of sites (a job with customer data moved abroad). */
     val rulesBroken: Int = 0,
+    /** O11: at most this many servers work for batch jobs at a time – the rest belong to the shop (null: all). */
+    val batchLimit: Int? = null,
 ) {
     /** Expected interactive work at a tick: the web load or the VMs' profiles (what an operator can plan with). */
     fun expectedDemand(tick: Int): Int = interactive.expected(tick) + vms.sumOf { it.expectedMilli(tick) } / 1_000
@@ -360,6 +362,35 @@ data class Scenario(
             ),
         )
 
+        /**
+         * Scenario 11, "Dark doldrums": a week in a German winter with hardly any wind or sun – until the wind returns
+         * on day 6. Everything together: the web shop the batch jobs (three of them can
+         * wait for the wind, three cannot) and an AI training due at the end of the week. Until day 4, 12:00 the
+         * forecast expects the wind a day early; a plan made with it puts the waiting jobs into a still dirty day.
+         */
+        val DARK_DOLDRUMS = Scenario(
+            number = 11, title = "Dark doldrums", setting = GridSetting(GridRegion.GERMANY, Season.WINTER), days = 7,
+            // Day 8 (after the week) is calm again: the forecast that sees the weather a day early shows it on day 7.
+            weather = WeatherMode.Days(listOf(1_300, 1_400, 1_450, 1_400, 1_350, 600, 450, 1_300)),
+            forecastMiss = ForecastMiss(shift = -GameTime.TICKS_PER_DAY, revisedAt = GameTime.at(3, 12).tick),
+            seed = 11, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 40), FleetEntry(ServerKind.GPU_CURRENT, 4)),
+            interactive = InteractiveLoad(peak = 240),
+            controls = setOf(Control.CAPACITY_RULES, Control.BATCH_RULES, Control.TRAINING),
+            initialPolicy = Policy(CapacityMode.AllOn, BatchMode.Asap, training = TrainingConfig(servers = 4)),
+            referencePolicy = Policy(CapacityMode.AllOn, BatchMode.Asap, training = TrainingConfig(servers = 4)),
+            goals = StarGoals(400, SpecialGoal.Reduction(505)),
+            batchLimit = 16,
+            training = TrainingModel(work = 90_000),
+            batchJobs = listOf(
+                BatchJobSpec.of("Full backup", 8, 10, GameTime.at(0, 2), GameTime.at(6, 8)),
+                BatchJobSpec.of("Search index", 6, 6, GameTime.at(0, 8), GameTime.at(2, 8)),
+                BatchJobSpec.of("Billing run", 12, 8, GameTime.at(1, 0), GameTime.at(6, 20)),
+                BatchJobSpec.of("Data warehouse reload", 10, 8, GameTime.at(2, 6), GameTime.at(6, 23)),
+                BatchJobSpec.of("Payroll", 6, 4, GameTime.at(3, 0), GameTime.at(4, 6)),
+                BatchJobSpec.of("Recommendations", 6, 5, GameTime.at(4, 12), GameTime.at(5, 18)),
+            ),
+        )
+
         /** The 24 VMs of scenario 5. */
         private val SHOP_VMS = List(8) { VmKind.FRONT_END } + List(6) { VmKind.BATCH_WORKER } + List(4) { VmKind.REPORTING } +
             List(2) { VmKind.DATABASE } + List(4) { VmKind.CACHE }
@@ -493,6 +524,6 @@ data class Scenario(
             staleLimit = 5,
         )
 
-        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, OLD_IRON, TRAINING_RUN, ECO_MODE, TWO_SITES, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS)
+        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, OLD_IRON, TRAINING_RUN, ECO_MODE, TWO_SITES, DARK_DOLDRUMS, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS)
     }
 }

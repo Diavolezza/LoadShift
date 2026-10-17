@@ -32,7 +32,7 @@ fun TrainingPanel(game: GameController) {
     val draft = game.draftTraining
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Txt(t("Training run"), Type.heading)
-        Txt(t("The model needs a fixed amount of GPU work by the end of day 3. You decide how many GPU servers train together, how much power each may draw, and when they train. A pause is possible at a checkpoint; resuming costs 15 minutes of loading it."), Type.style(15, color = Palette.secondary))
+        Txt(t("The model needs a fixed amount of GPU work by the end of day %lld. You decide how many GPU servers train together, how much power each may draw, and when they train. A pause is possible at a checkpoint; resuming costs 15 minutes of loading it.", game.scenario.days), Type.style(15, color = Palette.secondary))
 
         // Progress
         val done = minOf(1_000L, totals.trainingDone * 1_000 / model.work).toInt()
@@ -48,7 +48,7 @@ fun TrainingPanel(game: GameController) {
             Txt(t("GPU servers"), Type.style(15, FontWeight.SemiBold), Modifier.weight(1f))
             Stepper("${game.trainServers}",
                 minus = { game.trainServers = maxOf(TrainingModel.SERVERS.first, game.trainServers - 1) },
-                plus = { game.trainServers = minOf(TrainingModel.SERVERS.last, game.trainServers + 1) })
+                plus = { game.trainServers = minOf(TrainingModel.SERVERS.last, game.gpuCount, game.trainServers + 1) })
         }
         val efficiency = 1_000 - model.scalingLoss * (game.trainServers - 1)
         Txt(t("Together they do %@ times the work of one server – each one %@, because they wait for each other.",

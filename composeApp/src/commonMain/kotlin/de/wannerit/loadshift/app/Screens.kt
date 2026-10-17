@@ -330,7 +330,12 @@ private fun SideCard(scenario: Scenario, texts: ScenarioTexts, onStart: () -> Un
             Fact(if (sites != null) t("%@ and %@", t(sites[0].region.title), t(sites[1].region.title)) else t(scenario.setting.region.title))
             Fact(t(scenario.setting.season.title))
             Fact(if (scenario.days == 1) t("1 day, from 00:00") else t("%lld days, from 00:00", scenario.days))
-            if (scenario.interactive.peak > 0) {
+            if (scenario.training != null && scenario.interactive.peak > 0) {
+                val gpus = scenario.fleet.filter { it.kind == de.wannerit.loadshift.core.ServerKind.GPU_CURRENT }.sumOf { it.count }
+                Fact(t("%lld CPU servers for the shop and the batch jobs", scenario.serverCount - gpus))
+                Fact(t("%lld GPU servers for the training", gpus))
+                Fact(t("%lld jobs with deadlines", scenario.batchJobs.size))
+            } else if (scenario.interactive.peak > 0) {
                 Fact(t("%lld servers, %lld load units each", scenario.serverCount, perServer))
                 Fact(t("Evening peak about %lld load units", scenario.interactive.peak))
             } else {

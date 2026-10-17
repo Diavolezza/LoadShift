@@ -337,7 +337,7 @@ Engineering track opens after scenario 1, because it builds on the SCI per reque
 | 8 | Training run | Germany, spring (calm, windy, calm) | 3 days | GPU servers in parallel, power cap, schedule (without a break or greenest hours) | A model needs a fixed amount of GPU work by the end of day 3. The greenest hours move the work into wind and sun; a power cap saves energy for a little time [S7]; fewer servers waste less time waiting for each other. A pause costs a checkpoint load (G3, G6). Term: Carbon-Aware Training (Power Capping). |
 | 9 | Eco mode | Poland, summer | 2 days | highest quality per device (4K, HD, SD), eco mode with threshold and eco quality | A streaming service: phones 40 %, laptops 25 %, TVs 35 %; 4K needs four times the work of HD. HD on phones and laptops costs hardly any rating; an eco mode lowers TVs to HD while the grid is dirty – in the evening, when most watch. The viewers' rating must stay at 93 % (G7). Term: Demand Shaping. |
 | 10 | Two sites | Frankfurt and Oslo, autumn | 3 days | where each job runs (before the start), batch rule for both sites | Ten batch jobs; Oslo's grid emits a tenth of Frankfurt's, but has only 8 servers. A moved job needs its data there first: the transfer takes hours and network energy in the German grid. Move what computes much and has little data (trainings, reports, the search index); the product videos (30 TB) cost more in the network than Oslo saves, the price calculation talks to the live database in Frankfurt and takes three times as long far from it, customer data must stay in Germany. Location saves CO₂, not energy (G8, D23). Term: Location Shifting. |
-| 11 | Dark doldrums | Germany, winter, windless | 7 days | all | Little sun, no wind, high prices – everything together, with a hard SCI target. |
+| 11 | Dark doldrums | Germany, winter, windless until day 6 | 7 days | all: capacity rule for the shop, batch rule, training (servers, cap, schedule) – in tabs | Every hour is dirty, so shifting within the day gains nothing. What remains: using less (autoscaling, independent of the weather) and waiting for days – the training (due at the end of the week) and three of six batch jobs can wait for the wind, the others cannot. The forecast expects the wind a day early until day 4, 12:00; plans made with it must be made again. Each lever alone gives one star, two give two, all three (with the plan made again and the training capped) three (G1–G4, D24). Term: Carbon Awareness. |
 
 **Scenario 5 in more detail.** Ten hosts (current CPU servers with RAM as a second capacity) and about 24 VMs of
 the web shop, each with a RAM size and a daily CPU profile: shop front ends peak in the evening, batch VMs at
@@ -844,6 +844,32 @@ music. Not taken over: maps, paths, the tower-and-creep rules, opponents, networ
 Energy rises with every move (the transfers), CO₂ falls: the scenario shows that Location Shifting saves carbon,
 not energy.
 
+**As built in step 5, part 6** (scenario 11, "Dark doldrums", the capstone of the Operations track):
+
+- Core: no new model – the scenario combines the shop (40 CPU servers, peak 240), six batch jobs on the same
+  servers (`Scenario.batchLimit`: at most 16 for batch at a time, the rest belong to the shop) and a training on 4
+  GPU servers (`TrainingModel(work = 90_000)`, due at the end of day 7). Weather `Days(1300, 1400, 1450, 1400,
+  1350, 600, 450, 1300)`: dark doldrums until day 5, wind on days 6 and 7, calm again after the week. `ForecastMiss`
+  with a negative shift: until day 4, 12:00 the forecast sees the weather a day early. `TickRecord.training` marks
+  the ticks the GPUs train (the training lane no longer infers it from the IT power).
+- App: the control panel has three tabs (shop, batch, training) over one draft; the timeline's lower lane follows
+  the tab (load, jobs, training). The CO₂ goal compares the expected end with the rules now – CO₂ so far would
+  flatter a training that waits. At the forecast update the game pauses and opens the batch tab.
+- Goals ★★ −40 %, ★★★ −50.5 %.
+
+| Shop, batch, training | CO₂ vs. reference | Stars |
+|---|---:|---:|
+| all on, at once, 4 GPUs uncapped at once (reference) | – | – |
+| autoscaling 80 %, at once, at once | −23.9 % | ★ |
+| all on, at once, training 4 / 60 % / greenest | −24.3 % | ★ |
+| all on, greenest (planned again), at once | −2.8 % | ★ |
+| autoscaling 80 %, at once, 4 / 60 % / greenest | −48.3 % | ★★ |
+| autoscaling 80 %, greenest planned once, 4 / 60 % / greenest | −50.1 % | ★★ |
+| autoscaling 80 %, greenest planned again, 4 / 100 % / greenest | −50.0 % | ★★ |
+| autoscaling 80 %, greenest planned again, 4 / 60 % / greenest | −52.3 % | ★★★ |
+| autoscaling 70 %, the same | −51.0 % | ★★★ |
+| autoscaling 60 %, the same | −49.4 % | ★★ |
+
 ---
 
 ## 13 Decisions
@@ -873,6 +899,7 @@ not energy.
 | D21 | PUE | shown everywhere in scenario 6, but the stars count CO₂: the scenario is built so that the best PUE and the least CO₂ need different decisions (fewer servers raise the PUE, faster fans lower it) |
 | D22 | Hardware renewal (scenario 7) | quarterly steps (a game day stands for a quarter) instead of monthly steps (revises D5); two sites with a yearly budget, growth, new generations and failures, so that decisions come up over the three years; the question is where new hardware replaces dirty electricity, while the clean site keeps enough capacity |
 | D23 | Location Shifting (scenario 10) | the player decides per job before the start, not during the game: moving work between sites is a planning decision, and the data must be moved first; the limits come from the jobs themselves (data size, database latency, data residency), so that "everything to Norway" is wrong and the choice needs judgement |
+| D24 | Capstone (scenario 11) | stars by CO₂ reduction, not a hard SCI target; the three kinds of work share one draft in tabs, so the controls stay those of the scenarios that introduced them; the forecast update is the one new twist, because a plan days ahead is where a forecast error costs most |
 
 ---
 

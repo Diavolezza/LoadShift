@@ -47,7 +47,14 @@ fun ControlPanel(game: GameController, modifier: Modifier = Modifier) {
         modifier.background(Palette.panel).verticalScroll(rememberScrollState()).padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        if (Control.BATCH_BY_HAND in game.scenario.controls || Control.BATCH_RULES in game.scenario.controls) {
+        if (game.isCapstone) {
+            CapstoneTabs(game)
+            when (game.panelTab) {
+                0 -> { CapacityRules(game); NowBox(game) }
+                1 -> BatchPanel(game)
+                else -> TrainingPanel(game)
+            }
+        } else if (Control.BATCH_BY_HAND in game.scenario.controls || Control.BATCH_RULES in game.scenario.controls) {
             BatchPanel(game)
         } else if (Control.CACHING in game.scenario.controls) {
             CachePanel(game)
@@ -80,11 +87,32 @@ fun ControlPanel(game: GameController, modifier: Modifier = Modifier) {
     }
 }
 
+/** O11: one tab per kind of work; one draft for all of them, applied together. */
+@Composable
+private fun CapstoneTabs(game: GameController) {
+    Txt(t("Three kinds of work share the data center. Each tab has its rules; Apply applies the changes of all three."), Type.style(14, color = Palette.secondary))
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Palette.background).padding(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        for ((i, title) in listOf(t("Shop"), t("Batch"), t("Training")).withIndex()) {
+            val chosen = game.panelTab == i
+            Box(
+                Modifier.weight(1f).clip(RoundedCornerShape(9.dp)).background(if (chosen) Palette.accent else Color.Transparent)
+                    .clickable { game.panelTab = i }.padding(vertical = 8.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Txt(title, Type.style(15, FontWeight.SemiBold, if (chosen) Color.White else Palette.ink), maxLines = 1)
+            }
+        }
+    }
+}
+
 /** Scenario 1: switch servers on and off by hand; takes effect at once. */
 @Composable
 fun ManualCapacity(game: GameController) {
     val wanted = game.wantedServers
-    val total = game.scenario.serverCount
+    val total = game.scenario.fleet.filter { it.kind.servesInteractive }.sumOf { it.count }
     val perServer = game.scenario.fleet.firstOrNull()?.kind?.capacity ?: 0
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Txt(t("An idle server still draws about a quarter of its maximum power. Switch off what is not needed – but a server you switch on takes 30 minutes before it can work."), Type.style(15, color = Palette.secondary))
@@ -153,7 +181,8 @@ fun BatchPanel(game: GameController) {
         }
         Txt(t("Batch jobs"), Type.heading)
         if (!byRule) Txt(t("Each job needs servers for some hours and must be finished by its deadline. When it starts, its servers switch on and boot for 30 minutes first; servers without a job are off."), Type.style(15, color = Palette.secondary))
-        Txt(t("Servers in use: %lld of %lld", busy, simulation.batchServerCount), Type.subheading)
+        Txt(t("Servers in use: %lld of %lld", busy, simulation.batchCapacity), Type.subheading)
+        if (game.scenario.batchLimit != null) Txt(t("Batch jobs may use at most %lld servers at a time – the others belong to the shop.", simulation.batchCapacity), Type.caption)
         game.urgentJob?.let { urgent ->
             val spec = simulation.jobs[urgent].spec
             Row(
@@ -296,7 +325,7 @@ fun ApplyRow(game: GameController, describe: (Policy) -> String) {
 @Composable
 private fun CapacityRules(game: GameController) {
     val perServer = game.scenario.fleet.firstOrNull()?.kind?.capacity ?: 0
-    val total = game.scenario.serverCount
+    val total = game.scenario.fleet.filter { it.kind.servesInteractive }.sumOf { it.count }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Txt(t("Capacity rule"), Type.heading)
         Txt(t("A rule switches the servers – you no longer do it by hand. One server handles %lld load units; it takes 30 minutes to boot.", perServer), Type.style(15, color = Palette.secondary))

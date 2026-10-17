@@ -121,6 +121,8 @@ data class TickRecord(
     val trainingDone: Long = 0,
     /** O9: eco mode was on. */
     val eco: Boolean = false,
+    /** O8, O11: the GPUs trained (or loaded the checkpoint) in this tick. */
+    val training: Boolean = false,
 )
 
 /** E3: memory used (tenths of GB), memory of the running cache servers (GB), hits (per mille of the cacheable requests), memory per kind (tenths of GB). */
@@ -246,6 +248,7 @@ class Simulation private constructor(
         val copy = copy()
         copy.policy = with
         copy.plannedAt = tick
+        copy.trainedLastTick = trainedLastTick
         copy.historyList.clear()
         copy.run()
         return copy.totals
@@ -277,6 +280,9 @@ class Simulation private constructor(
 
     /** Servers that can run batch jobs. */
     val batchServerCount: Int get() = serverList.count { it.kind.servesBatch }
+
+    /** Servers batch jobs may use at a time (O11: the rest belong to the shop). */
+    val batchCapacity: Int get() = scenario.batchLimit?.let { minOf(it, batchServerCount) } ?: batchServerCount
 
     /** Capacity of the servers that take interactive work now. */
     val readyCapacity: Int get() = serverList.sumOf { if (it.state.isOn && it.job == null) it.kind.capacity else 0 }
@@ -405,6 +411,7 @@ class Simulation private constructor(
                 setpoint = policy.setpoint, cache = cacheRecord,
                 embodiedSoFar = totals.embodied, fleetCapacity = serverList.sumOf { it.kind.capacity }, trainingDone = totals.trainingDone,
                 eco = scenario.streaming?.ecoActive(policy.streaming, (intensity + 5) / 10) ?: false,
+                training = training != null && trainedLastTick,
             ),
         )
         tick += 1
@@ -664,6 +671,7 @@ class Simulation private constructor(
             if (planned.start > tick || job.spec.arrival > tick) continue
             val free = serverList.indices.filter { serverList[it].kind.servesBatch && serverList[it].job == null }
             if (free.size < job.spec.servers) continue
+            if (serverList.count { it.job != null } + job.spec.servers > batchCapacity) continue
             // Prefer servers that are off, so interactive work keeps its running servers.
             val chosen = free.sortedWith(compareBy<Int> { if (serverList[it].state.isPowered) 1 else 0 }.thenBy { it })
                 .take(job.spec.servers)
@@ -710,7 +718,7 @@ class Simulation private constructor(
             for (t in tick until until) busy[t] = (busy[t] ?: 0) + job.spec.servers
         }
         val open = jobList.filter { !it.state.isStarted }.map { it.id to it.spec }
-        val starts = BatchPlanner.plan(open, batchServerCount, busy, grid, tick)
+        val starts = BatchPlanner.plan(open, batchCapacity, busy, grid, tick)
         for ((id, start) in starts) jobList[id] = jobList[id].copy(state = BatchJobState.Planned(start))
     }
 

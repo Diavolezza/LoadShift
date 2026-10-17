@@ -67,7 +67,18 @@ private fun initialScreen(options: LaunchOptions): Screen {
     scenario ?: return Screen.List
     if (!options.play) return Screen.Briefing(scenario)
     val game = GameController(scenario)
-    if (options.careful && game.hasBatch && scenario.location == null) {
+    if (options.careful && game.isCapstone) {
+        // Like a careful player: autoscaling at 80 %, batch jobs and training in the greenest hours (training capped
+        // at 60 %), the plan made again when the forecast is revised.
+        game.setPolicy(Policy(de.wannerit.loadshift.core.CapacityMode.Autoscale(800), BatchMode.Greenest,
+            training = de.wannerit.loadshift.core.TrainingConfig(4, 600, true)))
+        val first = minOf(options.ticks, (scenario.forecastMiss?.revisedAt ?: scenario.endTick) - scenario.startTick)
+        game.advance(first)
+        if (options.ticks > first) {
+            game.replan()
+            game.advance(options.ticks - first)
+        }
+    } else if (options.careful && game.hasBatch && scenario.location == null) {
         // Plan like a careful player: every job into the greenest hours of the forecast.
         game.setPolicy(Policy(scenario.initialPolicy.capacity, BatchMode.Greenest))
         game.advance(options.ticks)

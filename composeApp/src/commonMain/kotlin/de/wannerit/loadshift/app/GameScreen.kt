@@ -87,7 +87,8 @@ fun GameScreen(game: GameController, onExit: () -> Unit, onNext: ((Scenario) -> 
             HDivider()
             if (game.hasRenewal) QuarterChart(game, Modifier.fillMaxWidth().height(timelineHeight).background(Palette.panel))
             else TimelineChart(game.simulation, game.version, Modifier.fillMaxWidth().height(timelineHeight).background(Palette.panel),
-                other = game.scenario.location?.let { m -> val o = 1 - game.site; t(m.sites[o].title) to game.simulationOf(o) })
+                other = game.scenario.location?.let { m -> val o = 1 - game.site; t(m.sites[o].title) to game.simulationOf(o) },
+                lane = if (game.isCapstone) Lane.entries[game.panelTab] else null)
         }
         if (game.showEnd) EndCard(game, onExit, onNext, onOverview)
     }
@@ -208,7 +209,8 @@ private fun GoalBar(game: GameController) {
             GoalItem(minOf(totals.sla, totals.worstSiteSla) >= scenario.slaTarget, change != null,
                 if (game.hasRenewal) t("SLA ≥ %@ at each site", Format.percent(scenario.slaTarget)) else t("SLA ≥ %@", Format.percent(scenario.slaTarget)))
             GoalItem((change ?: 0) < 0, change != null,
-                if (change == null) t("CO₂ vs. reference") else t("CO₂ vs. reference: %@", Format.changePermille(change)))
+                if (change == null) t("CO₂ vs. reference") else if (game.isCapstone && !game.isFinished) t("CO₂ vs. reference, expected: %@", Format.changePermille(change))
+                else t("CO₂ vs. reference: %@", Format.changePermille(change)))
         }
         scenario.streaming?.let { model ->
             GoalItem(totals.meanRating >= model.ratingTarget, change != null,
@@ -218,7 +220,7 @@ private fun GoalBar(game: GameController) {
             val done = totals.trainingFinishedAt
             GoalItem(done != null, done != null || game.isFinished,
                 if (done != null) t("Training done: %@", timeText(done)) else t("Training done by the end of day %lld", scenario.days))
-            GoalItem((change ?: 0) < 0, change != null,
+            if (!game.hasInteractive) GoalItem((change ?: 0) < 0, change != null,
                 if (change == null) t("CO₂ vs. reference") else t("CO₂ vs. reference: %@", Format.changePermille(change)))
         }
         if (scenario.location != null) {

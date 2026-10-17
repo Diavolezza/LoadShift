@@ -23,6 +23,21 @@ class ScenarioTexts(
 ) {
     companion object {
         fun of(scenario: Scenario): ScenarioTexts = when (scenario.number) {
+            11 -> ScenarioTexts(
+                situation = "A week in January. A high-pressure area lies over Germany: hardly any wind, hardly any sun – a dark doldrums. Coal and gas carry the grid, around 500 g CO₂ per kWh. The forecast expects the wind back on day 5. In the data center: the web shop on 40 CPU servers, six batch jobs, and an AI model that must be trained on 4 GPU servers by the end of the week. The previous shift has left everything as it was: all servers on, every job at once, the training at full power.",
+                idea = "Everything you have learned, together. Waiting for clean hours within a day does not help now – every hour is dirty. What helps: use less (size the shop with autoscaling) and move what can wait for days into the wind: the training is due only at the end of the week, three of the batch jobs too. The others cannot wait. And a forecast five days ahead is a bet – look at it again when it changes.",
+                screen = listOf(
+                    "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals: SLA, every deadline, the training done and less CO₂.",
+                    "The hall: 40 CPU servers for the shop and the batch jobs (at most 16 for batch), 4 GPU servers for the training.",
+                    "Three tabs – shop, batch, training – each with its rules. Apply applies all of them; an amber note shows changes not applied yet.",
+                    "Carbon intensity of the grid with the forecast; below it what the chosen tab is about: the shop's load, the jobs or the training's progress.",
+                ),
+                comparedWith = "compared with the reference operator, who leaves all servers on, starts every job at once and trains at full power without a break.",
+                rules = "SLA at least 99 %, every job by its deadline, the training done and less CO₂ than the reference",
+                remark = "A dark doldrums is the hard case of Carbon Awareness: when every hour is dirty, shifting within the day gains nothing. Two things remained. Using less – the autoscaler saves in every hour, wind or not; it is the lever that never depends on the weather. And waiting for days – only work whose deadline is far enough away can do that: the training and three of the batch jobs, about a quarter of the energy. The forecast promised the wind a day early; a plan made with it put the waiting jobs into a day that was still dirty – plans that look days ahead must be made again when the forecast changes. Germany has a few such weeks every winter; grids with storage, hydropower and links to their neighbours bridge them, and data centers that can wait help them.",
+                term = "Carbon Awareness",
+                termText = "Doing more when the electricity is clean and less when it is dirty – by Time Shifting, Location Shifting and Demand Shaping. Together with energy efficiency and hardware efficiency it is one of the three principles of the Green Software Foundation; in a dark doldrums all three are needed.",
+            )
             10 -> ScenarioTexts(
                 situation = "The web shop's batch cluster in Frankfurt: 14 servers in Germany's autumn grid, about 335 g CO₂ per kWh. The company also rents 8 servers in Oslo – Norway's grid runs on hydropower and emits about 30 g, a tenth. Over three days ten jobs arrive: daily reports, two AI trainings, video encoding, customer analytics, a search index and price calculations.",
                 idea = "Location Shifting: let the work run where the electricity is clean. But work does not travel alone – its data must go along. Moving terabytes takes hours and energy in the network; a job that talks to a database all the time becomes slow far away from it; and some data may not leave the country at all. Move what needs much computing and little data.",
