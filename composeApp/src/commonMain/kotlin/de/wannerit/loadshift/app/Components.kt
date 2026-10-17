@@ -19,6 +19,7 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -44,7 +45,8 @@ fun PrimaryButton(text: String, modifier: Modifier = Modifier, enabled: Boolean 
     Box(
         modifier
             .alpha(if (enabled) 1f else 0.4f)
-            .background(Palette.accent, RoundedCornerShape(50))
+            .clip(RoundedCornerShape(50))
+            .background(Palette.accent)
             .clickable(enabled = enabled, onClick = onClick)
             .padding(horizontal = 22.dp, vertical = if (large) 14.dp else 9.dp),
         contentAlignment = Alignment.Center,
@@ -59,7 +61,8 @@ fun SecondaryButton(text: String, modifier: Modifier = Modifier, enabled: Boolea
     Box(
         modifier
             .alpha(if (enabled) 1f else 0.4f)
-            .background(Palette.ink.copy(alpha = 0.07f), RoundedCornerShape(50))
+            .clip(RoundedCornerShape(50))
+            .background(Palette.ink.copy(alpha = 0.07f))
             .clickable(enabled = enabled, onClick = onClick)
             .padding(horizontal = 18.dp, vertical = 9.dp),
         contentAlignment = Alignment.Center,
@@ -75,7 +78,8 @@ fun RoundButton(plus: Boolean, size: Dp = 56.dp, enabled: Boolean = true, onClic
         Modifier
             .size(size)
             .alpha(if (enabled) 1f else 0.35f)
-            .background(Palette.accent.copy(alpha = 0.14f), CircleShape)
+            .clip(CircleShape)
+            .background(Palette.accent.copy(alpha = 0.14f))
             .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {

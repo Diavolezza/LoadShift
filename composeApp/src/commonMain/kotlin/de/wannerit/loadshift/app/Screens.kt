@@ -2,6 +2,7 @@ package de.wannerit.loadshift.app
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,6 +41,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -109,11 +111,12 @@ fun ScenarioListScreen(onSelect: (Scenario) -> Unit) {
                 }
             }
             Txt(t("More scenarios follow: headroom and autoscaling, consolidation, cooling, hardware, AI training, eco mode, two sites – and an engineering track: profiling and growing data."), Type.style(20, color = Palette.secondary))
-            Txt(t("About Load Shift"), Type.style(16, FontWeight.SemiBold, Palette.accent), Modifier.clickable { about = true }.padding(vertical = 4.dp))
+            Txt(t("About Load Shift"), Type.style(16, FontWeight.SemiBold, Palette.accent), Modifier.clip(RoundedCornerShape(6.dp)).clickable { about = true }.padding(vertical = 4.dp, horizontal = 2.dp))
         }
         if (about) {
             Box(
-                Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.35f)).clickable { about = false },
+                Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.35f))
+                    .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { about = false },
                 contentAlignment = Alignment.Center,
             ) {
                 AboutContent(Modifier.widthIn(max = 520.dp).background(Palette.panel, RoundedCornerShape(20.dp)))
@@ -128,7 +131,8 @@ private fun days(n: Int) = if (n == 1) t("1 day") else t("%lld days", n)
 private fun ScenarioCard(scenario: Scenario, unlocked: Boolean, onClick: () -> Unit) {
     Column(
         Modifier.width(360.dp).alpha(if (unlocked) 1f else 0.6f)
-            .background(Palette.panel, RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(18.dp))
+            .background(Palette.panel)
             .clickable(enabled = unlocked, onClick = onClick).padding(22.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -156,7 +160,7 @@ fun BriefingScreen(scenario: Scenario, onStart: () -> Unit, onBack: () -> Unit) 
             verticalArrangement = Arrangement.spacedBy(28.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp)) {
-                Txt("‹", Type.style(40, FontWeight.SemiBold), Modifier.clickable(onClick = onBack).padding(horizontal = 8.dp))
+                Txt("‹", Type.style(40, FontWeight.SemiBold), Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = onBack).padding(horizontal = 8.dp))
                 RackIcon(56.dp)
                 Column(Modifier.weight(1f)) {
                     Txt("Load Shift", Type.style(22, FontWeight.SemiBold, Palette.secondary))

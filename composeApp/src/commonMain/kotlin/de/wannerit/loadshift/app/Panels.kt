@@ -2,6 +2,7 @@ package de.wannerit.loadshift.app
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,6 +20,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -134,7 +136,7 @@ fun BatchPanel(game: GameController) {
                 CheckMark(ok = false, warning = true)
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Txt(t("%@ has no start time and must start by %@, or it misses its deadline.", t(spec.name), timeText(spec.latestStart)), Type.callout)
-                    Txt(t("OK"), Type.style(15, FontWeight.SemiBold, Palette.accent), Modifier.clickable { game.dismissUrgent() })
+                    Txt(t("OK"), Type.style(15, FontWeight.SemiBold, Palette.accent), Modifier.clip(RoundedCornerShape(6.dp)).clickable { game.dismissUrgent() }.padding(horizontal = 4.dp))
                 }
             }
         }
@@ -170,7 +172,7 @@ private fun JobRow(game: GameController, job: BatchJob) {
                         game.plan(job.id, start + GameTime.TICKS_PER_HOUR)
                     }
                     Spacer(Modifier.weight(1f))
-                    Txt("×", Type.style(17, color = Palette.secondary), Modifier.clickable { game.unplan(job.id) }.padding(6.dp))
+                    Txt("×", Type.style(17, color = Palette.secondary), Modifier.clip(CircleShape).clickable { game.unplan(job.id) }.padding(6.dp))
                 }
                 if (start > spec.latestStart) {
                     Txt(t("Too late for the deadline – start by %@.", timeText(spec.latestStart)), Type.style(13, FontWeight.SemiBold, Palette.red))
@@ -229,7 +231,7 @@ private fun BatchRules(game: GameController) {
                 plus = { game.draftThreshold = minOf(range.last, game.draftThreshold + 10) })
         }
         Row(
-            Modifier.fillMaxWidth().clickable { game.draftSafety = !game.draftSafety }.padding(vertical = 4.dp),
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).clickable { game.draftSafety = !game.draftSafety }.padding(vertical = 4.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Tick(game.draftSafety)
@@ -254,6 +256,7 @@ private fun RuleOption(game: GameController, kind: GameController.RuleKind, titl
     val chosen = game.draftKind == kind
     Column(
         Modifier.fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
             .background(if (chosen) Palette.accent.copy(alpha = 0.08f) else Palette.background, RoundedCornerShape(12.dp))
             .border(if (chosen) 1.5.dp else 0.dp, if (chosen) Palette.accent else Color.Transparent, RoundedCornerShape(12.dp))
             .clickable { game.draftKind = kind }.padding(12.dp),

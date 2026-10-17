@@ -26,6 +26,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -78,7 +79,7 @@ private fun TopBar(game: GameController, onExit: () -> Unit) {
     // Left the controls, the clock in the middle, the figures on the right: the buttons stay where they are.
     Box(Modifier.fillMaxWidth().background(Palette.panel).padding(horizontal = 20.dp, vertical = 10.dp)) {
         Row(Modifier.align(Alignment.CenterStart), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(22.dp)) {
-            Txt("‹", Type.style(34, FontWeight.SemiBold), Modifier.clickable(onClick = onExit).padding(horizontal = 6.dp))
+            Txt("‹", Type.style(34, FontWeight.SemiBold), Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = onExit).padding(horizontal = 6.dp))
             SpeedControl(game)
         }
         Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -109,7 +110,8 @@ private fun SpeedControl(game: GameController) {
             val enabled = !game.isFinished || speed == Speed.PAUSED
             Box(
                 Modifier.size(width = 48.dp, height = 38.dp)
-                    .background(if (selected) Palette.accent else Color.Transparent, RoundedCornerShape(8.dp))
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(if (selected) Palette.accent else Color.Transparent)
                     .clickable(enabled = enabled) { game.changeSpeed(speed) },
                 contentAlignment = Alignment.Center,
             ) {
