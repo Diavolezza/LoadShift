@@ -780,7 +780,7 @@ music. Not taken over: maps, paths, the tower-and-creep rules, opponents, networ
 **As built in step 5, part 3** (scenario 8, "Training run"):
 
 - Core: `TrainingModel` (work 240 server-hours; GPUs draw 90 % of their dynamic range without a cap; speed at a cap
-  60/70/80/90 % = 87/93/97/100 %; each additional server loses 4 % throughput; resuming costs one tick).
+  50/60/70/80/90 % = 70/87/93/97/100 % – below 60 % the energy per work rises again, 60 % is the sweet spot; each additional server loses 4 % throughput; resuming costs one tick).
   `Policy.training` (`TrainingConfig`: servers, cap, greenest). Greenest hours: the training runs now if this tick is
   among the greenest of the ticks left that it still needs (a tenth and two ticks in reserve), by the forecast made
   now. The first star needs the training done by the deadline. Weather: calm, windy, calm.

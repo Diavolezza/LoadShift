@@ -389,6 +389,7 @@ class LessonTest {
             Triple(8, 700, true), Triple(8, 800, true), Triple(8, 600, true),
             Triple(6, 1_000, true), Triple(6, 700, true), Triple(6, 600, true),
             Triple(4, 1_000, false), Triple(4, 700, false), Triple(5, 700, true), Triple(7, 700, true),
+            Triple(8, 500, false), Triple(8, 500, true), Triple(6, 500, true),
         ).map { (n, c, g) -> "$n, ${c / 10} %, ${if (g) "greenest" else "now"}" to run(n, c, g) }
         val lines = mutableListOf(title(scenario), HEADER + "  done at  restarts")
         for ((name, sim) in runs) {
@@ -408,6 +409,10 @@ class LessonTest {
         assertEquals(3, stars("6, 60 %, greenest"))
         // Too few servers at a low cap, all the time: the deadline is missed – no star.
         assertEquals(0, stars("4, 70 %, now"))
+        // Below the sweet spot the cap costs more than it saves: 50 % is worse than 60 %.
+        fun co2(name: String) = byName.getValue(name).totals.emissions
+        assertTrue(co2("8, 50 %, now") > co2("8, 60 %, now"))
+        assertTrue(co2("6, 50 %, greenest") > co2("6, 60 %, greenest"))
     }
 
     @Test fun e1MeasureFirst() {

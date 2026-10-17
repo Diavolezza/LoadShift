@@ -32,10 +32,14 @@ data class TrainingModel(
     /** Power drawn by the GPUs at a cap, per mille of the dynamic range. */
     fun draw(cap: Int): Int = minOf(cap, uncappedDraw)
 
-    /** Speed of one server at a cap, per mille of full speed (game values after [S7]). */
+    /**
+     * Speed of one server at a cap, per mille of full speed (game values after [S7]). Down to 60 % the GPU loses little
+     * speed; below it the speed drops steeply, and the rest of the server – which draws its idle power all the time –
+     * runs so much longer that the energy per work rises again: 60 % is the sweet spot.
+     */
     fun speed(cap: Int): Int {
-        val points = listOf(600 to 870, 700 to 930, 800 to 970, 900 to 1_000, 1_000 to 1_000)
-        val c = cap.coerceIn(600, 1_000)
+        val points = listOf(500 to 700, 600 to 870, 700 to 930, 800 to 970, 900 to 1_000, 1_000 to 1_000)
+        val c = cap.coerceIn(500, 1_000)
         val (a, b) = points.zipWithNext().first { c <= it.second.first }
         return a.second + (b.second - a.second) * (c - a.first) / (b.first - a.first)
     }
@@ -48,7 +52,7 @@ data class TrainingModel(
     }
 
     companion object {
-        val CAPS = listOf(1_000, 900, 800, 700, 600)
+        val CAPS = listOf(1_000, 900, 800, 700, 600, 500)
         val SERVERS = 2..8
     }
 }

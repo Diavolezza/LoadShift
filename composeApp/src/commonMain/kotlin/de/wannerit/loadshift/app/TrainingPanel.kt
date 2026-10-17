@@ -70,6 +70,7 @@ fun TrainingPanel(game: GameController) {
         }
         val kind = ServerKind.GPU_CURRENT
         val watts = kind.idlePower + (kind.maxPower - kind.idlePower) * model.draw(game.trainCap) / 1_000
+        Txt(t("A cap does not make the GPUs work less: they stay fully busy, only at a lower clock – and the last watts bring little speed. Below a certain cap, though, the rest of the server runs so much longer that it costs more than it saves."), Type.caption)
         Txt(t("Each GPU server draws %@ kW while training and works at %@ of full speed.",
             Format.kilowatts(watts), Format.wholePercent(model.speed(game.trainCap))), Type.caption)
 
