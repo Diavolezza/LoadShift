@@ -100,7 +100,8 @@ class GameController(val scenario: Scenario) {
 
     /** Changes the policy at once (switching by hand, launch options). */
     fun setPolicy(policy: Policy) {
-        simulation.policy = policy
+        current.policy = policy
+        current.applyPolicy()
         changed()
     }
 

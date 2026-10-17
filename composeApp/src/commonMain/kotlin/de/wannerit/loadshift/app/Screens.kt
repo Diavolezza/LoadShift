@@ -10,6 +10,19 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.runtime.remember
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -121,11 +134,11 @@ fun BriefingScreen(scenario: Scenario, onStart: () -> Unit, onBack: () -> Unit) 
             }
             if (wide) {
                 Row(horizontalArrangement = Arrangement.spacedBy(40.dp)) {
-                    Story(texts, Modifier.weight(1f))
+                    Story(scenario, texts, Modifier.weight(1f))
                     SideCard(scenario, texts, onStart, Modifier.width(sideCardWidth))
                 }
             } else {
-                Story(texts, Modifier.fillMaxWidth())
+                Story(scenario, texts, Modifier.fillMaxWidth())
                 SideCard(scenario, texts, onStart, Modifier.fillMaxWidth())
             }
         }
@@ -133,14 +146,66 @@ fun BriefingScreen(scenario: Scenario, onStart: () -> Unit, onBack: () -> Unit) 
 }
 
 @Composable
-private fun Story(texts: ScenarioTexts, modifier: Modifier) {
+private fun Story(scenario: Scenario, texts: ScenarioTexts, modifier: Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(26.dp)) {
-        for ((title, text) in listOf(t("Situation") to texts.situation, t("The idea") to texts.idea, t("On the screen") to texts.screen)) {
+        for ((title, text) in listOf(t("Situation") to texts.situation, t("The idea") to texts.idea)) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Txt(title, Type.heading)
                 Txt(t(text), Type.bodyLarge)
             }
         }
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Txt(t("On the screen"), Type.heading)
+            ScreenPreview(scenario, Modifier.fillMaxWidth())
+            texts.screen.forEachIndexed { i, text ->
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Marker(i + 1)
+                    Txt(t(text), Type.bodyLarge, Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+/** The play screen as the scenario starts, drawn small: not clickable, with numbered markers for the four areas. */
+@Composable
+private fun ScreenPreview(scenario: Scenario, modifier: Modifier) {
+    val game = remember(scenario) { GameController(scenario) }
+    val width = 1366.dp
+    val height = 960.dp
+    // Marker positions on the full-size screen (GameScreen at 1366 × 960: panel 380 wide, timeline 288 high).
+    val markers = listOf(470.dp to 36.dp, 40.dp to 150.dp, (width - 36.dp) to 136.dp, (width - 36.dp) to (height - 258.dp))
+    BoxWithConstraints(modifier) {
+        val scale = maxWidth / width
+        Box(
+            Modifier.fillMaxWidth().height(height * scale).clipToBounds()
+                .border(1.dp, Palette.secondary.copy(alpha = 0.3f), RoundedCornerShape(6.dp)),
+        ) {
+            Box(
+                Modifier.wrapContentSize(Alignment.TopStart, unbounded = true).requiredSize(width, height)
+                    .graphicsLayer { scaleX = scale; scaleY = scale; transformOrigin = TransformOrigin(0f, 0f) },
+            ) {
+                GameScreen(game, onExit = {})
+            }
+            // On top: takes every click, so the preview is only a picture.
+            Box(Modifier.matchParentSize().pointerInput(Unit) {
+                awaitPointerEventScope { while (true) awaitPointerEvent().changes.forEach { it.consume() } }
+            })
+            markers.forEachIndexed { i, (x, y) ->
+                Marker(i + 1, Modifier.offset(x * scale - 14.dp, y * scale - 14.dp))
+            }
+        }
+    }
+}
+
+/** A numbered circle that links the preview to the list below it. */
+@Composable
+private fun Marker(number: Int, modifier: Modifier = Modifier) {
+    Box(
+        modifier.size(28.dp).background(Palette.accent, CircleShape).border(2.dp, Color.White, CircleShape),
+        contentAlignment = Alignment.Center,
+    ) {
+        Txt("$number", Type.style(15, FontWeight.Bold, Color.White).copy(textAlign = TextAlign.Center))
     }
 }
 

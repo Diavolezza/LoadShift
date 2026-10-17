@@ -118,7 +118,10 @@ class Simulation private constructor(
         historyList = ArrayList(scenario.endTick - scenario.startTick),
         plannedAt = null,
         missedCounted = mutableSetOf(),
-    )
+    ) {
+        // The start shows the servers as the policy wants them (the first tick would switch them anyway).
+        applyCapacityPolicy()
+    }
 
     /** An independent copy (the simulation is mutable; projections and "what if" run on copies). */
     fun copy(): Simulation = Simulation(
@@ -128,6 +131,14 @@ class Simulation private constructor(
 
     val time: GameTime get() = GameTime(tick)
     val isFinished: Boolean get() = tick >= scenario.endTick
+
+    /**
+     * Applies a changed capacity policy at once, before the next tick. The result is the same as applying it at
+     * the start of the next tick; the hall shows the change while the game is paused.
+     */
+    fun applyPolicy() {
+        if (!isFinished) applyCapacityPolicy()
+    }
 
     /** Runs the scenario to its end. */
     fun run() {

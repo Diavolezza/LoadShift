@@ -14,20 +14,20 @@ internal val GERMAN: Map<String, String> = mapOf(
         "%lld Tage, ab 00:00",
     "%lld jobs with deadlines" to
         "%lld Jobs mit Fristen",
-    "%lld of %lld servers on" to
-        "%1\$lld von %2\$lld Servern an",
     "%lld of %lld servers on · %@ kW IT power" to
         "%1\$lld von %2\$lld Servern an · %3\$@ kW IT-Leistung",
+    "%lld of %lld servers on" to
+        "%1\$lld von %2\$lld Servern an",
     "%lld of 3 stars" to
         "%lld von 3 Sternen",
-    "%lld servers" to
-        "%lld Server",
     "%lld servers for batch jobs" to
         "%lld Server für Batch-Jobs",
     "%lld servers run" to
         "%lld Server laufen",
     "%lld servers · %lld h · due %@" to
         "%1\$lld Server · %2\$lld h · fällig %3\$@",
+    "%lld servers" to
+        "%lld Server",
     "%lld servers, %lld load units each" to
         "%1\$lld Server mit je %2\$lld Lasteinheiten",
     "1 day" to
@@ -38,10 +38,10 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Aktiv: %@",
     "All on" to
         "Alle an",
-    "All servers on" to
-        "Alle Server an",
     "All servers on (reference)" to
         "Alle Server an (Referenz)",
+    "All servers on" to
+        "Alle Server an",
     "An idle server still draws about a quarter of its maximum power. Switch off the servers that are not needed – and switch them on again in time: a server takes 30 minutes before it can work." to
         "Ein Server im Leerlauf zieht noch etwa ein Viertel seiner Maximalleistung. Schalte die Server ab, die nicht gebraucht werden – und rechtzeitig wieder ein: Ein Server braucht 30 Minuten, bis er arbeiten kann.",
     "An idle server still draws about a quarter of its maximum power. Switch off what is not needed – but a server you switch on takes 30 minutes before it can work." to
@@ -58,16 +58,16 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Autoscaling mit 70 % (ab Szenario 4)",
     "Autumn" to
         "Herbst",
-    "Back" to
-        "Zurück",
     "Back to the briefing" to
         "Zurück zum Briefing",
+    "Back" to
+        "Zurück",
     "Batch job" to
         "Batch-Job",
-    "Batch jobs" to
-        "Batch-Jobs",
     "Batch jobs – light: arrival to deadline, outlined: planned, filled: running or done" to
         "Batch-Jobs – hell: Ankunft bis Frist, umrandet: geplant, gefüllt: läuft oder fertig",
+    "Batch jobs" to
+        "Batch-Jobs",
     "batch work at %lld g/kWh or less on average" to
         "Batch-Arbeit im Schnitt bei höchstens %lld g/kWh",
     "Batch work Ø %lld g/kWh (reference %lld)" to
@@ -80,14 +80,16 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Batch ≤ %lld g/kWh",
     "Best result" to
         "Bestes Ergebnis",
-    "booting" to
-        "startet",
     "Booting" to
         "Startet",
+    "booting" to
+        "startet",
     "Capacity" to
         "Kapazität",
     "Capacity: %lld load units" to
         "Kapazität: %lld Lasteinheiten",
+    "Carbon intensity of the grid with the forecast, the load so far and the expected load (dotted); the lines on the right show how many servers a load needs." to
+        "Die CO₂-Intensität des Stroms mit Prognose, die Last bisher und die erwartete Last (gepunktet); die Linien rechts zeigen, wie viele Server eine Last braucht.",
     "Carbon intensity of the grid, g CO₂/kWh – dashed: forecast" to
         "CO₂-Intensität des Stroms, g CO₂/kWh – gestrichelt: Prognose",
     "compared with the reference operator, who leaves every server on." to
@@ -170,10 +172,10 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Last (Linie) und Kapazität der laufenden Server (Fläche) – rot: langsame Requests",
     "Load / capacity" to
         "Last / Kapazität",
-    "Mean utilization" to
-        "Mittlere Auslastung",
     "mean utilization at least %@" to
         "mittlere Auslastung mindestens %@",
+    "Mean utilization" to
+        "Mittlere Auslastung",
     "Missed" to
         "Verpasst",
     "More scenarios follow: forecasts and wind, headroom and autoscaling, cooling, hardware, AI training, eco mode, two sites." to
@@ -202,12 +204,14 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Ein Stern schaltet das nächste Szenario frei.",
     "Plan" to
         "Planen",
-    "planned" to
-        "geplant",
     "Planned by the forecast (from scenario 3)" to
         "Nach Prognose geplant (ab Szenario 3)",
+    "planned" to
+        "geplant",
     "Play again" to
         "Noch einmal",
+    "Plus and minus for the servers, and the situation right now." to
+        "Plus und Minus für die Server und die Lage gerade jetzt.",
     "Poland" to
         "Polen",
     "Power" to
@@ -218,8 +222,6 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Plan entfernen",
     "Right now" to
         "Gerade jetzt",
-    "Right: the jobs with their size and deadline. Plan a start time for each job with plus and minus, or start it now; a planned job starts by itself. Bottom: the carbon intensity with the forecast, and below it one row per job – light: the time between arrival and deadline, outlined: planned, filled: running or done. The game pauses when a job must start within the hour." to
-        "Rechts: die Jobs mit Größe und Frist. Plane für jeden Job mit Plus und Minus eine Startzeit oder starte ihn sofort; ein geplanter Job startet von selbst. Unten: die CO₂-Intensität mit Prognose und darunter eine Zeile pro Job – hell: die Zeit zwischen Ankunft und Frist, umrandet: geplant, gefüllt: läuft oder fertig. Das Spiel hält an, wenn ein Job innerhalb der nächsten Stunde starten muss.",
     "Rule" to
         "Regel",
     "Run a greener data center" to
@@ -240,10 +242,10 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Server in Betrieb",
     "Situation" to
         "Ausgangslage",
-    "SLA at least %@ and less CO₂ than the reference" to
-        "SLA mindestens %@ und weniger CO₂ als die Referenz",
     "SLA at least %@ and less CO₂ than the reference operator, who leaves every server on" to
         "SLA mindestens %@ und weniger CO₂ als der Referenzbetreiber, der alle Server laufen lässt",
+    "SLA at least %@ and less CO₂ than the reference" to
+        "SLA mindestens %@ und weniger CO₂ als die Referenz",
     "SLA at least 99 % and less CO₂ than the reference" to
         "SLA mindestens 99 % und weniger CO₂ als die Referenz",
     "Spain" to
@@ -262,10 +264,16 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Wirkt sofort. Abgeschaltete Server stoppen sofort, eingeschaltete starten 30 Minuten lang.",
     "Target utilization: %@" to
         "Zielauslastung: %@",
-    "The game starts paused. Top: clock and speed – pause, 1×, 4×, 16× – and below it your goals. Middle: your racks; grey servers are off, light blue ones are booting, the blue bar shows how busy a server is. Right: plus and minus for the servers, and the situation right now. Bottom: carbon intensity of the grid with the forecast, the load so far and the expected load (dotted); the lines on the right show how many servers a load needs." to
-        "Das Spiel beginnt pausiert. Oben: Uhr und Tempo – Pause, 1×, 4×, 16× – und darunter deine Ziele. Mitte: deine Racks; graue Server sind aus, hellblaue starten gerade, der blaue Balken zeigt, wie ausgelastet ein Server ist. Rechts: Plus und Minus für die Server und die Lage gerade jetzt. Unten: die CO₂-Intensität des Stroms mit Prognose, die Last bisher und die erwartete Last (gepunktet); die Linien rechts zeigen, wie viele Server eine Last braucht.",
+    "The carbon intensity with the forecast, and below it one row per job – light: the time between arrival and deadline, outlined: planned, filled: running or done." to
+        "Die CO₂-Intensität mit Prognose und darunter eine Zeile pro Job – hell: die Zeit zwischen Ankunft und Frist, umrandet: geplant, gefüllt: läuft oder fertig.",
+    "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals. The game also pauses when a job must start within the hour." to
+        "Das Spiel beginnt pausiert. Uhr und Tempo – Pause, 1×, 4×, 16× – und darunter deine Ziele. Das Spiel hält auch an, wenn ein Job innerhalb der nächsten Stunde starten muss.",
+    "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals." to
+        "Das Spiel beginnt pausiert. Uhr und Tempo – Pause, 1×, 4×, 16× – und darunter deine Ziele.",
     "The idea" to
         "Die Idee",
+    "The jobs with their size and deadline. Plan a start time for each job with plus and minus, or start it now; a planned job starts by itself." to
+        "Die Jobs mit Größe und Frist. Plane für jeden Job mit Plus und Minus eine Startzeit oder starte ihn sofort; ein geplanter Job startet von selbst.",
     "The night is not clean everywhere: in a solar grid the midday hours are the cleanest. Part of the CO₂ is the hardware's manufacturing – it stays the same whenever the jobs run." to
         "Die Nacht ist nicht überall sauber: Im Solarnetz sind die Mittagsstunden am saubersten. Ein Teil des CO₂ stammt aus der Herstellung der Hardware – er bleibt gleich, egal wann die Jobs laufen.",
     "The same job emits less CO₂ when the grid is clean. In Spain's solar grid the cleanest hours are around midday, not at night. Plan every job into clean hours before its deadline – and keep in mind that only ten servers are there." to
@@ -276,12 +284,14 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Es laufen die Server, die für die erwartete Last der nächsten Stunde nötig sind. Ein niedriges Ziel lässt Reserve für Spitzen, aber mehr Server stehen im Leerlauf; ein hohes Ziel ist effizient, wird aber bei Spitzen langsam.",
     "The web shop's batch cluster in Spain: ten servers for reports, backups, imports and conversions. Over two days seven jobs arrive, each with a deadline. Nobody minds when a job runs – as long as it is finished in time." to
         "Der Batch-Cluster des Webshops in Spanien: zehn Server für Reports, Backups, Importe und Konvertierungen. In zwei Tagen kommen sieben Jobs, jeder mit einer Frist. Wann ein Job läuft, ist egal – solange er rechtzeitig fertig ist.",
+    "To scenario %lld" to
+        "Weiter zu Szenario %lld",
     "Too late for the deadline – start by %@." to
         "Zu spät für die Frist – spätestens %@ starten.",
-    "Utilization" to
-        "Auslastung",
     "utilization ≥ %@" to
         "Auslastung ≥ %@",
+    "Utilization" to
+        "Auslastung",
     "Wait for the sun" to
         "Warten auf die Sonne",
     "Web requests" to
@@ -290,8 +300,12 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Was wäre, wenn …",
     "Whole year" to
         "Jahresmittel",
-    "You" to
-        "Du",
     "You run the data center of a web shop in Germany. Its 20 servers are sized for the Christmas season. Today is an ordinary autumn day: in the evening many people shop, at night hardly anyone. It is midnight, and the previous shift has left every server on." to
         "Du betreibst das Rechenzentrum eines Webshops in Deutschland. Seine 20 Server sind für das Weihnachtsgeschäft ausgelegt. Heute ist ein gewöhnlicher Herbsttag: Abends kaufen viele ein, nachts kaum jemand. Es ist Mitternacht, und die vorige Schicht hat alle Server laufen lassen.",
+    "You" to
+        "Du",
+    "Your batch cluster: grey servers are off, light blue ones are booting, the amber bar shows a server working on a job." to
+        "Dein Batch-Cluster: graue Server sind aus, hellblaue starten gerade, der orange Balken zeigt einen Server, der an einem Job arbeitet.",
+    "Your racks: grey servers are off, light blue ones are booting, the blue bar shows how busy a server is." to
+        "Deine Racks: graue Server sind aus, hellblaue starten gerade, der blaue Balken zeigt, wie ausgelastet ein Server ist.",
 )

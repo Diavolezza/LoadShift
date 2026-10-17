@@ -31,12 +31,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import de.wannerit.loadshift.core.GameTime
+import de.wannerit.loadshift.core.Scenario
 import de.wannerit.loadshift.core.SpecialGoal
 import kotlinx.coroutines.delay
 
 /** The play screen (docs/CONCEPT.md 10.1): top bar with the goals, hall and controls, timeline. */
 @Composable
-fun GameScreen(game: GameController, onExit: () -> Unit) {
+fun GameScreen(game: GameController, onExit: () -> Unit, onNext: ((Scenario) -> Unit)? = null) {
     // The clock: one tick per 1/speed seconds while not paused.
     LaunchedEffect(game.speed) {
         val speed = game.speed
@@ -63,7 +64,7 @@ fun GameScreen(game: GameController, onExit: () -> Unit) {
             HDivider()
             TimelineChart(game.simulation, game.version, Modifier.fillMaxWidth().height(timelineHeight).background(Palette.panel))
         }
-        if (game.showEnd) EndCard(game, onExit)
+        if (game.showEnd) EndCard(game, onExit, onNext)
     }
 }
 
@@ -188,7 +189,7 @@ private fun GoalItem(ok: Boolean, started: Boolean, text: String) {
 
 /** End of the scenario (CONCEPT.md 8.2, 8.3): stars, goals, the result next to the reference, "what if". */
 @Composable
-private fun EndCard(game: GameController, onExit: () -> Unit) {
+private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario) -> Unit)?) {
     val scenario = game.scenario
     val you = game.simulation.totals
     val ref = game.reference.totals
@@ -235,7 +236,14 @@ private fun EndCard(game: GameController, onExit: () -> Unit) {
                 WhatIf(game)
             }
             Row(Modifier.fillMaxWidth().padding(horizontal = 30.dp, vertical = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                PrimaryButton(t("Play again")) { game.restart() }
+                // The next scenario, once a star has opened it.
+                val next = Scenario.ALL.firstOrNull { it.number == scenario.number + 1 }?.takeIf { Progress.isUnlocked(it.number) }
+                if (next != null && onNext != null) {
+                    PrimaryButton(t("To scenario %lld", next.number)) { onNext(next) }
+                    SecondaryButton(t("Play again")) { game.restart() }
+                } else {
+                    PrimaryButton(t("Play again")) { game.restart() }
+                }
                 SecondaryButton(t("Back to the briefing"), onClick = onExit)
             }
         }
