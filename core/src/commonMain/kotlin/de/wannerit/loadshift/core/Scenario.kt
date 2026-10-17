@@ -1,0 +1,133 @@
+package de.wannerit.loadshift.core
+
+/** A scenario: region, season, length, fleet, load, the controls it unlocks and its goals (docs/CONCEPT.md 8.3 and 9). */
+data class FleetEntry(val kind: ServerKind, val count: Int)
+
+/** Controls a scenario offers (one new idea at a time, CONCEPT.md principle 3). */
+enum class Control {
+    /** Switching servers on and off by hand; takes effect at once. */
+    MANUAL_CAPACITY,
+
+    /** Rules for the capacity: all on, fixed number, autoscaling with a target utilization. */
+    CAPACITY_RULES,
+
+    /** Planning batch jobs by hand: a start time per job. */
+    BATCH_BY_HAND,
+}
+
+/** The special goal of a scenario: the third star. */
+sealed interface SpecialGoal {
+    /** Mean utilization of the running servers at least this, per mille. */
+    data class MeanUtilization(val permille: Int) : SpecialGoal
+
+    /** CO₂ at least this much below the reference, per mille. */
+    data class Reduction(val permille: Int) : SpecialGoal
+
+    /** Mean carbon intensity of the energy used for batch work at most this, g/kWh. */
+    data class BatchIntensity(val gramsPerKWh: Int) : SpecialGoal
+}
+
+/** Goals of a scenario (CONCEPT.md 8.3). */
+data class StarGoals(
+    /** Second star: CO₂ at least this much below the reference operator, per mille. */
+    val reduction: Int,
+    /** Third star. */
+    val special: SpecialGoal,
+)
+
+data class GoalsMet(val rules: Boolean, val reduction: Boolean, val special: Boolean)
+
+data class Scenario(
+    val number: Int,
+    val title: String,
+    val setting: GridSetting,
+    val weather: WeatherMode = WeatherMode.Drawn,
+    val days: Int,
+    val seed: Long,
+    val fleet: List<FleetEntry>,
+    val interactive: InteractiveLoad,
+    val facility: Facility = Facility(),
+    /** SLA target, per mille of the demand served in time. */
+    val slaTarget: Int = 990,
+    val controls: Set<Control> = setOf(Control.CAPACITY_RULES),
+    /** Policy at the start: how the data center was left by the previous shift. */
+    val initialPolicy: Policy = Policy.REFERENCE,
+    /** What the reference operator does in this scenario. */
+    val referencePolicy: Policy = Policy.REFERENCE,
+    val goals: StarGoals = StarGoals(150, SpecialGoal.Reduction(250)),
+    val batchJobs: List<BatchJobSpec> = emptyList(),
+) {
+    /** First tick: 00:00 on day 0. */
+    val startTick: Int get() = GameTime.START.tick
+
+    /** The tick after the last one. */
+    val endTick: Int get() = startTick + days * GameTime.TICKS_PER_DAY
+    val serverCount: Int get() = fleet.sumOf { it.count }
+
+    // Stars
+
+    /** The goals a result reaches. */
+    fun goalsMet(totals: Totals, reference: Totals): GoalsMet {
+        val rules = totals.sla >= slaTarget && totals.deadlinesMissed == 0 && totals.emissions < reference.emissions
+        val reduction = rules && totals.emissions * 1_000 <= reference.emissions * (1_000 - goals.reduction)
+        val special = rules && when (val goal = goals.special) {
+            is SpecialGoal.MeanUtilization -> totals.meanUtilization >= goal.permille
+            is SpecialGoal.Reduction -> totals.emissions * 1_000 <= reference.emissions * (1_000 - goal.permille)
+            is SpecialGoal.BatchIntensity ->
+                totals.batchEnergy > 0 && totals.meanBatchIntensityTenths <= goal.gramsPerKWh * 10
+        }
+        return GoalsMet(rules, reduction, special)
+    }
+
+    /**
+     * Stars of a result, 0..3: ★ the rules (SLA target, deadlines, less CO₂ than the reference), ★★ the reduction,
+     * ★★★ the special goal. The second and third star need the first, not each other.
+     */
+    fun stars(totals: Totals, reference: Totals): Int {
+        val met = goalsMet(totals, reference)
+        if (!met.rules) return 0
+        return 1 + (if (met.reduction) 1 else 0) + (if (met.special) 1 else 0)
+    }
+
+    companion object {
+        /**
+         * Scenario 1, "Night shift": a web shop in Germany in autumn. The fleet is sized for the Christmas season;
+         * at night the load falls to a fifth of the evening peak, and idle servers still draw a quarter of their
+         * maximum power. The day starts at midnight with every server on; the player switches servers by hand.
+         */
+        val NIGHT_SHIFT = Scenario(
+            number = 1, title = "Night shift", setting = GridSetting(GridRegion.GERMANY, Season.AUTUMN), days = 1,
+            seed = 1, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 20)),
+            interactive = InteractiveLoad(peak = 240),
+            controls = setOf(Control.MANUAL_CAPACITY),
+            initialPolicy = Policy(CapacityMode.Manual(20)),
+            goals = StarGoals(150, SpecialGoal.MeanUtilization(600)),
+        )
+
+        /**
+         * Scenario 2, "Wait for the sun": the batch cluster of the web shop in Spain. Reports, backups and imports
+         * must be done by their deadlines; when they run is up to the player. In Spain's solar grid the midday
+         * hours are the cleanest – not the night.
+         */
+        val WAIT_FOR_THE_SUN = Scenario(
+            number = 2, title = "Wait for the sun", setting = GridSetting(GridRegion.SPAIN, Season.YEAR), days = 2,
+            seed = 2, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 10)),
+            interactive = InteractiveLoad(peak = 0),
+            controls = setOf(Control.BATCH_BY_HAND),
+            initialPolicy = Policy(CapacityMode.Manual(0), BatchMode.ByHand),
+            referencePolicy = Policy(CapacityMode.Manual(0), BatchMode.Asap),
+            goals = StarGoals(100, SpecialGoal.BatchIntensity(83)),
+            batchJobs = listOf(
+                BatchJobSpec.of("Daily report", 4, 3, GameTime.at(0, 0), GameTime.at(0, 18)),
+                BatchJobSpec.of("Backup", 3, 4, GameTime.at(0, 1), GameTime.at(1, 6)),
+                BatchJobSpec.of("Data import", 6, 2, GameTime.at(0, 7), GameTime.at(0, 20)),
+                BatchJobSpec.of("Image conversion", 5, 4, GameTime.at(0, 18), GameTime.at(1, 18)),
+                BatchJobSpec.of("Daily report", 4, 3, GameTime.at(1, 0), GameTime.at(1, 18)),
+                BatchJobSpec.of("Backup", 3, 4, GameTime.at(1, 1), GameTime.at(2, 0)),
+                BatchJobSpec.of("Search index", 4, 3, GameTime.at(1, 6), GameTime.at(2, 0)),
+            ),
+        )
+
+        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN)
+    }
+}
