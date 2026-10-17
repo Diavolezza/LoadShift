@@ -9,6 +9,8 @@ The game is a simulation, not a race: pause at any time, plan in peace, and let 
 to be decided. Each scenario introduces one idea and names its technical term; a debrief compares your result with
 a reference operator and shows "what if" with other rules.
 
+**Play it in the browser: https://diavolezza.github.io/LoadShift/** (built from `main` on every push).
+
 The app speaks English and German (switch on the start page); everything in this repository is written in English.
 
 ## Scenarios
@@ -73,7 +75,7 @@ The files are in `composeApp/build/dist/wasmJs/productionExecutable/` (about 13 
 two `.wasm` files, fonts). They must be served over HTTP – opening `index.html` from the file system does not work.
 A local test: `cd composeApp/build/dist/wasmJs/productionExecutable && python3 -m http.server 8080`, then open
 http://localhost:8080. Any static host works (GitHub Pages, Netlify, Cloudflare Pages, a web server of your own);
-the server should deliver `.wasm` files as `application/wasm`.
+the server should deliver `.wasm` files as `application/wasm`. This repository publishes it on GitHub Pages with the workflow `.github/workflows/pages.yml`.
 
 ### Installers
 
