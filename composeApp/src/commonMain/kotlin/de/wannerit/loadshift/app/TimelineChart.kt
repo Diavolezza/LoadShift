@@ -171,7 +171,7 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
             lines += t("Load %lld, capacity %lld (%lld servers on)", record.demand, record.capacity, record.serversOn)
             if (record.inTime < record.demand) lines += t("In time: %@", Format.wholePercent(record.inTime * 1_000 / maxOf(1, record.demand)))
         } else {
-            lines += t("Expected load %lld", scenario.interactive.expected(tick))
+            lines += t("Expected load %lld", scenario.expectedDemand(tick))
         }
         val xLine = x(tick) + (x(tick + 1) - x(tick)) / 2
         drawLine(Palette.accent, Offset(xLine, top), Offset(xLine, bottom), 1.2f * density)
@@ -200,7 +200,7 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
 
     private fun DrawScope.drawLoad(top: Float, bottom: Float, future: List<Int>) {
         val history = simulation.history
-        val expected = future.map { it to scenario.interactive.expected(it) }
+        val expected = future.map { it to scenario.expectedDemand(it) }
         val fleetCapacity = simulation.servers.sumOf { it.kind.capacity }
         val maxUnits = maxOf(10, maxOf(fleetCapacity, (history.map { it.demand } + expected.map { it.second }).maxOrNull() ?: 10))
         val unitsTop = niceCeiling(maxUnits).toFloat()

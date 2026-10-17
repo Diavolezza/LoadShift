@@ -47,6 +47,8 @@ fun ControlPanel(game: GameController, modifier: Modifier = Modifier) {
     ) {
         if (Control.BATCH_BY_HAND in game.scenario.controls || Control.BATCH_RULES in game.scenario.controls) {
             BatchPanel(game)
+        } else if (Control.PLACEMENT in game.scenario.controls) {
+            PlacementPanel(game)
         } else if (Control.CAPACITY_RULES in game.scenario.controls) {
             CapacityRules(game)
             NowBox(game)
@@ -317,6 +319,7 @@ private fun CapacityRules(game: GameController) {
 /** "autoscaling at 80 %, at least 26 servers 18:00–22:00" */
 fun capacityText(capacity: CapacityMode): String = when (capacity) {
     CapacityMode.AllOn -> t("all on")
+    is CapacityMode.Placed -> t("%lld hosts in use", capacity.hosts.toSet().size)
     is CapacityMode.Manual -> t("fixed %lld servers", capacity.servers)
     is CapacityMode.Autoscale -> capacity.minimum?.let {
         t("autoscaling at %@, at least %lld servers %@–%@", Format.wholePercent(capacity.targetUtilization), it.servers,

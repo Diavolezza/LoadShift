@@ -599,6 +599,27 @@ After each step the game is played by a person before the next step begins (**pl
   "Apply"), the campaign marked in the load lane, "what if" with the alternatives above. Slogan "Green IT – from
   code to data center".
 
+**As built in step 4, part 2** (scenario 5, timeline tooltips):
+
+- Core: `VmKind` (RAM, CPU peak, daily profile: shop front end evening, batch worker night, reporting morning,
+  database replica, cache), `CapacityMode.Placed` (host per VM; hosts without a VM are off), per-host CPU with
+  slow requests above 85 %, `Packing` (spread, First Fit Decreasing with three checks: RAM only, sum of the peaks,
+  daily profiles), special goal "at most N servers on".
+- Scenario 5: Germany, autumn, 1 day, 10 hosts (256 GB, 20 load units), 24 VMs (1,472 GB). As found: spread over
+  all ten hosts. Goals: ★★ −15 %, ★★★ at most 6 hosts.
+
+| Placement | Hosts | CO₂ vs. reference | SLA | Stars |
+|---|---:|---:|---:|---:|
+| spread (reference) | 10 | – | 100 % | – |
+| FFD, RAM only | 6 | −24 % | 89 % | – |
+| FFD, sum of the peaks | 9 | −5 % | 100 % | ★ |
+| FFD, daily profiles | 7 | −16 % | 100 % | ★★ |
+| FFD, profiles, sorted by RAM and CPU | 6 | −21 % | 100 % | ★★★ |
+
+- App: the hall is replaced by a board of hosts as bins (RAM as height, VMs stacked, CPU chart per host with the
+  slow line); click a VM, then a host; fixed once the day runs; warnings for hosts whose expected peak is above
+  85 %. The placement is kept for the next run. Timeline tooltips with the values at the time under the mouse.
+
 **Taken over from the Carbon Rush prototype** (copied, checked for every reference to its origin):
 grid curves and their generator, the forecast model, the electricity price formula, the embodied and SCI
 bookkeeping, the build script with its watcher, the string catalog tools, the App Store tools, sound effects and

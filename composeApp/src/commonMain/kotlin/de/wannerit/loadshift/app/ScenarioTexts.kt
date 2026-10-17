@@ -23,6 +23,21 @@ class ScenarioTexts(
 ) {
     companion object {
         fun of(scenario: Scenario): ScenarioTexts = when (scenario.number) {
+            5 -> ScenarioTexts(
+                situation = "The web shop's 24 virtual machines – front ends, batch workers, reporting, two database replicas and caches – run on ten hosts. The previous team spread them evenly: every host runs, none is busy. A host draws about a quarter of its maximum power even when idle.",
+                idea = "Fewer hosts, less idle power: pack the VMs tighter. Two things decide whether a VM fits: its RAM, which is often full before the CPU, and its CPU over the day. VMs whose peaks come at different times – batch at night, reporting in the morning, the shop in the evening – fit together; VMs that peak at the same time do not.",
+                screen = listOf(
+                    "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals.",
+                    "The hosts as columns: the height is the RAM, the VMs are stacked in it. Below each host its CPU over the day – dotted the expected work, the area what has happened, red dashed the line above which requests get slow. Click a VM, then a host.",
+                    "Hosts in use, RAM, warnings for hosts that will be too busy, the VM kinds with their daily profiles.",
+                    "Carbon intensity of the grid with the forecast, the load of all VMs and the capacity of the running hosts.",
+                ),
+                comparedWith = "compared with the reference operator, who keeps the VMs spread over all ten hosts.",
+                rules = "SLA at least 99 % and less CO₂ than the reference",
+                remark = "Bin packing is a hard problem: the best placement cannot be computed quickly for large fleets (NP-hard). Simple heuristics like First Fit Decreasing get close – if they look at the right things: RAM and CPU together, and the daily profiles instead of the peaks. Schedulers like Kubernetes do this all the time; spreading for safety is their default, packing for energy has to be switched on.",
+                term = "Consolidation",
+                termText = "Running the work on as few machines as it needs, so the others can be switched off. Placing items of different sizes into as few bins as possible is called bin packing.",
+            )
             4 -> ScenarioTexts(
                 situation = "The web shop again, now in winter and with 30 servers. Autoscaling is on: at 80 % target utilization it keeps just enough servers running. On day 2 marketing sends a newsletter at 19:00 – for three hours twice as many people will shop as usual.",
                 idea = "Autoscaling does what you did by hand in scenario 1: it switches servers on and off for the load. The target utilization decides how much headroom stays free. Little headroom saves energy – but a server takes 30 minutes to boot, and the autoscaler knows only the usual day; a sudden peak finds it unprepared. Headroom all the time costs energy all the time; a minimum for a known event costs it only when it is needed.",

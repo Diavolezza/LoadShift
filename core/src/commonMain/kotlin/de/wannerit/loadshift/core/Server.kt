@@ -14,12 +14,14 @@ enum class ServerKind(
     val capacity: Int,
     /** Embodied emissions in kg CO₂e (Dell R760 LCA [S10], HGX H100 PCF [S13], game values in between). */
     val embodiedKilograms: Int,
+    /** RAM for virtual machines, GB (game value). */
+    val ramGb: Int,
 ) {
-    CPU_OLD("CPU server, old", 600, 350, 10, 500),
-    CPU_CURRENT("CPU server", 600, 260, 20, 550),
-    ARM_CURRENT("ARM server", 300, 200, 12, 450),
-    GPU_OLD("GPU server, old", 6_400, 150, 0, 1_450),
-    GPU_CURRENT("GPU server", 10_200, 150, 0, 1_800);
+    CPU_OLD("CPU server, old", 600, 350, 10, 500, 128),
+    CPU_CURRENT("CPU server", 600, 260, 20, 550, 256),
+    ARM_CURRENT("ARM server", 300, 200, 12, 450, 256),
+    GPU_OLD("GPU server, old", 6_400, 150, 0, 1_450, 1_024),
+    GPU_CURRENT("GPU server", 10_200, 150, 0, 1_800, 2_048);
 
     val idlePower: Int get() = maxPower * idlePermille / 1_000
 

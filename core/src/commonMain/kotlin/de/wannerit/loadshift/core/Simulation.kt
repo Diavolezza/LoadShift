@@ -75,6 +75,8 @@ data class TickRecord(
     val facilityPower: Int,
     /** Operational plus embodied emissions from the start up to and including this tick, µg CO₂e. */
     val emissionsSoFar: Long,
+    /** Scenario 5: the CPU work the VMs of each host asked for, thousandths of a work unit. */
+    val hostDemandMilli: IntArray? = null,
 )
 
 class Simulation private constructor(
@@ -107,6 +109,9 @@ class Simulation private constructor(
     val servers: List<Server> get() = serverList
     val jobs: List<BatchJob> get() = jobList
     val history: List<TickRecord> get() = historyList
+
+    /** Scenario 5: the CPU work of one host's VMs tick by tick so far, thousandths of a work unit. */
+    fun hostHistory(host: Int): List<Int> = historyList.map { it.hostDemandMilli?.getOrNull(host) ?: 0 }
 
     constructor(scenario: Scenario, policy: Policy = scenario.initialPolicy) : this(
         scenario = scenario,
@@ -200,13 +205,35 @@ class Simulation private constructor(
         applyCapacityPolicy()
         startBatchJobs()
 
-        val demand = if (plannedAt == null) scenario.interactive.actual(tick, scenario.seed)
+        var demand = if (plannedAt == null) scenario.interactive.actual(tick, scenario.seed)
         else scenario.interactive.expected(tick)
-        val capacity = readyCapacity
-        val served = minOf(demand, capacity)
+        var capacity = readyCapacity
+        var served = minOf(demand, capacity)
         val fast = capacity * InteractiveLoad.SLOW_ABOVE / 1_000
-        val inTime = minOf(served, fast) + maxOf(0, served - fast) / 2
+        var inTime = minOf(served, fast) + maxOf(0, served - fast) / 2
         val utilization = if (capacity == 0) 0 else served * 1_000 / capacity
+        // VMs on hosts (scenario 5): every host serves only its own VMs.
+        val hostMilli = (policy.capacity as? CapacityMode.Placed)?.let { placed ->
+            val milli = IntArray(serverList.size)
+            for ((vm, kind) in scenario.vms.withIndex()) {
+                val host = placed.hosts.getOrNull(vm) ?: continue
+                val e = if (plannedAt == null) SeededRandom.symmetric(scenario.seed, 20L + vm, tick, 50) else 0
+                milli[host] += kind.expectedMilli(tick) * (1_000 + e) / 1_000
+            }
+            milli
+        }
+        val hostUtilization = hostMilli?.let { milli ->
+            demand = 0; capacity = 0; served = 0; inTime = 0
+            IntArray(serverList.size) { h ->
+                val d = (milli[h] + 500) / 1_000
+                val c = if (serverList[h].state.isOn) serverList[h].kind.capacity else 0
+                val s = minOf(d, c)
+                val f = c * InteractiveLoad.SLOW_ABOVE / 1_000
+                demand += d; capacity += c; served += s
+                inTime += minOf(s, f) + maxOf(0, s - f) / 2
+                if (c == 0) 0 else minOf(1_000, milli[h] / c)
+            }
+        }
 
         var itPower = 0
         var batchPower = 0
@@ -218,6 +245,7 @@ class Simulation private constructor(
             val job = server.job
             val newUtilization = when {
                 job != null -> if (jobList[job].state is BatchJobState.Running && server.state.isOn) 1_000 else 0
+                hostUtilization != null -> if (server.state.isOn) hostUtilization[i] else 0
                 server.state.isOn && server.kind.servesInteractive -> utilization
                 else -> 0
             }
@@ -254,7 +282,7 @@ class Simulation private constructor(
             TickRecord(
                 tick = tick, intensityTenths = intensity, demand = demand, capacity = capacity, served = served,
                 inTime = inTime, serversOn = poweredOn, batchServers = batchServers, itPower = itPower,
-                facilityPower = facilityPower, emissionsSoFar = totals.emissions,
+                facilityPower = facilityPower, emissionsSoFar = totals.emissions, hostDemandMilli = hostMilli,
             ),
         )
         tick += 1
@@ -286,6 +314,17 @@ class Simulation private constructor(
                 val wanted = order.take(maxOf(0, mode.servers)).toSet()
                 for (i in order) {
                     if (i in wanted) switchOn(i) else switchOff(i)
+                }
+            }
+            is CapacityMode.Placed -> {
+                val used = mode.hosts.toSet()
+                for (i in serverList.indices) {
+                    when {
+                        i !in used -> switchOff(i)
+                        // Before the day starts the hosts are simply on: the placement is the starting point.
+                        historyList.isEmpty() -> serverList[i] = serverList[i].copy(state = ServerState.On)
+                        else -> switchOn(i)
+                    }
                 }
             }
             is CapacityMode.Autoscale -> {

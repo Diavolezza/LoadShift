@@ -8,6 +8,7 @@ import androidx.compose.runtime.setValue
 import de.wannerit.loadshift.core.BatchMode
 import de.wannerit.loadshift.core.CapacityMode
 import de.wannerit.loadshift.core.Control
+import de.wannerit.loadshift.core.Packing
 import de.wannerit.loadshift.core.ScheduledMinimum
 import de.wannerit.loadshift.core.GameTime
 import de.wannerit.loadshift.core.Policy
@@ -65,6 +66,13 @@ private fun initialScreen(options: LaunchOptions): Screen {
     if (options.careful && game.hasBatch) {
         // Plan like a careful player: every job into the greenest hours of the forecast.
         game.setPolicy(Policy(scenario.initialPolicy.capacity, BatchMode.Greenest))
+        game.advance(options.ticks)
+    } else if (options.careful && Control.PLACEMENT in scenario.controls) {
+        // Like a careful player: packed by RAM and CPU with the daily profiles.
+        val host = scenario.fleet.first().kind
+        game.setPolicy(Policy(CapacityMode.Placed(Packing.firstFitDecreasing(scenario.vms, host, Packing.Check.PROFILES) {
+            it.ramGb * 1_000 / host.ramGb + it.peak * 1_000 / host.capacity
+        })))
         game.advance(options.ticks)
     } else if (options.careful && Control.CAPACITY_RULES in scenario.controls) {
         // Like a careful player: autoscaling with a minimum for the campaign.

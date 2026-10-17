@@ -14,6 +14,9 @@ sealed interface CapacityMode {
      * many servers in a time window every day (scheduled scaling).
      */
     data class Autoscale(val targetUtilization: Int, val minimum: ScheduledMinimum? = null) : CapacityMode
+
+    /** Scenario 5: the host of every VM (index into the fleet); hosts with a VM run, the others are off. */
+    data class Placed(val hosts: List<Int>) : CapacityMode
 }
 
 /** At least [servers] servers every day from [fromHour] to [toHour] (exclusive), whatever the autoscaler thinks. */

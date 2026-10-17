@@ -229,6 +229,44 @@ class LessonTest {
         assertTrue(stars("as 800 + min 26 18-22 daily") <= 2)
     }
 
+    @Test fun scenario5Consolidation() {
+        val scenario = Scenario.CONSOLIDATION
+        val vms = scenario.vms
+        val host = ServerKind.CPU_CURRENT
+        val reference = Simulation.reference(scenario)
+        fun placed(p: List<Int>) = Simulation.replay(scenario, Policy(CapacityMode.Placed(p)))
+        val heuristics = listOf(
+            "FFD by RAM, RAM only" to Packing.firstFitDecreasing(vms, host, Packing.Check.RAM_ONLY) { it.ramGb },
+            "FFD by RAM, peak sum" to Packing.firstFitDecreasing(vms, host, Packing.Check.PEAK_SUM) { it.ramGb },
+            "FFD by RAM, profiles" to Packing.firstFitDecreasing(vms, host, Packing.Check.PROFILES) { it.ramGb },
+            "FFD by CPU, profiles" to Packing.firstFitDecreasing(vms, host, Packing.Check.PROFILES) { it.peak },
+            "FFD by both, profiles" to Packing.firstFitDecreasing(vms, host, Packing.Check.PROFILES) { it.ramGb * 1_000 / host.ramGb + it.peak * 1_000 / host.capacity },
+        )
+        val runs = mutableListOf("reference: spread" to reference)
+        for ((name, p) in heuristics) runs += name to placed(p)
+        val lines = mutableListOf(title(scenario), HEADER + "  hosts  peak/host")
+        for ((name, simulation) in runs) {
+            val p = (simulation.policy.capacity as CapacityMode.Placed).hosts
+            val hosts = p.toSet().size
+            val peak = p.toSet().maxOf { Packing.expectedPeakMilli(vms, p, it) } / 1_000.0
+            lines += line(name, simulation.totals, reference.totals) + String.format(Locale.ROOT, "  %5d  %9.1f", hosts, peak) +
+                "  " + "★".repeat(scenario.stars(simulation.totals, reference.totals))
+        }
+        report(5, lines)
+
+        assertTrue(reference.totals.sla >= scenario.slaTarget, "the reference meets the SLA")
+        assertEquals(0, scenario.stars(reference.totals, reference.totals))
+        val run = runs.toMap()
+        fun stars(name: String) = scenario.stars(run.getValue(name).totals, reference.totals)
+        // Packed by RAM alone, the peaks collide: requests get slow, no star.
+        assertEquals(0, stars("FFD by RAM, RAM only"))
+        // Packed by the sum of the peaks: safe, but hardly better than the reference.
+        assertEquals(1, stars("FFD by RAM, peak sum"))
+        // With the daily profiles seven hosts suffice; looking at RAM and CPU together, six.
+        assertEquals(2, stars("FFD by RAM, profiles"))
+        assertEquals(3, stars("FFD by both, profiles"))
+    }
+
     private companion object {
         val sections = sortedMapOf<Int, List<String>>()
 

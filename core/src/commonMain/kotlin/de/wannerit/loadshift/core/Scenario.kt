@@ -16,6 +16,9 @@ enum class Control {
 
     /** Rules for batch jobs: as soon as possible, fixed hour, greenest hours, threshold; deadline safety. */
     BATCH_RULES,
+
+    /** Placing VMs on hosts by hand (before the day starts). */
+    PLACEMENT,
 }
 
 /** The special goal of a scenario: the third star. */
@@ -28,6 +31,9 @@ sealed interface SpecialGoal {
 
     /** Mean carbon intensity of the energy used for batch work at most this, g/kWh. */
     data class BatchIntensity(val gramsPerKWh: Int) : SpecialGoal
+
+    /** On average at most this many servers on. */
+    data class MaxServersOn(val servers: Int) : SpecialGoal
 }
 
 /** Goals of a scenario (CONCEPT.md 8.3). */
@@ -61,7 +67,12 @@ data class Scenario(
     val batchJobs: List<BatchJobSpec> = emptyList(),
     /** A forecast that gets the weather's timing wrong until it is revised (the game pauses then). */
     val forecastMiss: ForecastMiss? = null,
+    /** Virtual machines to place on the hosts (scenario 5). */
+    val vms: List<VmKind> = emptyList(),
 ) {
+    /** Expected interactive work at a tick: the web load or the VMs' profiles (what an operator can plan with). */
+    fun expectedDemand(tick: Int): Int = interactive.expected(tick) + vms.sumOf { it.expectedMilli(tick) } / 1_000
+
     /** First tick: 00:00 on day 0. */
     val startTick: Int get() = GameTime.START.tick
 
@@ -80,6 +91,7 @@ data class Scenario(
             is SpecialGoal.Reduction -> totals.emissions * 1_000 <= reference.emissions * (1_000 - goal.permille)
             is SpecialGoal.BatchIntensity ->
                 totals.batchEnergy > 0 && totals.meanBatchIntensityTenths <= goal.gramsPerKWh * 10
+            is SpecialGoal.MaxServersOn -> totals.meanServersOn <= goal.servers * 1_000
         }
         return GoalsMet(rules, reduction, special)
     }
@@ -182,6 +194,26 @@ data class Scenario(
             goals = StarGoals(300, SpecialGoal.MeanUtilization(700)),
         )
 
-        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM)
+        /** The 24 VMs of scenario 5. */
+        private val SHOP_VMS = List(8) { VmKind.FRONT_END } + List(6) { VmKind.BATCH_WORKER } + List(4) { VmKind.REPORTING } +
+            List(2) { VmKind.DATABASE } + List(4) { VmKind.CACHE }
+
+        /**
+         * Scenario 5, "Consolidation": the web shop's VMs, spread over ten hosts by the previous team. Packed
+         * tighter, fewer hosts run – but the RAM is full before the CPU, and VMs whose peaks come at the same time
+         * do not fit together (bin packing in two dimensions, with daily profiles).
+         */
+        val CONSOLIDATION = Scenario(
+            number = 5, title = "Consolidation", setting = GridSetting(GridRegion.GERMANY, Season.AUTUMN), days = 1,
+            seed = 5, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 10)),
+            interactive = InteractiveLoad(peak = 0),
+            controls = setOf(Control.PLACEMENT),
+            initialPolicy = Policy(CapacityMode.Placed(Packing.spread(SHOP_VMS, 10))),
+            referencePolicy = Policy(CapacityMode.Placed(Packing.spread(SHOP_VMS, 10))),
+            goals = StarGoals(150, SpecialGoal.MaxServersOn(6)),
+            vms = SHOP_VMS,
+        )
+
+        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION)
     }
 }

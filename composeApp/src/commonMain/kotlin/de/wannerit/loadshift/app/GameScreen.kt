@@ -31,6 +31,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import de.wannerit.loadshift.core.Control
 import de.wannerit.loadshift.core.GameTime
 import de.wannerit.loadshift.core.Scenario
 import de.wannerit.loadshift.core.SpecialGoal
@@ -58,7 +59,11 @@ fun GameScreen(game: GameController, onExit: () -> Unit, onNext: ((Scenario) -> 
             GoalBar(game)
             HDivider()
             Row(Modifier.fillMaxWidth().weight(1f)) {
-                HallView(game.simulation.servers, game.version, game.hasInteractive, game.hasBatch, Modifier.weight(1f).fillMaxHeight())
+                if (Control.PLACEMENT in game.scenario.controls) {
+                    PlacementBoard(game, Modifier.weight(1f).fillMaxHeight())
+                } else {
+                    HallView(game.simulation.servers, game.version, game.hasInteractive, game.hasBatch, Modifier.weight(1f).fillMaxHeight())
+                }
                 VDivider()
                 ControlPanel(game, Modifier.width(panelWidth).fillMaxHeight())
             }
@@ -134,12 +139,14 @@ private fun specialShort(goal: SpecialGoal): String = when (goal) {
     is SpecialGoal.MeanUtilization -> t("utilization ≥ %@", Format.wholePercent(goal.permille))
     is SpecialGoal.Reduction -> t("CO₂ from %@", Format.changePermille(-goal.permille.toLong()))
     is SpecialGoal.BatchIntensity -> t("batch ≤ %lld g/kWh", goal.gramsPerKWh)
+    is SpecialGoal.MaxServersOn -> t("≤ %lld hosts", goal.servers)
 }
 
 fun specialLong(goal: SpecialGoal): String = when (goal) {
     is SpecialGoal.MeanUtilization -> t("mean utilization at least %@", Format.wholePercent(goal.permille))
     is SpecialGoal.Reduction -> t("CO₂ %@ or better", Format.changePermille(-goal.permille.toLong()))
     is SpecialGoal.BatchIntensity -> t("batch work at %lld g/kWh or less on average", goal.gramsPerKWh)
+    is SpecialGoal.MaxServersOn -> t("at most %lld hosts running", goal.servers)
 }
 
 /** The goals and where the run stands. */

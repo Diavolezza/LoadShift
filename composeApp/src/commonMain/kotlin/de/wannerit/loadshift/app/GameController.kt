@@ -8,6 +8,7 @@ import de.wannerit.loadshift.core.BatchMode
 import de.wannerit.loadshift.core.CapacityMode
 import de.wannerit.loadshift.core.Control
 import de.wannerit.loadshift.core.GameTime
+import de.wannerit.loadshift.core.Packing
 import de.wannerit.loadshift.core.Policy
 import de.wannerit.loadshift.core.ScheduledMinimum
 import de.wannerit.loadshift.core.Scenario
@@ -51,7 +52,7 @@ class GameController(val scenario: Scenario) {
 
     val isFinished: Boolean get() = simulation.isFinished
     val hasBatch: Boolean get() = scenario.batchJobs.isNotEmpty()
-    val hasInteractive: Boolean get() = scenario.interactive.peak > 0
+    val hasInteractive: Boolean get() = scenario.interactive.peak > 0 || scenario.vms.isNotEmpty()
 
     private fun changed() {
         version++
@@ -211,6 +212,7 @@ class GameController(val scenario: Scenario) {
                 capMinimumOn = capacity.minimum != null
                 capacity.minimum?.let { capMinimum = it.servers; capFrom = it.fromHour; capTo = it.toHour }
             }
+            is CapacityMode.Placed -> {}
         }
         draftSafety = policy.deadlineSafety
         draftKind = when (val mode = policy.batch) {
@@ -230,7 +232,7 @@ class GameController(val scenario: Scenario) {
     private class Draft(
         val kind: RuleKind, val hour: Int, val threshold: Int, val safety: Boolean,
         val capKind: CapacityKind, val capFixed: Int, val capTarget: Int, val capMinimumOn: Boolean, val capMinimum: Int,
-        val capFrom: Int, val capTo: Int,
+        val capFrom: Int, val capTo: Int, val placement: List<Int>?,
     )
 
     private companion object {
@@ -240,7 +242,7 @@ class GameController(val scenario: Scenario) {
     /** Keeps the panel's settings for the next run (a new run starts with the scenario's rules, the panel keeps yours). */
     fun saveDraft() {
         drafts[scenario.number] = Draft(draftKind, draftHour, draftThreshold, draftSafety, capKind, capFixed, capTarget,
-            capMinimumOn, capMinimum, capFrom, capTo)
+            capMinimumOn, capMinimum, capFrom, capTo, placement)
     }
 
     private fun restoreDraft() {
@@ -248,6 +250,55 @@ class GameController(val scenario: Scenario) {
         draftKind = d.kind; draftHour = d.hour; draftThreshold = d.threshold; draftSafety = d.safety
         capKind = d.capKind; capFixed = d.capFixed; capTarget = d.capTarget; capMinimumOn = d.capMinimumOn
         capMinimum = d.capMinimum; capFrom = d.capFrom; capTo = d.capTo
+        // The placement is the player's work: a new run starts with it.
+        if (d.placement != null && Control.PLACEMENT in scenario.controls && current.history.isEmpty()) {
+            current.policy = Policy(CapacityMode.Placed(d.placement))
+            current.applyPolicy()
+        }
+    }
+
+    // Placing VMs (scenario 5)
+
+    /** The VM the player has picked up to move, if any. */
+    var selectedVm by mutableStateOf<Int?>(null)
+        private set
+    var placementMessage by mutableStateOf<String?>(null)
+        private set
+
+    /** The host of every VM, in the placement scenario. */
+    val placement: List<Int>? get() = (simulation.policy.capacity as? CapacityMode.Placed)?.hosts
+
+    /** VMs can be moved until the day starts. */
+    val canPlace: Boolean get() = simulation.history.isEmpty() && placement != null
+
+    fun selectVm(vm: Int) {
+        if (!canPlace) return
+        selectedVm = if (selectedVm == vm) null else vm
+        placementMessage = null
+    }
+
+    /** Moves the picked-up VM to a host, if its RAM fits there. */
+    fun moveSelectedTo(host: Int) {
+        val vm = selectedVm ?: return
+        val p = placement ?: return
+        if (!canPlace) return
+        if (p[vm] == host) { selectedVm = null; return }
+        val kind = scenario.vms[vm]
+        val free = simulation.servers[host].kind.ramGb - Packing.ramUsed(scenario.vms, p, host)
+        if (kind.ramGb > free) {
+            placementMessage = t("%@ needs %lld GB – host %lld has only %lld GB free.", t(kind.title), kind.ramGb, host + 1, free)
+            return
+        }
+        setPolicy(Policy(CapacityMode.Placed(p.toMutableList().also { it[vm] = host })))
+        selectedVm = null
+        placementMessage = null
+    }
+
+    fun spreadAgain() {
+        if (!canPlace) return
+        setPolicy(scenario.initialPolicy)
+        selectedVm = null
+        placementMessage = null
     }
 
     // Batch jobs by hand
@@ -304,6 +355,19 @@ class GameController(val scenario: Scenario) {
                 t("Every job at night, at 01:00") to replay(BatchMode.AtHour(1)),
                 t("Every job at 11:00") to replay(BatchMode.AtHour(11)),
                 t("Planned by the forecast (from scenario 3)") to replay(BatchMode.Greenest),
+            )
+        }
+        if (Control.PLACEMENT in scenario.controls) {
+            val vms = scenario.vms
+            val host = scenario.fleet.first().kind
+            fun replay(p: List<Int>) = Simulation.replay(scenario, Policy(CapacityMode.Placed(p))).totals
+            return listOf(
+                t("Spread over all hosts (reference)") to reference.totals,
+                t("First Fit Decreasing, RAM only") to replay(Packing.firstFitDecreasing(vms, host, Packing.Check.RAM_ONLY) { it.ramGb }),
+                t("First Fit Decreasing, sum of the peaks") to replay(Packing.firstFitDecreasing(vms, host, Packing.Check.PEAK_SUM) { it.ramGb }),
+                t("First Fit Decreasing, daily profiles") to replay(Packing.firstFitDecreasing(vms, host, Packing.Check.PROFILES) { it.ramGb }),
+                t("First Fit Decreasing, profiles, sorted by RAM and CPU") to
+                    replay(Packing.firstFitDecreasing(vms, host, Packing.Check.PROFILES) { it.ramGb * 1_000 / host.ramGb + it.peak * 1_000 / host.capacity }),
             )
         }
         if (Control.CAPACITY_RULES in scenario.controls) {
