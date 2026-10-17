@@ -63,9 +63,13 @@ class GameController(val scenario: Scenario) {
         speed = newSpeed
     }
 
+    /** The rules in force when this run's first tick ran (the next run starts with them). */
+    private var startPolicy: Policy? = null
+
     /** One tick; called by the clock. */
     fun step() {
         if (simulation.isFinished) return
+        if (current.history.isEmpty()) startPolicy = current.policy
         simulation.step()
         if (simulation.isFinished) finish() else {
             checkUrgentJobs()
@@ -95,6 +99,7 @@ class GameController(val scenario: Scenario) {
 
     /** Runs a number of ticks at once (launch options). */
     fun advance(ticks: Int) {
+        if (ticks > 0 && current.history.isEmpty()) startPolicy = current.policy
         repeat(ticks) { if (!simulation.isFinished) simulation.step() }
         if (simulation.isFinished) finish()
         changed()
@@ -232,7 +237,7 @@ class GameController(val scenario: Scenario) {
     private class Draft(
         val kind: RuleKind, val hour: Int, val threshold: Int, val safety: Boolean,
         val capKind: CapacityKind, val capFixed: Int, val capTarget: Int, val capMinimumOn: Boolean, val capMinimum: Int,
-        val capFrom: Int, val capTo: Int, val placement: List<Int>?,
+        val capFrom: Int, val capTo: Int, val startPolicy: Policy?,
     )
 
     private companion object {
@@ -242,7 +247,7 @@ class GameController(val scenario: Scenario) {
     /** Keeps the panel's settings for the next run (a new run starts with the scenario's rules, the panel keeps yours). */
     fun saveDraft() {
         drafts[scenario.number] = Draft(draftKind, draftHour, draftThreshold, draftSafety, capKind, capFixed, capTarget,
-            capMinimumOn, capMinimum, capFrom, capTo, placement)
+            capMinimumOn, capMinimum, capFrom, capTo, startPolicy ?: current.policy.takeIf { current.history.isEmpty() })
     }
 
     private fun restoreDraft() {
@@ -250,9 +255,9 @@ class GameController(val scenario: Scenario) {
         draftKind = d.kind; draftHour = d.hour; draftThreshold = d.threshold; draftSafety = d.safety
         capKind = d.capKind; capFixed = d.capFixed; capTarget = d.capTarget; capMinimumOn = d.capMinimumOn
         capMinimum = d.capMinimum; capFrom = d.capFrom; capTo = d.capTo
-        // The placement is the player's work: a new run starts with it.
-        if (d.placement != null && Control.PLACEMENT in scenario.controls && current.history.isEmpty()) {
-            current.policy = Policy(CapacityMode.Placed(d.placement))
+        // A new run starts with the rules the last run started with (the panel shows the last run's final ones).
+        if (d.startPolicy != null && current.history.isEmpty()) {
+            current.policy = d.startPolicy
             current.applyPolicy()
         }
     }
@@ -400,6 +405,7 @@ class GameController(val scenario: Scenario) {
         speed = Speed.PAUSED
         current = Simulation(scenario)
         restoreDraft()
+        startPolicy = null
         stars = 0
         showEnd = false
         urgentJob = null
