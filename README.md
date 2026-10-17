@@ -1,43 +1,115 @@
 # Load Shift
 
-A teaching game about Green IT for the browser, Windows, macOS and Linux (Android and iOS later). You run a data
-center through days and weeks: servers, workloads, cooling and electricity from a real-world grid mix. Serve your
-users reliably and emit as little CO₂ as possible – by switching off idle servers, moving flexible work into clean
-hours, cooling wisely and keeping hardware in service.
+A teaching game about Green IT – from code to data center. It runs in the browser and as a desktop app for
+Windows, macOS and Linux (Android and iOS later). You run a data center or improve the software that runs in it:
+switch off idle servers, move flexible work into clean hours, cool wisely, renew hardware where it pays off, measure
+before you optimize, cache what repeats. Serve your users reliably and emit as little CO₂ as possible.
 
-The game is a simulation, not a race: pause at any time, plan in peace, and let time run faster when nothing
-needs to be decided. Each scenario introduces one idea; a debrief compares your result with a reference operator
-and shows "what if" with other rules.
+The game is a simulation, not a race: pause at any time, plan in peace, and let time run faster when nothing needs
+to be decided. Each scenario introduces one idea and names its technical term; a debrief compares your result with
+a reference operator and shows "what if" with other rules.
 
-Status: step 3 of the concept is under way (`docs/CONCEPT.md`, section 12). Playable: scenario 1 "Night shift"
-(switching servers by hand) and scenario 2 "Wait for the sun" (planning batch jobs into clean hours).
+The app speaks English and German (switch on the start page); everything in this repository is written in English.
 
-The app speaks English and German; everything in this repository is written in English.
+## Scenarios
 
-## Project layout
+| | Operations | Term |
+|---|---|---|
+| O1 | Night shift | Rightsizing |
+| O2 | Wait for the sun | Time Shifting |
+| O3 | When the wind drops | Carbon-Aware Scheduling |
+| O4 | Headroom | Autoscaling |
+| O5 | Consolidation | Consolidation (Bin Packing) |
+| O6 | Heat wave | PUE (Power Usage Effectiveness) |
+| O7 | Old iron | Embodied Carbon |
+
+| | Engineering | Term |
+|---|---|---|
+| E1 | Measure first | Profiling |
+| E2 | Growing data | Algorithmic complexity |
+| E3 | Hit or miss | Caching |
+
+In German the operations scenarios are called B1–B7 ("Betrieb"). A star in one scenario opens the next; teachers can
+open all scenarios in the About dialog. More scenarios are planned (`docs/CONCEPT.md`, section 9).
+
+## Running the game
+
+### What you need
+
+- **A JDK, version 21 or later**, for example [Eclipse Temurin](https://adoptium.net). Check with `java -version`.
+  Nothing else has to be installed: the Gradle wrapper (`gradlew`, `gradlew.bat`) downloads Gradle, Kotlin and all
+  libraries on the first build – this needs an internet connection and takes a few minutes.
+- For the web version a current browser with WebAssembly GC: Chrome or Edge 119+, Firefox 120+, Safari 18.2+.
+
+### Desktop app
+
+macOS and Linux:
+
+```
+./gradlew :composeApp:run
+```
+
+Windows:
+
+```
+gradlew.bat :composeApp:run
+```
+
+### Web app
+
+To try it out, the development server builds the app and opens it in the browser:
+
+```
+./gradlew :composeApp:wasmJsBrowserDevelopmentRun        # Windows: gradlew.bat …
+```
+
+For other people, build the web app once and put the files on any web server:
+
+```
+./gradlew :composeApp:wasmJsBrowserDistribution
+```
+
+The files are in `composeApp/build/dist/wasmJs/productionExecutable/` (about 13 MB: `index.html`, `loadshift.js`,
+two `.wasm` files, fonts). They must be served over HTTP – opening `index.html` from the file system does not work.
+A local test: `cd composeApp/build/dist/wasmJs/productionExecutable && python3 -m http.server 8080`, then open
+http://localhost:8080. Any static host works (GitHub Pages, Netlify, Cloudflare Pages, a web server of your own);
+the server should deliver `.wasm` files as `application/wasm`.
+
+### Installers
+
+```
+./gradlew :composeApp:packageDmg      # macOS, run on a Mac
+gradlew.bat :composeApp:packageMsi    # Windows, run on Windows
+./gradlew :composeApp:packageDeb      # Debian/Ubuntu, run on Linux
+```
+
+The installers are in `composeApp/build/compose/binaries/main/`. They are not signed: macOS asks for confirmation
+on the first start (right-click → Open), Windows SmartScreen warns once.
+
+### Launch options
+
+For screenshots, tests and teaching: desktop `./gradlew :composeApp:run --args="-scenario 7 -play -ticks 40 -careful -lang de"`,
+web `index.html?scenario=7&play&ticks=40&careful&lang=de`. `scenario` opens a scenario's briefing (101–103 are E1–E3),
+`play` starts it, `ticks` runs that many 15-minute steps, `careful` plays like a careful player, `lang` sets the
+language for this start.
+
+## Development
+
+```
+./gradlew :core:allTests     # simulation tests on the JVM and in Wasm; the lesson report is in build/lesson-report.txt
+```
+
+`build.sh` (macOS and Linux) wraps the common tasks: `./build.sh ktest | web | serve | desktop`.
 
 | Path | Content |
 |---|---|
-| `core/` | Kotlin Multiplatform module with the deterministic simulation (no UI) and its tests |
+| `core/` | Kotlin Multiplatform module with the deterministic simulation (no UI) and its tests; `LessonTest` checks that every scenario teaches what it should |
 | `composeApp/` | Compose Multiplatform app: web (Wasm) and desktop (JVM) |
-| `tools/` | helper scripts (grid curves, string migration) |
-| `docs/CONCEPT.md` | game concept, decisions and sources |
+| `tools/` | grid curves and fonts |
+| `docs/CONCEPT.md` | game concept, model, decisions and sources |
 
-## Building
-
-Requires JDK 21 or later. The Gradle wrapper downloads everything else.
-
-```
-./gradlew :core:allTests                          # simulation tests on the JVM and in Wasm
-./gradlew :composeApp:run                         # desktop app
-./gradlew :composeApp:wasmJsBrowserDevelopmentRun # web app in the browser
-./build.sh ktest | web | serve | desktop          # the same via the build script (also for the watcher)
-```
-
-Launch options for screenshots and tests: desktop `-scenario 2 -play -ticks 40 -careful -lang de`, web
-`index.html?scenario=2&ticks=40&careful&lang=de`.
-
-The first version was written in Swift for iPad and Mac (tag `v0.3.0`); the Kotlin version replaced it.
+Built with Kotlin 2.4 and Compose Multiplatform 1.12. The first version was written in Swift for iPad and Mac
+(tag `v0.3.0`); the Kotlin version replaced it.
 
 ## License
 
