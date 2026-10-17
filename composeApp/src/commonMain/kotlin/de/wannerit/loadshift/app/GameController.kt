@@ -260,9 +260,11 @@ class GameController(val scenario: Scenario) {
     var cacheTtl by mutableStateOf(listOf<Int>())
     var cacheCount by mutableStateOf(false)
     var cacheView by mutableStateOf(false)
+    var cacheInvalidate by mutableStateOf(false)
+    var cacheWarmUp by mutableStateOf(false)
 
     val draftCache: CacheConfig
-        get() = CacheConfig(cacheServers, cacheTtl, cacheCount, cacheView)
+        get() = CacheConfig(cacheServers, cacheTtl, cacheCount, cacheView, cacheInvalidate, cacheWarmUp)
 
     fun setTtl(kind: Int, minutes: Int) {
         cacheTtl = cacheTtl.toMutableList().also { while (it.size <= kind) it += 0; it[kind] = minutes }
@@ -316,6 +318,8 @@ class GameController(val scenario: Scenario) {
             cacheTtl = model.kinds.indices.map { c.ttlMinutes.getOrElse(it) { 0 } }
             cacheCount = c.approximateCount
             cacheView = c.materializedView
+            cacheInvalidate = c.invalidate
+            cacheWarmUp = c.warmUp
         }
         draftKind = when (val mode = policy.batch) {
             is BatchMode.AtHour -> RuleKind.HOUR.also { draftHour = mode.hour }
@@ -354,7 +358,7 @@ class GameController(val scenario: Scenario) {
         capMinimum = d.capMinimum; capFrom = d.capFrom; capTo = d.capTo
         cacheServers = d.cache.servers
         if (d.cache.ttlMinutes.isNotEmpty()) cacheTtl = d.cache.ttlMinutes
-        cacheCount = d.cache.approximateCount; cacheView = d.cache.materializedView
+        cacheCount = d.cache.approximateCount; cacheView = d.cache.materializedView; cacheInvalidate = d.cache.invalidate; cacheWarmUp = d.cache.warmUp
         draftSetpoint = d.setpoint
         // A new run starts with the rules the last run started with (the panel shows the last run's final ones).
         if (d.startPolicy != null && current.history.isEmpty() && !hasSprints) {
@@ -481,18 +485,20 @@ class GameController(val scenario: Scenario) {
                 t("Every job as soon as it arrives (reference)") to reference.totals,
                 t("Every job at night, at 01:00") to replay(BatchMode.AtHour(1)),
                 t("Every job at 11:00") to replay(BatchMode.AtHour(11)),
-                t("Planned by the forecast (from scenario 3)") to replay(BatchMode.Greenest),
+                t("Planned by the forecast (from scenario O3)") to replay(BatchMode.Greenest),
             )
         }
         if (scenario.caching != null) {
             fun run(c: CacheConfig) = Simulation.replay(scenario, scenario.initialPolicy.copy(cache = c)).totals
-            val allowed = CacheConfig(1, listOf(1_440, 15, 1, 0, 0))
+            val allowed = CacheConfig(1, listOf(1_440, 15, 1, 0, 0), invalidate = true)
             return listOf(
                 t("No cache (reference)") to reference.totals,
                 t("Everything allowed, search too, 4 cache servers (the team's plan)") to run(allowed.copy(servers = 4, ttlMinutes = listOf(1_440, 15, 1, 60, 0))),
-                t("As allowed, without search, 2 cache servers") to run(allowed.copy(servers = 2)),
                 t("As allowed, without search, 1 cache server") to run(allowed),
-                t("The same with HyperLogLog and materialized view") to run(allowed.copy(approximateCount = true, materializedView = true)),
+                t("The same without invalidation") to run(allowed.copy(invalidate = false)),
+                t("The same, catalog pages for 1 min instead of invalidation") to run(allowed.copy(invalidate = false, ttlMinutes = listOf(1_440, 1, 1, 0, 0))),
+                t("As allowed, 1 cache server, invalidation, HyperLogLog and materialized view") to run(allowed.copy(approximateCount = true, materializedView = true)),
+                t("The same with the nightly warm-up") to run(allowed.copy(approximateCount = true, materializedView = true, warmUp = true)),
             )
         }
         if (hasSprints) {
@@ -547,7 +553,7 @@ class GameController(val scenario: Scenario) {
             t("All servers on (reference)") to reference.totals,
             t("Fixed: %lld servers all day", half) to replay(CapacityMode.Manual(half)),
             t("Fixed: %lld servers all day", most) to replay(CapacityMode.Manual(most)),
-            t("Autoscaling at 70 % (from scenario 4)") to replay(CapacityMode.Autoscale(700)),
+            t("Autoscaling at 70 % (from scenario O4)") to replay(CapacityMode.Autoscale(700)),
         )
     }
 

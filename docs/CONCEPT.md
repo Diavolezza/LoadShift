@@ -702,6 +702,20 @@ After each step the game is played by a person before the next step begins (**pl
 - E3: the upper lane of the timeline shows the cache memory (memory of the running cache servers, used, expected)
   instead of the grid's carbon intensity, which the player cannot act on there.
 
+**As built in step 4, part 6** (E3 after the second play test; start page):
+
+- E3: on day 2 at 18:00 the prices change in the catalog. Catalog pages cached before are wrong until they expire:
+  τ minutes after the change a share 1 − τ/T of the hits is wrong (T the time an entry stays). "Invalidate the
+  catalog pages" removes them at once; the hit rate then climbs back within T. Stale answers are limited to 0.5 ‰:
+  without invalidation 0.9 ‰ – no star; catalog pages for 1 min instead: correct, but −33 % (★★).
+- E3: a measure that should not be ticked: "warm the cache every night" (03:00–07:00, all catalog page variants
+  in advance) – the pages expire after 15 minutes, long before the first customer: −37 % instead of −40 % (★★).
+  ★★★ now from −38 %.
+- E3: red marks under the cache lane where answers were stale; the end card says "Not made" without the first star;
+  a draft that is not applied says so in amber.
+- Start page: operations scenarios are labelled B1… in German and O1… in English (E1… in both); a language switch
+  (Deutsch | English), kept on the device; "Open all scenarios" moved into the About dialog ("For teachers").
+
 **As built in step 5, part 1** (scenario 6, "Heat wave"):
 
 - Core: `CoolingModel` – outside temperature per day (lowest at 05:00, highest at 15:00, cosine in between),

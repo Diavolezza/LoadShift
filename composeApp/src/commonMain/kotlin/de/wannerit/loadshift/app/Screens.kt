@@ -85,6 +85,18 @@ fun AboutContent(modifier: Modifier = Modifier) {
             Txt(t("Font: Inter, SIL Open Font License 1.1"), Type.caption)
             Txt(t("Built with Kotlin and Compose Multiplatform"), Type.caption)
         }
+        // For teachers: open every scenario (D19) – here, so that players do not skip the story by accident.
+        Txt(t("For teachers"), Type.style(16, FontWeight.SemiBold))
+        Row(
+            Modifier.clip(RoundedCornerShape(10.dp)).clickable { Progress.changeUnlockAll(!Progress.unlockAll) }.padding(4.dp),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            CheckBox(Progress.unlockAll)
+            Column {
+                Txt(t("Open all scenarios"), Type.style(15, FontWeight.SemiBold))
+                Txt(t("For courses that take the topics in another order. Stars still count."), Type.caption)
+            }
+        }
     }
 }
 
@@ -116,10 +128,11 @@ fun ScenarioListScreen(onSelect: (Scenario) -> Unit) {
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp)) {
                 RackIcon(64.dp)
-                Column {
+                Column(Modifier.weight(1f)) {
                     Txt("Load Shift", Type.style(52, FontWeight.Bold))
                     Txt(t("Green IT – from code to data center"), Type.style(22, color = Palette.secondary))
                 }
+                LanguageSwitch()
             }
             for ((track, title) in listOf(Track.OPERATIONS to t("Operations"), Track.ENGINEERING to t("Engineering"))) {
                 Txt(title, Type.title)
@@ -127,17 +140,6 @@ fun ScenarioListScreen(onSelect: (Scenario) -> Unit) {
                     for (scenario in Scenario.ALL.filter { it.track == track }) {
                         ScenarioCard(scenario, Progress.isUnlocked(scenario)) { onSelect(scenario) }
                     }
-                }
-            }
-            Txt(t("More scenarios follow – operations: cooling, hardware, AI training, eco mode, two sites; engineering: growing data."), Type.style(20, color = Palette.secondary))
-            Row(
-                Modifier.clip(RoundedCornerShape(10.dp)).clickable { Progress.changeUnlockAll(!Progress.unlockAll) }.padding(4.dp),
-                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                CheckBox(Progress.unlockAll)
-                Column {
-                    Txt(t("Open all scenarios"), Type.style(16, FontWeight.SemiBold))
-                    Txt(t("For courses that take the topics in another order. Stars still count."), Type.callout)
                 }
             }
             Txt(t("About Load Shift"), Type.style(16, FontWeight.SemiBold, Palette.accent), Modifier.clip(RoundedCornerShape(6.dp)).clickable { about = true }.padding(vertical = 4.dp, horizontal = 2.dp))
@@ -156,6 +158,24 @@ fun ScenarioListScreen(onSelect: (Scenario) -> Unit) {
 
 private fun days(n: Int) = if (n == 1) t("1 day") else t("%lld days", n)
 
+/** Deutsch | English, kept on the device. */
+@Composable
+private fun LanguageSwitch() {
+    Row(Modifier.background(Palette.panel, RoundedCornerShape(10.dp)).padding(3.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        for ((german, name) in listOf(true to "Deutsch", false to "English")) {
+            val selected = Language.german == german
+            Txt(
+                name, Type.style(16, FontWeight.SemiBold, if (selected) Color.White else Palette.ink),
+                Modifier.clip(RoundedCornerShape(8.dp)).background(if (selected) Palette.accent else Color.Transparent)
+                    .clickable { Language.choose(german) }.padding(horizontal = 14.dp, vertical = 8.dp),
+            )
+        }
+    }
+}
+
+/** The name in the list: B3 in German (Betrieb), O3 in English (Operations); E1 for engineering in both. */
+val Scenario.shownLabel: String get() = if (track == Track.OPERATIONS) t("O%@", label) else label
+
 @Composable
 private fun ScenarioCard(scenario: Scenario, unlocked: Boolean, onClick: () -> Unit) {
     Column(
@@ -166,14 +186,14 @@ private fun ScenarioCard(scenario: Scenario, unlocked: Boolean, onClick: () -> U
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Txt(scenario.label, Type.style(34, FontWeight.Bold, if (unlocked) Palette.accent else Palette.secondary), Modifier.weight(1f))
+            Txt(scenario.shownLabel, Type.style(34, FontWeight.Bold, if (unlocked) Palette.accent else Palette.secondary), Modifier.weight(1f))
             if (unlocked) StarRow(Progress.stars(scenario.number), 22.dp) else LockIcon(22.dp)
         }
         Txt(t(scenario.title), Type.heading)
         Txt(ScenarioTexts.of(scenario).term, Type.style(16, FontWeight.SemiBold, Palette.accent))
         Txt("${t(scenario.setting.region.title)} · ${t(scenario.setting.season.title)} · ${days(scenario.days)}", Type.style(17, color = Palette.secondary))
         if (!unlocked) {
-            val before = Scenario.ALL.firstOrNull { it.number == scenario.unlockAfter }?.label ?: ""
+            val before = Scenario.ALL.firstOrNull { it.number == scenario.unlockAfter }?.shownLabel ?: ""
             Txt(t("Earn a star in scenario %@ first.", before), Type.callout)
         }
     }
@@ -196,7 +216,7 @@ fun BriefingScreen(scenario: Scenario, onStart: () -> Unit, onBack: () -> Unit) 
                 RackIcon(56.dp)
                 Column(Modifier.weight(1f)) {
                     Txt("Load Shift", Type.style(22, FontWeight.SemiBold, Palette.secondary))
-                    Txt(t("Scenario %@: %@", scenario.label, t(scenario.title)), Type.display)
+                    Txt(t("Scenario %@: %@", scenario.shownLabel, t(scenario.title)), Type.display)
                 }
                 val best = Progress.stars(scenario.number)
                 if (best > 0) Column(horizontalAlignment = Alignment.End) {

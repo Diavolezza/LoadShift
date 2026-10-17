@@ -1,10 +1,28 @@
 package de.wannerit.loadshift.app
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.intl.Locale
 
-/** Language of the app: German if the system language is German (or the launch option says so), else English. */
+/**
+ * Language of the app: the player's choice on the start page, kept on the device; without one German if the system
+ * language is German, else English. A launch option sets it for one run. A state, so that switching redraws the app.
+ */
 object Language {
-    var german: Boolean = Locale.current.language == "de"
+    var german: Boolean by mutableStateOf(
+        when (Storage.getInt("language")) {
+            1 -> true
+            2 -> false
+            else -> Locale.current.language == "de"
+        },
+    )
+
+    /** The player's choice, kept for the next start. */
+    fun choose(german: Boolean) {
+        this.german = german
+        Storage.setInt("language", if (german) 1 else 2)
+    }
 }
 
 /**

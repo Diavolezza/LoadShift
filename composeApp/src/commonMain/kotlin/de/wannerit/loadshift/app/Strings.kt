@@ -76,10 +76,10 @@ internal val GERMAN: Map<String, String> = mapOf(
         "20 Währungen, von der Bank geholt.",
     "20,000 images of about 2 MB each." to
         "20.000 Bilder mit je etwa 2 MB.",
-    "50,000 pages of about 500 KB, expensive to build." to
-        "50.000 Seiten mit je etwa 500 KB, aufwendig zu bauen.",
-    "A cache is a bet on repetition. It wins where many requests ask for the same thing – images, rates, popular pages – and loses where the answer must be current or is asked only once: a cached account balance is an error, a cached search that nobody repeats only fills memory. Size the memory by what it holds, not by what might come: the hot set fits into one server, more servers only draw power. HyperLogLog and the materialized view follow the same idea: keep a little, compute less – as long as the business accepts the result." to
-        "Ein Cache ist eine Wette auf Wiederholung. Er gewinnt, wo viele Anfragen dasselbe wollen – Bilder, Kurse, beliebte Seiten –, und verliert, wo die Antwort aktuell sein muss oder nur einmal gefragt wird: Ein gecachter Kontostand ist ein Fehler, eine gecachte Suche, die niemand wiederholt, füllt nur den Speicher. Bemiss den Speicher nach dem, was er hält, nicht nach dem, was kommen könnte: Der heiße Bestand passt auf einen Server, weitere Server ziehen nur Strom. HyperLogLog und die materialisierte Sicht folgen derselben Idee: wenig aufbewahren, weniger rechnen – solange die Fachlichkeit das Ergebnis akzeptiert.",
+    "50,000 pages of about 500 KB, expensive to build; new prices on day 2 at 18:00." to
+        "50.000 Seiten mit je etwa 500 KB, aufwendig zu bauen; neue Preise an Tag 2 um 18:00.",
+    "A cache is a bet on repetition. It wins where many requests ask for the same thing – images, rates, popular pages – and loses where the answer must be current or is asked only once: a cached account balance is an error, a cached search that nobody repeats only fills memory. Size the memory by what it holds, not by what might come: the hot set fits into one server, more servers only draw power. And a cache must learn when its data change: the TTL bounds the age in normal times, but after a price change only invalidation keeps the answers right – the hard part of caching is not keeping, but forgetting at the right moment. Warming the cache every night sounds diligent, but the pages expire after 15 minutes – long before the first customer comes: work for nothing. HyperLogLog and the materialized view follow the same idea: keep a little, compute less – as long as the business accepts the result." to
+        "Ein Cache ist eine Wette auf Wiederholung. Er gewinnt, wo viele Anfragen dasselbe wollen – Bilder, Kurse, beliebte Seiten –, und verliert, wo die Antwort aktuell sein muss oder nur einmal gefragt wird: Ein gecachter Kontostand ist ein Fehler, eine gecachte Suche, die niemand wiederholt, füllt nur den Speicher. Bemiss den Speicher nach dem, was er hält, nicht nach dem, was kommen könnte: Der heiße Bestand passt auf einen Server, weitere Server ziehen nur Strom. Und ein Cache muss erfahren, wann sich seine Daten ändern: Die TTL begrenzt das Alter im Normalfall, aber nach einer Preisänderung hält nur die Invalidierung die Antworten richtig – das Schwere am Caching ist nicht das Aufbewahren, sondern das Vergessen im richtigen Moment. Den Cache jede Nacht vorzuwärmen klingt fleißig, aber die Seiten laufen nach 15 Minuten ab – lange bevor der erste Kunde kommt: Arbeit für nichts. HyperLogLog und die materialisierte Sicht folgen derselben Idee: wenig aufbewahren, weniger rechnen – solange die Fachlichkeit das Ergebnis akzeptiert.",
     "A cache keeps answers for a while, so that the next request is cheap. It works because a few items get most of the requests – the bestsellers, the euro rate. Four things decide: what may be cached at all, how long an entry may live (the TTL – a business question, not a technical one), whether the same thing is asked again, and how much memory is worth its power." to
         "Ein Cache hält Antworten eine Zeit lang vor, damit die nächste Anfrage billig wird. Das funktioniert, weil wenige Dinge die meisten Anfragen bekommen – die Bestseller, der Eurokurs. Vier Dinge entscheiden: was überhaupt in den Cache darf, wie lange ein Eintrag lebt (die TTL – eine fachliche Frage, keine technische), ob dasselbe noch einmal gefragt wird und wie viel Speicher seinen Strom wert ist.",
     "A cache keeps answers so they need not be computed or fetched again. All kinds you tick share the memory of the cache servers; when it is full, the entry used least recently goes first (LRU). A cache server draws power all day. How old an answer may be is a business decision." to
@@ -130,10 +130,10 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Übernehmen",
     "arrives %@" to
         "kommt %@",
+    "As allowed, 1 cache server, invalidation, HyperLogLog and materialized view" to
+        "Wie erlaubt, 1 Cache-Server, Invalidierung, HyperLogLog und materialisierte Sicht",
     "As allowed, without search, 1 cache server" to
         "Wie erlaubt, ohne Suche, 1 Cache-Server",
-    "As allowed, without search, 2 cache servers" to
-        "Wie erlaubt, ohne Suche, 2 Cache-Server",
     "As soon as possible" to
         "So früh wie möglich",
     "as soon as possible" to
@@ -166,14 +166,14 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Autoscaling bei 50 %, 20 °C (Referenz)",
     "Autoscaling at 50 %, 27 °C" to
         "Autoscaling bei 50 %, 27 °C",
-    "Autoscaling at 70 % (from scenario 4)" to
-        "Autoscaling mit 70 % (ab Szenario 4)",
+    "Autoscaling at 70 % (from scenario O4)" to
+        "Autoscaling mit 70 % (ab Szenario B4)",
     "Autoscaling at 80 %, 20 °C" to
         "Autoscaling bei 80 %, 20 °C",
     "Autoscaling at 80 %, 25 °C" to
         "Autoscaling bei 80 %, 25 °C",
-    "Autoscaling does what you did by hand in scenario 1: it switches servers on and off for the load. The target utilization decides how much headroom stays free. Little headroom saves energy – but a server takes 30 minutes to boot, and the autoscaler knows only the usual day; a sudden peak finds it unprepared. Headroom all the time costs energy all the time; a minimum for a known event costs it only when it is needed." to
-        "Autoscaling macht, was du in Szenario 1 von Hand gemacht hast: Es schaltet Server passend zur Last ein und aus. Die Zielauslastung bestimmt, wie viel Reserve frei bleibt. Wenig Reserve spart Energie – aber ein Server braucht 30 Minuten zum Starten, und das Autoscaling kennt nur den gewöhnlichen Tag; eine plötzliche Spitze trifft es unvorbereitet. Reserve rund um die Uhr kostet rund um die Uhr Energie; ein Minimum für ein bekanntes Ereignis kostet sie nur, wenn sie gebraucht wird.",
+    "Autoscaling does what you did by hand in scenario O1: it switches servers on and off for the load. The target utilization decides how much headroom stays free. Little headroom saves energy – but a server takes 30 minutes to boot, and the autoscaler knows only the usual day; a sudden peak finds it unprepared. Headroom all the time costs energy all the time; a minimum for a known event costs it only when it is needed." to
+        "Autoscaling macht, was du in Szenario B1 von Hand gemacht hast: Es schaltet Server passend zur Last ein und aus. Die Zielauslastung bestimmt, wie viel Reserve frei bleibt. Wenig Reserve spart Energie – aber ein Server braucht 30 Minuten zum Starten, und das Autoscaling kennt nur den gewöhnlichen Tag; eine plötzliche Spitze trifft es unvorbereitet. Reserve rund um die Uhr kostet rund um die Uhr Energie; ein Minimum für ein bekanntes Ereignis kostet sie nur, wenn sie gebraucht wird.",
     "Autumn" to
         "Herbst",
     "Back to the web shop – this time to its code. Autoscaling keeps the servers in line with the load, so less CPU work per request means fewer servers. Your team has 8 story points per sprint and a backlog of ideas, each with the team's estimate of what it saves. Four sprints; each game day shows the week after a sprint." to
@@ -226,8 +226,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Nach den Schätzungen des Teams",
     "By today's saving per story point" to
         "Nach der heutigen Einsparung pro Story Point",
-    "Cache memory, GB – areas: used, by kind; line: memory of the running cache servers; dotted: expected" to
-        "Cache-Speicher, GB – Flächen: belegt, je Art; Linie: Speicher der laufenden Cache-Server; gepunktet: erwartet",
+    "Cache memory, GB – areas: used, by kind; line: memory of the running cache servers; dotted: expected; red: stale answers" to
+        "Cache-Speicher, GB – Flächen: belegt, je Art; Linie: Speicher der laufenden Cache-Server; gepunktet: erwartet; rot: veraltete Antworten",
     "Cache memory: what the running cache servers hold, what is used and what is expected (dotted). Below it the load and capacity of the web servers." to
         "Cache-Speicher: was die laufenden Cache-Server fassen, was belegt ist und was erwartet wird (gepunktet). Darunter Last und Kapazität der Web-Server.",
     "Cache server" to
@@ -404,6 +404,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Schrift: Inter, SIL Open Font License 1.1",
     "For courses that take the topics in another order. Stars still count." to
         "Für Lehrveranstaltungen, die die Themen in anderer Reihenfolge behandeln. Sterne zählen weiter.",
+    "For teachers" to
+        "Für Lehrende",
     "Forecast update: the wind drops about 12 hours earlier than forecast." to
         "Neue Prognose: Der Wind lässt etwa 12 Stunden früher nach als vorhergesagt.",
     "Forecast while it runs: %lld g/kWh · start by %@" to
@@ -416,6 +418,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Frankreich",
     "from %@" to
         "ab %@",
+    "From 03:00 to 07:00 computes all catalog pages in all variants (language, currency, sort order) in advance, so that nothing is missing in the morning." to
+        "Berechnet von 03:00 bis 07:00 alle Katalogseiten in allen Varianten (Sprache, Währung, Sortierung) vorab, damit morgens nichts fehlt.",
     "Full: entries are pushed out before their TTL ends." to
         "Voll: Einträge werden verdrängt, bevor ihre TTL abläuft.",
     "Germany" to
@@ -466,6 +470,10 @@ internal val GERMAN: Map<String, String> = mapOf(
         "in Arbeit: noch %1\$lld von %2\$lld Story Points",
     "In time: %@" to
         "Rechtzeitig: %@",
+    "Invalidate the catalog pages when the prices change" to
+        "Katalogseiten bei Preisänderung invalidieren",
+    "invalidation" to
+        "Invalidierung",
     "IT power" to
         "IT-Leistung",
     "Jobs done" to
@@ -526,8 +534,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Verpasst",
     "MIT License" to
         "MIT-Lizenz",
-    "More scenarios follow – operations: cooling, hardware, AI training, eco mode, two sites; engineering: growing data." to
-        "Weitere Szenarien folgen – Betrieb: Kühlung, Hardware, KI-Training, Eco-Modus, zwei Standorte; Engineering: wachsende Daten.",
+    "More measures" to
+        "Weitere Maßnahmen",
     "Moving flexible work into the hours when the grid is cleanest. Together with Location Shifting it is called Demand Shifting – part of the Green Software Foundation principle Carbon Awareness." to
         "Flexible Arbeit in die Stunden verschieben, in denen der Strom am saubersten ist. Zusammen mit Location Shifting heißt das Demand Shifting – ein Teil des Prinzips Carbon Awareness der Green Software Foundation.",
     "Must be current." to
@@ -546,10 +554,16 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Kein Job",
     "Norway" to
         "Norwegen",
+    "Not applied yet – active: %@" to
+        "Noch nicht übernommen – aktiv: %@",
+    "Not made" to
+        "Nicht geschafft",
     "not planned" to
         "nicht geplant",
     "Now %@ of the original." to
         "Jetzt %@ des ursprünglichen Werts.",
+    "O%@" to
+        "B%@",
     "of %lld servers on" to
         "von %lld Servern an",
     "of it embodied (kg)" to
@@ -596,8 +610,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Planen",
     "planned %@" to
         "geplant %@",
-    "Planned by the forecast (from scenario 3)" to
-        "Nach Prognose geplant (ab Szenario 3)",
+    "Planned by the forecast (from scenario O3)" to
+        "Nach Prognose geplant (ab Szenario B3)",
     "Planned with the forecast of %@." to
         "Geplant mit der Prognose von %@.",
     "planned" to
@@ -618,6 +632,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Leistung",
     "Precompute the shipping costs" to
         "Versandkosten vorab berechnen",
+    "Prices change" to
+        "Preise ändern sich",
     "Product images" to
         "Produktbilder",
     "Product lookup in a list" to
@@ -638,6 +654,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Referenz",
     "Remove the plan" to
         "Plan entfernen",
+    "Removes them from the cache at once (day 2, 18:00); the cache fills again. Without it, cached pages show the old prices until they expire." to
+        "Entfernt sie sofort aus dem Cache (Tag 2, 18:00); der Cache füllt sich neu. Ohne das zeigen gecachte Seiten die alten Preise, bis sie ablaufen.",
     "Reuse TLS sessions" to
         "TLS-Sessions wiederverwenden",
     "Rewrite the checkout in a compiled language" to
@@ -686,8 +704,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "SLA mindestens %@ und weniger CO₂ als die Referenz",
     "SLA at least 99 % and less CO₂ than the reference" to
         "SLA mindestens 99 % und weniger CO₂ als die Referenz",
-    "SLA at least 99 %, at most 1 ‰ stale answers and less CO₂ than the reference" to
-        "SLA mindestens 99 %, höchstens 1 ‰ veraltete Antworten und weniger CO₂ als die Referenz",
+    "SLA at least 99 %, at most 0.5 ‰ stale answers and less CO₂ than the reference" to
+        "SLA mindestens 99 %, höchstens 0,5 ‰ veraltete Antworten und weniger CO₂ als die Referenz",
     "Spain" to
         "Spanien",
     "Spread again (as found)" to
@@ -710,6 +728,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Veraltete Antworten (‰)",
     "Stale answers: %@ (at most %@)" to
         "Veraltete Antworten: %1\$@ (höchstens %2\$@)",
+    "Stale answers: %@" to
+        "Veraltete Antworten: %@",
     "start by %@" to
         "spätestens %@",
     "Start now" to
@@ -770,8 +790,12 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Derselbe Job stößt weniger CO₂ aus, wenn der Strom sauber ist. Im spanischen Solarnetz sind die saubersten Stunden um die Mittagszeit, nicht nachts. Plane jeden Job vor seiner Frist in saubere Stunden – und denk daran, dass nur zehn Server da sind.",
     "The same run with exactly the same load and grid mix – only the rules differ:" to
         "Derselbe Ablauf mit genau derselben Last und demselben Strommix – nur die Regeln sind anders:",
-    "The same with HyperLogLog and materialized view" to
-        "Dasselbe mit HyperLogLog und materialisierter Sicht",
+    "The same with the nightly warm-up" to
+        "Dasselbe mit nächtlichem Vorwärmen",
+    "The same without invalidation" to
+        "Dasselbe ohne Invalidierung",
+    "The same, catalog pages for 1 min instead of invalidation" to
+        "Dasselbe, Katalogseiten 1 min statt Invalidierung",
     "The servers needed for the expected load of the next hour run. A low target leaves headroom for peaks but more servers idle; a high target is efficient but gets slow at peaks." to
         "Es laufen die Server, die für die erwartete Last der nächsten Stunde nötig sind. Ein niedriges Ziel lässt Reserve für Spitzen, aber mehr Server stehen im Leerlauf; ein hohes Ziel ist effizient, wird aber bei Spitzen langsam.",
     "The team changes nothing (reference)" to
@@ -784,8 +808,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Der Webshop im deutschen Sommer, mit 40 Servern. Eine Hitzewelle kommt: heute 28 °C, morgen 35 °C, übermorgen 37 °C. Das Autoscaling läuft mit 50 % Zielauslastung, die Kühlung hält 20 °C am Lufteinlass der Server – so hat es die letzte Schicht hinterlassen. Die Geschäftsleitung schaut auf die PUE: Das Energieeffizienzgesetz verlangt von bestehenden Rechenzentren ab Juli 2027 höchstens 1,5.",
     "The web shop is growing: every month 15 % more products, customers and orders – after a year almost five times as much data. Each game day stands for a month. The team spends most of its time on features; for performance it has 2 story points per sprint." to
         "Der Webshop wächst: Jeden Monat 15 % mehr Produkte, Kunden und Bestellungen – nach einem Jahr fast fünfmal so viele Daten. Jeder Spieltag steht für einen Monat. Das Team arbeitet vor allem an Features; für Performance hat es 2 Story Points pro Sprint.",
-    "The web shop serves five kinds of data: product images, catalog pages, exchange rates, search results and, before a transfer, account balances. Today every request computes or fetches its answer anew. The team has ordered four cache servers with 64 GB each, to be on the safe side; nothing is cached yet. Autoscaling keeps the web servers in line with the work." to
-        "Der Webshop liefert fünf Arten von Daten: Produktbilder, Katalogseiten, Wechselkurse, Suchergebnisse und vor einer Überweisung den Kontostand. Heute berechnet oder holt jede Anfrage ihre Antwort neu. Das Team hat sicherheitshalber vier Cache-Server mit je 64 GB bestellt; noch liegt nichts im Cache. Das Autoscaling hält die Web-Server passend zur Arbeit.",
+    "The web shop serves five kinds of data: product images, catalog pages, exchange rates, search results and, before a transfer, account balances. Today every request computes or fetches its answer anew. The team has ordered four cache servers with 64 GB each, to be on the safe side; nothing is cached yet. On day 2 at 18:00 a sale starts with new prices in the whole catalog – from then on a page with an old price is a stale answer. Autoscaling keeps the web servers in line with the work." to
+        "Der Webshop liefert fünf Arten von Daten: Produktbilder, Katalogseiten, Wechselkurse, Suchergebnisse und vor einer Überweisung den Kontostand. Heute berechnet oder holt jede Anfrage ihre Antwort neu. Das Team hat sicherheitshalber vier Cache-Server mit je 64 GB bestellt; noch liegt nichts im Cache. An Tag 2 um 18:00 beginnt eine Aktion mit neuen Preisen im ganzen Katalog – ab dann ist eine Seite mit altem Preis eine veraltete Antwort. Das Autoscaling hält die Web-Server passend zur Arbeit.",
     "The web shop's 24 virtual machines – front ends, batch workers, reporting, two database replicas and caches – run on ten hosts. The previous team spread them evenly: every host runs, none is busy. A host draws about a quarter of its maximum power even when idle." to
         "Die 24 virtuellen Maschinen des Webshops – Frontends, Batch-Worker, Reporting, zwei Datenbank-Replikate und Caches – laufen auf zehn Hosts. Das vorige Team hat sie gleichmäßig verteilt: Jeder Host läuft, keiner ist ausgelastet. Ein Host zieht auch im Leerlauf etwa ein Viertel seiner Maximalleistung.",
     "The web shop's analytics cluster in Great Britain: twelve servers, nine jobs in three days. It is winter, and the British grid depends on the wind. Today is an ordinary winter day; tomorrow a storm front brings plenty of wind power, the day after the wind drops and gas power plants take over." to
@@ -808,8 +832,6 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Zu spät für die Frist – spätestens %@ starten.",
     "too many story points" to
         "zu viele Story Points",
-    "Two more measures" to
-        "Zwei weitere Maßnahmen",
     "Update the search index incrementally instead of comparing all pairs" to
         "Suchindex inkrementell aktualisieren statt alle Paare zu vergleichen",
     "Update to the current JVM version" to
@@ -830,6 +852,10 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Warten auf die Sonne",
     "waiting" to
         "wartet",
+    "Warm the cache every night" to
+        "Cache jede Nacht vorwärmen",
+    "warm-up" to
+        "Vorwärmen",
     "Web requests" to
         "Web-Requests",
     "What if …" to

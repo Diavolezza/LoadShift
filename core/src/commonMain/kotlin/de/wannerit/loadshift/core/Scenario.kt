@@ -94,7 +94,7 @@ data class Scenario(
     val growth: GrowthModel? = null,
     /** E3: kinds of data that can be cached. */
     val caching: CacheModel? = null,
-    /** E3: stale answers allowed for the first star, per mille of the requests. */
+    /** E3: stale answers allowed for the first star, per 10,000 requests. */
     val staleLimit: Int? = null,
     /** Scenario 6: cooling with outside temperature and setpoint instead of a fixed PUE. */
     val cooling: CoolingModel? = null,
@@ -114,7 +114,7 @@ data class Scenario(
     /** The goals a result reaches. */
     fun goalsMet(totals: Totals, reference: Totals): GoalsMet {
         val rules = totals.sla >= slaTarget && totals.deadlinesMissed == 0 && totals.emissions < reference.emissions &&
-            (staleLimit == null || totals.stalePermille <= staleLimit)
+            (staleLimit == null || totals.stalePerTenThousand <= staleLimit)
         val reduction = rules && totals.emissions * 1_000 <= reference.emissions * (1_000 - goals.reduction)
         val special = rules && when (val goal = goals.special) {
             is SpecialGoal.MeanUtilization -> totals.meanUtilization >= goal.permille
@@ -340,7 +340,8 @@ data class Scenario(
          * pages, exchange rates, search results, account balances – each with its own cost, popularity, size and
          * allowed age. All cached kinds share the memory of the cache servers. Caching saves work while it hits; a
          * cache server draws power all the time, an answer older than allowed is wrong, an account balance must never
-         * come from the cache, and most searches are asked only once. The team has ordered four cache servers.
+         * come from the cache, and most searches are asked only once. The team has ordered four cache servers. On day
+         * 2 at 18:00 the prices change: catalog pages in the cache are wrong until they expire – or are invalidated.
          * Two more measures: counting unique visitors approximately (HyperLogLog) and a materialized view for the
          * sales dashboard.
          */
@@ -353,11 +354,11 @@ data class Scenario(
             // The team has ordered four cache servers, to be on the safe side; nothing is cached yet.
             initialPolicy = Policy(CapacityMode.Autoscale(700), cache = CacheConfig(servers = CacheModel.MAX_SERVERS)),
             referencePolicy = Policy(CapacityMode.Autoscale(700)),
-            goals = StarGoals(320, SpecialGoal.Reduction(400)),
+            goals = StarGoals(320, SpecialGoal.Reduction(380)),
             caching = CacheModel(
                 kinds = listOf(
                     CacheKind("Product images", 300, 300, 20_000, 2_000, 1_440, note = "20,000 images of about 2 MB each."),
-                    CacheKind("Catalog pages", 300, 1_400, 50_000, 500, 15, note = "50,000 pages of about 500 KB, expensive to build."),
+                    CacheKind("Catalog pages", 300, 1_400, 50_000, 500, 15, note = "50,000 pages of about 500 KB, expensive to build; new prices on day 2 at 18:00."),
                     CacheKind("Exchange rates", 100, 800, 20, 1, 1, note = "20 currencies, fetched from the bank."),
                     CacheKind("Search results", 150, 1_000, 300_000, 400, 60, unique = 850, note = "Pages of about 400 KB; most searches are typed only once."),
                     CacheKind("Account balance before a transfer", 50, 600, 200_000, 10, 0, note = "Read from the core banking system."),
@@ -365,8 +366,12 @@ data class Scenario(
                 other = 300,
                 exactCount = 40, approximateCount = 3,
                 report = 12, reportWithView = 2,
+                // Day 2, 18:00: new prices in the whole catalog.
+                priceChange = GameTime.at(1, 18).tick, priceKind = 1,
+                // About 460,000 page variants (language, currency, sort order) at 1.4 thousandths of a unit each.
+                warmUpWork = 40,
             ),
-            staleLimit = 1,
+            staleLimit = 5,
         )
 
         val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS)

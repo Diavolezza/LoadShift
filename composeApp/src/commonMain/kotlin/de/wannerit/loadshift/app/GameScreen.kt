@@ -170,8 +170,8 @@ private fun GoalBar(game: GameController) {
     ) {
         Txt(t("Goals"), Type.style(13, FontWeight.SemiBold, Palette.secondary))
         scenario.staleLimit?.let { limit ->
-            GoalItem(totals.stalePermille <= limit, change != null, t("Stale answers: %@ (at most %@)",
-                Format.number(totals.stale * 1_000.0 / maxOf(1, totals.requests), 2) + " ‰", "$limit ‰"))
+            GoalItem(totals.stalePerTenThousand <= limit, change != null, t("Stale answers: %@ (at most %@)",
+                Format.number(totals.stale.toDouble() / maxOf(1, totals.requests), 2) + " ‰", Format.number(limit / 10.0, 1) + " ‰"))
         }
         if (game.hasInteractive) {
             GoalItem(totals.sla >= scenario.slaTarget, change != null, t("SLA ≥ %@", Format.percent(scenario.slaTarget)))
@@ -229,7 +229,7 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
         ) {
             Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(30.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Txt(if (scenario.days == 1) t("Day complete") else t("Scenario complete"), Type.title, Modifier.weight(1f))
+                    Txt(if (!met.rules) t("Not made") else if (scenario.days == 1) t("Day complete") else t("Scenario complete"), Type.title, Modifier.weight(1f))
                     StarRow(game.stars)
                 }
                 Txt("${Format.change(you.emissions, ref.emissions)} CO₂", Type.style(40, FontWeight.Bold, if (you.emissions < ref.emissions) Palette.accent else Palette.red))
@@ -245,7 +245,7 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
                     add(t("Energy (kWh)") to (Format.kilowattHours(you.facilityEnergy) to Format.kilowattHours(ref.facilityEnergy)))
                     if (scenario.cooling != null) add(t("PUE") to (Format.number(you.pue / 1_000.0, 2) to Format.number(ref.pue / 1_000.0, 2)))
                     if (scenario.staleLimit != null) {
-                        add(t("Stale answers (‰)") to (Format.number(you.stale * 1_000.0 / maxOf(1, you.requests), 2) to Format.number(ref.stale * 1_000.0 / maxOf(1, ref.requests), 2)))
+                        add(t("Stale answers (‰)") to (Format.number(you.stale.toDouble() / maxOf(1, you.requests), 2) to Format.number(ref.stale.toDouble() / maxOf(1, ref.requests), 2)))
                     }
                     if (game.hasInteractive) {
                         add(t("SLA") to (Format.percent(you.sla) to Format.percent(ref.sla)))
@@ -268,7 +268,7 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
                 val sameTrack = Scenario.ALL.filter { it.track == scenario.track }
                 val next = sameTrack.getOrNull(sameTrack.indexOf(scenario) + 1)?.takeIf { Progress.isUnlocked(it) }
                 if (next != null && onNext != null) {
-                    PrimaryButton(t("To scenario %@", next.label)) { onNext(next) }
+                    PrimaryButton(t("To scenario %@", next.shownLabel)) { onNext(next) }
                     SecondaryButton(t("Play again")) { game.restart() }
                 } else {
                     PrimaryButton(t("Play again")) { game.restart() }

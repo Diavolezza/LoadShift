@@ -34,6 +34,10 @@ data class CacheConfig(
     val ttlMinutes: List<Int> = emptyList(),
     val approximateCount: Boolean = false,
     val materializedView: Boolean = false,
+    /** Remove the entries of the changed kind from the cache when the prices change. */
+    val invalidate: Boolean = false,
+    /** Warm the cache every night: compute all catalog pages in all variants in advance. */
+    val warmUp: Boolean = false,
 ) {
     val anyCached: Boolean get() = servers > 0 && ttlMinutes.any { it > 0 }
 }
@@ -61,6 +65,15 @@ data class CacheModel(
     /** Work left on a hit, and extra work on a miss (look up, serialize, store), per mille of the cost. */
     val hitCost: Int = 20,
     val missCost: Int = 80,
+    /** The tick at which the prices change, and the kind they change in (its cached entries are wrong from then). */
+    val priceChange: Int? = null,
+    val priceKind: Int = 0,
+    /**
+     * Warming the cache every night: work units per tick from [WARM_FROM] to [WARM_TO] o'clock. It looks useful and
+     * is not: the pages expire after their TTL (15 minutes) long before the first customer asks, and the images are
+     * hot anyway.
+     */
+    val warmUpWork: Int = 0,
 ) {
     /** Cache servers that run. */
     fun servers(config: CacheConfig): Int = if (config.anyCached) config.servers else 0
@@ -119,36 +132,85 @@ data class CacheModel(
     /** Harmonic number H(x) ≈ ln x + γ + 1/(2x), H(x) = x below 1. */
     private fun harmonic(x: Double): Double = if (x < 1.0) x else ln(x) + 0.5772156649 + 1.0 / (2 * x)
 
+    /**
+     * The price change in a tick, for the changed kind: minutes since the change at the start and the end of the tick,
+     * or null if the tick is before the change or long after it.
+     */
+    private fun afterChange(tick: Int, stay: Double): Pair<Double, Double>? {
+        val change = priceChange ?: return null
+        if (tick < change || stay <= 0.0) return null
+        val from = (tick - change) * GameTime.MINUTES_PER_TICK.toDouble()
+        return if (from >= stay) null else from to from + GameTime.MINUTES_PER_TICK
+    }
+
+    /**
+     * Invalidated: the changed kind's entries are gone, the cache fills again – an entry that stays T minutes is back
+     * after T minutes at the latest, so the hit rate climbs from 0 to its usual value. Share of the usual hits, mean
+     * over the tick.
+     */
+    private fun refill(tick: Int, stay: Double): Double {
+        val (a, b) = afterChange(tick, stay) ?: return 1.0
+        fun g(t: Double) = if (t <= stay) t * t / (2 * stay) else stay / 2 + (t - stay)
+        return (g(b) - g(a)) / (b - a)
+    }
+
+    /**
+     * Not invalidated: the entries cached before the change are wrong until they expire. An entry that stays T minutes
+     * was cached at a random time within T minutes before, so τ minutes after the change a share 1 − τ/T of the hits
+     * is wrong. Mean over the tick.
+     */
+    private fun wrongAfterChange(tick: Int, stay: Double): Double {
+        val (a, b) = afterChange(tick, stay) ?: return 0.0
+        fun f(t: Double) = if (t <= stay) t - t * t / (2 * stay) else stay / 2
+        return (f(b) - f(a)) / (b - a)
+    }
+
     /** Work per 1,000 requests at a load, thousandths of a unit. */
-    fun work(config: CacheConfig, requests: Int): Int {
+    fun work(config: CacheConfig, requests: Int, tick: Int = -1): Int {
         val state = state(config, requests)
         val count = if (config.approximateCount) approximateCount else exactCount
         return other + count + kinds.indices.sumOf { k ->
             val cost = kinds[k].cost.toDouble()
             val per = if (state.stay[k] <= 0.0) cost else {
-                val hit = state.hits[k] / 1_000.0
+                val usual = state.hits[k] / 1_000.0
+                val hit = if (k == priceKind && config.invalidate) usual * refill(tick, state.stay[k]) else usual
                 hit * cost * hitCost / 1_000 + (1 - hit) * cost * (1_000 + missCost) / 1_000
             }
             (kinds[k].share * per / 1_000).roundToInt()
         }
     }
 
-    /** Stale answers per 1,000 requests: hits on entries older than allowed (an entry that stays longer than allowed). */
-    fun stale(config: CacheConfig, requests: Int): Int {
+    /**
+     * Stale answers per request at a load and tick: hits on entries older than allowed (an entry that stays longer than
+     * allowed), and after the price change hits on entries cached before it, unless they were invalidated.
+     */
+    fun staleShare(config: CacheConfig, requests: Int, tick: Int = -1): Double {
         val state = state(config, requests)
-        return ceil(kinds.indices.sumOf { k ->
+        return kinds.indices.sumOf { k ->
             val stay = state.stay[k]
             val allowed = kinds[k].allowedMinutes
-            if (stay <= allowed) 0.0 else kinds[k].share * state.hits[k] / 1_000.0 * (stay - allowed) / stay
-        }).toInt()
+            val old = if (stay <= allowed) 0.0 else (stay - allowed) / stay
+            val changed = if (k == priceKind && !config.invalidate) wrongAfterChange(tick, stay) else 0.0
+            kinds[k].share / 1_000.0 * state.hits[k] / 1_000.0 * minOf(1.0, old + changed)
+        }
     }
 
-    fun extraWork(config: CacheConfig): Int = if (config.materializedView) reportWithView else report
+    /** Stale answers per 1,000 requests (rounded up). */
+    fun stale(config: CacheConfig, requests: Int, tick: Int = -1): Int = ceil(staleShare(config, requests, tick) * 1_000).toInt()
+
+    fun extraWork(config: CacheConfig, tick: Int = -1): Int {
+        val hour = (tick % GameTime.TICKS_PER_DAY) / GameTime.TICKS_PER_HOUR
+        val warm = if (config.warmUp && config.anyCached && tick >= 0 && hour in WARM_FROM until WARM_TO) warmUpWork else 0
+        return (if (config.materializedView) reportWithView else report) + warm
+    }
 
     companion object {
         /** TTL choices, minutes. */
         val TTLS = listOf(1, 15, 60, 1_440)
         /** At most this many cache servers. */
         const val MAX_SERVERS = 4
+        /** The nightly warm-up runs from 03:00 to 07:00. */
+        const val WARM_FROM = 3
+        const val WARM_TO = 7
     }
 }

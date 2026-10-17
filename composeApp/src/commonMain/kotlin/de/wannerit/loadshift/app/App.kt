@@ -77,7 +77,7 @@ private fun initialScreen(options: LaunchOptions): Screen {
         game.advance(options.ticks)
     } else if (options.careful && Control.CACHING in scenario.controls) {
         // Like a careful player: cached as allowed, one cache server, with HyperLogLog and the materialized view.
-        game.setPolicy(scenario.initialPolicy.copy(cache = CacheConfig(1, listOf(1_440, 15, 1, 0, 0), approximateCount = true, materializedView = true)))
+        game.setPolicy(scenario.initialPolicy.copy(cache = CacheConfig(1, listOf(1_440, 15, 1, 0, 0), approximateCount = true, materializedView = true, invalidate = true)))
         game.advance(options.ticks)
     } else if (options.careful && Control.SPRINTS in scenario.controls) {
         // Like a careful team: profiling first, then by the measurements.

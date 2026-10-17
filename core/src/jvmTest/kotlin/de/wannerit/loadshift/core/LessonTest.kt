@@ -406,7 +406,7 @@ class LessonTest {
         val reference = Simulation.reference(scenario)
         val model = scenario.caching!!
         fun run(c: CacheConfig) = Simulation.replay(scenario, scenario.initialPolicy.copy(cache = c))
-        val allowed = CacheConfig(1, listOf(1_440, 15, 1, 0, 0))
+        val allowed = CacheConfig(1, listOf(1_440, 15, 1, 0, 0), invalidate = true)
         val withSearch = allowed.copy(ttlMinutes = listOf(1_440, 15, 1, 60, 0))
         val configs = listOf(
             "everything 1 day, 1" to CacheConfig(1, listOf(1_440, 1_440, 1_440, 1_440, 1_440)),
@@ -426,12 +426,16 @@ class LessonTest {
             "+search, 1, HLL+view" to withSearch.copy(approximateCount = true, materializedView = true),
             "allowed, 1, HLL+view" to allowed.copy(approximateCount = true, materializedView = true),
             "only HLL+view" to CacheConfig(approximateCount = true, materializedView = true),
+            "1, HLL+view, no inval." to allowed.copy(approximateCount = true, materializedView = true, invalidate = false),
+            "1, HLL+view, catalog 1 min" to allowed.copy(ttlMinutes = listOf(1_440, 1, 1, 0, 0), approximateCount = true, materializedView = true, invalidate = false),
+            "allowed, 1, no inval." to allowed.copy(invalidate = false),
+            "1, HLL+view, warm-up" to allowed.copy(approximateCount = true, materializedView = true, warmUp = true),
         )
         val runs = listOf("reference: no cache" to reference) + configs.map { (n, c) -> n to run(c) }
         val lines = mutableListOf(title(scenario), "$HEADER  stale ‰")
         for ((name, simulation) in runs) {
             lines += line(name, simulation.totals, reference.totals) +
-                String.format(Locale.ROOT, "  %6.2f", simulation.totals.stale * 1_000.0 / simulation.totals.requests) +
+                String.format(Locale.ROOT, "  %6.2f", simulation.totals.stale.toDouble() / simulation.totals.requests) +
                 "  " + "★".repeat(scenario.stars(simulation.totals, reference.totals))
         }
         for ((name, c) in configs.drop(3).take(8)) {
@@ -451,6 +455,12 @@ class LessonTest {
         assertEquals(0, stars("everything 1 day, 1"))
         assertEquals(0, stars("balance 1 min (stale)"))
         assertEquals(0, stars("catalog 1 h (stale)"))
+        // The price change: catalog pages cached before it are wrong – without invalidation no star.
+        assertEquals(0, stars("1, HLL+view, no inval."))
+        // Catalog pages for one minute instead: correct, but the expensive pages hit less – two stars.
+        assertEquals(2, stars("1, HLL+view, catalog 1 min"))
+        // Warming the cache every night computes pages that expire before anyone asks: it costs the third star.
+        assertEquals(2, stars("1, HLL+view, warm-up"))
         // The team's plan – everything allowed, search too, four cache servers – saves, but only one star.
         assertEquals(1, stars("+search, 4 (team)"))
         assertEquals(1, stars("allowed, 2"))

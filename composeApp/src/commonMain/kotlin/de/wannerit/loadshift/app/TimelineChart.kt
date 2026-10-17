@@ -166,6 +166,7 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
         if (scenario.caching != null) {
             if (cache != null) {
                 lines += t("Cache: %lld of %lld GB, %@ hits", (cache.usedTenthsGb + 5) / 10, cache.capacityGb, Format.wholePercent(cache.hits))
+                if (cache.staleTenthsPermille > 0) lines += t("Stale answers: %@", Format.number(cache.staleTenthsPermille / 10.0, 1) + " ‰")
                 val kinds = scenario.caching?.kinds.orEmpty()
                 for ((k, tenths) in cache.kindTenthsGb.withIndex()) {
                     if (tenths > 0 && k < kinds.size) lines += t("%@: %@ GB", t(kinds[k].title), Format.number(tenths / 10.0, 1))
@@ -257,6 +258,17 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
             }
             drawPath(line, Palette.ink.copy(alpha = 0.5f), style = Stroke(1.5f * density, pathEffect = PathEffect.dashPathEffect(floatArrayOf(2f * density, 3f * density))))
         }
+        // Stale answers: a red mark under the lane.
+        for ((tick, c) in records) {
+            if (c.staleTenthsPermille > 0) {
+                drawRect(Palette.red, Offset(x(tick), bottom + 1f), Size(maxOf(1f, x(tick + 1) - x(tick)), 4f * density))
+            }
+        }
+        // The price change.
+        model.priceChange?.let { change ->
+            drawLine(Palette.red, Offset(x(change), top), Offset(x(change), bottom), 1.5f * density)
+            text(t("Prices change"), Offset(x(change) + 4f * density, top + 30f * density), Type.style(11, FontWeight.SemiBold, Palette.red))
+        }
         // One dotted line per cache server.
         var gb = model.gbPerServer
         while (gb <= scaleTop) {
@@ -266,7 +278,7 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
             gb += model.gbPerServer
         }
         axis(top, bottom, scaleTop.toInt().toString())
-        val title = t("Cache memory, GB – areas: used, by kind; line: memory of the running cache servers; dotted: expected")
+        val title = t("Cache memory, GB – areas: used, by kind; line: memory of the running cache servers; dotted: expected; red: stale answers")
         text(title, Offset(left, top - 12f * density), Type.style(12, FontWeight.SemiBold))
         // Legend: the kinds in the cache now, top right of the lane.
         var lx = right

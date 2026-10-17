@@ -1,6 +1,7 @@
 package de.wannerit.loadshift.core
 
 import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 
 /*
  * The simulation of one data center through a scenario (docs/CONCEPT.md, sections 3, 5–7, 11).
@@ -20,7 +21,7 @@ data class Totals(
     var inTime: Long = 0,
     /** Requests served, in units of 1,000 – the functional unit; with less work per request more than [served]. */
     var requestsServed: Long = 0,
-    /** Requests asked for and answers older than allowed (E3), units of 1,000. */
+    /** Requests asked for, units of 1,000; answers older than allowed (E3), single answers. */
     var requests: Long = 0,
     var stale: Long = 0,
     /** Energy of the servers and of the facility, mWh. */
@@ -44,7 +45,10 @@ data class Totals(
     val sla: Int get() = if (demand == 0L) 1_000 else (inTime * 1_000 / demand).toInt()
 
     /** Stale answers per mille of the requests (E3). */
-    val stalePermille: Int get() = if (requests == 0L) 0 else (stale * 1_000 / requests).toInt()
+    val stalePermille: Int get() = if (requests == 0L) 0 else (stale / requests).toInt()
+
+    /** Stale answers per 10,000 requests (E3). */
+    val stalePerTenThousand: Int get() = if (requests == 0L) 0 else (stale * 10 / requests).toInt()
 
     /** PUE over the scenario, per mille. */
     val pue: Int get() = if (itEnergy == 0L) 0 else (facilityEnergy * 1_000 / itEnergy).toInt()
@@ -94,7 +98,11 @@ data class TickRecord(
 )
 
 /** E3: memory used (tenths of GB), memory of the running cache servers (GB), hits (per mille of the cacheable requests), memory per kind (tenths of GB). */
-data class CacheRecord(val usedTenthsGb: Int, val capacityGb: Int, val hits: Int, val kindTenthsGb: List<Int> = emptyList())
+data class CacheRecord(
+    val usedTenthsGb: Int, val capacityGb: Int, val hits: Int, val kindTenthsGb: List<Int> = emptyList(),
+    /** Stale answers in this tick, tenths of ‰ of the requests. */
+    val staleTenthsPermille: Int = 0,
+)
 
 class Simulation private constructor(
     val scenario: Scenario,
@@ -136,7 +144,7 @@ class Simulation private constructor(
         val growth = scenario.growth
         val caching = scenario.caching
         return when {
-            caching != null -> caching.work(policy.cache, scenario.interactive.expected(tick))
+            caching != null -> caching.work(policy.cache, scenario.interactive.expected(tick), tick)
             growth != null -> growth.perRequest((tick - scenario.startTick) / GameTime.TICKS_PER_DAY, scenario.backlog, policy.done)
             scenario.backlog.isNotEmpty() -> Engineering.work(scenario.backlog, policy.done)
             else -> 1_000
@@ -145,7 +153,7 @@ class Simulation private constructor(
 
     /** Work that does not come from requests: the nightly jobs of E2, work units per tick. */
     fun extraWork(tick: Int): Int =
-        scenario.growth?.night(tick, scenario.backlog, policy.done) ?: scenario.caching?.extraWork(policy.cache) ?: 0
+        scenario.growth?.night(tick, scenario.backlog, policy.done) ?: scenario.caching?.extraWork(policy.cache, tick) ?: 0
 
     /** Scenario 5: the CPU work of one host's VMs tick by tick so far, thousandths of a work unit. */
     fun hostHistory(host: Int): List<Int> = historyList.map { it.hostDemandMilli?.getOrNull(host) ?: 0 }
@@ -302,12 +310,13 @@ class Simulation private constructor(
         scenario.caching?.let { caching ->
             val state = caching.state(policy.cache, scenario.interactive.expected(tick))
             cacheRecord = CacheRecord((state.usedGb * 10).roundToInt(), state.capacityGb, caching.overallHits(state),
-                state.memoryGb.map { (it * 10).roundToInt() })
+                state.memoryGb.map { (it * 10).roundToInt() },
+                (caching.staleShare(policy.cache, scenario.interactive.expected(tick), tick) * 10_000).roundToInt())
             val cacheServers = caching.servers(policy.cache)
             itPower += caching.power(policy.cache)
             embodied += cacheServers * ServerKind.CPU_CURRENT.embodiedPerTick
             poweredOn += cacheServers
-            totals.stale += requests.toLong() * caching.stale(policy.cache, scenario.interactive.expected(tick)) / 1_000
+            totals.stale += (requests * 1_000.0 * caching.staleShare(policy.cache, scenario.interactive.expected(tick), tick)).roundToLong()
         }
         totals.requests += requests
         // Scenario 6: the server fans follow the setpoint; the cooling follows the outside temperature.

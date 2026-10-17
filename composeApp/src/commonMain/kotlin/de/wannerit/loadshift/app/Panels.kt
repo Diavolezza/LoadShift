@@ -276,9 +276,10 @@ private fun BatchRules(game: GameController) {
 fun ApplyRow(game: GameController, describe: (Policy) -> String) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         PrimaryButton(t("Apply"), enabled = !game.draftIsActive && !game.isFinished) { game.applyDraft() }
+        // A change that is not applied yet is easy to overlook: say so in amber.
         Txt(
-            if (game.draftIsActive) t("This rule is active.") else t("Active: %@", describe(game.simulation.policy)),
-            Type.style(14, color = if (game.draftIsActive) Palette.accent else Palette.secondary), Modifier.weight(1f),
+            if (game.draftIsActive) t("This rule is active.") else t("Not applied yet – active: %@", describe(game.simulation.policy)),
+            Type.style(14, if (game.draftIsActive) FontWeight.Normal else FontWeight.SemiBold, if (game.draftIsActive) Palette.accent else Color(0xFFB0741A)), Modifier.weight(1f),
         )
     }
 }
