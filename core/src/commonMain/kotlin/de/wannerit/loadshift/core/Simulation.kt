@@ -42,6 +42,10 @@ data class Totals(
     var deadlinesMissed: Int = 0,
     /** O7: embodied emissions booked at once for servers retired before the end of their life, µg CO₂e (in [embodied]). */
     var retiredEmbodied: Long = 0,
+    /** O7: old servers that failed after the end of their life. */
+    var failedServers: Int = 0,
+    /** O7: the lowest SLA of the sites added up, per mille (the SLA counts per site). */
+    var worstSiteSla: Int = 1_000,
 ) {
     /** Share of the demand served in time, per mille. */
     val sla: Int get() = if (demand == 0L) 1_000 else (inTime * 1_000 / demand).toInt()
@@ -97,6 +101,9 @@ data class TickRecord(
     val setpoint: Int = 20,
     /** E3: what the cache held. */
     val cache: CacheRecord? = null,
+    /** O7: embodied emissions so far (µg) and the capacity of all servers installed, work units. */
+    val embodiedSoFar: Long = 0,
+    val fleetCapacity: Int = 0,
 )
 
 /** E3: memory used (tenths of GB), memory of the running cache servers (GB), hits (per mille of the cacheable requests), memory per kind (tenths of GB). */
@@ -248,6 +255,7 @@ class Simulation private constructor(
 
     fun step() {
         check(!isFinished) { "the scenario has ended" }
+        startOfQuarter()
         finishBooting()
         updateJobs()
         applyCapacityPolicy()
@@ -353,6 +361,7 @@ class Simulation private constructor(
                 inTime = inTime, serversOn = poweredOn, batchServers = batchServers, itPower = itPower,
                 facilityPower = facilityPower, emissionsSoFar = totals.emissions, hostDemandMilli = hostMilli,
                 setpoint = policy.setpoint, cache = cacheRecord,
+                embodiedSoFar = totals.embodied, fleetCapacity = serverList.sumOf { it.kind.capacity },
             ),
         )
         tick += 1
@@ -434,28 +443,38 @@ class Simulation private constructor(
     /** Real days one tick stands for, in ticks of a real day: 1, or a quarter's 91 in O7. */
     private val scale: Long get() = (scenario.renewal?.daysPerStep ?: 1).toLong()
 
-    /**
-     * O7: as many new servers as the policy says; each replaces old ones. An old server retired before the end of its
-     * life books the rest of its embodied emissions at once.
-     */
+    /** O7: as many new servers as the policy says, of the generation of the day they arrive (switched off). */
     private fun applyRenewal() {
         val model = scenario.renewal ?: return
-        var installed = serverList.count { it.kind == ServerKind.CPU_CURRENT }
-        while (installed < policy.renewed) {
-            repeat(model.replacedPerNew) {
-                // The old server that is off, or the last one.
-                val i = serverList.indices.lastOrNull { serverList[it].kind == ServerKind.CPU_OLD && !serverList[it].state.isPowered }
-                    ?: serverList.indices.lastOrNull { serverList[it].kind == ServerKind.CPU_OLD } ?: return
-                val old = serverList.removeAt(i)
-                val left = Units.LIFESPAN_DAYS - old.ageAt(tick, scale)
-                if (left > 0) {
-                    val booked = old.kind.embodiedKilograms * 1_000_000_000L * left / Units.LIFESPAN_DAYS
-                    totals.embodied += booked
-                    totals.retiredEmbodied += booked
-                }
-            }
-            serverList += Server((serverList.maxOfOrNull { it.id } ?: -1) + 1, ServerKind.CPU_CURRENT, ServerState.Off, installedAt = tick)
-            installed++
+        val installed = serverList.count { it.kind == ServerKind.CPU_CURRENT && it.installedAt > scenario.startTick - 1 && it.ageDays == 0 }
+        repeat(maxOf(0, policy.renewed - installed)) { install(model) }
+    }
+
+    private fun install(model: RenewalModel) {
+        val day = (tick - scenario.startTick) / GameTime.TICKS_PER_DAY
+        serverList += Server((serverList.maxOfOrNull { it.id } ?: -1) + 1, ServerKind.CPU_CURRENT, ServerState.Off,
+            installedAt = tick, powerPermille = model.generationPower(day))
+    }
+
+    /**
+     * O7, at the start of every quarter: old servers past their life fail at random (the same ones in every run);
+     * the reference operator buys what the coming quarter needs.
+     */
+    private fun startOfQuarter() {
+        val model = scenario.renewal ?: return
+        if ((tick - scenario.startTick) % GameTime.TICKS_PER_DAY != 0) return
+        val day = (tick - scenario.startTick) / GameTime.TICKS_PER_DAY
+        val failed = serverList.filter {
+            it.ageAt(tick, scale) >= Units.LIFESPAN_DAYS && SeededRandom.value(scenario.seed, 50L + it.id, day, 1_000) < model.failure
+        }
+        serverList.removeAll(failed)
+        totals.failedServers += failed.size
+        if (policy.buyWhenShort) {
+            // Capacity for the coming quarter's peak at 75 % utilization, bought when it is missing.
+            val peak = (tick until tick + GameTime.TICKS_PER_DAY).maxOf { scenario.interactive.expected(it) }
+            val needed = ceilDiv(peak * 1_000, 750)
+            var capacity = serverList.sumOf { it.kind.capacity }
+            while (capacity < needed) { install(model); capacity += ServerKind.CPU_CURRENT.capacity }
         }
     }
 

@@ -29,6 +29,8 @@ import de.wannerit.loadshift.core.ServerState
 fun HallView(
     servers: List<Server>, version: Int, interactive: Boolean, batch: Boolean, modifier: Modifier = Modifier,
     cacheSlots: Int = 0, cacheOn: Int = 0, cachePower: Int = 0,
+    /** O7: two halls side by side – a short status line only. */
+    compact: Boolean = false,
 ) {
     val on = servers.count { it.state.isPowered }
     val itPower = servers.sumOf { it.power() } + cachePower
@@ -41,6 +43,12 @@ fun HallView(
             Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(18.dp),
         ) {
+            if (compact) {
+                LegendSwatch(Palette.old, t("Old server"))
+                Spacer(Modifier.weight(1f))
+                Txt(t("%lld of %lld servers on", on, servers.size), Type.callout, maxLines = 1)
+                return@Row
+            }
             LegendSwatch(Palette.off, t("Off"))
             LegendSwatch(Palette.booting, t("Booting"))
             if (interactive) LegendSwatch(Palette.slab, t("Web requests"), Palette.interactiveLoad)

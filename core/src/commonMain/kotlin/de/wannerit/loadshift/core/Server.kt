@@ -66,6 +66,8 @@ data class Server(
     /** Age when it was installed, days, and the tick it was installed at (O7: old servers and their end of life). */
     val ageDays: Int = 0,
     val installedAt: Int = 0,
+    /** O7: power of this server's generation, per mille of its kind's (a newer generation needs less). */
+    val powerPermille: Int = 1_000,
 ) {
     /** Age at a tick, real days; [scale]: real days per game day. */
     fun ageAt(tick: Int, scale: Long = 1): Int = ageDays + ((tick - installedAt) * scale / GameTime.TICKS_PER_DAY).toInt()
@@ -78,5 +80,5 @@ data class Server(
         ServerState.Off -> 0
         is ServerState.Booting -> kind.idlePower
         ServerState.On -> kind.idlePower + (kind.maxPower - kind.idlePower) * utilization / 1_000
-    }
+    } * powerPermille / 1_000
 }

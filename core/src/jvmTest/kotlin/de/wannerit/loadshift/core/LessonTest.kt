@@ -333,45 +333,50 @@ class LessonTest {
         val sites = scenario.renewal!!.sites.indices
         val references = sites.map { Simulation.reference(scenario.forSite(it)) }
         val reference = references.map { it.totals }.reduce { a, b -> a + b }
-        /** A site's run: [plan] = new servers installed by the start of each quarter (day). */
+        /** A site's run: [plan] = new servers installed by the start of a quarter (day), in total. */
         fun site(site: Int, plan: Map<Int, Int>): Simulation {
             val s = scenario.forSite(site)
             val changes = plan.entries.associate { (day, n) -> GameTime.at(day, 0).tick to s.initialPolicy.copy(renewed = n) }
             return Simulation.replay(s, s.initialPolicy, changes = changes)
         }
-        val now = mapOf(0 to 12)
-        val never = emptyMap<Int, Int>()
-        val endOfLife = mapOf(8 to 12)
         val runs = listOf(
-            "keep all (reference)" to listOf(never, never),
-            "Warsaw now, Paris never" to listOf(now, never),
-            "Warsaw now, Paris at end" to listOf(now, endOfLife),
-            "Warsaw half now" to listOf(mapOf(0 to 6), never),
-            "Warsaw in year 2" to listOf(mapOf(4 to 12), never),
-            "Paris now, Warsaw never" to listOf(never, now),
-            "Warsaw from Q2" to listOf(mapOf(1 to 12), never),
-            "6 and 6 now" to listOf(mapOf(0 to 6), mapOf(0 to 6)),
-            "Warsaw 6 now, 6 in Q5" to listOf(mapOf(0 to 6, 4 to 12), never),
+            "buy nothing" to listOf(emptyMap(), emptyMap()),
+            "Warsaw first" to listOf(mapOf(0 to 4, 4 to 8), mapOf(8 to 4)),
+            "Warsaw first, P at Q12" to listOf(mapOf(0 to 4, 4 to 8, 8 to 10), mapOf(11 to 2)),
+            "Paris first" to listOf(mapOf(8 to 4), mapOf(0 to 4, 4 to 8)),
+            "2 and 2 every year" to listOf(mapOf(0 to 2, 4 to 4, 8 to 6), mapOf(0 to 2, 4 to 4, 8 to 6)),
+            "W 4 now, then split" to listOf(mapOf(0 to 4, 4 to 6, 8 to 8), mapOf(4 to 2, 8 to 4)),
+            "all in Warsaw" to listOf(mapOf(0 to 4, 4 to 8, 8 to 12), emptyMap()),
+            "W first, P 2 at Q9" to listOf(mapOf(0 to 4, 4 to 8, 8 to 10), mapOf(8 to 2)),
+            "W first, P 2 at Q11" to listOf(mapOf(0 to 4, 4 to 8, 8 to 10), mapOf(10 to 2)),
+            "W first, P 1 at Q12" to listOf(mapOf(0 to 4, 4 to 8, 8 to 11), mapOf(11 to 1)),
         ).map { (name, plans) -> name to sites.map { site(it, plans[it]) } }
-        val lines = mutableListOf(title(scenario), HEADER + "  Warsaw  Paris  retired kg")
-        for ((name, sims) in runs) {
+        val lines = mutableListOf(title(scenario), HEADER + "  Warsaw  Paris  failed")
+        val all = listOf("reference (buys when short)" to references) + runs
+        for ((name, sims) in all) {
             val total = sims.map { it.totals }.reduce { a, b -> a + b }
             val perSite = sims.mapIndexed { i, sim ->
                 val r = references[i].totals.emissions
-                String.format(Locale.ROOT, "%+6.1f%%", (sim.totals.emissions - r) * 100.0 / r)
+                String.format(Locale.ROOT, "%+6.1f%% %5.1f", (sim.totals.emissions - r) * 100.0 / r, sim.totals.sla / 10.0)
             }
-            lines += line(name, total, reference) + "  " + perSite.joinToString("  ") +
-                String.format(Locale.ROOT, "  %6.0f", total.retiredEmbodied / 1e9) + "  " + "★".repeat(scenario.stars(total, reference))
+            lines += line(name, total, reference) + "  " + perSite.joinToString("  ") + "  " + total.failedServers +
+                "  " + "★".repeat(scenario.stars(total, reference))
+        }
+        for ((i, sim) in references.withIndex()) {
+            lines += "  reference site $i: new " + sim.servers.count { it.kind == ServerKind.CPU_CURRENT } + ", old left " + sim.servers.count { it.kind == ServerKind.CPU_OLD }
         }
         report(7, lines)
-        val byName = runs.toMap()
+        val byName = all.toMap()
         fun stars(name: String) = scenario.stars(byName.getValue(name).map { it.totals }.reduce { a, b -> a + b }, reference)
-        // The budget (12 new servers) in the coal grid at once: three stars; in the nuclear grid it hardly matters.
-        assertEquals(3, stars("Warsaw now, Paris never"))
-        assertEquals(1, stars("Paris now, Warsaw never"))
-        // Splitting or waiting: two stars.
-        assertEquals(2, stars("6 and 6 now"))
-        assertEquals(2, stars("Warsaw in year 2"))
+        // Without new servers the growth and the failures break the SLA; Paris must not be left without capacity.
+        assertEquals(0, stars("buy nothing"))
+        assertEquals(0, stars("all in Warsaw"))
+        // New hardware first where the grid is dirty: two stars; in Paris only as late as the capacity allows: three.
+        assertEquals(2, stars("Warsaw first"))
+        assertEquals(3, stars("W first, P 2 at Q11"))
+        // Paris first saves nothing against the reference.
+        assertEquals(0, stars("Paris first"))
+        assertEquals(1, stars("2 and 2 every year"))
     }
 
     @Test fun e1MeasureFirst() {

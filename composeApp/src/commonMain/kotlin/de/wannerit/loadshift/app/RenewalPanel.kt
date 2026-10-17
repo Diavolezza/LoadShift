@@ -1,8 +1,6 @@
 package de.wannerit.loadshift.app
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,62 +13,60 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import de.wannerit.loadshift.core.InteractiveLoad
 import de.wannerit.loadshift.core.ServerKind
-import de.wannerit.loadshift.core.Units
 
-/** O7: where and when the budget of new servers goes; one card per site, the one chosen is shown in the hall. */
+/** O7: the year's budget, the generation on offer, and per site its grid, servers, capacity and CO₂. */
 @Composable
 fun RenewalPanel(game: GameController) {
     val model = game.scenario.renewal ?: return
+    val day = minOf(game.currentDay, game.scenario.days - 1)
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Txt(t("Hardware renewal"), Type.heading)
-        Txt(t("Two data centers, each with 24 servers that are four years old – a server lives six years. A new server does the work of two old ones at about the same power, but making it emits about 550 kg CO₂, booked over its six years. An old server retired early books the rest of its 500 kg at once. Each game day is a quarter."), Type.style(15, color = Palette.secondary))
-        Txt(t("Budget: %lld of %lld new servers left", maxOf(0, game.budgetLeft), model.budget), Type.style(15, FontWeight.SemiBold))
+        Txt(t("New servers arrive at the start of the next quarter. A new server does the work of two old ones; making it emits about 550 kg CO₂, booked over its six years. Old servers past six years begin to fail. The shop grows by 15 % a year."), Type.style(15, color = Palette.secondary))
+        Txt(t("Budget year %lld: %lld of %lld new servers left – what is not spent by the end of the year is gone.", game.year + 1, maxOf(0, game.budgetLeft), model.budgetPerYear), Type.style(15, FontWeight.SemiBold))
+        val saving = 1_000 - model.generationPower(day)
+        Txt(
+            if (saving == 0) t("This year's generation: the first.") else t("This year's generation needs %@ less power than the first.", Format.wholePercent(saving)),
+            Type.caption,
+        )
         for ((i, site) in model.sites.withIndex()) {
             val simulation = game.simulationOf(i)
-            val tick = simulation.tick
             val old = simulation.servers.filter { it.kind == ServerKind.CPU_OLD }
-            val selected = game.site == i
+            val capacity = game.capacityOf(i)
+            val peak = game.peakOf(i)
+            val short = capacity * InteractiveLoad.SLOW_ABOVE / 1_000 < peak
             Column(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
-                    .background(if (selected) Palette.accent.copy(alpha = 0.08f) else Palette.background)
-                    .border(if (selected) 1.5.dp else 0.dp, if (selected) Palette.accent else Palette.background, RoundedCornerShape(12.dp))
-                    .clickable { game.site = i }.padding(12.dp),
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Palette.background).padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Txt(t(site.title), Type.style(16, FontWeight.SemiBold), Modifier.weight(1f))
                     Txt(t("grid on average %lld g/kWh", (site.region.annualMean + 5) / 10), Type.style(13, color = Palette.intensity((site.region.annualMean + 5) / 10)))
                 }
-                val age = old.firstOrNull()?.ageAt(tick, model.daysPerStep.toLong())
+                val age = old.firstOrNull()?.ageAt(simulation.tick, model.daysPerStep.toLong())
                 Txt(
-                    if (age != null) t("%lld old servers (%@ years), %lld new", old.size, Format.number(age / 365.0, 1), game.installed(i))
-                    else t("%lld new servers", game.installed(i)),
+                    t("%lld old servers (%@ years), %lld failed; %lld new", old.size, Format.number((age ?: 0) / 365.0, 1),
+                        simulation.totals.failedServers, game.renewDraft[i]),
                     Type.callout,
                 )
-                Txt(t("So far %@ t CO₂, %@ MWh", Format.tonnes(simulation.totals.emissions), Format.number(simulation.totals.facilityEnergy / 1e9, 0)), Type.caption)
+                Txt(
+                    t("Capacity %lld, peak this quarter %lld", capacity, peak),
+                    Type.style(13, if (short) FontWeight.SemiBold else FontWeight.Normal, if (short) Palette.red else Palette.secondary),
+                )
+                if (short) Txt(t("Too little: above 85 % utilization requests get slow."), Type.style(12, FontWeight.SemiBold, Palette.red))
+                Txt(t("So far %@ t CO₂", Format.tonnes(simulation.totals.emissions)), Type.caption)
                 if (game.canRenew) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Txt(t("New servers"), Type.style(14, FontWeight.SemiBold), Modifier.weight(1f))
                         Stepper("${game.renewDraft[i]}", minus = { game.changeRenewal(i, -1) }, plus = { game.changeRenewal(i, 1) })
                     }
-                    val retire = (game.renewDraft[i] - game.installed(i)) * model.replacedPerNew
-                    if (retire > 0 && age != null) {
-                        val left = maxOf(0, Units.LIFESPAN_DAYS - age)
-                        val tonnes = retire * ServerKind.CPU_OLD.embodiedKilograms * left.toDouble() / Units.LIFESPAN_DAYS / 1_000
-                        Txt(
-                            if (left > 0) t("Retires %lld old servers: %@ t embodied CO₂ of their remaining life at once.", retire, Format.number(tonnes, 1))
-                            else t("Retires %lld old servers at the end of their life: nothing left to book.", retire),
-                            Type.style(12, FontWeight.SemiBold, Palette.old),
-                        )
-                    }
                 }
             }
         }
-        if (game.canRenew) {
-            PrimaryButton(t("Start the quarter")) { game.startQuarter() }
-        } else if (!game.isFinished) {
-            Txt(t("The quarter is running – at the start of the next one you decide again."), Type.caption)
+        if (!game.isFinished) {
+            if (game.speed == Speed.PAUSED) PrimaryButton(t("Run")) { game.startQuarter() }
+            Txt(t("The game pauses at the start of every year. You can pause any time and buy; the servers arrive at the start of the next quarter."), Type.caption)
         }
     }
 }

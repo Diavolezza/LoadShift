@@ -22,7 +22,12 @@ import de.wannerit.loadshift.core.forSite
 import de.wannerit.loadshift.core.plus
 
 /** Speed of the game clock: ticks (15 game minutes) per real second. */
-enum class Speed(val ticksPerSecond: Int) { PAUSED(0), X1(1), X4(4), X16(16) }
+enum class Speed(val ticksPerSecond: Int) {
+    PAUSED(0), X1(1), X4(4), X16(16),
+
+    /** O7: a quarter (a game day) in two seconds. */
+    QUARTERS(48),
+}
 
 /**
  * Runs a scenario for the screen: the simulation, the clock and the player's controls. The simulation is mutable;
@@ -46,8 +51,9 @@ class GameController(val scenario: Scenario) {
     val totals: Totals get() = version.let { sims.map { it.totals }.reduce { a, b -> a + b } }
     val referenceTotals: Totals get() = references.map { it.totals }.reduce { a, b -> a + b }
 
-    /** The simulation of a site (O7). */
+    /** The simulation of a site (O7), and the reference operator's. */
     fun simulationOf(site: Int): Simulation = version.let { sims[site] }
+    fun referenceOf(site: Int): Simulation = references[site]
 
     var version by mutableIntStateOf(0)
         private set
@@ -89,6 +95,7 @@ class GameController(val scenario: Scenario) {
     fun step() {
         if (simulation.isFinished) return
         if (current.history.isEmpty()) startPolicy = current.policy
+        beforeTick()
         sims.forEach { if (!it.isFinished) it.step() }
         if (simulation.isFinished) finish() else {
             checkUrgentJobs()
@@ -99,18 +106,21 @@ class GameController(val scenario: Scenario) {
         changed()
     }
 
-    // Hardware renewal (O7): at the start of every quarter (day) the player decides how many new servers each site gets
+    // Hardware renewal (O7): new servers per site, bought whenever the game is paused; they arrive at the start of
+    // the next quarter. Each year brings a budget; what is not spent by the end of the year is gone.
 
     val hasRenewal: Boolean get() = scenario.renewal != null
-    /** New servers per site the player plans for this quarter (installed ones included). */
+    /** New servers per site, bought so far (installed or arriving at the start of the next quarter). */
     var renewDraft by mutableStateOf(List(siteCount) { 0 })
         private set
-    private var quarterStartedDay = -1
-    val canRenew: Boolean
-        get() = hasRenewal && !isFinished && (current.tick - scenario.startTick) % GameTime.TICKS_PER_DAY == 0 && quarterStartedDay < currentDay
+    /** New servers bought before the current year. */
+    private var boughtBeforeYear = 0
+    private var budgetYear = 0
     fun installed(site: Int): Int = version.let { sims[site].policy.renewed }
-    /** New servers the budget still pays for, with the plan of this quarter. */
-    val budgetLeft: Int get() = (scenario.renewal?.budget ?: 0) - renewDraft.sum()
+    val year: Int get() = scenario.renewal?.year(currentDay.coerceAtMost(scenario.days - 1)) ?: 0
+    /** New servers the budget still pays for this year. */
+    val budgetLeft: Int get() = (scenario.renewal?.budgetPerYear ?: 0) - (renewDraft.sum() - boughtBeforeYear)
+    val canRenew: Boolean get() = hasRenewal && !isFinished
 
     fun changeRenewal(site: Int, delta: Int) {
         if (!canRenew) return
@@ -118,21 +128,42 @@ class GameController(val scenario: Scenario) {
         renewDraft = renewDraft.toMutableList().also { it[site] = n }
     }
 
-    /** Installs the planned servers and lets the quarter run. */
+    /** Lets the quarters run. */
     fun startQuarter() {
         if (!canRenew) return
-        for (i in sims.indices) {
-            sims[i].policy = sims[i].policy.copy(renewed = renewDraft[i])
-            sims[i].applyPolicy()
-        }
-        quarterStartedDay = currentDay
-        speed = Speed.X16
-        changed()
+        speed = Speed.QUARTERS
     }
 
-    /** Pauses at the start of every quarter. */
+    /** O7, before a tick: at the start of a quarter the bought servers arrive; a new year brings a new budget. */
+    private fun beforeTick() {
+        if (!hasRenewal || (current.tick - scenario.startTick) % GameTime.TICKS_PER_DAY != 0) return
+        if (year != budgetYear) {
+            budgetYear = year
+            boughtBeforeYear = renewDraft.sum()
+        }
+        for (i in sims.indices) {
+            if (renewDraft[i] > sims[i].policy.renewed) {
+                sims[i].policy = sims[i].policy.copy(renewed = renewDraft[i])
+                sims[i].applyPolicy()
+            }
+        }
+    }
+
+    /** Pauses at the start of every year: a new budget. */
     private fun checkQuarter() {
-        if (hasRenewal && (current.tick - scenario.startTick) % GameTime.TICKS_PER_DAY == 0) speed = Speed.PAUSED
+        val model = scenario.renewal ?: return
+        val sinceStart = current.tick - scenario.startTick
+        if (sinceStart % (GameTime.TICKS_PER_DAY * model.daysPerYear) == 0) speed = Speed.PAUSED
+    }
+
+    /** O7: capacity of all servers of a site and the peak of the coming quarter (the current one while it runs). */
+    fun capacityOf(site: Int): Int = version.let { sims[site].servers.sumOf { it.kind.capacity } } +
+        (renewDraft[site] - installed(site)) * de.wannerit.loadshift.core.ServerKind.CPU_CURRENT.capacity
+    fun peakOf(site: Int): Int = version.let {
+        val sim = sims[site]
+        val day = (sim.tick - scenario.startTick) / GameTime.TICKS_PER_DAY
+        val from = scenario.startTick + minOf(day, scenario.days - 1) * GameTime.TICKS_PER_DAY
+        (from until from + GameTime.TICKS_PER_DAY).maxOf { sim.scenario.interactive.expected(it) }
     }
 
     // Sprints (engineering track): one sprint plan at the start of every day
@@ -221,7 +252,7 @@ class GameController(val scenario: Scenario) {
     /** Runs a number of ticks at once (launch options). */
     fun advance(ticks: Int) {
         if (ticks > 0 && current.history.isEmpty()) startPolicy = current.policy
-        repeat(ticks) { sims.forEach { if (!it.isFinished) it.step() } }
+        repeat(ticks) { beforeTick(); sims.forEach { if (!it.isFinished) it.step() } }
         if (simulation.isFinished) finish()
         changed()
     }
@@ -511,13 +542,12 @@ class GameController(val scenario: Scenario) {
                 val s = scenario.forSite(site)
                 Simulation.replay(s, s.initialPolicy, changes = plan.entries.associate { (day, n) -> GameTime.at(day, 0).tick to s.initialPolicy.copy(renewed = n) }).totals
             }.reduce { a, b -> a + b }
-            val budget = scenario.renewal?.budget ?: 12
             return listOf(
-                t("Keep the old servers (reference)") to referenceTotals,
-                t("The budget in Paris, at once") to run(emptyMap(), mapOf(0 to budget)),
-                t("Half in each city, at once") to run(mapOf(0 to budget / 2), mapOf(0 to budget / 2)),
-                t("The budget in Warsaw, in year 2") to run(mapOf(4 to budget), emptyMap()),
-                t("The budget in Warsaw, at once") to run(mapOf(0 to budget), emptyMap()),
+                t("Buy when capacity runs short (reference)") to referenceTotals,
+                t("Paris first") to run(mapOf(8 to 4), mapOf(0 to 4, 4 to 8)),
+                t("Two and two every year") to run(mapOf(0 to 2, 4 to 4, 8 to 6), mapOf(0 to 2, 4 to 4, 8 to 6)),
+                t("Warsaw first, Paris in year 3") to run(mapOf(0 to 4, 4 to 8), mapOf(8 to 4)),
+                t("Warsaw first, Paris only what it needs, as late as possible") to run(mapOf(0 to 4, 4 to 8, 8 to 10), mapOf(10 to 2)),
             )
         }
         if (scenario.cooling != null) {
@@ -628,8 +658,9 @@ class GameController(val scenario: Scenario) {
         saveDraft()
         speed = Speed.PAUSED
         sims = newSims()
-        quarterStartedDay = -1
         renewDraft = List(siteCount) { 0 }
+        boughtBeforeYear = 0
+        budgetYear = 0
         restoreDraft()
         startPolicy = null
         team = Team(scenario.backlog, scenario.sprintPoints)

@@ -1,5 +1,8 @@
 package de.wannerit.loadshift.core
 
+import kotlin.math.pow
+import kotlin.math.roundToInt
+
 /** Workloads (docs/CONCEPT.md, section 5). */
 enum class WorkloadKind(val title: String) {
     INTERACTIVE("Interactive"), BATCH("Batch"), AI_TRAINING("AI training"), STREAMING("Streaming"),
@@ -21,7 +24,14 @@ data class InteractiveLoad(
     /** Half width of the random noise per tick, per mille. */
     val noise: Int = 50,
     val campaigns: List<Campaign> = emptyList(),
+    /** O7: the demand grows by this much a year, per mille; [daysPerYear] game days make a year. */
+    val growthPerYear: Int = 0,
+    val daysPerYear: Int = 4,
 ) {
+    /** Growth of the demand on a day, per mille of the first day (compound, a step per game day). */
+    fun growth(day: Int): Int =
+        if (growthPerYear == 0) 1_000 else (1_000 * (1 + growthPerYear / 1_000.0).pow(day.toDouble() / daysPerYear)).roundToInt()
+
     /** Expected demand at a tick, without noise (what the operator can plan with). */
     fun expected(tick: Int): Int {
         val perHour = GameTime.TICKS_PER_HOUR
@@ -29,7 +39,8 @@ data class InteractiveLoad(
         val hour = inDay / perHour
         val r = inDay % perHour
         val share = (DAILY_CURVE[hour] * (perHour - r) + DAILY_CURVE[(hour + 1) % 24] * r) / perHour
-        return peak * share / 1_000
+        val base = peak * share / 1_000
+        return if (growthPerYear == 0) base else base * growth(tick / GameTime.TICKS_PER_DAY) / 1_000
     }
 
     /** Actual demand at a tick: the expected demand with the noise of that tick, times a running campaign. */

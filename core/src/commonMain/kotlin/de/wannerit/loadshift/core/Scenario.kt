@@ -118,7 +118,7 @@ data class Scenario(
 
     /** The goals a result reaches. */
     fun goalsMet(totals: Totals, reference: Totals): GoalsMet {
-        val rules = totals.sla >= slaTarget && totals.deadlinesMissed == 0 && totals.emissions < reference.emissions &&
+        val rules = totals.sla >= slaTarget && totals.worstSiteSla >= slaTarget && totals.deadlinesMissed == 0 && totals.emissions < reference.emissions &&
             (staleLimit == null || totals.stalePerTenThousand <= staleLimit)
         val reduction = rules && totals.emissions * 1_000 <= reference.emissions * (1_000 - goals.reduction)
         val special = rules && when (val goal = goals.special) {
@@ -248,18 +248,20 @@ data class Scenario(
 
         /**
          * Scenario 7, "Old iron": the company's two data centers, in Warsaw and in Paris, each with 24 old servers, four
-         * years old. Over three years (one game day per quarter) the player decides where and when to put the budget
-         * of twelve new servers; one new server does the work of two old ones. In the coal-heavy Polish grid the energy
-         * saved is many times the embodied emissions; in the nuclear French grid it hardly makes a difference.
+         * years old. Three years, one game day per quarter. Every year a budget for four new servers and a new
+         * generation that does 20 % more work per kWh; the shop grows by 15 % a year; from year 3 the old servers are
+         * past their life and fail. New servers in the coal-heavy Polish grid save many times their embodied emissions
+         * at once; in the nuclear French grid they hardly save anything – there it pays to wait for a better generation
+         * until the capacity is needed.
          */
         val OLD_IRON = Scenario(
             number = 7, title = "Old iron", setting = GridSetting(GridRegion.POLAND, Season.WINTER), days = 12,
             seed = 7, fleet = listOf(FleetEntry(ServerKind.CPU_OLD, 24, ageYears = 4)),
-            interactive = InteractiveLoad(peak = 160),
+            interactive = InteractiveLoad(peak = 150, growthPerYear = 150, daysPerYear = 4),
             controls = setOf(Control.RENEWAL),
             initialPolicy = Policy(CapacityMode.Autoscale(700)),
-            referencePolicy = Policy(CapacityMode.Autoscale(700)),
-            goals = StarGoals(300, SpecialGoal.Reduction(420)),
+            referencePolicy = Policy(CapacityMode.Autoscale(700), buyWhenShort = true),
+            goals = StarGoals(200, SpecialGoal.Reduction(280)),
             renewal = RenewalModel(listOf(Site("Warsaw", GridRegion.POLAND), Site("Paris", GridRegion.FRANCE))),
         )
 

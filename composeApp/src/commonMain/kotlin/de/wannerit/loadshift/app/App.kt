@@ -73,7 +73,7 @@ private fun initialScreen(options: LaunchOptions): Screen {
         game.advance(options.ticks)
     } else if (options.careful && Control.RENEWAL in scenario.controls) {
         // Like a careful player: the whole budget into Warsaw at once.
-        game.changeRenewal(0, scenario.renewal?.budget ?: 0)
+        game.changeRenewal(0, scenario.renewal?.budgetPerYear ?: 0)
         game.startQuarter()
         game.advance(options.ticks)
     } else if (options.careful && Control.COOLING in scenario.controls) {

@@ -333,7 +333,7 @@ Engineering track opens after scenario 1, because it builds on the SCI per reque
 | 4 | Headroom | Germany, winter | 2 days | capacity rules: all on, fixed, autoscaling with target utilization and a scheduled minimum | Autoscaling automates what the player did by hand in scenario 1. A newsletter on day 2 doubles the load for three hours; the autoscaler knows only the usual day and reacts too late (30 minutes boot time). Headroom all the time costs energy all the time; a minimum for the known event costs it only when needed (G4). Term: Autoscaling (with Scheduled Scaling). |
 | 5 | Consolidation | Germany, autumn | 1 day | placing VMs on hosts by hand (two dimensions: CPU and RAM) | Bin packing: fewer hosts running means less idle power. Pack by the peaks, not the means; VMs with opposite daily profiles fit together; often the RAM is full before the CPU; packing too tight lets the peaks collide (G6, D18). Term: Consolidation (Bin Packing). |
 | 6 | Heat wave | Germany, summer | 3 days | inlet setpoint (18–27 °C), capacity rule | Outside air cools for free while it is 6 K below the setpoint; in the heat the chiller works, the hotter the more. A warmer setpoint saves chiller power, above 25 °C the server fans eat it up: the sweet spot is 25 °C. The PUE trap: fewer servers save the most energy but raise the PUE (fixed facility power); 27 °C and all servers on give the best PUE and more CO₂. The stars count CO₂ (G5, D21). Term: PUE (Power Usage Effectiveness). |
-| 7 | Old iron | Warsaw and Paris | 3 years (12 quarters, one game day each) | where and when the budget of 12 new servers goes | Two data centers with the same old fleet (24 servers, four years old). A new server does the work of two old ones; making it emits 550 kg, booked over six years; an old server retired early books the rest of its life at once. In the Polish grid the budget saves almost half the CO₂ at once; in the French grid it hardly matters. The earlier the budget goes to the dirty grid, the more it saves (G6, G1, D22). Term: Embodied Carbon. |
+| 7 | Old iron | Warsaw and Paris | 3 years (12 quarters, one game day each) | where and when new servers go: a budget of four a year | Two data centers with the same old fleet (24 servers, four years old). The shop grows by 15 % a year; every year a generation that needs 17 % less power; from year 3 the old servers fail. A new server does the work of two old ones; making it emits 550 kg, booked over six years. In the Polish grid a new server saves many times that, in the French grid hardly anything: new hardware first where the grid is dirty, at the clean site only what the capacity needs, as late as possible (G6, G1, D22). Term: Embodied Carbon. |
 | 8 | Training run | Germany, spring | 3 days | AI training, power cap | Run the training in clean hours and cap the GPUs (G3, G6). |
 | 9 | Eco mode | Poland, summer | 2 days | streaming eco mode | Lower quality when the grid is dirty (G7). Term: Demand Shaping. |
 | 10 | Two sites | Norway and Germany | 3 days | moving workloads between sites | Batch and training move to Norway; interactive stays close to the users (latency) (G8). Term: Location Shifting. |
@@ -744,27 +744,29 @@ After each step the game is played by a person before the next step begins (**pl
   server is ready, the less headroom the autoscaler needs.
 - End card: "To the overview" next to "To the briefing".
 
-**As built in step 5, part 2** (scenario 7, "Old iron"):
+**As built in step 5, part 2** (scenario 7, "Old iron"; reworked after the first play test):
 
-- Core: `RenewalModel` (sites, a game day stands for 91 real days, two old servers per new one, budget 12);
-  `Scenario.forSite` gives each site its grid; the grid changes its season every quarter. Servers know their age:
-  embodied emissions are booked only during the six-year life (scaled by 91 per game day, like the energy); a server
-  retired before the end of its life books the rest at once (`Totals.retiredEmbodied`). `Policy.renewed`: new
-  servers installed at a site; installing removes old ones (those switched off first).
-- App: one simulation per site, stepping together; goals, top bar and end card add both sites up; the hall and the
-  timeline show the site chosen in the panel. The game pauses at the start of every quarter; the panel shows the
-  budget, both sites (grid, servers, CO₂ so far) and what retiring the old servers books at once. Old servers have an
-  orange mark.
-- Goals ★★ −30 %, ★★★ −42 %.
+- Core: `RenewalModel` (sites, a game day stands for 91 real days, four game days a year, a budget of four new
+  servers a year for both sites – what is not spent is gone –, each year's generation 20 % more work per kWh, old
+  servers past their six-year life fail with 8 % a quarter, the same ones in every run). `InteractiveLoad` grows by
+  15 % a year. `Scenario.forSite` gives each site its grid; the grid changes its season every quarter. Embodied
+  emissions are booked only during a server's life (scaled by 91 per game day, like the energy). `Policy.renewed`:
+  new servers bought for a site; `Policy.buyWhenShort`: the reference operator buys at the start of a quarter
+  whenever the quarter's peak would exceed 75 % of the capacity. The SLA counts per site (`Totals.worstSiteSla`).
+- App: one simulation per site, stepping together; both halls side by side; pause and run (a quarter in two
+  seconds), pausing at the start of every year; servers bought while paused arrive at the start of the next
+  quarter. The chart shows CO₂ per quarter and site (electricity and hardware, the reference as a line) and the
+  capacity of both sites against the growing peak load.
+- Goals: SLA ≥ 99 % at each site, ★★ −20 %, ★★★ −28 %.
 
-| Budget | CO₂ vs. reference | Warsaw | Paris | Stars |
-|---|---:|---:|---:|---:|
-| keep the old servers (reference) | – | – | – | – |
-| all 12 in Paris, at once | −0.5 % | – | −8.4 % | ★ |
-| 6 and 6, at once | −33.5 % | −35.1 % | −11.6 % | ★★ |
-| all 12 in Warsaw, in year 2 | −30.4 % | −32.5 % | – | ★★ |
-| all 12 in Warsaw, from quarter 2 | −41.5 % | −44.5 % | – | ★★ |
-| all 12 in Warsaw, at once | −45.4 % | −48.7 % | – | ★★★ |
+| New servers | CO₂ vs. reference | Stars |
+|---|---:|---:|
+| none | +8.9 % (SLA missed) | 0 |
+| all twelve in Warsaw | −31.3 % (SLA in Paris missed) | 0 |
+| Paris first, Warsaw in year 3 | 0.0 % | 0 |
+| two and two every year | −14.0 % | ★ |
+| Warsaw first, Paris in year 3 | −26.1 % | ★★ |
+| Warsaw first, Paris only two, in the last quarters | −29.4 % | ★★★ |
 - Debriefs: E1 names Amdahl's law (the checkout), E2 the rebound effect (freed capacity fills up with features).
 - Planned from the same lecture: scenario 6 "Heat wave" with the PUE trap (switching servers off raises the PUE,
   but CO₂ falls – the score counts CO₂, not PUE); a note on JVM start time (Native Image, CRaC) in scenario 4,
@@ -802,7 +804,7 @@ music. Not taken over: maps, paths, the tower-and-creep rules, opponents, networ
 | D19 | Order of the scenarios | a star opens the next scenario (the story), but a switch "Open all scenarios" opens everything for courses that take the topics in another order; stars still count |
 | D20 | Caching | its own Engineering scenario E3 instead of a backlog item; the TTL is a business rule per kind of data, breaking it gives stale answers and no stars; all kinds share the memory of whole cache servers (LRU), so the decisions are what to cache and how many servers; HyperLogLog and the materialized view as extra measures |
 | D21 | PUE | shown everywhere in scenario 6, but the stars count CO₂: the scenario is built so that the best PUE and the least CO₂ need different decisions (fewer servers raise the PUE, faster fans lower it) |
-| D22 | Hardware renewal (scenario 7) | quarterly steps (a game day stands for a quarter) instead of monthly steps (revises D5); two sites with one budget, so the decision is where the new hardware replaces dirty electricity – with an unlimited budget renewing would pay off in both grids and the lesson would be lost |
+| D22 | Hardware renewal (scenario 7) | quarterly steps (a game day stands for a quarter) instead of monthly steps (revises D5); two sites with a yearly budget, growth, new generations and failures, so that decisions come up over the three years; the question is where new hardware replaces dirty electricity, while the clean site keeps enough capacity |
 
 ---
 

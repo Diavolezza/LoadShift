@@ -62,6 +62,14 @@ fun GameScreen(game: GameController, onExit: () -> Unit, onNext: ((Scenario) -> 
             Row(Modifier.fillMaxWidth().weight(1f)) {
                 if (Control.PLACEMENT in game.scenario.controls) {
                     PlacementBoard(game, Modifier.weight(1f).fillMaxHeight())
+                } else if (game.hasRenewal) {
+                    // O7: both sites side by side.
+                    for ((i, site) in game.scenario.renewal!!.sites.withIndex()) {
+                        Column(Modifier.weight(1f).fillMaxHeight()) {
+                            Txt(t("%@ · grid on average %lld g/kWh", t(site.title), (site.region.annualMean + 5) / 10), Type.style(16, FontWeight.SemiBold), Modifier.padding(start = 16.dp, top = 12.dp))
+                            HallView(game.simulationOf(i).servers, game.version, interactive = true, batch = false, modifier = Modifier.weight(1f).fillMaxWidth(), compact = true)
+                        }
+                    }
                 } else {
                     HallView(
                         game.simulation.servers, game.version, game.hasInteractive, game.hasBatch, Modifier.weight(1f).fillMaxHeight(),
@@ -74,7 +82,8 @@ fun GameScreen(game: GameController, onExit: () -> Unit, onNext: ((Scenario) -> 
                 ControlPanel(game, Modifier.width(panelWidth).fillMaxHeight())
             }
             HDivider()
-            TimelineChart(game.simulation, game.version, Modifier.fillMaxWidth().height(timelineHeight).background(Palette.panel))
+            if (game.hasRenewal) QuarterChart(game, Modifier.fillMaxWidth().height(timelineHeight).background(Palette.panel))
+            else TimelineChart(game.simulation, game.version, Modifier.fillMaxWidth().height(timelineHeight).background(Palette.panel))
         }
         if (game.showEnd) EndCard(game, onExit, onNext, onOverview)
     }
@@ -99,12 +108,13 @@ private fun TopBar(game: GameController, onExit: () -> Unit) {
             Txt(time.clockText, Type.style(30, FontWeight.SemiBold).copy(fontFeatureSettings = "tnum"))
         }
         Row(Modifier.align(Alignment.CenterEnd), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(22.dp)) {
-        Metric(t("Grid now"), "$intensity g/kWh", Palette.intensity(intensity))
+        if (!game.hasRenewal) Metric(t("Grid now"), "$intensity g/kWh", Palette.intensity(intensity))
         val totals = game.totals
         Metric(t("CO₂ so far"), if (game.hasRenewal) "${Format.tonnes(totals.emissions)} t" else "${Format.kilograms(totals.emissions)} kg")
         if (game.hasInteractive) {
-            Metric(t("SLA"), Format.percent(totals.sla),
-                if (totals.sla >= simulation.scenario.slaTarget) Palette.ink else Palette.red)
+            val sla = minOf(totals.sla, totals.worstSiteSla)
+            Metric(if (game.hasRenewal) t("SLA (lowest site)") else t("SLA"), Format.percent(sla),
+                if (sla >= simulation.scenario.slaTarget) Palette.ink else Palette.red)
         }
         if (game.hasBatch) {
             Metric(t("Jobs done"), "${simulation.totals.jobsDone} / ${simulation.jobs.size}",
@@ -113,7 +123,7 @@ private fun TopBar(game: GameController, onExit: () -> Unit) {
         if (simulation.scenario.cooling != null) {
             Metric(t("PUE now"), if (last == null || last.itPower == 0) "–" else Format.number(last.facilityPower.toDouble() / last.itPower, 2))
         }
-        Metric(t("Power"), "${Format.kilowatts(last?.facilityPower ?: 0)} kW")
+        if (!game.hasRenewal) Metric(t("Power"), "${Format.kilowatts(last?.facilityPower ?: 0)} kW")
         }
     }
 }
@@ -121,7 +131,9 @@ private fun TopBar(game: GameController, onExit: () -> Unit) {
 @Composable
 private fun SpeedControl(game: GameController) {
     Row(Modifier.background(Palette.background, RoundedCornerShape(10.dp)).padding(3.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        for (speed in Speed.entries) {
+        // O7 runs quarter by quarter: pause and run; the others the four speeds.
+        val speeds = if (game.hasRenewal) listOf(Speed.PAUSED, Speed.QUARTERS) else Speed.entries.filter { it != Speed.QUARTERS }
+        for (speed in speeds) {
             val selected = game.speed == speed
             val enabled = !game.isFinished || speed == Speed.PAUSED
             Box(
@@ -137,6 +149,11 @@ private fun SpeedControl(game: GameController) {
                         val w = size.width
                         drawRect(color, Offset(w * 0.12f, 0f), androidx.compose.ui.geometry.Size(w * 0.26f, w))
                         drawRect(color, Offset(w * 0.62f, 0f), androidx.compose.ui.geometry.Size(w * 0.26f, w))
+                    }
+                } else if (speed == Speed.QUARTERS) {
+                    Canvas(Modifier.size(14.dp)) {
+                        val w = size.width
+                        drawPath(androidx.compose.ui.graphics.Path().apply { moveTo(w * 0.15f, 0f); lineTo(w * 0.95f, w / 2); lineTo(w * 0.15f, w); close() }, color)
                     }
                 } else {
                     Txt("${speed.ticksPerSecond}×", Type.style(17, FontWeight.SemiBold, color))
@@ -176,7 +193,8 @@ private fun GoalBar(game: GameController) {
                 Format.number(totals.stale.toDouble() / maxOf(1, totals.requests), 2) + " ‰", Format.number(limit / 10.0, 1) + " ‰"))
         }
         if (game.hasInteractive) {
-            GoalItem(totals.sla >= scenario.slaTarget, change != null, t("SLA ≥ %@", Format.percent(scenario.slaTarget)))
+            GoalItem(minOf(totals.sla, totals.worstSiteSla) >= scenario.slaTarget, change != null,
+                if (game.hasRenewal) t("SLA ≥ %@ at each site", Format.percent(scenario.slaTarget)) else t("SLA ≥ %@", Format.percent(scenario.slaTarget)))
             GoalItem((change ?: 0) < 0, change != null,
                 if (change == null) t("CO₂ vs. reference") else t("CO₂ vs. reference: %@", Format.changePermille(change)))
         }
@@ -245,7 +263,7 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
                     if (game.hasRenewal) {
                         add(t("CO₂ (t)") to (Format.tonnes(you.emissions) to Format.tonnes(ref.emissions)))
                         add(t("of it embodied (t)") to (Format.tonnes(you.embodied) to Format.tonnes(ref.embodied)))
-                        add(t("of it for servers retired early (t)") to (Format.tonnes(you.retiredEmbodied) to Format.tonnes(ref.retiredEmbodied)))
+                        add(t("Old servers failed") to ("${you.failedServers}" to "${ref.failedServers}"))
                         add(t("Energy (MWh)") to (Format.number(you.facilityEnergy / 1e9, 0) to Format.number(ref.facilityEnergy / 1e9, 0)))
                     } else {
                         add(t("CO₂ (kg)") to (Format.kilograms(you.emissions) to Format.kilograms(ref.emissions)))
@@ -257,7 +275,7 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
                         add(t("Stale answers (‰)") to (Format.number(you.stale.toDouble() / maxOf(1, you.requests), 2) to Format.number(ref.stale.toDouble() / maxOf(1, ref.requests), 2)))
                     }
                     if (game.hasInteractive) {
-                        add(t("SLA") to (Format.percent(you.sla) to Format.percent(ref.sla)))
+                        add((if (game.hasRenewal) t("SLA (lowest site)") else t("SLA")) to (Format.percent(minOf(you.sla, you.worstSiteSla)) to Format.percent(minOf(ref.sla, ref.worstSiteSla))))
                         add(t("Servers on (mean)") to (Format.number(you.meanServersOn / 1_000.0, 1) to Format.number(ref.meanServersOn / 1_000.0, 1)))
                         add(t("Mean utilization") to (Format.wholePercent(you.meanUtilization) to Format.wholePercent(ref.meanUtilization)))
                     }

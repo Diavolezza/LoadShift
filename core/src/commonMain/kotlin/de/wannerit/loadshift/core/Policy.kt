@@ -68,8 +68,10 @@ data class Policy(
     val cache: CacheConfig = CacheConfig(),
     /** Scenario 6: the inlet temperature the cooling keeps, °C. */
     val setpoint: Int = 20,
-    /** O7: new servers installed at the site so far (each replaces old ones). */
+    /** O7: new servers installed at the site so far. */
     val renewed: Int = 0,
+    /** O7, the reference operator: buys new servers whenever the coming quarter would be short of capacity. */
+    val buyWhenShort: Boolean = false,
 ) {
     companion object {
         /**

@@ -24,17 +24,17 @@ class ScenarioTexts(
     companion object {
         fun of(scenario: Scenario): ScenarioTexts = when (scenario.number) {
             7 -> ScenarioTexts(
-                situation = "The company runs two data centers, in Warsaw and in Paris, with the same hardware: 24 servers each, bought four years ago. Both carry the same web shop load. Finance has approved a budget for 12 new servers over the next three years – enough to renew one site completely, or both by half.",
-                idea = "New hardware does more work per kilowatt-hour – a new server does the work of two old ones. But making a server emits CO₂ too, and an old one retired early wastes the rest of its life. Whether renewing pays off depends on the grid: where electricity is dirty, the energy saved soon outweighs the hardware; where it is clean, the hardware dominates.",
+                situation = "The company runs two data centers, in Warsaw and in Paris, with the same hardware: 24 servers each, bought four years ago. The web shop grows by 15 % a year, at both sites alike. Every year finance approves four new servers for both sites together, and every year the manufacturers bring out a generation that needs less power. From year 3 the old servers are past their six-year life and begin to fail.",
+                idea = "New hardware does more work per kilowatt-hour – a new server does the work of two old ones. But making a server emits CO₂ too, about 550 kg. Whether a new server pays off depends on the grid: where electricity is dirty, the energy it saves outweighs its making within weeks; where it is clean, hardly ever. A site in a clean grid needs new servers only when its capacity runs short – and then preferably the newest generation.",
                 screen = listOf(
-                    "The game starts paused and pauses at the start of every quarter. Clock and speed – pause, 1×, 4×, 16× – and below it your goals. Each game day is a typical day of a quarter.",
-                    "The racks of the site you have chosen: an orange mark shows an old server.",
-                    "Hardware renewal: the budget and both sites – grid, servers, CO₂ so far, and how many new servers they get this quarter. Click a site to see it in the hall and the timeline.",
-                    "Carbon intensity of the chosen site's grid, quarter by quarter, and the load with the capacity of the running servers.",
+                    "The game starts paused and pauses at the start of every year. Pause and run – a quarter takes two seconds. Below them your goals: the SLA counts at each site.",
+                    "Both data centers: an orange mark shows an old server; failed servers are gone.",
+                    "Hardware renewal: the year's budget, the generation on offer, and per site its servers, capacity against the peak load, CO₂ so far, and how many new servers it gets.",
+                    "Above: CO₂ per quarter and site, electricity and hardware. Below: capacity of each site and the peak load, which grows.",
                 ),
-                comparedWith = "compared with the reference operator, who keeps the old servers.",
-                rules = "SLA at least 99 % and less CO₂ than the reference",
-                remark = "In Warsaw a new server saves many times its embodied emissions; in Paris the same server saves little, because the electricity is almost free of CO₂ – there the old servers can run to the end of their life. The question is not “new or old?” but “where does new hardware replace dirty electricity?”. The earlier the budget goes to the dirty grid, the more it saves; every quarter of waiting costs.",
+                comparedWith = "compared with the reference operator, who buys new servers wherever capacity runs short.",
+                rules = "SLA at least 99 % at each site and less CO₂ than the reference",
+                remark = "In Warsaw a new server saves many times its embodied emissions; in Paris it saves little, because the electricity is almost free of CO₂ – there it only has to carry the growth and replace the failed servers, and later generations do that better. The question is not “new or old?” but “where does new hardware replace dirty electricity?”. The earlier the budget goes to the dirty grid, the more it saves – as long as the clean site keeps enough capacity.",
                 term = "Embodied Carbon",
                 termText = "The emissions of making, shipping and disposing of hardware, as opposed to those of the electricity it uses. The SCI books them over the hardware's life; in a clean grid they can be the larger part. Hardware efficiency means using hardware long and well – and replacing it where the energy saved outweighs them.",
             )
