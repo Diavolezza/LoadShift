@@ -329,7 +329,7 @@ Engineering track opens after scenario 1, because it builds on the SCI per reque
 |---|---|---|---|---|---|
 | 1 | Night shift | Germany, autumn | 1 day | servers on/off by hand | Idle power: at night 20 % load, all servers on wastes energy; switching on takes 30 minutes, so plan ahead (G2). Term: Rightsizing. |
 | 2 | Wait for the sun | Spain (annual profile) | 2 days | batch jobs planned by hand, forecast | Reports and backups move into the midday dip – the night is not clean in a solar grid (G3). Term: Time Shifting. |
-| 3 | When the wind drops | Great Britain, winter | 3 days | batch rules (fixed hour, greenest hours, threshold), deadline safety | The rules automate what the player planned by hand in scenario 2. A fixed threshold works while the wind blows and fails when it drops: without the deadline safety jobs miss their deadlines, with it they start at the last moment in dirty hours. A rule that compares the hours of the (uncertain) forecast adapts to the weather (G3, D15). Term: Carbon-Aware Scheduling. |
+| 3 | When the wind drops | Great Britain, winter | 3 days | batch rules (fixed hour, greenest hours, threshold), deadline safety | The rules automate what the player planned by hand in scenario 2. A fixed threshold works while the wind blows and fails when it drops: without the deadline safety jobs miss their deadlines, with it they start at the last moment in dirty hours. A rule that compares the hours of the (uncertain) forecast adapts to the weather – if the plan is made again when the forecast changes (G3, D15). Term: Carbon-Aware Scheduling. |
 | 4 | Headroom | Germany, winter | 2 days | capacity rules with autoscaling (target utilization), money, SLA penalty | Autoscaling automates what the player did by hand in scenario 1; a marketing campaign doubles the load: too little headroom costs SLA, too much costs energy (G4). Term: Autoscaling. |
 | 5 | Consolidation | Germany, autumn | 1 day | placing VMs on hosts by hand (two dimensions: CPU and RAM) | Bin packing: fewer hosts running means less idle power. Pack by the peaks, not the means; VMs with opposite daily profiles fit together; often the RAM is full before the CPU; packing too tight lets the peaks collide (G6, D18). Term: Consolidation (Bin Packing). |
 | 6 | Heat wave | Germany, summer | 3 days | cooling type, setpoint | PUE rises with the outside temperature; setpoint and free cooling (G5). |
@@ -555,12 +555,17 @@ After each step the game is played by a person before the next step begins (**pl
   jobs not started yet anew. `WeatherMode.Days`: one weather factor per day. A changed capacity policy applies at
   once, also while paused, with the same result as at the next tick.
 - Scenario 3: Great Britain, winter, 3 days, weather 1.0 / 0.55 (storm) / 1.7 (windless), 12 CPU servers, 9 jobs.
-  Goals: ★★ −10 %, ★★★ batch work ≤ 140 g/kWh.
+  Goals: ★★ −10 %, ★★★ batch work ≤ 145 g/kWh. After the first play test (too easy: greenest hours plus safety
+  gave three stars at once) the forecast gets the timing wrong until day 2, 12:00: it expects the wind to drop 12
+  hours later than it does (`ForecastMiss`). Then the game pauses with the news. The greenest-hours rule plans once,
+  when it is applied; "Plan again with the latest forecast" plans the open jobs anew. Only a player who plans
+  again after the update reaches the third star (rolling planning).
 
 | Rule | CO₂ vs. reference | Batch work g/kWh | Deadlines missed | Stars |
 |---|---:|---:|---:|---:|
 | as soon as possible (reference) | – | 169 | 0 | – |
-| greenest hours by the forecast | −14 % | 135 | 0 | ★★★ |
+| greenest hours, planned once | −8 % | 151 | 0 | ★ |
+| greenest hours, planned again at the forecast update | −11 % | 142 | 0 | ★★★ |
 | at 03:00, with safety | −4 % | 160 | 0 | ★ |
 | at 03:00, without safety | −16 % | 144 | 1 | – |
 | below 140 g/kWh, with safety | −1 % | 166 | 0 | ★ |

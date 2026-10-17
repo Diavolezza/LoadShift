@@ -114,7 +114,12 @@ class LessonTest {
         val off = CapacityMode.Manual(0)
         val reference = Simulation.reference(scenario)
         val runs = mutableListOf<Pair<String, Simulation>>("reference: as soon as" to reference)
-        runs += "greenest (forecast)" to Simulation.replay(scenario, Policy(off, BatchMode.Greenest))
+        val update = scenario.forecastMiss!!.revisedAt
+        runs += "greenest, planned once" to Simulation.replay(scenario, Policy(off, BatchMode.Greenest))
+        runs += "greenest, again at update" to Simulation.replay(scenario, Policy(off, BatchMode.Greenest), setOf(update))
+        runs += "greenest, again every 6 h" to Simulation.replay(scenario, Policy(off, BatchMode.Greenest),
+            (0 until scenario.endTick step 24).toSet())
+        runs += "greenest, again late" to Simulation.replay(scenario, Policy(off, BatchMode.Greenest), setOf(update + 16))
         for (h in listOf(3, 13)) {
             runs += "at %02d:00, safety".format(h) to Simulation.replay(scenario, Policy(off, BatchMode.AtHour(h)))
             runs += "at %02d:00, no safety".format(h) to Simulation.replay(scenario, Policy(off, BatchMode.AtHour(h), false))
@@ -139,7 +144,7 @@ class LessonTest {
                 "%4d (%4d)    ".format(grid.intensity(tick), grid.forecast(tick, maxOf(0, tick - GameTime.TICKS_PER_DAY)))
             }
         }
-        for ((name, simulation) in runs.take(2) + runs.filter { it.first == "below 140, safety" }) {
+        for ((name, simulation) in runs.take(3) + runs.filter { it.first == "below 140, safety" }) {
             lines += "  $name: " + simulation.jobs.joinToString("  ") { job ->
                 val start = job.startedAt?.let { GameTime(it) }
                 "${job.id}@${start?.let { "d${it.day + 1} ${it.clockText}" } ?: "–"}"
@@ -152,9 +157,11 @@ class LessonTest {
         val run = runs.toMap()
         fun stars(name: String) = scenario.stars(run.getValue(name).totals, reference.totals)
         fun missed(name: String) = run.getValue(name).totals.deadlinesMissed
-        // The rule from the forecast earns all three stars.
-        assertEquals(0, missed("greenest (forecast)"))
-        assertEquals(3, stars("greenest (forecast)"))
+        // The rule from the forecast is good; planning again after the forecast update earns all three stars.
+        assertEquals(0, missed("greenest, planned once"))
+        assertEquals(0, missed("greenest, again at update"))
+        assertEquals(3, stars("greenest, again at update"), "planning again after the forecast update earns three stars")
+        assertTrue(stars("greenest, planned once") <= 2, "a plan from the old forecast is not enough for the third star")
         // Waiting without the deadline safety misses deadlines once the wind has dropped: no star.
         assertTrue(missed("at 03:00, no safety") > 0)
         assertTrue(missed("below 140, no safety") > 0)

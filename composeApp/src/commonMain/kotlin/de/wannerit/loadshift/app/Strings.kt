@@ -38,8 +38,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "1 Tag",
     "1 day, from 00:00" to
         "1 Tag, ab 00:00",
-    "A fixed threshold works while the wind blows. When it drops, the jobs wait in vain: without the deadline safety they miss their deadlines, with it they start at the last moment – often in the dirtiest hours. A rule that compares the hours of the forecast adapts to the weather." to
-        "Ein fester Schwellwert funktioniert, solange der Wind weht. Lässt er nach, warten die Jobs vergeblich: Ohne Fristsicherung verpassen sie ihre Fristen, mit ihr starten sie im letzten Moment – oft in den schmutzigsten Stunden. Eine Regel, die die Stunden der Prognose vergleicht, passt sich dem Wetter an.",
+    "A fixed threshold works while the wind blows. When it drops, the jobs wait in vain: without the deadline safety they miss their deadlines, with it they start at the last moment – often in the dirtiest hours. A rule that compares the hours of the forecast adapts to the weather – as long as the plan is made again when the forecast changes. Real schedulers plan again regularly for this reason." to
+        "Ein fester Schwellwert funktioniert, solange der Wind weht. Lässt er nach, warten die Jobs vergeblich: Ohne Fristsicherung verpassen sie ihre Fristen, mit ihr starten sie im letzten Moment – oft in den schmutzigsten Stunden. Eine Regel, die die Stunden der Prognose vergleicht, passt sich dem Wetter an – solange neu geplant wird, wenn sich die Prognose ändert. Echte Scheduler planen deshalb regelmäßig neu.",
     "A job starts as soon as the grid is at or below %lld g/kWh – the value now, not the forecast." to
         "Ein Job startet, sobald der Strom höchstens %lld g/kWh hat – der Wert jetzt, nicht die Prognose.",
     "A job that would otherwise miss its deadline starts when there is just enough time left (with a fixed hour and a threshold)." to
@@ -182,8 +182,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Jeder Job nachts um 03:00",
     "every job by its deadline and less CO₂ than the reference" to
         "jeder Job rechtzeitig und weniger CO₂ als die Referenz",
-    "Every job is planned into the hours with the lowest forecast before its deadline; planned again when a job arrives." to
-        "Jeder Job wird in die Stunden mit der niedrigsten Prognose vor seiner Frist geplant; neu geplant, wenn ein Job ankommt.",
+    "Every job is planned into the hours with the lowest forecast before its deadline, once, when you apply the rule." to
+        "Jeder Job wird in die Stunden mit der niedrigsten Prognose vor seiner Frist geplant – einmal, wenn du die Regel übernimmst.",
     "Every job starts at the next %@ after it arrives." to
         "Jeder Job startet nach seiner Ankunft beim nächsten Mal um %@ Uhr.",
     "Every job starts when it arrives." to
@@ -198,6 +198,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Fest: %lld Server den ganzen Tag",
     "Font: Inter, SIL Open Font License 1.1" to
         "Schrift: Inter, SIL Open Font License 1.1",
+    "Forecast update: the wind drops about 12 hours earlier than forecast." to
+        "Neue Prognose: Der Wind lässt etwa 12 Stunden früher nach als vorhergesagt.",
     "Forecast while it runs: %lld g/kWh · start by %@" to
         "Prognose während der Laufzeit: %1\$lld g/kWh · spätestens %2\$@",
     "France" to
@@ -210,10 +212,12 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Großbritannien",
     "Greenest hours (forecast)" to
         "Sauberste Stunden (Prognose)",
-    "Greenest hours by the forecast" to
-        "Sauberste Stunden nach Prognose",
     "greenest hours" to
         "sauberste Stunden",
+    "Greenest hours, planned again after the forecast update" to
+        "Sauberste Stunden, nach der neuen Prognose neu geplant",
+    "Greenest hours, planned once" to
+        "Sauberste Stunden, einmal geplant",
     "Grid data: Electricity Maps, Grid Review 2025 (life-cycle, imports included)" to
         "Netzdaten: Electricity Maps, Grid Review 2025 (Lebenszyklus, Importe eingerechnet)",
     "Grid now" to
@@ -266,16 +270,22 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Ein Server schafft %1\$lld Lasteinheiten (%2\$lld.000 Requests pro 15 Minuten). Über 85 %% Auslastung werden Requests langsam.",
     "One star opens the next scenario." to
         "Ein Stern schaltet das nächste Szenario frei.",
+    "Plan again with the latest forecast" to
+        "Mit neuester Prognose neu planen",
     "Plan" to
         "Planen",
     "planned %@" to
         "geplant %@",
     "Planned by the forecast (from scenario 3)" to
         "Nach Prognose geplant (ab Szenario 3)",
+    "Planned with the forecast of %@." to
+        "Geplant mit der Prognose von %@.",
     "planned" to
         "geplant",
     "Planning every job by hand does not scale. A rule does it for you: at a fixed hour, below a threshold, or into the greenest hours of the forecast. But the forecast is uncertain – ±25 % a day ahead in a wind grid – and a rule that waits for clean power may wait in vain. The deadline safety makes sure that no job misses its deadline." to
         "Jeden Job von Hand zu planen, skaliert nicht. Eine Regel übernimmt das: zu einer festen Uhrzeit, unter einem Schwellwert oder in die saubersten Stunden der Prognose. Doch die Prognose ist unsicher – in einem Windnetz ±25 % einen Tag im Voraus –, und eine Regel, die auf sauberen Strom wartet, wartet vielleicht vergeblich. Die Fristsicherung sorgt dafür, dass kein Job seine Frist verpasst.",
+    "Plans made with the old forecast may now fall into dirty hours. Look at the new forecast below." to
+        "Pläne, die mit der alten Prognose gemacht wurden, liegen jetzt vielleicht in schmutzigen Stunden. Schau dir unten die neue Prognose an.",
     "Play again" to
         "Noch einmal",
     "Plus and minus for the servers, and the situation right now." to

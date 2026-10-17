@@ -59,6 +59,8 @@ data class Scenario(
     val referencePolicy: Policy = Policy.REFERENCE,
     val goals: StarGoals = StarGoals(150, SpecialGoal.Reduction(250)),
     val batchJobs: List<BatchJobSpec> = emptyList(),
+    /** A forecast that gets the weather's timing wrong until it is revised (the game pauses then). */
+    val forecastMiss: ForecastMiss? = null,
 ) {
     /** First tick: 00:00 on day 0. */
     val startTick: Int get() = GameTime.START.tick
@@ -140,12 +142,14 @@ data class Scenario(
         val WHEN_THE_WIND_DROPS = Scenario(
             number = 3, title = "When the wind drops", setting = GridSetting(GridRegion.GREAT_BRITAIN, Season.WINTER),
             weather = WeatherMode.Days(listOf(1_000, 550, 1_700)), days = 3,
+            // Until day 2, 12:00 the forecast expects the wind to drop 12 hours later than it does.
+            forecastMiss = ForecastMiss(shift = 12 * GameTime.TICKS_PER_HOUR, revisedAt = GameTime.at(1, 12).tick),
             seed = 3, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 12)),
             interactive = InteractiveLoad(peak = 0),
             controls = setOf(Control.BATCH_RULES),
             initialPolicy = Policy(CapacityMode.Manual(0), BatchMode.Asap),
             referencePolicy = Policy(CapacityMode.Manual(0), BatchMode.Asap),
-            goals = StarGoals(100, SpecialGoal.BatchIntensity(140)),
+            goals = StarGoals(100, SpecialGoal.BatchIntensity(145)),
             batchJobs = listOf(
                 BatchJobSpec.of("Daily report", 4, 3, GameTime.at(0, 0), GameTime.at(0, 18)),
                 BatchJobSpec.of("Backup", 3, 4, GameTime.at(0, 1), GameTime.at(1, 8)),

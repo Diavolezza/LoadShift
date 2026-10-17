@@ -218,12 +218,20 @@ private fun BatchRules(game: GameController) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Txt(t("Batch rule"), Type.heading)
         Txt(t("A rule decides when each job starts – you no longer plan every job by hand. Choose a rule and apply it; you can change it at any time."), Type.style(15, color = Palette.secondary))
+        if (game.forecastNews) ForecastNews(game)
         RuleOption(game, GameController.RuleKind.ASAP, t("As soon as possible"), t("Every job starts when it arrives."))
         RuleOption(game, GameController.RuleKind.HOUR, t("At a fixed hour"), t("Every job starts at the next %@ after it arrives.", GameTime.at(0, game.draftHour).clockText)) {
             Stepper(GameTime.at(0, game.draftHour).clockText,
                 minus = { game.draftHour = (game.draftHour + 23) % 24 }, plus = { game.draftHour = (game.draftHour + 1) % 24 })
         }
-        RuleOption(game, GameController.RuleKind.GREENEST, t("Greenest hours (forecast)"), t("Every job is planned into the hours with the lowest forecast before its deadline; planned again when a job arrives."))
+        RuleOption(game, GameController.RuleKind.GREENEST, t("Greenest hours (forecast)"), t("Every job is planned into the hours with the lowest forecast before its deadline, once, when you apply the rule.")) {
+            val active = game.simulation.policy.batch == BatchMode.Greenest
+            val planned = game.simulation.plannedWithForecastOf
+            if (active && planned != null) {
+                Txt(t("Planned with the forecast of %@.", timeText(planned)), Type.caption)
+                SecondaryButton(t("Plan again with the latest forecast"), enabled = !game.isFinished) { game.replan() }
+            }
+        }
         RuleOption(game, GameController.RuleKind.THRESHOLD, t("Below a threshold"), t("A job starts as soon as the grid is at or below %lld g/kWh – the value now, not the forecast.", game.draftThreshold)) {
             val range = Policy.THRESHOLD_RANGE
             Stepper("${game.draftThreshold} g/kWh",
@@ -246,6 +254,22 @@ private fun BatchRules(game: GameController) {
                 if (game.draftIsActive) t("This rule is active.") else t("Active: %@", ruleText(game.simulation.policy)),
                 Type.style(14, color = if (game.draftIsActive) Palette.accent else Palette.secondary), Modifier.weight(1f),
             )
+        }
+    }
+}
+
+/** The forecast has changed: what that means for the plan, and the way to plan again. */
+@Composable
+private fun ForecastNews(game: GameController) {
+    Row(
+        Modifier.fillMaxWidth().background(Palette.amber.copy(alpha = 0.15f), RoundedCornerShape(10.dp)).padding(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        CheckMark(ok = false, warning = true)
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Txt(t("Forecast update: the wind drops about 12 hours earlier than forecast."), Type.style(15, FontWeight.SemiBold))
+            Txt(t("Plans made with the old forecast may now fall into dirty hours. Look at the new forecast below."), Type.callout)
+            Txt(t("OK"), Type.style(15, FontWeight.SemiBold, Palette.accent), Modifier.clip(RoundedCornerShape(6.dp)).clickable { game.dismissForecastNews() }.padding(horizontal = 4.dp))
         }
     }
 }

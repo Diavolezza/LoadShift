@@ -39,6 +39,10 @@ class GameController(val scenario: Scenario) {
     var stars by mutableIntStateOf(0)
         private set
 
+    /** The forecast has been revised (scenario 3): the game paused for it. */
+    var forecastNews by mutableStateOf(false)
+        private set
+
     /** A batch job that must start soon or will miss its deadline: the game paused for it. */
     var urgentJob by mutableStateOf<Int?>(null)
         private set
@@ -61,7 +65,29 @@ class GameController(val scenario: Scenario) {
     fun step() {
         if (simulation.isFinished) return
         simulation.step()
-        if (simulation.isFinished) finish() else checkUrgentJobs()
+        if (simulation.isFinished) finish() else {
+            checkUrgentJobs()
+            checkForecast()
+        }
+        changed()
+    }
+
+    /** Pauses when the forecast is revised (CONCEPT.md 3.3). */
+    private fun checkForecast() {
+        if (scenario.forecastMiss?.revisedAt == current.tick) {
+            forecastNews = true
+            speed = Speed.PAUSED
+        }
+    }
+
+    fun dismissForecastNews() {
+        forecastNews = false
+    }
+
+    /** Plans the open jobs again with the latest forecast (greenest-hours rule). */
+    fun replan() {
+        current.replan()
+        forecastNews = false
         changed()
     }
 
@@ -198,7 +224,11 @@ class GameController(val scenario: Scenario) {
                 t("Every job at night, at 03:00") to replay(BatchMode.AtHour(3)),
                 t("Below 150 g/kWh, with deadline safety") to replay(BatchMode.Threshold(150)),
                 t("Below 150 g/kWh, without deadline safety") to replay(BatchMode.Threshold(150), false),
-                t("Greenest hours by the forecast") to replay(BatchMode.Greenest),
+                t("Greenest hours, planned once") to replay(BatchMode.Greenest),
+                t("Greenest hours, planned again after the forecast update") to
+                    scenario.forecastMiss.let { miss ->
+                        Simulation.replay(scenario, Policy(capacity, BatchMode.Greenest), setOfNotNull(miss?.revisedAt)).totals
+                    },
             )
         }
         if (hasBatch) {
@@ -229,6 +259,7 @@ class GameController(val scenario: Scenario) {
         stars = 0
         showEnd = false
         urgentJob = null
+        forecastNews = false
         warnedJobs.clear()
         changed()
     }

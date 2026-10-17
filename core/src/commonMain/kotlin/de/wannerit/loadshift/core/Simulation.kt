@@ -111,7 +111,7 @@ class Simulation private constructor(
     constructor(scenario: Scenario, policy: Policy = scenario.initialPolicy) : this(
         scenario = scenario,
         policy = policy,
-        grid = Grid(scenario.setting, scenario.seed, scenario.weather),
+        grid = Grid(scenario.setting, scenario.seed, scenario.weather, scenario.forecastMiss),
         serverList = scenario.fleet.flatMap { e -> List(e.count) { e.kind } }
             .mapIndexed { i, kind -> Server(i, kind, ServerState.On) }.toMutableList(),
         jobList = scenario.batchJobs.mapIndexed { i, spec -> BatchJob(i, spec) }.toMutableList(),
@@ -122,8 +122,9 @@ class Simulation private constructor(
         missedCounted = mutableSetOf(),
         batchRuleSeen = null,
     ) {
-        // The start shows the servers as the policy wants them (the first tick would switch them anyway).
+        // The start shows the servers and the batch plans as the policy wants them (the first tick would do the same).
         applyCapacityPolicy()
+        planBatchJobs()
     }
 
     /** An independent copy (the simulation is mutable; projections and "what if" run on copies). */
@@ -136,11 +137,13 @@ class Simulation private constructor(
     val isFinished: Boolean get() = tick >= scenario.endTick
 
     /**
-     * Applies a changed capacity policy at once, before the next tick. The result is the same as applying it at
-     * the start of the next tick; the hall shows the change while the game is paused.
+     * Applies a changed policy at once, before the next tick: capacity and batch plans. The result is the same as
+     * applying it at the start of the next tick; hall and job list show the change while the game is paused.
      */
     fun applyPolicy() {
-        if (!isFinished) applyCapacityPolicy()
+        if (isFinished) return
+        applyCapacityPolicy()
+        planBatchJobs()
     }
 
     /** Runs the scenario to its end. */
@@ -358,8 +361,16 @@ class Simulation private constructor(
     /** Starts the jobs the batch policy wants to start now, if enough servers are free. */
     private fun startBatchJobs() {
         if (jobList.isEmpty()) return
+        planBatchJobs()
+        startPlannedJobs()
+    }
+
+    /** Plans the jobs by the batch rule (at this tick); a changed rule plans the jobs not started yet anew. */
+    private fun planBatchJobs() {
+        if (jobList.isEmpty()) return
         // A changed rule: jobs not started yet are planned again by the new rule (plans by hand stay).
         val rule = policy.batch to policy.deadlineSafety
+        val first = batchRuleSeen == null
         var ruleChanged = false
         if (rule != batchRuleSeen) {
             if (batchRuleSeen != null && policy.batch.isRule) {
@@ -386,12 +397,9 @@ class Simulation private constructor(
                     jobList[i] = job.copy(state = BatchJobState.Planned(safe))
                 }
             }
-            BatchMode.Greenest -> {
-                val arrived = jobList.any {
-                    it.spec.arrival == tick || (it.spec.arrival < tick && it.state == BatchJobState.Waiting)
-                }
-                if (arrived || ruleChanged) replanGreenest()
-            }
+            // Planned once, when the rule is applied; again only on request ([replan]): a plan made with an old
+            // forecast stays until somebody looks at the new one.
+            BatchMode.Greenest -> if (first || ruleChanged) replanGreenest()
             is BatchMode.Threshold -> {
                 val now = plannedAt?.let { grid.forecastTenths(tick, it) } ?: grid.intensityTenths(tick)
                 for (i in jobList.indices) {
@@ -403,6 +411,10 @@ class Simulation private constructor(
                 }
             }
         }
+    }
+
+    /** Starts the planned jobs whose time has come, if enough servers are free. */
+    private fun startPlannedJobs() {
         for (i in jobList.indices) {
             val job = jobList[i]
             val planned = job.state as? BatchJobState.Planned ?: continue
@@ -433,8 +445,18 @@ class Simulation private constructor(
         }
     }
 
+    /** Tick of the last plan by the greenest-hours rule (its forecast was made then). */
+    var plannedWithForecastOf: Int? = null
+        private set
+
+    /** Plans the jobs not started yet again with the latest forecast (greenest-hours rule only). */
+    fun replan() {
+        if (policy.batch == BatchMode.Greenest && !isFinished) replanGreenest()
+    }
+
     /** Plans all jobs not started yet into the greenest hours (forecast made now), around the running ones. */
     private fun replanGreenest() {
+        plannedWithForecastOf = tick
         val busy = mutableMapOf<Int, Int>()
         for (job in jobList) {
             val until = when (val state = job.state) {
@@ -453,7 +475,16 @@ class Simulation private constructor(
         /** Runs the scenario with the reference operator's policy (CONCEPT.md 8.2). */
         fun reference(scenario: Scenario): Simulation = replay(scenario, scenario.referencePolicy)
 
-        /** Runs the whole scenario with one policy from start to end – for "what if" in the debrief. */
-        fun replay(scenario: Scenario, policy: Policy): Simulation = Simulation(scenario, policy).also { it.run() }
+        /**
+         * Runs the whole scenario with one policy from start to end – for "what if" in the debrief; [replanAt]: ticks
+         * at which the plan is made again with the latest forecast.
+         */
+        fun replay(scenario: Scenario, policy: Policy, replanAt: Set<Int> = emptySet()): Simulation =
+            Simulation(scenario, policy).also {
+                while (!it.isFinished) {
+                    if (it.tick in replanAt) it.replan()
+                    it.step()
+                }
+            }
     }
 }

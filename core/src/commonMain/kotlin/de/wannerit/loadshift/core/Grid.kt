@@ -76,7 +76,25 @@ sealed interface WeatherMode {
     }
 }
 
-class Grid(val setting: GridSetting, private val seed: Long, val weatherMode: WeatherMode = WeatherMode.Drawn) {
+/**
+ * A forecast that gets the weather's timing wrong until it is revised (scenario 3: "the wind drops earlier than
+ * forecast"). Forecasts made before [revisedAt] see the weather [shift] ticks late: a positive shift means the
+ * forecast expects a change later than it comes. The next hours are forecast well all the same; the error grows
+ * over the first six hours of lead time.
+ */
+data class ForecastMiss(val shift: Int, val revisedAt: Int) {
+    companion object {
+        /** Lead time up to which a forecast is still close to the real value, ticks. */
+        const val NEAR = 6 * GameTime.TICKS_PER_HOUR
+    }
+}
+
+class Grid(
+    val setting: GridSetting,
+    private val seed: Long,
+    val weatherMode: WeatherMode = WeatherMode.Drawn,
+    val forecastMiss: ForecastMiss? = null,
+) {
     val curve: GridCurve = GridCurve.of(setting)
 
     /** Range of the drawn weather factor, per mille of the curve. */
@@ -120,14 +138,17 @@ class Grid(val setting: GridSetting, private val seed: Long, val weatherMode: We
     // Carbon intensity
 
     /** Carbon intensity at a tick in tenths of g CO₂e/kWh: the curve, linear between the full hours, times the weather. */
-    fun intensityTenths(tick: Int): Int {
+    fun intensityTenths(tick: Int): Int = intensityTenths(tick, weatherFactor(tick))
+
+    /** The curve at a tick with a given weather factor. */
+    private fun intensityTenths(tick: Int, weather: Int): Int {
         val perHour = GameTime.TICKS_PER_HOUR
         val inDay = tick % GameTime.TICKS_PER_DAY
         val hour = inDay / perHour
         val r = inDay % perHour
         val base = curve.hourly[hour] * (perHour - r) + curve.hourly[(hour + 1) % 24] * r
         val denominator = perHour * 1_000
-        return (base * weatherFactor(tick) + denominator / 2) / denominator
+        return (base * weather + denominator / 2) / denominator
     }
 
     /** Carbon intensity at a tick, g CO₂e/kWh (rounded). */
@@ -149,13 +170,21 @@ class Grid(val setting: GridSetting, private val seed: Long, val weatherMode: We
      */
     fun forecastTenths(tick: Int, madeAt: Int): Int {
         val actual = intensityTenths(tick)
+        val miss = forecastMiss
+        val expected = if (miss != null && madeAt < miss.revisedAt) {
+            val wrong = intensityTenths(tick, weatherFactor(tick - miss.shift))
+            val w = (tick - madeAt).coerceIn(0, ForecastMiss.NEAR)
+            (actual * (ForecastMiss.NEAR - w) + wrong * w) / ForecastMiss.NEAR
+        } else {
+            actual
+        }
         // Noise in -700..700, drawn every three hours and linear in between, so the forecast curve stays smooth.
         val knot = 3 * GameTime.TICKS_PER_HOUR
         val index = tick.floorDiv(knot)
         val r = tick - index * knot
         val noise = (forecastNoise(index) * (knot - r) + forecastNoise(index + 1) * r) / knot
         val error = noise * band(tick - madeAt) / 1_000
-        return (actual * (1_000 + error) + 500) / 1_000
+        return (expected * (1_000 + error) + 500) / 1_000
     }
 
     /** Forecast in g CO₂e/kWh (rounded). */

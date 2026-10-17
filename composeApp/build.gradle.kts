@@ -57,6 +57,9 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "LoadShift"
+            macOS { iconFile.set(project.file("icons/icon.icns")) }
+            windows { iconFile.set(project.file("icons/icon.ico")) }
+            linux { iconFile.set(project.file("icons/icon.png")) }
             packageVersion = "1.0.0"
         }
     }
