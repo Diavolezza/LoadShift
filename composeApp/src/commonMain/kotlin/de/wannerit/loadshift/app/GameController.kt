@@ -9,6 +9,7 @@ import de.wannerit.loadshift.core.CapacityMode
 import de.wannerit.loadshift.core.Control
 import de.wannerit.loadshift.core.GameTime
 import de.wannerit.loadshift.core.Policy
+import de.wannerit.loadshift.core.ScheduledMinimum
 import de.wannerit.loadshift.core.Scenario
 import de.wannerit.loadshift.core.Simulation
 import de.wannerit.loadshift.core.Totals
@@ -161,17 +162,55 @@ class GameController(val scenario: Scenario) {
             RuleKind.THRESHOLD -> BatchMode.Threshold(draftThreshold)
         }
 
+    // Capacity rules (scenario 4)
+
+    enum class CapacityKind { ALL_ON, FIXED, AUTOSCALE }
+
+    var capKind by mutableStateOf(CapacityKind.AUTOSCALE)
+    var capFixed by mutableIntStateOf(15)
+    var capTarget by mutableIntStateOf(800)
+    var capMinimumOn by mutableStateOf(false)
+    var capMinimum by mutableIntStateOf(24)
+    var capFrom by mutableIntStateOf(18)
+    var capTo by mutableIntStateOf(22)
+
+    /** The capacity rule of the draft. */
+    val draftCapacity: CapacityMode
+        get() = when (capKind) {
+            CapacityKind.ALL_ON -> CapacityMode.AllOn
+            CapacityKind.FIXED -> CapacityMode.Manual(capFixed)
+            CapacityKind.AUTOSCALE -> CapacityMode.Autoscale(capTarget, if (capMinimumOn) ScheduledMinimum(capMinimum, capFrom, capTo) else null)
+        }
+
+    /** The whole draft: the rules the scenario lets the player edit, the rest as it runs. */
+    val draftPolicy: Policy
+        get() {
+            var policy = simulation.policy
+            if (Control.BATCH_RULES in scenario.controls) policy = policy.copy(batch = draftBatch, deadlineSafety = draftSafety)
+            if (Control.CAPACITY_RULES in scenario.controls) policy = policy.copy(capacity = draftCapacity)
+            return policy
+        }
+
     /** The draft is what runs now. */
-    val draftIsActive: Boolean
-        get() = simulation.policy.batch == draftBatch && simulation.policy.deadlineSafety == draftSafety
+    val draftIsActive: Boolean get() = simulation.policy == draftPolicy
 
     fun applyDraft() {
-        setPolicy(simulation.policy.copy(batch = draftBatch, deadlineSafety = draftSafety))
+        setPolicy(draftPolicy)
     }
 
-    /** Sets the draft to the rule that runs now. */
+    /** Sets the draft to the rules that run now. */
     private fun resetDraft() {
         val policy = current.policy
+        when (val capacity = policy.capacity) {
+            CapacityMode.AllOn -> capKind = CapacityKind.ALL_ON
+            is CapacityMode.Manual -> { capKind = CapacityKind.FIXED; capFixed = capacity.servers }
+            is CapacityMode.Autoscale -> {
+                capKind = CapacityKind.AUTOSCALE
+                capTarget = capacity.targetUtilization
+                capMinimumOn = capacity.minimum != null
+                capacity.minimum?.let { capMinimum = it.servers; capFrom = it.fromHour; capTo = it.toHour }
+            }
+        }
         draftSafety = policy.deadlineSafety
         draftKind = when (val mode = policy.batch) {
             is BatchMode.AtHour -> RuleKind.HOUR.also { draftHour = mode.hour }
@@ -239,6 +278,20 @@ class GameController(val scenario: Scenario) {
                 t("Every job at night, at 01:00") to replay(BatchMode.AtHour(1)),
                 t("Every job at 11:00") to replay(BatchMode.AtHour(11)),
                 t("Planned by the forecast (from scenario 3)") to replay(BatchMode.Greenest),
+            )
+        }
+        if (Control.CAPACITY_RULES in scenario.controls) {
+            fun replay(policy: Policy, changes: Map<Int, Policy> = emptyMap()) = Simulation.replay(scenario, policy, changes = changes).totals
+            val start = scenario.initialPolicy
+            val target = (start.capacity as? CapacityMode.Autoscale)?.targetUtilization ?: 800
+            val day2 = GameTime.at(1, 12).tick
+            val prepared = Policy(CapacityMode.Autoscale(target, ScheduledMinimum(26, 18, 22)))
+            return listOf(
+                t("All servers on (reference)") to reference.totals,
+                t("Autoscaling at %@ (as at the start)", Format.wholePercent(target)) to replay(start),
+                t("Autoscaling at %@", Format.wholePercent(600)) to replay(Policy(CapacityMode.Autoscale(600))),
+                t("Autoscaling at %@, every day at least %lld servers 18:00–22:00", Format.wholePercent(target), 26) to replay(prepared),
+                t("Autoscaling at %@, on day 2 at least %lld servers 18:00–22:00", Format.wholePercent(target), 26) to replay(start, mapOf(day2 to prepared)),
             )
         }
         val half = scenario.serverCount / 2

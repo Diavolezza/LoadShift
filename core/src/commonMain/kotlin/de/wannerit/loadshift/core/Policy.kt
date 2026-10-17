@@ -9,10 +9,16 @@ sealed interface CapacityMode {
     data class Manual(val servers: Int) : CapacityMode
 
     /**
-     * The simulation keeps enough servers on to meet the expected demand of the next hour at the target
-     * utilization (per mille, 400..900).
+     * The simulation keeps enough servers on to meet the expected demand of the next hour – or the demand of the
+     * last tick, if that was higher – at the target utilization (per mille, 400..900). [minimum]: at least that
+     * many servers in a time window every day (scheduled scaling).
      */
-    data class Autoscale(val targetUtilization: Int) : CapacityMode
+    data class Autoscale(val targetUtilization: Int, val minimum: ScheduledMinimum? = null) : CapacityMode
+}
+
+/** At least [servers] servers every day from [fromHour] to [toHour] (exclusive), whatever the autoscaler thinks. */
+data class ScheduledMinimum(val servers: Int, val fromHour: Int, val toHour: Int) {
+    fun activeAt(tick: Int): Boolean = GameTime(tick).hour.let { it >= fromHour && it < toHour }
 }
 
 /** When batch jobs start (CONCEPT.md 5.2). */

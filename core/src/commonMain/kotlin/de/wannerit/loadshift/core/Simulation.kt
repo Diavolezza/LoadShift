@@ -290,14 +290,18 @@ class Simulation private constructor(
             }
             is CapacityMode.Autoscale -> {
                 val utilization = mode.targetUtilization.coerceIn(Policy.TARGET_RANGE)
-                val expected = (tick..tick + ServerKind.BOOT_TICKS + Policy.LOOKAHEAD)
-                    .maxOf { scenario.interactive.expected(it) }
+                // The expected demand of the coming hour; the last tick's demand too, if it was higher (the
+                // autoscaler also reacts to what it measures – a campaign is not in the expected demand).
+                val recent = historyList.lastOrNull()?.demand ?: 0
+                val expected = maxOf(recent, (tick..tick + ServerKind.BOOT_TICKS + Policy.LOOKAHEAD)
+                    .maxOf { scenario.interactive.expected(it) })
                 val needed = maxOf(1, ceilDiv(expected * 1_000, utilization))
+                val minimum = mode.minimum?.takeIf { it.activeAt(tick) }?.servers ?: 0
                 // The most efficient servers that together reach the needed capacity (at least one).
                 val wanted = mutableSetOf<Int>()
                 var sum = 0
                 for (i in order) {
-                    if (sum >= needed) break
+                    if (sum >= needed && wanted.size >= minimum) break
                     wanted += i
                     sum += serverList[i].kind.capacity
                 }
@@ -305,7 +309,7 @@ class Simulation private constructor(
                 // Surplus servers go off, but only as long as the wanted ones that are ready cover the need:
                 // a server keeps running until its replacement has finished booting.
                 var ready = order.filter { it in wanted && serverList[it].state.isOn }.sumOf { serverList[it].kind.capacity }
-                val neededNow = ceilDiv(scenario.interactive.expected(tick) * 1_000, utilization)
+                val neededNow = ceilDiv(maxOf(recent, scenario.interactive.expected(tick)) * 1_000, utilization)
                 for (i in order.reversed()) {
                     if (i in wanted || !serverList[i].state.isPowered) continue
                     if (ready >= neededNow) {
@@ -477,11 +481,12 @@ class Simulation private constructor(
 
         /**
          * Runs the whole scenario with one policy from start to end – for "what if" in the debrief; [replanAt]: ticks
-         * at which the plan is made again with the latest forecast.
+         * at which the plan is made again with the latest forecast; [changes]: policies applied at given ticks.
          */
-        fun replay(scenario: Scenario, policy: Policy, replanAt: Set<Int> = emptySet()): Simulation =
+        fun replay(scenario: Scenario, policy: Policy, replanAt: Set<Int> = emptySet(), changes: Map<Int, Policy> = emptyMap()): Simulation =
             Simulation(scenario, policy).also {
                 while (!it.isFinished) {
+                    changes[it.tick]?.let { changed -> it.policy = changed; it.applyPolicy() }
                     if (it.tick in replanAt) it.replan()
                     it.step()
                 }

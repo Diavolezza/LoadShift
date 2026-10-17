@@ -163,6 +163,25 @@ data class Scenario(
             ),
         )
 
-        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS)
+        /**
+         * Scenario 4, "Headroom": the web shop in Germany in winter, two days, with autoscaling. On day 2 a
+         * newsletter goes out at 19:00 and doubles the load for three hours. The autoscaler knows only the usual
+         * day and reacts to what it measures – too late, because a server takes 30 minutes to boot. Headroom costs
+         * energy all the time; a scheduled minimum for the campaign costs it only when needed.
+         */
+        val HEADROOM = Scenario(
+            number = 4, title = "Headroom", setting = GridSetting(GridRegion.GERMANY, Season.WINTER), days = 2,
+            seed = 4, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 30)),
+            interactive = InteractiveLoad(
+                peak = 240,
+                campaigns = listOf(Campaign(GameTime.at(1, 19).tick, GameTime.at(1, 22).tick, 2_000)),
+            ),
+            controls = setOf(Control.CAPACITY_RULES),
+            initialPolicy = Policy(CapacityMode.Autoscale(800)),
+            referencePolicy = Policy(CapacityMode.AllOn),
+            goals = StarGoals(300, SpecialGoal.MeanUtilization(700)),
+        )
+
+        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM)
     }
 }

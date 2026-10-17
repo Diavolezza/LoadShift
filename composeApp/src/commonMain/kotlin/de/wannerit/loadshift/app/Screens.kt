@@ -102,7 +102,7 @@ fun ScenarioListScreen(onSelect: (Scenario) -> Unit) {
                 RackIcon(64.dp)
                 Column {
                     Txt("Load Shift", Type.style(52, FontWeight.Bold))
-                    Txt(t("Run a greener data center"), Type.style(22, color = Palette.secondary))
+                    Txt(t("Green IT – from code to data center"), Type.style(22, color = Palette.secondary))
                 }
             }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {

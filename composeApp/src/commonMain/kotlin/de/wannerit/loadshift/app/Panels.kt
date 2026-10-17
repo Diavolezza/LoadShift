@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import de.wannerit.loadshift.core.BatchJob
 import de.wannerit.loadshift.core.BatchMode
+import de.wannerit.loadshift.core.CapacityMode
 import de.wannerit.loadshift.core.Policy
 import de.wannerit.loadshift.core.BatchJobState
 import de.wannerit.loadshift.core.BatchPlanner
@@ -46,6 +47,9 @@ fun ControlPanel(game: GameController, modifier: Modifier = Modifier) {
     ) {
         if (Control.BATCH_BY_HAND in game.scenario.controls || Control.BATCH_RULES in game.scenario.controls) {
             BatchPanel(game)
+        } else if (Control.CAPACITY_RULES in game.scenario.controls) {
+            CapacityRules(game)
+            NowBox(game)
         } else {
             Txt(t("Capacity"), Type.heading)
             ManualCapacity(game)
@@ -219,12 +223,12 @@ private fun BatchRules(game: GameController) {
         Txt(t("Batch rule"), Type.heading)
         Txt(t("A rule decides when each job starts – you no longer plan every job by hand. Choose a rule and apply it; you can change it at any time."), Type.style(15, color = Palette.secondary))
         if (game.forecastNews) ForecastNews(game)
-        RuleOption(game, GameController.RuleKind.ASAP, t("As soon as possible"), t("Every job starts when it arrives."))
-        RuleOption(game, GameController.RuleKind.HOUR, t("At a fixed hour"), t("Every job starts at the next %@ after it arrives.", GameTime.at(0, game.draftHour).clockText)) {
+        RuleOption(game.draftKind == GameController.RuleKind.ASAP, { game.draftKind = GameController.RuleKind.ASAP }, t("As soon as possible"), t("Every job starts when it arrives."))
+        RuleOption(game.draftKind == GameController.RuleKind.HOUR, { game.draftKind = GameController.RuleKind.HOUR }, t("At a fixed hour"), t("Every job starts at the next %@ after it arrives.", GameTime.at(0, game.draftHour).clockText)) {
             Stepper(GameTime.at(0, game.draftHour).clockText,
                 minus = { game.draftHour = (game.draftHour + 23) % 24 }, plus = { game.draftHour = (game.draftHour + 1) % 24 })
         }
-        RuleOption(game, GameController.RuleKind.GREENEST, t("Greenest hours (forecast)"), t("Every job is planned into the hours with the lowest forecast before its deadline, once, when you apply the rule.")) {
+        RuleOption(game.draftKind == GameController.RuleKind.GREENEST, { game.draftKind = GameController.RuleKind.GREENEST }, t("Greenest hours (forecast)"), t("Every job is planned into the hours with the lowest forecast before its deadline, once, when you apply the rule.")) {
             val active = game.simulation.policy.batch == BatchMode.Greenest
             val planned = game.simulation.plannedWithForecastOf
             if (active && planned != null) {
@@ -232,7 +236,7 @@ private fun BatchRules(game: GameController) {
                 SecondaryButton(t("Plan again with the latest forecast"), enabled = !game.isFinished) { game.replan() }
             }
         }
-        RuleOption(game, GameController.RuleKind.THRESHOLD, t("Below a threshold"), t("A job starts as soon as the grid is at or below %lld g/kWh – the value now, not the forecast.", game.draftThreshold)) {
+        RuleOption(game.draftKind == GameController.RuleKind.THRESHOLD, { game.draftKind = GameController.RuleKind.THRESHOLD }, t("Below a threshold"), t("A job starts as soon as the grid is at or below %lld g/kWh – the value now, not the forecast.", game.draftThreshold)) {
             val range = Policy.THRESHOLD_RANGE
             Stepper("${game.draftThreshold} g/kWh",
                 minus = { game.draftThreshold = maxOf(range.first, game.draftThreshold - 10) },
@@ -248,14 +252,76 @@ private fun BatchRules(game: GameController) {
                 Txt(t("A job that would otherwise miss its deadline starts when there is just enough time left (with a fixed hour and a threshold)."), Type.caption)
             }
         }
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            PrimaryButton(t("Apply"), enabled = !game.draftIsActive && !game.isFinished) { game.applyDraft() }
-            Txt(
-                if (game.draftIsActive) t("This rule is active.") else t("Active: %@", ruleText(game.simulation.policy)),
-                Type.style(14, color = if (game.draftIsActive) Palette.accent else Palette.secondary), Modifier.weight(1f),
-            )
-        }
+        ApplyRow(game) { ruleText(it) }
     }
+}
+
+/** "Apply" and what runs now. */
+@Composable
+private fun ApplyRow(game: GameController, describe: (Policy) -> String) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        PrimaryButton(t("Apply"), enabled = !game.draftIsActive && !game.isFinished) { game.applyDraft() }
+        Txt(
+            if (game.draftIsActive) t("This rule is active.") else t("Active: %@", describe(game.simulation.policy)),
+            Type.style(14, color = if (game.draftIsActive) Palette.accent else Palette.secondary), Modifier.weight(1f),
+        )
+    }
+}
+
+/** Scenario 4: a rule for the capacity – all on, a fixed number, autoscaling with an optional scheduled minimum. */
+@Composable
+private fun CapacityRules(game: GameController) {
+    val perServer = game.scenario.fleet.firstOrNull()?.kind?.capacity ?: 0
+    val total = game.scenario.serverCount
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Txt(t("Capacity rule"), Type.heading)
+        Txt(t("A rule switches the servers – you no longer do it by hand. One server handles %lld load units; it takes 30 minutes to boot.", perServer), Type.style(15, color = Palette.secondary))
+        val kind = game.capKind
+        RuleOption(kind == GameController.CapacityKind.ALL_ON, { game.capKind = GameController.CapacityKind.ALL_ON },
+            t("All on"), t("All %lld servers run all the time.", total))
+        RuleOption(kind == GameController.CapacityKind.FIXED, { game.capKind = GameController.CapacityKind.FIXED },
+            t("Fixed number"), t("%lld servers run all the time (%lld load units).", game.capFixed, game.capFixed * perServer)) {
+            Stepper(t("%lld servers", game.capFixed),
+                minus = { game.capFixed = maxOf(1, game.capFixed - 1) }, plus = { game.capFixed = minOf(total, game.capFixed + 1) })
+        }
+        RuleOption(kind == GameController.CapacityKind.AUTOSCALE, { game.capKind = GameController.CapacityKind.AUTOSCALE },
+            t("Autoscaling"), t("Keeps enough servers on for the expected load of the next hour – or the measured load, if it is higher – at %@ utilization. The rest is headroom.", Format.wholePercent(game.capTarget))) {
+            val range = Policy.TARGET_RANGE
+            Txt(t("Target utilization"), Type.caption)
+            Stepper(Format.wholePercent(game.capTarget),
+                minus = { game.capTarget = maxOf(range.first, game.capTarget - 50) }, plus = { game.capTarget = minOf(range.last, game.capTarget + 50) })
+            Row(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).clickable { game.capMinimumOn = !game.capMinimumOn }.padding(vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Tick(game.capMinimumOn)
+                Column(Modifier.weight(1f)) {
+                    Txt(t("Minimum in a time window"), Type.style(15, FontWeight.SemiBold))
+                    Txt(t("At least %lld servers every day from %@ to %@ (scheduled scaling).", game.capMinimum,
+                        GameTime.at(0, game.capFrom).clockText, GameTime.at(0, game.capTo % 24).clockText), Type.caption)
+                }
+            }
+            if (game.capMinimumOn) {
+                Stepper(t("%lld servers", game.capMinimum),
+                    minus = { game.capMinimum = maxOf(1, game.capMinimum - 1) }, plus = { game.capMinimum = minOf(total, game.capMinimum + 1) })
+                Stepper(t("from %@", GameTime.at(0, game.capFrom).clockText),
+                    minus = { game.capFrom = maxOf(0, game.capFrom - 1) }, plus = { game.capFrom = minOf(game.capTo - 1, game.capFrom + 1) })
+                Stepper(t("to %@", GameTime.at(0, game.capTo % 24).clockText),
+                    minus = { game.capTo = maxOf(game.capFrom + 1, game.capTo - 1) }, plus = { game.capTo = minOf(24, game.capTo + 1) })
+            }
+        }
+        ApplyRow(game) { capacityText(it.capacity) }
+    }
+}
+
+/** "autoscaling at 80 %, at least 26 servers 18:00–22:00" */
+fun capacityText(capacity: CapacityMode): String = when (capacity) {
+    CapacityMode.AllOn -> t("all on")
+    is CapacityMode.Manual -> t("fixed %lld servers", capacity.servers)
+    is CapacityMode.Autoscale -> capacity.minimum?.let {
+        t("autoscaling at %@, at least %lld servers %@–%@", Format.wholePercent(capacity.targetUtilization), it.servers,
+            GameTime.at(0, it.fromHour).clockText, GameTime.at(0, it.toHour % 24).clockText)
+    } ?: t("autoscaling at %@", Format.wholePercent(capacity.targetUtilization))
 }
 
 /** The forecast has changed: what that means for the plan, and the way to plan again. */
@@ -276,14 +342,13 @@ private fun ForecastNews(game: GameController) {
 
 /** One rule to choose, with its explanation and, when chosen, its setting. */
 @Composable
-private fun RuleOption(game: GameController, kind: GameController.RuleKind, title: String, text: String, setting: (@Composable () -> Unit)? = null) {
-    val chosen = game.draftKind == kind
+private fun RuleOption(chosen: Boolean, onChoose: () -> Unit, title: String, text: String, setting: (@Composable () -> Unit)? = null) {
     Column(
         Modifier.fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .background(if (chosen) Palette.accent.copy(alpha = 0.08f) else Palette.background, RoundedCornerShape(12.dp))
             .border(if (chosen) 1.5.dp else 0.dp, if (chosen) Palette.accent else Color.Transparent, RoundedCornerShape(12.dp))
-            .clickable { game.draftKind = kind }.padding(12.dp),
+            .clickable(onClick = onChoose).padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {

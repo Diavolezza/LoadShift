@@ -9,11 +9,18 @@ enum class WorkloadKind(val title: String) {
  * Demand of interactive work (web shop, app backend): a daily curve with an evening peak, scaled to the
  * scenario's peak, with a small random noise per tick. One work unit = 1,000 requests.
  */
+/**
+ * A marketing campaign: from [start] to [end] (ticks) the demand is [factor] per mille of the usual. It is not in
+ * the expected demand – a planner that only knows the usual day does not see it coming.
+ */
+data class Campaign(val start: Int, val end: Int, val factor: Int)
+
 data class InteractiveLoad(
     /** Work units per tick at the evening peak (curve value 1,000, before noise). */
     val peak: Int,
     /** Half width of the random noise per tick, per mille. */
     val noise: Int = 50,
+    val campaigns: List<Campaign> = emptyList(),
 ) {
     /** Expected demand at a tick, without noise (what the operator can plan with). */
     fun expected(tick: Int): Int {
@@ -25,10 +32,11 @@ data class InteractiveLoad(
         return peak * share / 1_000
     }
 
-    /** Actual demand at a tick: the expected demand with the noise of that tick. */
+    /** Actual demand at a tick: the expected demand with the noise of that tick, times a running campaign. */
     fun actual(tick: Int, seed: Long): Int {
         val e = SeededRandom.symmetric(seed, 10, tick, noise)
-        return maxOf(0, expected(tick) * (1_000 + e) / 1_000)
+        val campaign = campaigns.firstOrNull { tick >= it.start && tick < it.end }?.factor ?: 1_000
+        return maxOf(0, expected(tick) * (1_000 + e) / 1_000 * campaign / 1_000)
     }
 
     companion object {

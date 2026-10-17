@@ -141,6 +141,11 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
         val maxUnits = maxOf(10, maxOf(fleetCapacity, (history.map { it.demand } + expected.map { it.second }).maxOrNull() ?: 10))
         val unitsTop = niceCeiling(maxUnits).toFloat()
         fun yU(units: Int) = bottom - (bottom - top) * (units / unitsTop)
+        // Campaigns: marked, although the expected load does not know them.
+        for (c in scenario.interactive.campaigns) {
+            drawRect(Palette.amber.copy(alpha = 0.16f), Offset(x(c.start), top), Size(x(c.end) - x(c.start), bottom - top))
+            text(t("Campaign"), Offset(x(c.start) + 3f * density, top + 7f * density), Type.style(11, FontWeight.SemiBold, Color(0xFFB0741A)))
+        }
         if (history.isNotEmpty()) {
             val capacity = Path().apply {
                 moveTo(x(history[0].tick), bottom)

@@ -330,7 +330,7 @@ Engineering track opens after scenario 1, because it builds on the SCI per reque
 | 1 | Night shift | Germany, autumn | 1 day | servers on/off by hand | Idle power: at night 20 % load, all servers on wastes energy; switching on takes 30 minutes, so plan ahead (G2). Term: Rightsizing. |
 | 2 | Wait for the sun | Spain (annual profile) | 2 days | batch jobs planned by hand, forecast | Reports and backups move into the midday dip – the night is not clean in a solar grid (G3). Term: Time Shifting. |
 | 3 | When the wind drops | Great Britain, winter | 3 days | batch rules (fixed hour, greenest hours, threshold), deadline safety | The rules automate what the player planned by hand in scenario 2. A fixed threshold works while the wind blows and fails when it drops: without the deadline safety jobs miss their deadlines, with it they start at the last moment in dirty hours. A rule that compares the hours of the (uncertain) forecast adapts to the weather – if the plan is made again when the forecast changes (G3, D15). Term: Carbon-Aware Scheduling. |
-| 4 | Headroom | Germany, winter | 2 days | capacity rules with autoscaling (target utilization), money, SLA penalty | Autoscaling automates what the player did by hand in scenario 1; a marketing campaign doubles the load: too little headroom costs SLA, too much costs energy (G4). Term: Autoscaling. |
+| 4 | Headroom | Germany, winter | 2 days | capacity rules: all on, fixed, autoscaling with target utilization and a scheduled minimum | Autoscaling automates what the player did by hand in scenario 1. A newsletter on day 2 doubles the load for three hours; the autoscaler knows only the usual day and reacts too late (30 minutes boot time). Headroom all the time costs energy all the time; a minimum for the known event costs it only when needed (G4). Term: Autoscaling (with Scheduled Scaling). |
 | 5 | Consolidation | Germany, autumn | 1 day | placing VMs on hosts by hand (two dimensions: CPU and RAM) | Bin packing: fewer hosts running means less idle power. Pack by the peaks, not the means; VMs with opposite daily profiles fit together; often the RAM is full before the CPU; packing too tight lets the peaks collide (G6, D18). Term: Consolidation (Bin Packing). |
 | 6 | Heat wave | Germany, summer | 3 days | cooling type, setpoint | PUE rises with the outside temperature; setpoint and free cooling (G5). |
 | 7 | Old iron | France and Poland | 3 years (monthly steps) | buying and retiring servers | Replacing hardware pays off in Poland, hardly in France (G6, G1). |
@@ -578,6 +578,27 @@ After each step the game is played by a person before the next step begins (**pl
   on the scenario card and in the debrief; a live preview of the play screen in its start state with markers ①–④.
   End card: "To scenario N" once it is open.
 
+**As built in step 4, part 1** (scenario 4, without money – D4 revised):
+
+- Core: `Campaign` in the interactive load (not in the expected demand); the autoscaler also reacts to the demand
+  of the last tick; `ScheduledMinimum` (at least N servers every day in a time window); `Simulation.replay` with
+  policy changes at given ticks.
+- Scenario 4: Germany, winter, 2 days, 30 CPU servers, peak 240 units, newsletter on day 2 from 19:00 to 22:00
+  (twice the load). Start: autoscaling at 80 %. Goals: ★★ −30 %, ★★★ mean utilization ≥ 70 %.
+
+| Operator | CO₂ vs. reference | SLA | Mean utilization | Stars |
+|---|---:|---:|---:|---:|
+| all on (reference) | – | 100 % | 25 % | – |
+| autoscaling 80 % (as found) | −34 % | 98.3 % | 72 % | – |
+| autoscaling 60 % (headroom all the time) | −28 % | 99.3 % | 57 % | ★ |
+| 80 % + minimum 26 servers 18–22 every day | −31 % | 99.9 % | 66 % | ★★ |
+| 80 % + minimum 26 servers 18–22, set on day 2 | −33 % | 99.9 % | 71 % | ★★★ |
+| 80 %, all on from day 2 18:30 | −31 % | 100 % | 66 % | ★★ |
+
+- App: capacity rules panel (all on, fixed number, autoscaling with target and minimum window; draft and
+  "Apply"), the campaign marked in the load lane, "what if" with the alternatives above. Slogan "Green IT – from
+  code to data center".
+
 **Taken over from the Carbon Rush prototype** (copied, checked for every reference to its origin):
 grid curves and their generator, the forecast model, the electricity price formula, the embodied and SCI
 bookkeeping, the build script with its watcher, the string catalog tools, the App Store tools, sound effects and
@@ -592,7 +613,7 @@ music. Not taken over: maps, paths, the tower-and-creep rules, opponents, networ
 | D1 | Platforms | large screens first (the timeline needs width): browser and desktop, tablets; phones from step 9 (revised by D14) |
 | D2 | Hall view or pure dashboard | isometric hall with racks, timeline below, policies on the right |
 | D3 | Names of the workloads in the app | Interactive, Batch, AI training, Streaming – English IT terms in both languages |
-| D4 | Money | from scenario 4; before that only CO₂ and SLA |
+| D4 | Money | later (revised 17.10.): in scenario 4 lost requests would cost far more than electricity, so money would only say "always keep headroom"; it comes with a scenario where the electricity price matters |
 | D5 | Second time scale for the hardware lesson | monthly steps, only in scenario 6 and in free play as "fleet planning" |
 | D6 | Online ranking for classes | not at first; shareable result cards with the scenario code |
 | D7 | Outside temperature per region and season | collected in step 5 |

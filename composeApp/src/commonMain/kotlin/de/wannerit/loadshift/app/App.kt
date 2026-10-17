@@ -6,6 +6,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import de.wannerit.loadshift.core.BatchMode
+import de.wannerit.loadshift.core.CapacityMode
+import de.wannerit.loadshift.core.Control
+import de.wannerit.loadshift.core.ScheduledMinimum
 import de.wannerit.loadshift.core.GameTime
 import de.wannerit.loadshift.core.Policy
 import de.wannerit.loadshift.core.Scenario
@@ -62,6 +65,10 @@ private fun initialScreen(options: LaunchOptions): Screen {
     if (options.careful && game.hasBatch) {
         // Plan like a careful player: every job into the greenest hours of the forecast.
         game.setPolicy(Policy(scenario.initialPolicy.capacity, BatchMode.Greenest))
+        game.advance(options.ticks)
+    } else if (options.careful && Control.CAPACITY_RULES in scenario.controls) {
+        // Like a careful player: autoscaling with a minimum for the campaign.
+        game.setPolicy(Policy(CapacityMode.Autoscale(800, ScheduledMinimum(26, 18, 22))))
         game.advance(options.ticks)
     } else if (options.careful) {
         // Switch like a careful player: enough servers for the next 90 minutes at 80 % utilization.

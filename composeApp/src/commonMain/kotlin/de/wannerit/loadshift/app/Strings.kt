@@ -26,6 +26,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "%lld von 3 Sternen",
     "%lld servers for batch jobs" to
         "%lld Server für Batch-Jobs",
+    "%lld servers run all the time (%lld load units)." to
+        "%1\$lld Server laufen die ganze Zeit (%2\$lld Lasteinheiten).",
     "%lld servers run" to
         "%lld Server laufen",
     "%lld servers · %lld h · due %@" to
@@ -46,6 +48,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Ein Job, der sonst seine Frist verpassen würde, startet, wenn die Zeit gerade noch reicht (bei fester Uhrzeit und Schwellwert).",
     "A rule decides when each job starts – you no longer plan every job by hand. Choose a rule and apply it; you can change it at any time." to
         "Eine Regel entscheidet, wann jeder Job startet – du planst nicht mehr jeden Job von Hand. Wähle eine Regel und übernimm sie; du kannst sie jederzeit ändern.",
+    "A rule switches the servers – you no longer do it by hand. One server handles %lld load units; it takes 30 minutes to boot." to
+        "Eine Regel schaltet die Server – du machst es nicht mehr von Hand. Ein Server schafft %lld Lasteinheiten und braucht 30 Minuten zum Starten.",
     "A scheduler starts jobs by rules that look at the carbon intensity – now or in the forecast. It automates Time Shifting; Google shifts flexible work in its data centers this way, with day-ahead forecasts." to
         "Ein Scheduler startet Jobs nach Regeln, die auf die CO₂-Intensität schauen – jetzt oder in der Prognose. Das automatisiert Time Shifting; Google verschiebt so flexible Arbeit in seinen Rechenzentren, mit Prognosen für den nächsten Tag.",
     "A teaching game about Green IT: run a data center so that it serves its users reliably and emits as little CO₂ as possible – by switching servers, shifting work in time and, later, writing better software." to
@@ -54,8 +58,12 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Über Load Shift",
     "Active: %@" to
         "Aktiv: %@",
+    "All %lld servers run all the time." to
+        "Alle %lld Server laufen die ganze Zeit.",
     "All on" to
         "Alle an",
+    "all on" to
+        "alle an",
     "All servers on (reference)" to
         "Alle Server an (Referenz)",
     "All servers on" to
@@ -76,12 +84,26 @@ internal val GERMAN: Map<String, String> = mapOf(
         "um %@ Uhr",
     "At a fixed hour" to
         "Zu einer festen Uhrzeit",
+    "At least %lld servers every day from %@ to %@ (scheduled scaling)." to
+        "Mindestens %1\$lld Server, jeden Tag von %2\$@ bis %3\$@ (Scheduled Scaling).",
     "Autoscale" to
         "Autoscaling",
+    "Autoscaling at %@ (as at the start)" to
+        "Autoscaling bei %@ (wie zu Beginn)",
     "Autoscaling at %@" to
-        "Autoscaling mit %@",
+        "Autoscaling bei %@",
+    "autoscaling at %@" to
+        "Autoscaling bei %@",
+    "autoscaling at %@, at least %lld servers %@–%@" to
+        "Autoscaling bei %1\$@, mindestens %2\$lld Server %3\$@–%4\$@",
+    "Autoscaling at %@, every day at least %lld servers 18:00–22:00" to
+        "Autoscaling bei %1\$@, jeden Tag mindestens %2\$lld Server 18:00–22:00",
+    "Autoscaling at %@, on day 2 at least %lld servers 18:00–22:00" to
+        "Autoscaling bei %1\$@, an Tag 2 mindestens %2\$lld Server 18:00–22:00",
     "Autoscaling at 70 % (from scenario 4)" to
         "Autoscaling mit 70 % (ab Szenario 4)",
+    "Autoscaling does what you did by hand in scenario 1: it switches servers on and off for the load. The target utilization decides how much headroom stays free. Little headroom saves energy – but a server takes 30 minutes to boot, and the autoscaler knows only the usual day; a sudden peak finds it unprepared. Headroom all the time costs energy all the time; a minimum for a known event costs it only when it is needed." to
+        "Autoscaling macht, was du in Szenario 1 von Hand gemacht hast: Es schaltet Server passend zur Last ein und aus. Die Zielauslastung bestimmt, wie viel Reserve frei bleibt. Wenig Reserve spart Energie – aber ein Server braucht 30 Minuten zum Starten, und das Autoscaling kennt nur den gewöhnlichen Tag; eine plötzliche Spitze trifft es unvorbereitet. Reserve rund um die Uhr kostet rund um die Uhr Energie; ein Minimum für ein bekanntes Ereignis kostet sie nur, wenn sie gebraucht wird.",
     "Autumn" to
         "Herbst",
     "Back to the briefing" to
@@ -124,10 +146,18 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Gebaut mit Kotlin und Compose Multiplatform",
     "by hand" to
         "von Hand",
+    "Campaign" to
+        "Kampagne",
+    "Capacity follows the load automatically: servers are added when the utilization rises above a target and removed when it falls. The target decides the headroom. Scheduled scaling adds capacity for known events in advance." to
+        "Die Kapazität folgt der Last automatisch: Server kommen hinzu, wenn die Auslastung über ein Ziel steigt, und gehen, wenn sie fällt. Das Ziel bestimmt die Reserve (Headroom). Scheduled Scaling stellt für bekannte Ereignisse vorab Kapazität bereit.",
+    "Capacity rule" to
+        "Kapazitätsregel",
     "Capacity" to
         "Kapazität",
     "Capacity: %lld load units" to
         "Kapazität: %lld Lasteinheiten",
+    "Carbon intensity of the grid with the forecast, the load so far and the expected load (dotted). The campaign is marked – but it is not in the expected load." to
+        "Die CO₂-Intensität des Stroms mit Prognose, die Last bisher und die erwartete Last (gepunktet). Die Kampagne ist markiert – aber nicht in der erwarteten Last.",
     "Carbon intensity of the grid with the forecast, the load so far and the expected load (dotted); the lines on the right show how many servers a load needs." to
         "Die CO₂-Intensität des Stroms mit Prognose, die Last bisher und die erwartete Last (gepunktet); die Linien rechts zeigen, wie viele Server eine Last braucht.",
     "Carbon intensity of the grid, g CO₂/kWh – dashed: forecast" to
@@ -192,6 +222,10 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Alle Server laufen ständig – wie beim Referenzbetreiber.",
     "Expected load in 1 h" to
         "Erwartete Last in 1 h",
+    "fixed %lld servers" to
+        "fest %lld Server",
+    "Fixed number" to
+        "Feste Anzahl",
     "Fixed" to
         "Fest",
     "Fixed: %lld servers all day" to
@@ -204,12 +238,16 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Prognose während der Laufzeit: %1\$lld g/kWh · spätestens %2\$@",
     "France" to
         "Frankreich",
+    "from %@" to
+        "ab %@",
     "Germany" to
         "Deutschland",
     "Goals" to
         "Ziele",
     "Great Britain" to
         "Großbritannien",
+    "Green IT – from code to data center" to
+        "Green IT – vom Code bis zum Rechenzentrum",
     "Greenest hours (forecast)" to
         "Sauberste Stunden (Prognose)",
     "greenest hours" to
@@ -222,6 +260,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Netzdaten: Electricity Maps, Grid Review 2025 (Lebenszyklus, Importe eingerechnet)",
     "Grid now" to
         "Netz jetzt",
+    "Headroom is insurance: it costs energy every hour, whether the peak comes or not. When a peak is known in advance, scheduled scaling is cheaper – cloud platforms offer it next to the autoscaler. Predictive autoscaling goes one step further and learns such peaks from the past." to
+        "Reserve ist eine Versicherung: Sie kostet jede Stunde Energie, ob die Spitze kommt oder nicht. Ist eine Spitze vorher bekannt, ist Scheduled Scaling günstiger – Cloud-Plattformen bieten das neben dem Autoscaling an. Predictive Autoscaling geht einen Schritt weiter und lernt solche Spitzen aus der Vergangenheit.",
     "Image conversion" to
         "Bildkonvertierung",
     "IT power" to
@@ -230,6 +270,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Jobs fertig",
     "Jobs on time" to
         "Jobs rechtzeitig",
+    "Keeps enough servers on for the expected load of the next hour – or the measured load, if it is higher – at %@ utilization. The rest is headroom." to
+        "Hält genug Server für die erwartete Last der nächsten Stunde – oder die gemessene, falls sie höher ist – bei %@ Auslastung. Der Rest ist Reserve.",
     "late, %@" to
         "zu spät, %@",
     "Load (line) and capacity of the running servers (area) – red: slow requests" to
@@ -240,6 +282,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "mittlere Auslastung mindestens %@",
     "Mean utilization" to
         "Mittlere Auslastung",
+    "Minimum in a time window" to
+        "Minimum in einem Zeitfenster",
     "Missed" to
         "Verpasst",
     "MIT License" to
@@ -304,8 +348,6 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Gerade jetzt",
     "Rule" to
         "Regel",
-    "Run a greener data center" to
-        "Ein Rechenzentrum klimafreundlich betreiben",
     "Running only as much capacity as the load needs. An idle server still draws power, so servers that are not needed are switched off. Green Software Foundation principle: energy efficiency." to
         "Nur so viel Kapazität betreiben, wie die Last braucht. Ein Server im Leerlauf zieht trotzdem Strom, deshalb werden nicht benötigte Server abgeschaltet. Prinzip der Green Software Foundation: Energy Efficiency.",
     "runs until %@" to
@@ -344,12 +386,16 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Abschalten spart Strom, aber keine Hardware: Die Herstellungsemissionen bleiben gleich.",
     "Takes effect at once. Switched-off servers stop immediately; switched-on servers boot for 30 minutes." to
         "Wirkt sofort. Abgeschaltete Server stoppen sofort, eingeschaltete starten 30 Minuten lang.",
+    "Target utilization" to
+        "Zielauslastung",
     "Target utilization: %@" to
         "Zielauslastung: %@",
     "Technical term" to
         "Fachbegriff",
     "The batch rule: choose one, set it and apply it. Below it the jobs with their deadlines and what the rule has planned for them." to
         "Die Batch-Regel: wählen, einstellen, übernehmen. Darunter die Jobs mit ihren Fristen und was die Regel für sie geplant hat.",
+    "The capacity rule: all on, a fixed number, or autoscaling with a target utilization and, if you want, a minimum for a time window. Choose, set, apply. Below it the situation right now." to
+        "Die Kapazitätsregel: alle an, eine feste Anzahl oder Autoscaling mit Zielauslastung und auf Wunsch einem Minimum für ein Zeitfenster. Wählen, einstellen, übernehmen. Darunter die Lage gerade jetzt.",
     "The carbon intensity with the forecast, and below it one row per job – light: the time between arrival and deadline, outlined: planned, filled: running or done." to
         "Die CO₂-Intensität mit Prognose und darunter eine Zeile pro Job – hell: die Zeit zwischen Ankunft und Frist, umrandet: geplant, gefüllt: läuft oder fertig.",
     "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals. The game also pauses when a job must start within the hour." to
@@ -368,12 +414,16 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Derselbe Ablauf mit genau derselben Last und demselben Strommix – nur die Regeln sind anders:",
     "The servers needed for the expected load of the next hour run. A low target leaves headroom for peaks but more servers idle; a high target is efficient but gets slow at peaks." to
         "Es laufen die Server, die für die erwartete Last der nächsten Stunde nötig sind. Ein niedriges Ziel lässt Reserve für Spitzen, aber mehr Server stehen im Leerlauf; ein hohes Ziel ist effizient, wird aber bei Spitzen langsam.",
+    "The web shop again, now in winter and with 30 servers. Autoscaling is on: at 80 % target utilization it keeps just enough servers running. On day 2 marketing sends a newsletter at 19:00 – for three hours twice as many people will shop as usual." to
+        "Wieder der Webshop, jetzt im Winter und mit 30 Servern. Autoscaling ist eingeschaltet: Mit 80 % Zielauslastung hält es gerade genug Server am Laufen. An Tag 2 verschickt das Marketing um 19:00 einen Newsletter – drei Stunden lang kaufen doppelt so viele Leute ein wie sonst.",
     "The web shop's analytics cluster in Great Britain: twelve servers, nine jobs in three days. It is winter, and the British grid depends on the wind. Today is an ordinary winter day; tomorrow a storm front brings plenty of wind power, the day after the wind drops and gas power plants take over." to
         "Der Analyse-Cluster des Webshops in Großbritannien: zwölf Server, neun Jobs in drei Tagen. Es ist Winter, und das britische Netz hängt am Wind. Heute ist ein gewöhnlicher Wintertag; morgen bringt eine Sturmfront viel Windstrom, übermorgen lässt der Wind nach, und Gaskraftwerke übernehmen.",
     "The web shop's batch cluster in Spain: ten servers for reports, backups, imports and conversions. Over two days seven jobs arrive, each with a deadline. Nobody minds when a job runs – as long as it is finished in time." to
         "Der Batch-Cluster des Webshops in Spanien: zehn Server für Reports, Backups, Importe und Konvertierungen. In zwei Tagen kommen sieben Jobs, jeder mit einer Frist. Wann ein Job läuft, ist egal – solange er rechtzeitig fertig ist.",
     "This rule is active." to
         "Diese Regel ist aktiv.",
+    "to %@" to
+        "bis %@",
     "To scenario %lld" to
         "Weiter zu Szenario %lld",
     "Too late for the deadline – start by %@." to

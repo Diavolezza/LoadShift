@@ -173,6 +173,62 @@ class LessonTest {
         }
     }
 
+    /** Runs a scenario and changes the policy at given ticks (a player who acts before the campaign). */
+    private fun withChanges(scenario: Scenario, start: Policy, changes: Map<Int, Policy>): Simulation {
+        val simulation = Simulation(scenario, start)
+        while (!simulation.isFinished) {
+            changes[simulation.tick]?.let { simulation.policy = it; simulation.applyPolicy() }
+            simulation.step()
+        }
+        return simulation
+    }
+
+    @Test fun scenario4Headroom() {
+        val scenario = Scenario.HEADROOM
+        val reference = Simulation.reference(scenario)
+        val day2noon = GameTime.at(1, 12).tick
+        fun auto(target: Int, minimum: ScheduledMinimum? = null) = Policy(CapacityMode.Autoscale(target, minimum))
+        val runs = mutableListOf<Pair<String, Simulation>>("reference: all on" to reference)
+        for (target in listOf(500, 600, 700, 800, 900)) runs += "autoscale $target" to Simulation.replay(scenario, auto(target))
+        for (n in listOf(24, 26, 28)) {
+            runs += "as 800 + min $n 18-22 daily" to Simulation.replay(scenario, auto(800, ScheduledMinimum(n, 18, 22)))
+            runs += "as 800 + min $n 18-22 day 2" to withChanges(scenario, auto(800), mapOf(day2noon to auto(800, ScheduledMinimum(n, 18, 22))))
+            runs += "as 700 + min $n 18-22 day 2" to withChanges(scenario, auto(700), mapOf(day2noon to auto(700, ScheduledMinimum(n, 18, 22))))
+            runs += "as 900 + min $n 18-22 day 2" to withChanges(scenario, auto(900), mapOf(day2noon to auto(900, ScheduledMinimum(n, 18, 22))))
+        }
+        runs += "as 800, 500 from d2 12" to withChanges(scenario, auto(800), mapOf(day2noon to auto(500)))
+        runs += "as 800, all on d2 18:30" to withChanges(scenario, auto(800), mapOf(GameTime.at(1, 18, 30).tick to Policy(CapacityMode.AllOn)))
+        runs += "fixed 28" to Simulation.replay(scenario, Policy(CapacityMode.Manual(28)))
+        val lines = mutableListOf(title(scenario), HEADER)
+        for ((name, simulation) in runs) {
+            lines += line(name, simulation.totals, reference.totals) + "  " + "★".repeat(scenario.stars(simulation.totals, reference.totals))
+        }
+        lines += ""
+        lines += "Day 2  demand  servers on (autoscale 800 / + min 26 day 2)"
+        val plain = runs.first { it.first == "autoscale 800" }.second
+        val prepared = runs.first { it.first == "as 800 + min 26 18-22 day 2" }.second
+        for (t in GameTime.at(1, 17).tick until GameTime.at(1, 23).tick step 2) {
+            val a = plain.history.first { it.tick == t }
+            val b = prepared.history.first { it.tick == t }
+            lines += String.format(Locale.ROOT, "%s  %6d  %2d (cap %3d, in time %3d) / %2d (cap %3d, in time %3d)", GameTime(t).clockText,
+                a.demand, a.serversOn, a.capacity, a.inTime, b.serversOn, b.capacity, b.inTime)
+        }
+        report(4, lines)
+
+        assertTrue(reference.totals.sla >= scenario.slaTarget, "the reference meets the SLA")
+        assertEquals(0, scenario.stars(reference.totals, reference.totals))
+        val run = runs.toMap()
+        fun stars(name: String) = scenario.stars(run.getValue(name).totals, reference.totals)
+        // Left as it was found, autoscaling at 80 % misses the SLA in the campaign.
+        assertEquals(0, stars("autoscale 800"))
+        // Headroom all the time holds the SLA but costs energy: no more than one star.
+        assertTrue(stars("autoscale 600") <= 1)
+        assertTrue(stars("autoscale 500") <= 1)
+        // A minimum for the campaign window on day 2 earns all three stars; every day it costs the third.
+        assertEquals(3, stars("as 800 + min 26 18-22 day 2"))
+        assertTrue(stars("as 800 + min 26 18-22 daily") <= 2)
+    }
+
     private companion object {
         val sections = sortedMapOf<Int, List<String>>()
 
