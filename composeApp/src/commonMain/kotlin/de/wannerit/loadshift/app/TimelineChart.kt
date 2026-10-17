@@ -125,8 +125,20 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
                     }
                     drawPath(line, Palette.ink.copy(alpha = 0.8f), style = Stroke(1.5f * density))
                 }
+                // O9: the eco threshold and the hours the eco mode was on.
+                scenario.streaming?.let { model ->
+                    val c = simulation.policy.streaming
+                    if (c.eco) {
+                        val y = yI(c.ecoAbove * 10)
+                        drawLine(Palette.accent, Offset(left, y), Offset(right, y), 1.5f * density, pathEffect = PathEffect.dashPathEffect(floatArrayOf(5f * density, 4f * density)))
+                        text(t("eco above %lld", c.ecoAbove), Offset(right + 6f * density, y), Type.style(11, FontWeight.SemiBold, Palette.accent))
+                    }
+                    for (r in simulation.history) if (r.eco) {
+                        drawRect(Palette.accent, Offset(x(r.tick), topBottom + 1f), Size(maxOf(1f, x(r.tick + 1) - x(r.tick)), 4f * density))
+                    }
+                }
                 axis(topTop, topBottom, scaleTop.toInt().toString())
-                text(t("Carbon intensity of the grid, g CO₂/kWh – dashed: forecast"), Offset(left, topTop - 12f * density), Type.style(12, FontWeight.SemiBold))
+                text(if (scenario.streaming != null) t("Carbon intensity of the grid, g CO₂/kWh – dashed: forecast; green: eco mode on") else t("Carbon intensity of the grid, g CO₂/kWh – dashed: forecast"), Offset(left, topTop - 12f * density), Type.style(12, FontWeight.SemiBold))
             }
         }
 

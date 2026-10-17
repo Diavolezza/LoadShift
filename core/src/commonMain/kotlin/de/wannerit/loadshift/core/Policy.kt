@@ -74,6 +74,8 @@ data class Policy(
     val buyWhenShort: Boolean = false,
     /** O8: how the training runs. */
     val training: TrainingConfig = TrainingConfig(),
+    /** O9: qualities and eco mode of the streaming service. */
+    val streaming: StreamingConfig = StreamingConfig(),
 ) {
     companion object {
         /**

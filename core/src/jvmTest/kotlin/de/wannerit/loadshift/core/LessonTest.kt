@@ -415,6 +415,45 @@ class LessonTest {
         assertTrue(co2("6, 50 %, greenest") > co2("6, 60 %, greenest"))
     }
 
+    @Test fun scenario9EcoMode() {
+        val scenario = Scenario.ECO_MODE
+        val reference = Simulation.reference(scenario)
+        fun run(c: StreamingConfig) = Simulation.replay(scenario, scenario.initialPolicy.copy(streaming = c))
+        val U = Quality.UHD; val H = Quality.HD; val S = Quality.SD
+        val byDevice = StreamingConfig(listOf(H, H, U))
+        val runs = listOf("reference: 4K everywhere" to reference) + listOf(
+            "by device" to byDevice,
+            "HD everywhere" to StreamingConfig(listOf(H, H, H)),
+            "phones SD, by device" to StreamingConfig(listOf(S, H, U)),
+            "eco 600 only" to StreamingConfig(eco = true, ecoAbove = 600),
+            "by device + eco 700" to byDevice.copy(eco = true, ecoAbove = 700),
+            "by device + eco 650" to byDevice.copy(eco = true, ecoAbove = 650),
+            "by device + eco 600" to byDevice.copy(eco = true, ecoAbove = 600),
+            "by device + eco 550" to byDevice.copy(eco = true, ecoAbove = 550),
+            "by device + eco 500" to byDevice.copy(eco = true, ecoAbove = 500),
+            "by device + eco SD 650" to byDevice.copy(eco = true, ecoAbove = 650, ecoQuality = S),
+        ).map { (n, c) -> n to run(c) }
+        val lines = mutableListOf(title(scenario), HEADER + "  rating")
+        for ((name, sim) in runs) {
+            lines += line(name, sim.totals, reference.totals) + String.format(Locale.ROOT, "  %5.1f", sim.totals.meanRating / 10.0) +
+                "  " + "★".repeat(scenario.stars(sim.totals, reference.totals))
+        }
+        val grid = reference.grid
+        lines += "  grid day 1: " + (0 until 24 step 2).joinToString(" ") { "${it}h ${grid.intensity(GameTime.at(0, it).tick)}" }
+        lines += "  grid day 2: " + (0 until 24 step 2).joinToString(" ") { "${it}h ${grid.intensity(GameTime.at(1, it).tick)}" }
+        report(9, lines)
+        val byName = runs.toMap()
+        fun stars(name: String) = scenario.stars(byName.getValue(name).totals, reference.totals)
+        // HD on phones and laptops costs hardly any rating and saves 40 %: one star.
+        assertEquals(1, stars("by device"))
+        // Too much: the viewers' rating falls below the target – no star, however much CO₂ it saves.
+        assertEquals(0, stars("HD everywhere"))
+        assertEquals(0, stars("by device + eco SD 650"))
+        // With the eco mode in the dirty hours: two stars; pushed as far as the viewers accept: three.
+        assertEquals(2, stars("by device + eco 650"))
+        assertEquals(3, stars("by device + eco 550"))
+    }
+
     @Test fun e1MeasureFirst() {
         val scenario = Scenario.MEASURE_FIRST
         val reference = Simulation.reference(scenario)

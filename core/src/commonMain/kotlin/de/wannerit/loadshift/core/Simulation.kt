@@ -50,7 +50,13 @@ data class Totals(
     var trainingDone: Long = 0,
     var trainingFinishedAt: Int? = null,
     var trainingRestarts: Int = 0,
+    /** O9: the viewers' rating, summed over the streams (units of 1,000 streams × per mille), and the streams. */
+    var ratingSum: Long = 0,
+    var ratedStreams: Long = 0,
 ) {
+    /** O9: the viewers' mean rating, per mille. */
+    val meanRating: Int get() = if (ratedStreams == 0L) 1_000 else (ratingSum / ratedStreams).toInt()
+
     /** Share of the demand served in time, per mille. */
     val sla: Int get() = if (demand == 0L) 1_000 else (inTime * 1_000 / demand).toInt()
 
@@ -110,6 +116,8 @@ data class TickRecord(
     val fleetCapacity: Int = 0,
     /** O8: training work done so far, thousandths of a server-hour. */
     val trainingDone: Long = 0,
+    /** O9: eco mode was on. */
+    val eco: Boolean = false,
 )
 
 /** E3: memory used (tenths of GB), memory of the running cache servers (GB), hits (per mille of the cacheable requests), memory per kind (tenths of GB). */
@@ -160,6 +168,7 @@ class Simulation private constructor(
         val caching = scenario.caching
         return when {
             caching != null -> caching.work(policy.cache, scenario.interactive.expected(tick), tick)
+            scenario.streaming != null -> scenario.streaming.work(policy.streaming, grid.intensity(tick))
             growth != null -> growth.perRequest((tick - scenario.startTick) / GameTime.TICKS_PER_DAY, scenario.backlog, policy.done)
             scenario.backlog.isNotEmpty() -> Engineering.work(scenario.backlog, policy.done)
             else -> 1_000
@@ -350,6 +359,10 @@ class Simulation private constructor(
             totals.stale += (requests * 1_000.0 * caching.staleShare(policy.cache, scenario.interactive.expected(tick), tick)).roundToLong()
         }
         totals.requests += requests
+        scenario.streaming?.let { streaming ->
+            totals.ratingSum += requests.toLong() * streaming.rating(policy.streaming, grid.intensity(tick))
+            totals.ratedStreams += requests
+        }
         // Scenario 6: the server fans follow the setpoint; the cooling follows the outside temperature.
         val cooling = scenario.cooling
         if (cooling != null) itPower = itPower * cooling.fanPermille(policy.setpoint) / 1_000
@@ -381,6 +394,7 @@ class Simulation private constructor(
                 facilityPower = facilityPower, emissionsSoFar = totals.emissions, hostDemandMilli = hostMilli,
                 setpoint = policy.setpoint, cache = cacheRecord,
                 embodiedSoFar = totals.embodied, fleetCapacity = serverList.sumOf { it.kind.capacity }, trainingDone = totals.trainingDone,
+                eco = scenario.streaming?.ecoActive(policy.streaming, (intensity + 5) / 10) ?: false,
             ),
         )
         tick += 1

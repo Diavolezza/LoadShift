@@ -23,6 +23,21 @@ class ScenarioTexts(
 ) {
     companion object {
         fun of(scenario: Scenario): ScenarioTexts = when (scenario.number) {
+            9 -> ScenarioTexts(
+                situation = "A video streaming service with its servers in Poland. It is summer: the sun makes the middays cleaner, but in the evening – when most people watch – coal carries the grid. The viewers watch on phones (40 %), laptops (25 %) and TVs (35 %). Today every device gets 4K.",
+                idea = "The cleanest energy is the energy not used. 4K needs four times the work of HD – and on a phone screen nobody sees the difference. Demand shaping goes one step further: while the grid is dirty, the service lowers the quality a little, as far as the viewers accept it. Their rating is the limit.",
+                screen = listOf(
+                    "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals: the viewers' rating and less CO₂.",
+                    "Your racks: grey servers are off, light blue ones are booting, the blue bar shows how busy a server is.",
+                    "Video quality: the highest quality per device with the viewers' rating, the eco mode and its threshold. Below it the situation right now.",
+                    "Carbon intensity of the grid with the forecast, the eco threshold and the hours with eco mode on (green); below it the load and capacity.",
+                ),
+                comparedWith = "compared with the reference operator, who streams 4K to every device.",
+                rules = "Viewers' rating at least 93 % and less CO₂ than the reference",
+                remark = "Most of the saving needed no compromise: 4K on a phone is work nobody sees. The eco mode adds the rest – in the dirty evening hours, where it saves most and where it is noticed most. SD went too far: the viewers' rating fell below the target. In reality most of the energy of streaming goes into networks and devices, not into the data center [S8]; a lower bitrate saves there as well.",
+                term = "Demand Shaping",
+                termText = "Adapting the demand to the supply of clean electricity – here through the quality of the service – instead of moving it in time or place. Eco modes of apps and streaming services are the common examples; the users should notice little and be able to choose.",
+            )
             8 -> ScenarioTexts(
                 situation = "The shop wants a language model for its search, trained by the end of day 3. Eight GPU servers are ready, each up to 10 kW. It is spring in Germany: sunny middays, a calm first day, a windy second day, a calm third. The data science team would start at once, with all servers and without limits.",
                 idea = "AI training is the most flexible load there is: it needs a lot of energy, but not at a particular hour, and it can pause at a checkpoint. Three levers: when it runs (the greenest hours of the forecast), how much power each GPU may draw (a power cap saves more energy than it costs in time), and how many servers train together (more are faster, but they spend time waiting for each other).",

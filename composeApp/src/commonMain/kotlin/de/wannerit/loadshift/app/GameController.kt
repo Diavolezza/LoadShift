@@ -17,6 +17,8 @@ import de.wannerit.loadshift.core.ScheduledMinimum
 import de.wannerit.loadshift.core.Scenario
 import de.wannerit.loadshift.core.Simulation
 import de.wannerit.loadshift.core.Totals
+import de.wannerit.loadshift.core.Quality
+import de.wannerit.loadshift.core.StreamingConfig
 import de.wannerit.loadshift.core.TrainingConfig
 import de.wannerit.loadshift.core.VmKind
 import de.wannerit.loadshift.core.forSite
@@ -333,6 +335,19 @@ class GameController(val scenario: Scenario) {
     var capFrom by mutableIntStateOf(18)
     var capTo by mutableIntStateOf(22)
 
+    // Streaming (O9)
+
+    var streamMax by mutableStateOf(listOf<Quality>())
+    var streamEco by mutableStateOf(false)
+    var streamEcoAbove by mutableIntStateOf(600)
+    var streamEcoQuality by mutableStateOf(Quality.HD)
+    val draftStreaming: StreamingConfig get() = StreamingConfig(streamMax, streamEco, streamEcoAbove, streamEcoQuality)
+
+    fun setMaxQuality(device: Int, quality: Quality) {
+        val n = scenario.streaming?.devices?.size ?: return
+        streamMax = List(n) { if (it == device) quality else streamMax.getOrElse(it) { Quality.UHD } }
+    }
+
     // Training (O8)
 
     val hasTraining: Boolean get() = scenario.training != null
@@ -378,6 +393,7 @@ class GameController(val scenario: Scenario) {
             if (Control.CACHING in scenario.controls) policy = policy.copy(cache = draftCache)
             if (Control.COOLING in scenario.controls) policy = policy.copy(setpoint = draftSetpoint)
             if (Control.TRAINING in scenario.controls) policy = policy.copy(training = draftTraining)
+            if (Control.STREAMING in scenario.controls) policy = policy.copy(streaming = draftStreaming)
             return policy
         }
 
@@ -405,6 +421,11 @@ class GameController(val scenario: Scenario) {
         draftSafety = policy.deadlineSafety
         draftSetpoint = policy.setpoint
         trainServers = policy.training.servers; trainCap = policy.training.cap; trainGreenest = policy.training.greenest
+        scenario.streaming?.let { m ->
+            val c = policy.streaming
+            streamMax = m.devices.indices.map { c.maxQuality.getOrElse(it) { Quality.UHD } }
+            streamEco = c.eco; streamEcoAbove = c.ecoAbove; streamEcoQuality = c.ecoQuality
+        }
         scenario.caching?.let { model ->
             val c = policy.cache
             cacheServers = c.servers
@@ -433,6 +454,7 @@ class GameController(val scenario: Scenario) {
         val capKind: CapacityKind, val capFixed: Int, val capTarget: Int, val capMinimumOn: Boolean, val capMinimum: Int,
         val capFrom: Int, val capTo: Int, val startPolicy: Policy?, val cache: CacheConfig, val setpoint: Int,
         val training: TrainingConfig,
+        val streaming: StreamingConfig,
     )
 
     private companion object {
@@ -442,7 +464,7 @@ class GameController(val scenario: Scenario) {
     /** Keeps the panel's settings for the next run (a new run starts with the scenario's rules, the panel keeps yours). */
     fun saveDraft() {
         drafts[scenario.number] = Draft(draftKind, draftHour, draftThreshold, draftSafety, capKind, capFixed, capTarget,
-            capMinimumOn, capMinimum, capFrom, capTo, startPolicy ?: current.policy.takeIf { current.history.isEmpty() }, draftCache, draftSetpoint, draftTraining)
+            capMinimumOn, capMinimum, capFrom, capTo, startPolicy ?: current.policy.takeIf { current.history.isEmpty() }, draftCache, draftSetpoint, draftTraining, draftStreaming)
     }
 
     private fun restoreDraft() {
@@ -455,6 +477,8 @@ class GameController(val scenario: Scenario) {
         cacheCount = d.cache.approximateCount; cacheView = d.cache.materializedView; cacheInvalidate = d.cache.invalidate; cacheWarmUp = d.cache.warmUp
         draftSetpoint = d.setpoint
         trainServers = d.training.servers; trainCap = d.training.cap; trainGreenest = d.training.greenest
+        if (d.streaming.maxQuality.isNotEmpty()) streamMax = d.streaming.maxQuality
+        streamEco = d.streaming.eco; streamEcoAbove = d.streaming.ecoAbove; streamEcoQuality = d.streaming.ecoQuality
         // A new run starts with the rules the last run started with (the panel shows the last run's final ones).
         if (d.startPolicy != null && current.history.isEmpty() && !hasSprints) {
             current.policy = d.startPolicy
@@ -548,6 +572,18 @@ class GameController(val scenario: Scenario) {
 
     /** "What if" for the debrief: the whole scenario replayed with other rules, with the same load and grid mix. */
     fun whatIf(): List<Pair<String, Totals>> {
+        if (scenario.streaming != null) {
+            fun run(c: StreamingConfig) = Simulation.replay(scenario, scenario.initialPolicy.copy(streaming = c)).totals
+            val byDevice = StreamingConfig(listOf(Quality.HD, Quality.HD, Quality.UHD))
+            return listOf(
+                t("4K on every device (reference)") to referenceTotals,
+                t("HD everywhere") to run(StreamingConfig(listOf(Quality.HD, Quality.HD, Quality.HD))),
+                t("HD on phones and laptops, 4K on TVs") to run(byDevice),
+                t("The same, eco mode HD above 650 g/kWh") to run(byDevice.copy(eco = true, ecoAbove = 650)),
+                t("The same, eco mode HD above 550 g/kWh") to run(byDevice.copy(eco = true, ecoAbove = 550)),
+                t("The same, eco mode SD above 650 g/kWh") to run(byDevice.copy(eco = true, ecoAbove = 650, ecoQuality = Quality.SD)),
+            )
+        }
         if (hasTraining) {
             fun run(n: Int, cap: Int, greenest: Boolean) = Simulation.replay(scenario, scenario.initialPolicy.copy(training = TrainingConfig(n, cap, greenest))).totals
             return listOf(

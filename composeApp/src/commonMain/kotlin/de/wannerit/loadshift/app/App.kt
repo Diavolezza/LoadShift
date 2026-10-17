@@ -71,6 +71,12 @@ private fun initialScreen(options: LaunchOptions): Screen {
         // Plan like a careful player: every job into the greenest hours of the forecast.
         game.setPolicy(Policy(scenario.initialPolicy.capacity, BatchMode.Greenest))
         game.advance(options.ticks)
+    } else if (options.careful && Control.STREAMING in scenario.controls) {
+        // Like a careful player: HD on phones and laptops, eco mode HD above 550 g/kWh.
+        val hd = de.wannerit.loadshift.core.Quality.HD
+        game.setPolicy(scenario.initialPolicy.copy(streaming = de.wannerit.loadshift.core.StreamingConfig(
+            listOf(hd, hd, de.wannerit.loadshift.core.Quality.UHD), eco = true, ecoAbove = 550)))
+        game.advance(options.ticks)
     } else if (options.careful && Control.TRAINING in scenario.controls) {
         // Like a careful player: six servers, cap 60 %, the greenest hours.
         game.setPolicy(scenario.initialPolicy.copy(training = de.wannerit.loadshift.core.TrainingConfig(6, 600, true)))

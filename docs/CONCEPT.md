@@ -335,7 +335,7 @@ Engineering track opens after scenario 1, because it builds on the SCI per reque
 | 6 | Heat wave | Germany, summer | 3 days | inlet setpoint (18–27 °C), capacity rule | Outside air cools for free while it is 6 K below the setpoint; in the heat the chiller works, the hotter the more. A warmer setpoint saves chiller power, above 25 °C the server fans eat it up: the sweet spot is 25 °C. The PUE trap: fewer servers save the most energy but raise the PUE (fixed facility power); 27 °C and all servers on give the best PUE and more CO₂. The stars count CO₂ (G5, D21). Term: PUE (Power Usage Effectiveness). |
 | 7 | Old iron | Warsaw and Paris | 3 years (12 quarters, one game day each) | where and when new servers go: a budget of four a year | Two data centers with the same old fleet (24 servers, four years old). The shop grows by 15 % a year; every year a generation that needs 17 % less power; from year 3 the old servers fail. A new server does the work of two old ones; making it emits 550 kg, booked over six years. In the Polish grid a new server saves many times that, in the French grid hardly anything: new hardware first where the grid is dirty, at the clean site only what the capacity needs, as late as possible (G6, G1, D22). Term: Embodied Carbon. |
 | 8 | Training run | Germany, spring (calm, windy, calm) | 3 days | GPU servers in parallel, power cap, schedule (without a break or greenest hours) | A model needs a fixed amount of GPU work by the end of day 3. The greenest hours move the work into wind and sun; a power cap saves energy for a little time [S7]; fewer servers waste less time waiting for each other. A pause costs a checkpoint load (G3, G6). Term: Carbon-Aware Training (Power Capping). |
-| 9 | Eco mode | Poland, summer | 2 days | streaming eco mode | Lower quality when the grid is dirty (G7). Term: Demand Shaping. |
+| 9 | Eco mode | Poland, summer | 2 days | highest quality per device (4K, HD, SD), eco mode with threshold and eco quality | A streaming service: phones 40 %, laptops 25 %, TVs 35 %; 4K needs four times the work of HD. HD on phones and laptops costs hardly any rating; an eco mode lowers TVs to HD while the grid is dirty – in the evening, when most watch. The viewers' rating must stay at 93 % (G7). Term: Demand Shaping. |
 | 10 | Two sites | Norway and Germany | 3 days | moving workloads between sites | Batch and training move to Norway; interactive stays close to the users (latency) (G8). Term: Location Shifting. |
 | 11 | Dark doldrums | Germany, winter, windless | 7 days | all | Little sun, no wind, high prices – everything together, with a hard SCI target. |
 
@@ -796,6 +796,25 @@ music. Not taken over: maps, paths, the tower-and-creep rules, opponents, networ
 | 8, cap 70 %, greenest hours | −23.9 % | ★★ |
 | 6, cap 60 %, greenest hours | −29.5 % | ★★★ |
 | 4, cap 70 %, at once | (not done in time) | 0 |
+
+**As built in step 5, part 4** (scenario 9, "Eco mode"):
+
+- Core: `StreamingModel` – devices with a share of the viewers and a rating of 4K/HD/SD (phones 100/100/80 %,
+  laptops 100/95/60 %, TVs 100/80/40 %), work per stream 15 % fixed plus the bitrate (HD a quarter of 4K, SD a
+  tenth), rating target 93 %. `Policy.streaming` (`StreamingConfig`: highest quality per device, eco mode, threshold,
+  eco quality). The eco mode looks at the grid now. `Totals.meanRating`; the first star needs the rating.
+- App: quality panel (chips per device with the rating, eco mode, threshold, the situation now); the carbon lane
+  shows the threshold and the hours with eco mode on; rating in the top bar, goals and end card.
+- Goals ★★ −45 %, ★★★ −56 %.
+
+| Rules | CO₂ vs. reference | Rating | Stars |
+|---|---:|---:|---:|
+| 4K everywhere (reference) | – | 100 % | – |
+| HD on phones and laptops | −39.6 % | 98.7 % | ★ |
+| HD everywhere | −60.6 % | 91.7 % | 0 |
+| the same plus eco HD above 650 g/kWh | −52.0 % | 95.0 % | ★★ |
+| the same plus eco HD above 550 g/kWh | −57.3 % | 93.2 % | ★★★ |
+| the same plus eco SD above 650 g/kWh | −59.1 % | 78.9 % | 0 |
 
 ---
 

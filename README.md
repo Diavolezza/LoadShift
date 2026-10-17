@@ -25,6 +25,7 @@ The app speaks English and German (switch on the start page); everything in this
 | O6 | Heat wave | PUE (Power Usage Effectiveness) |
 | O7 | Old iron | Embodied Carbon |
 | O8 | Training run | Carbon-Aware Training (Power Capping) |
+| O9 | Eco mode | Demand Shaping |
 
 | | Engineering | Term |
 |---|---|---|
@@ -32,7 +33,7 @@ The app speaks English and German (switch on the start page); everything in this
 | E2 | Growing data | Algorithmic complexity |
 | E3 | Hit or miss | Caching |
 
-In German the operations scenarios are called B1–B8 ("Betrieb"). A star in one scenario opens the next; teachers can
+In German the operations scenarios are called B1–B9 ("Betrieb"). A star in one scenario opens the next; teachers can
 open all scenarios in the About dialog. More scenarios are planned (`docs/CONCEPT.md`, section 9).
 
 ## Running the game

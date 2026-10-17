@@ -122,6 +122,10 @@ private fun TopBar(game: GameController, onExit: () -> Unit) {
             Metric(t("Jobs done"), "${simulation.totals.jobsDone} / ${simulation.jobs.size}",
                 if (simulation.totals.deadlinesMissed == 0) Palette.ink else Palette.red)
         }
+        simulation.scenario.streaming?.let { model ->
+            val rating = simulation.totals.meanRating
+            Metric(t("Rating"), Format.percent(rating), if (rating >= model.ratingTarget) Palette.ink else Palette.red)
+        }
         simulation.scenario.training?.let { model ->
             Metric(t("Training"), Format.wholePercent(minOf(1_000L, simulation.totals.trainingDone * 1_000 / model.work).toInt()),
                 if (simulation.totals.trainingFinishedAt != null) Palette.accent else Palette.ink)
@@ -203,6 +207,10 @@ private fun GoalBar(game: GameController) {
                 if (game.hasRenewal) t("SLA ≥ %@ at each site", Format.percent(scenario.slaTarget)) else t("SLA ≥ %@", Format.percent(scenario.slaTarget)))
             GoalItem((change ?: 0) < 0, change != null,
                 if (change == null) t("CO₂ vs. reference") else t("CO₂ vs. reference: %@", Format.changePermille(change)))
+        }
+        scenario.streaming?.let { model ->
+            GoalItem(totals.meanRating >= model.ratingTarget, change != null,
+                t("Viewers' rating %@ (at least %@)", Format.percent(totals.meanRating), Format.percent(model.ratingTarget)))
         }
         if (game.hasTraining) {
             val done = totals.trainingFinishedAt
@@ -293,6 +301,7 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
                         add(t("Servers on (mean)") to (Format.number(you.meanServersOn / 1_000.0, 1) to Format.number(ref.meanServersOn / 1_000.0, 1)))
                         add(t("Mean utilization") to (Format.wholePercent(you.meanUtilization) to Format.wholePercent(ref.meanUtilization)))
                     }
+                    if (scenario.streaming != null) add(t("Viewers' rating") to (Format.percent(you.meanRating) to Format.percent(ref.meanRating)))
                     if (game.hasTraining) {
                         add(t("Training done") to ((you.trainingFinishedAt?.let { timeText(it) } ?: t("not done")) to (ref.trainingFinishedAt?.let { timeText(it) } ?: t("not done"))))
                         add(t("Resumed after a pause") to ("${you.trainingRestarts}" to "${ref.trainingRestarts}"))

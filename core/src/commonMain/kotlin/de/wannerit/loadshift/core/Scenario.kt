@@ -37,6 +37,9 @@ enum class Control {
 
     /** O8: servers, power cap and schedule of an AI training run. */
     TRAINING,
+
+    /** O9: the highest quality per device and the eco mode of a streaming service. */
+    STREAMING,
 }
 
 /** The special goal of a scenario: the third star. */
@@ -108,6 +111,8 @@ data class Scenario(
     val renewal: RenewalModel? = null,
     /** O8: an AI training run. */
     val training: TrainingModel? = null,
+    /** O9: a video streaming service. */
+    val streaming: StreamingModel? = null,
 ) {
     /** Expected interactive work at a tick: the web load or the VMs' profiles (what an operator can plan with). */
     fun expectedDemand(tick: Int): Int = interactive.expected(tick) + vms.sumOf { it.expectedMilli(tick) } / 1_000
@@ -124,7 +129,8 @@ data class Scenario(
     /** The goals a result reaches. */
     fun goalsMet(totals: Totals, reference: Totals): GoalsMet {
         val rules = totals.sla >= slaTarget && totals.worstSiteSla >= slaTarget &&
-            (training == null || totals.trainingFinishedAt != null) && totals.deadlinesMissed == 0 && totals.emissions < reference.emissions &&
+            (training == null || totals.trainingFinishedAt != null) &&
+            (streaming == null || totals.meanRating >= streaming.ratingTarget) && totals.deadlinesMissed == 0 && totals.emissions < reference.emissions &&
             (staleLimit == null || totals.stalePerTenThousand <= staleLimit)
         val reduction = rules && totals.emissions * 1_000 <= reference.emissions * (1_000 - goals.reduction)
         val special = rules && when (val goal = goals.special) {
@@ -289,6 +295,28 @@ data class Scenario(
             training = TrainingModel(work = 240_000),
         )
 
+        /**
+         * Scenario 9, "Eco mode": a video streaming service in Poland, in summer. The viewers watch most in the evening –
+         * just when the coal-heavy grid is dirtiest. The reference operator streams in 4K to every device.
+         */
+        val ECO_MODE = Scenario(
+            number = 9, title = "Eco mode", setting = GridSetting(GridRegion.POLAND, Season.SUMMER), days = 2,
+            seed = 9, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 30)),
+            interactive = InteractiveLoad(peak = 360),
+            controls = setOf(Control.STREAMING),
+            initialPolicy = Policy(CapacityMode.Autoscale(700)),
+            referencePolicy = Policy(CapacityMode.Autoscale(700)),
+            goals = StarGoals(450, SpecialGoal.Reduction(560)),
+            streaming = StreamingModel(
+                devices = listOf(
+                    Device("Phones", 400, listOf(1_000, 1_000, 800)),
+                    Device("Laptops", 250, listOf(1_000, 950, 600)),
+                    Device("TVs", 350, listOf(1_000, 800, 400)),
+                ),
+                ratingTarget = 930,
+            ),
+        )
+
         /** The 24 VMs of scenario 5. */
         private val SHOP_VMS = List(8) { VmKind.FRONT_END } + List(6) { VmKind.BATCH_WORKER } + List(4) { VmKind.REPORTING } +
             List(2) { VmKind.DATABASE } + List(4) { VmKind.CACHE }
@@ -422,6 +450,6 @@ data class Scenario(
             staleLimit = 5,
         )
 
-        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, OLD_IRON, TRAINING_RUN, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS)
+        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, OLD_IRON, TRAINING_RUN, ECO_MODE, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS)
     }
 }
