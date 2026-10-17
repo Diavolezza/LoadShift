@@ -53,7 +53,7 @@ fun App(options: LaunchOptions = LaunchOptions()) {
     when (val s = screen) {
         Screen.List -> ScenarioListScreen { screen = Screen.Briefing(it) }
         is Screen.Briefing -> BriefingScreen(s.scenario, onStart = { screen = Screen.Game(GameController(s.scenario)) }, onBack = { screen = Screen.List })
-        is Screen.Game -> GameScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onNext = { screen = Screen.Briefing(it) })
+        is Screen.Game -> GameScreen(s.controller, onExit = { s.controller.saveDraft(); screen = Screen.Briefing(s.controller.scenario) }, onNext = { screen = Screen.Briefing(it) })
     }
 }
 

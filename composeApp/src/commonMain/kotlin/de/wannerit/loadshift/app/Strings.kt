@@ -220,6 +220,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Jeder Job startet, sobald er da ist.",
     "Every server runs all the time – like the reference operator." to
         "Alle Server laufen ständig – wie beim Referenzbetreiber.",
+    "Expected load %lld" to
+        "Erwartete Last %lld",
     "Expected load in 1 h" to
         "Erwartete Last in 1 h",
     "fixed %lld servers" to
@@ -236,6 +238,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Neue Prognose: Der Wind lässt etwa 12 Stunden früher nach als vorhergesagt.",
     "Forecast while it runs: %lld g/kWh · start by %@" to
         "Prognose während der Laufzeit: %1\$lld g/kWh · spätestens %2\$@",
+    "Forecast: %lld g/kWh, ±%lld %%" to
+        "Prognose: %1\$lld g/kWh, ±%2\$lld %%",
     "France" to
         "Frankreich",
     "from %@" to
@@ -260,10 +264,14 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Netzdaten: Electricity Maps, Grid Review 2025 (Lebenszyklus, Importe eingerechnet)",
     "Grid now" to
         "Netz jetzt",
+    "Grid: %lld g/kWh" to
+        "Strom: %lld g/kWh",
     "Headroom is insurance: it costs energy every hour, whether the peak comes or not. When a peak is known in advance, scheduled scaling is cheaper – cloud platforms offer it next to the autoscaler. Predictive autoscaling goes one step further and learns such peaks from the past." to
         "Reserve ist eine Versicherung: Sie kostet jede Stunde Energie, ob die Spitze kommt oder nicht. Ist eine Spitze vorher bekannt, ist Scheduled Scaling günstiger – Cloud-Plattformen bieten das neben dem Autoscaling an. Predictive Autoscaling geht einen Schritt weiter und lernt solche Spitzen aus der Vergangenheit.",
     "Image conversion" to
         "Bildkonvertierung",
+    "In time: %@" to
+        "Rechtzeitig: %@",
     "IT power" to
         "IT-Leistung",
     "Jobs done" to
@@ -274,6 +282,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Hält genug Server für die erwartete Last der nächsten Stunde – oder die gemessene, falls sie höher ist – bei %@ Auslastung. Der Rest ist Reserve.",
     "late, %@" to
         "zu spät, %@",
+    "Load %lld, capacity %lld (%lld servers on)" to
+        "Last %1\$lld, Kapazität %2\$lld (%3\$lld Server an)",
     "Load (line) and capacity of the running servers (area) – red: slow requests" to
         "Last (Linie) und Kapazität der laufenden Server (Fläche) – rot: langsame Requests",
     "Load / capacity" to
@@ -298,6 +308,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Nachtschicht",
     "No deadline missed" to
         "Keine Frist verpasst",
+    "No job" to
+        "Kein Job",
     "Norway" to
         "Norwegen",
     "not planned" to
@@ -326,6 +338,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Geplant mit der Prognose von %@.",
     "planned" to
         "geplant",
+    "Planned: %@" to
+        "Geplant: %@",
     "Planning every job by hand does not scale. A rule does it for you: at a fixed hour, below a threshold, or into the greenest hours of the forecast. But the forecast is uncertain – ±25 % a day ahead in a wind grid – and a rule that waits for clean power may wait in vain. The deadline safety makes sure that no job misses its deadline." to
         "Jeden Job von Hand zu planen, skaliert nicht. Eine Regel übernimmt das: zu einer festen Uhrzeit, unter einem Schwellwert oder in die saubersten Stunden der Prognose. Doch die Prognose ist unsicher – in einem Windnetz ±25 % einen Tag im Voraus –, und eine Regel, die auf sauberen Strom wartet, wartet vielleicht vergeblich. Die Fristsicherung sorgt dafür, dass kein Job seine Frist verpasst.",
     "Plans made with the old forecast may now fall into dirty hours. Look at the new forecast below." to
@@ -350,6 +364,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Regel",
     "Running only as much capacity as the load needs. An idle server still draws power, so servers that are not needed are switched off. Green Software Foundation principle: energy efficiency." to
         "Nur so viel Kapazität betreiben, wie die Last braucht. Ein Server im Leerlauf zieht trotzdem Strom, deshalb werden nicht benötigte Server abgeschaltet. Prinzip der Green Software Foundation: Energy Efficiency.",
+    "Running: %@" to
+        "Läuft: %@",
     "runs until %@" to
         "läuft bis %@",
     "Scenario %lld: %@" to

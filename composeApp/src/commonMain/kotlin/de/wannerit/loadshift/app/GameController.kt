@@ -100,6 +100,7 @@ class GameController(val scenario: Scenario) {
     }
 
     private fun finish() {
+        saveDraft()
         speed = Speed.PAUSED
         stars = scenario.stars(simulation.totals, reference.totals)
         Progress.record(stars, scenario.number)
@@ -222,6 +223,31 @@ class GameController(val scenario: Scenario) {
 
     init {
         resetDraft()
+        restoreDraft()
+    }
+
+    /** The draft of the last run of this scenario (kept while the app runs). */
+    private class Draft(
+        val kind: RuleKind, val hour: Int, val threshold: Int, val safety: Boolean,
+        val capKind: CapacityKind, val capFixed: Int, val capTarget: Int, val capMinimumOn: Boolean, val capMinimum: Int,
+        val capFrom: Int, val capTo: Int,
+    )
+
+    private companion object {
+        val drafts = mutableMapOf<Int, Draft>()
+    }
+
+    /** Keeps the panel's settings for the next run (a new run starts with the scenario's rules, the panel keeps yours). */
+    fun saveDraft() {
+        drafts[scenario.number] = Draft(draftKind, draftHour, draftThreshold, draftSafety, capKind, capFixed, capTarget,
+            capMinimumOn, capMinimum, capFrom, capTo)
+    }
+
+    private fun restoreDraft() {
+        val d = drafts[scenario.number] ?: return
+        draftKind = d.kind; draftHour = d.hour; draftThreshold = d.threshold; draftSafety = d.safety
+        capKind = d.capKind; capFixed = d.capFixed; capTarget = d.capTarget; capMinimumOn = d.capMinimumOn
+        capMinimum = d.capMinimum; capFrom = d.capFrom; capTo = d.capTo
     }
 
     // Batch jobs by hand
@@ -306,9 +332,10 @@ class GameController(val scenario: Scenario) {
     }
 
     fun restart() {
+        saveDraft()
         speed = Speed.PAUSED
         current = Simulation(scenario)
-        resetDraft()
+        restoreDraft()
         stars = 0
         showEnd = false
         urgentJob = null

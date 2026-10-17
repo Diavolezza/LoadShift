@@ -3,6 +3,12 @@ package de.wannerit.loadshift.app
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -31,13 +37,24 @@ import de.wannerit.loadshift.core.Simulation
 @Composable
 fun TimelineChart(simulation: Simulation, version: Int, modifier: Modifier = Modifier) {
     val measurer = rememberTextMeasurer()
-    Canvas(modifier.padding(horizontal = 16.dp, vertical = 10.dp)) {
+    // Where the mouse is: the chart shows the values at that time.
+    var hover by remember { mutableStateOf<Offset?>(null) }
+    Canvas(
+        modifier.padding(horizontal = 16.dp, vertical = 10.dp).pointerInput(Unit) {
+            awaitPointerEventScope {
+                while (true) {
+                    val event = awaitPointerEvent()
+                    hover = if (event.type == PointerEventType.Exit) null else event.changes.firstOrNull()?.position
+                }
+            }
+        },
+    ) {
         // Reading the version redraws the chart after every tick.
-        if (version >= 0) TimelineDrawing(simulation, measurer, this).draw()
+        if (version >= 0) TimelineDrawing(simulation, measurer, this, hover).draw()
     }
 }
 
-private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeasurer, val scope: DrawScope) {
+private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeasurer, val scope: DrawScope, val hover: Offset?) {
     val scenario = simulation.scenario
     val start = scenario.startTick
     val end = scenario.endTick
@@ -124,6 +141,53 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
             }
         }
         drawLine(Palette.ink, Offset(x(now), topTop - 4f * density), Offset(x(now), lowBottom), 1.5f * density)
+        hover?.let { tooltip(it, topTop, lowBottom) }
+    }
+
+    /** The values at the time under the mouse: a line and a small box. */
+    private fun DrawScope.tooltip(at: Offset, top: Float, bottom: Float) {
+        if (at.x < left || at.x > right || at.y < top - 20f * density || at.y > bottom) return
+        val tick = (start + ((at.x - left) / (right - left) * (end - start)).toInt()).coerceIn(start, end - 1)
+        val record = simulation.history.firstOrNull { it.tick == tick }
+        val grid = simulation.grid
+        val lines = mutableListOf(timeText(tick))
+        if (record != null) {
+            lines += t("Grid: %lld g/kWh", (record.intensityTenths + 5) / 10)
+        } else {
+            lines += t("Forecast: %lld g/kWh, ±%lld %%", grid.forecast(tick, now), (grid.band(tick - now) + 5) / 10)
+        }
+        if (batchLane) {
+            val names = simulation.jobs.filter { job ->
+                val from = job.startedAt ?: job.plannedStart ?: return@filter false
+                val to = job.finishedAt ?: (from + job.spec.span)
+                tick in from until to
+            }.map { t(it.spec.name) }
+            lines += when {
+                names.isEmpty() -> t("No job")
+                tick < now -> t("Running: %@", names.joinToString(", "))
+                else -> t("Planned: %@", names.joinToString(", "))
+            }
+        } else if (record != null) {
+            lines += t("Load %lld, capacity %lld (%lld servers on)", record.demand, record.capacity, record.serversOn)
+            if (record.inTime < record.demand) lines += t("In time: %@", Format.wholePercent(record.inTime * 1_000 / maxOf(1, record.demand)))
+        } else {
+            lines += t("Expected load %lld", scenario.interactive.expected(tick))
+        }
+        val xLine = x(tick) + (x(tick + 1) - x(tick)) / 2
+        drawLine(Palette.accent, Offset(xLine, top), Offset(xLine, bottom), 1.2f * density)
+        val layouts = lines.mapIndexed { i, s -> measurer.measure(s, if (i == 0) Type.style(13, FontWeight.SemiBold) else Type.style(12)) }
+        val pad = 8f * density
+        val w = layouts.maxOf { it.size.width } + 2 * pad
+        val h = layouts.sumOf { it.size.height } + 2 * pad
+        val boxX = if (xLine + 12f * density + w < size.width) xLine + 12f * density else xLine - 12f * density - w
+        val boxY = top
+        drawRoundRect(Color.White, Offset(boxX, boxY), Size(w, h), CornerRadius(8f * density))
+        drawRoundRect(Palette.divider, Offset(boxX, boxY), Size(w, h), CornerRadius(8f * density), style = Stroke(1f * density))
+        var y = boxY + pad
+        for (layout in layouts) {
+            drawText(layout, topLeft = Offset(boxX + pad, y))
+            y += layout.size.height
+        }
     }
 
     private fun DrawScope.axis(top: Float, bottom: Float, maxLabel: String) {
