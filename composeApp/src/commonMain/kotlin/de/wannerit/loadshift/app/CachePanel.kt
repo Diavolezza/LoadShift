@@ -17,6 +17,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import de.wannerit.loadshift.core.CacheModel
+import kotlin.math.roundToInt
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Box
 
 /** E3: what to cache, for how long, in how much memory – and two more measures. */
 @Composable
@@ -24,22 +27,32 @@ fun CachePanel(game: GameController) {
     val model = game.scenario.caching ?: return
     val running = game.simulation.policy.cache
     val load = game.scenario.interactive.expected(minOf(game.simulation.tick, game.scenario.endTick - 1))
-    val hits = model.hitRates(running, load)
+    val state = model.state(running, load)
+    val hits = state.hits
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Txt(t("Caching"), Type.heading)
-        Txt(t("A cache keeps answers so they need not be computed or fetched again. It saves work while it hits – but the cache servers draw power all the time (one per 64 GB). How old an answer may be is a business decision."), Type.style(15, color = Palette.secondary))
+        Txt(t("A cache keeps answers so they need not be computed or fetched again. All kinds you tick share the memory of the cache servers; when it is full, the entry used least recently goes first (LRU). A cache server draws power all day. How old an answer may be is a business decision."), Type.style(15, color = Palette.secondary))
 
-        // Size
-        val draft = game.draftCache
+        // Cache servers
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Txt(t("Cache size"), Type.style(15, FontWeight.SemiBold), Modifier.weight(1f))
-            val sizes = CacheModel.SIZES
-            val i = sizes.indexOf(game.cacheSize).coerceAtLeast(0)
-            Stepper("${game.cacheSize} GB",
-                minus = { game.cacheSize = sizes[maxOf(0, i - 1)] }, plus = { game.cacheSize = sizes[minOf(sizes.size - 1, i + 1)] })
+            Txt(t("Cache servers"), Type.style(15, FontWeight.SemiBold), Modifier.weight(1f))
+            Stepper("${game.cacheServers}",
+                minus = { game.cacheServers = maxOf(0, game.cacheServers - 1) },
+                plus = { game.cacheServers = minOf(CacheModel.MAX_SERVERS, game.cacheServers + 1) })
         }
-        Txt(t("%lld cache servers, %lld W all day", model.servers(draft.copy(ttlMinutes = draft.ttlMinutes.map { maxOf(it, 1) })),
-            model.power(draft.copy(ttlMinutes = draft.ttlMinutes.map { maxOf(it, 1) }))), Type.caption)
+        Txt(t("%lld GB memory, %lld W all day", game.cacheServers * model.gbPerServer, game.cacheServers * model.serverPower), Type.caption)
+
+        // Memory right now
+        if (running.anyCached) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Txt(t("Memory now: %lld of %lld GB used", state.usedGb.roundToInt(), state.capacityGb), Type.style(14, FontWeight.SemiBold))
+                Box(Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)).background(Palette.divider)) {
+                    Box(Modifier.fillMaxWidth((state.usedGb / state.capacityGb).toFloat().coerceIn(0f, 1f)).height(8.dp)
+                        .background(if (state.full) Palette.amber else Palette.accent))
+                }
+                if (state.full) Txt(t("Full: entries are pushed out before their TTL ends."), Type.style(12, FontWeight.SemiBold, Palette.amber))
+            }
+        }
 
         // Kinds of data
         for ((k, kind) in model.kinds.withIndex()) {
@@ -57,8 +70,9 @@ fun CachePanel(game: GameController) {
                 ) {
                     Tick(on)
                     Txt(t(kind.title), Type.style(15, FontWeight.SemiBold), Modifier.weight(1f))
-                    if (running.ttlMinutes.getOrElse(k) { 0 } > 0) Txt(t("hits now: %@", Format.wholePercent(hits[k])), Type.style(12, FontWeight.SemiBold, Palette.accent))
+                    if (state.stay[k] > 0.0) Txt(t("hits now: %@ · %lld GB", Format.wholePercent(hits[k]), state.memoryGb[k].roundToInt()), Type.style(12, FontWeight.SemiBold, Palette.accent))
                 }
+                Txt(t(kind.note), Type.caption)
                 Txt(allowedText(kind.allowedMinutes), Type.caption)
                 if (on) {
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -115,10 +129,10 @@ private fun allowedText(minutes: Int): String = when {
     else -> t("May be up to %@ old.", ttlText(minutes))
 }
 
-/** "32 GB, 3 kinds cached, HyperLogLog" */
+/** "1 cache servers, 3 kinds cached, HyperLogLog" */
 fun cacheText(c: de.wannerit.loadshift.core.CacheConfig): String {
     val cached = c.ttlMinutes.count { it > 0 }
-    val parts = mutableListOf(if (cached == 0) t("no cache") else t("%lld GB, %lld kinds cached", c.sizeGb, cached))
+    val parts = mutableListOf(if (cached == 0 || c.servers == 0) t("no cache") else t("%lld cache servers, %lld kinds cached", c.servers, cached))
     if (c.approximateCount) parts += "HyperLogLog"
     if (c.materializedView) parts += t("materialized view")
     return parts.joinToString(", ")

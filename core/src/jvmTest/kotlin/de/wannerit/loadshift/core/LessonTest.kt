@@ -2,6 +2,7 @@ package de.wannerit.loadshift.core
 
 import java.io.File
 import java.util.Locale
+import kotlin.math.roundToInt
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -348,17 +349,26 @@ class LessonTest {
         val reference = Simulation.reference(scenario)
         val model = scenario.caching!!
         fun run(c: CacheConfig) = Simulation.replay(scenario, scenario.initialPolicy.copy(cache = c))
-        val careful = CacheConfig(32, listOf(1_440, 15, 1, 0))
+        val allowed = CacheConfig(1, listOf(1_440, 15, 1, 0, 0))
+        val withSearch = allowed.copy(ttlMinutes = listOf(1_440, 15, 1, 60, 0))
         val configs = listOf(
-            "everything for a day, 64" to CacheConfig(64, listOf(1_440, 1_440, 1_440, 1_440)),
-            "careful 8 GB" to careful.copy(sizeGb = 8),
-            "careful 32 GB" to careful,
-            "careful 256 GB" to careful.copy(sizeGb = 256),
-            "rates 15 min (stale)" to careful.copy(ttlMinutes = listOf(1_440, 15, 15, 0)),
-            "catalog 60 min (stale)" to careful.copy(ttlMinutes = listOf(1_440, 60, 1, 0)),
-            "careful + HLL + view" to careful.copy(approximateCount = true, materializedView = true),
-            "careful 8 + HLL + view" to careful.copy(sizeGb = 8, approximateCount = true, materializedView = true),
-            "no cache, HLL + view" to CacheConfig(approximateCount = true, materializedView = true),
+            "everything 1 day, 1" to CacheConfig(1, listOf(1_440, 1_440, 1_440, 1_440, 1_440)),
+            "balance 1 min (stale)" to allowed.copy(ttlMinutes = listOf(1_440, 15, 1, 0, 1)),
+            "catalog 1 h (stale)" to allowed.copy(ttlMinutes = listOf(1_440, 60, 1, 0, 0)),
+            "+search, 4 (team)" to withSearch.copy(servers = 4),
+            "+search, 2" to withSearch.copy(servers = 2),
+            "+search, 1" to withSearch,
+            "allowed, 4" to allowed.copy(servers = 4),
+            "allowed, 2" to allowed.copy(servers = 2),
+            "allowed, 1" to allowed,
+            "images 1 h, 1" to allowed.copy(ttlMinutes = listOf(60, 15, 1, 0, 0)),
+            "no images, 1" to allowed.copy(ttlMinutes = listOf(0, 15, 1, 0, 0)),
+            "+search, 4, HLL+view" to withSearch.copy(servers = 4, approximateCount = true, materializedView = true),
+            "allowed, 4, HLL+view" to allowed.copy(servers = 4, approximateCount = true, materializedView = true),
+            "allowed, 2, HLL+view" to allowed.copy(servers = 2, approximateCount = true, materializedView = true),
+            "+search, 1, HLL+view" to withSearch.copy(approximateCount = true, materializedView = true),
+            "allowed, 1, HLL+view" to allowed.copy(approximateCount = true, materializedView = true),
+            "only HLL+view" to CacheConfig(approximateCount = true, materializedView = true),
         )
         val runs = listOf("reference: no cache" to reference) + configs.map { (n, c) -> n to run(c) }
         val lines = mutableListOf(title(scenario), "$HEADER  stale ‰")
@@ -367,9 +377,13 @@ class LessonTest {
                 String.format(Locale.ROOT, "  %6.2f", simulation.totals.stale * 1_000.0 / simulation.totals.requests) +
                 "  " + "★".repeat(scenario.stars(simulation.totals, reference.totals))
         }
-        for ((name, c) in configs.take(4)) {
-            lines += "  hit rates $name: peak " + model.hitRates(c, 240) + ", night " + model.hitRates(c, 48) +
-                ", work peak " + model.work(c, 240) + " night " + model.work(c, 48) + ", cache power " + model.power(c) + " W"
+        for ((name, c) in configs.drop(3).take(8)) {
+            for (load in listOf(240, 48)) {
+                val s = model.state(c, load)
+                lines += "  $name at $load: hits " + s.hits + ", GB " + s.memoryGb.map { it.roundToInt() } +
+                    String.format(Locale.ROOT, " (%.0f of %d), stay ", s.usedGb, s.capacityGb) + s.stay.map { it.roundToInt() } +
+                    ", work " + model.work(c, load) + ", cache " + model.power(c) + " W"
+            }
         }
         report(103, lines)
         assertTrue(reference.totals.sla >= scenario.slaTarget)
@@ -377,13 +391,20 @@ class LessonTest {
         val byName = runs.toMap()
         fun stars(name: String) = scenario.stars(byName.getValue(name).totals, reference.totals)
         // Stale answers break the first rule, however much they save.
-        assertEquals(0, stars("everything for a day, 64"))
-        assertEquals(0, stars("rates 15 min (stale)"))
-        // Cached with the right TTLs: two stars; four cache servers for 256 GB cost one of them.
-        assertEquals(2, stars("careful 32 GB"))
-        assertEquals(1, stars("careful 256 GB"))
-        // With approximate counting and the materialized view: three.
-        assertEquals(3, stars("careful + HLL + view"))
+        assertEquals(0, stars("everything 1 day, 1"))
+        assertEquals(0, stars("balance 1 min (stale)"))
+        assertEquals(0, stars("catalog 1 h (stale)"))
+        // The team's plan – everything allowed, search too, four cache servers – saves, but only one star.
+        assertEquals(1, stars("+search, 4 (team)"))
+        assertEquals(1, stars("allowed, 2"))
+        // One cache server holds the hot set: two stars; search results add nothing but fill the memory.
+        assertEquals(2, stars("allowed, 1"))
+        assertEquals(2, stars("+search, 1"))
+        // The extra measures do not make up for three idle cache servers.
+        assertEquals(1, stars("allowed, 4, HLL+view"))
+        assertEquals(2, stars("allowed, 2, HLL+view"))
+        // One cache server, with HyperLogLog and the materialized view: three.
+        assertEquals(3, stars("allowed, 1, HLL+view"))
     }
 
     private companion object {

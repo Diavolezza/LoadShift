@@ -270,6 +270,11 @@ data class Scenario(
                 BacklogItem("Cache the catalog responses", 8, 100, 180, hotSpot = 1),
                 BacklogItem("Fix the N+1 queries in the product list", 5, 50, 240, hotSpot = 0),
                 BacklogItem("Log at INFO instead of DEBUG in production", 1, 10, 100, hotSpot = 2),
+                BacklogItem("Lazy-load the product images", 3, 200, 10, hotSpot = 4),
+                BacklogItem("Cache the session lookups", 5, 150, 40, hotSpot = 3),
+                BacklogItem("Reuse TLS sessions", 2, 30, 50, hotSpot = 3),
+                BacklogItem("Update to the current JVM version", 2, 50, 40, hotSpot = 6),
+                BacklogItem("Precompute the shipping costs", 5, 120, 10, hotSpot = 5),
             ),
             sprintPoints = 8,
         )
@@ -309,11 +314,13 @@ data class Scenario(
         )
 
         /**
-         * E3, "Hit or miss": caching in the web shop (Green IT LE06). Four kinds of data – product images, catalog
-         * pages, exchange rates, account balances – each with its own cost, popularity and allowed age. Caching saves
-         * work while it hits; the cache servers draw power all the time, an answer older than allowed is wrong, and
-         * an account balance must never come from the cache. Two more measures: counting unique visitors
-         * approximately (HyperLogLog) and a materialized view for the sales dashboard.
+         * E3, "Hit or miss": caching in the web shop (Green IT LE06). Five kinds of data – product images, catalog
+         * pages, exchange rates, search results, account balances – each with its own cost, popularity, size and
+         * allowed age. All cached kinds share the memory of the cache servers. Caching saves work while it hits; a
+         * cache server draws power all the time, an answer older than allowed is wrong, an account balance must never
+         * come from the cache, and most searches are asked only once. The team has ordered four cache servers.
+         * Two more measures: counting unique visitors approximately (HyperLogLog) and a materialized view for the
+         * sales dashboard.
          */
         val HIT_OR_MISS = Scenario(
             number = 103, label = "E3", track = Track.ENGINEERING, unlockAfter = 102,
@@ -321,16 +328,19 @@ data class Scenario(
             seed = 13, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 30)),
             interactive = InteractiveLoad(peak = 240),
             controls = setOf(Control.CACHING),
-            initialPolicy = Policy(CapacityMode.Autoscale(700)),
+            // The team has ordered four cache servers, to be on the safe side; nothing is cached yet.
+            initialPolicy = Policy(CapacityMode.Autoscale(700), cache = CacheConfig(servers = CacheModel.MAX_SERVERS)),
             referencePolicy = Policy(CapacityMode.Autoscale(700)),
-            goals = StarGoals(450, SpecialGoal.Reduction(600)),
+            goals = StarGoals(320, SpecialGoal.Reduction(400)),
             caching = CacheModel(
                 kinds = listOf(
-                    CacheKind("Product images", 400, 300, 20_000, 2_000, 1_440),
-                    CacheKind("Catalog pages", 350, 1_400, 50_000, 500, 15),
-                    CacheKind("Exchange rates", 150, 800, 20, 1, 1),
-                    CacheKind("Account balance before a transfer", 100, 600, 200_000, 10, 0),
+                    CacheKind("Product images", 300, 300, 20_000, 2_000, 1_440, note = "20,000 images of about 2 MB each."),
+                    CacheKind("Catalog pages", 300, 1_400, 50_000, 500, 15, note = "50,000 pages of about 500 KB, expensive to build."),
+                    CacheKind("Exchange rates", 100, 800, 20, 1, 1, note = "20 currencies, fetched from the bank."),
+                    CacheKind("Search results", 150, 1_000, 300_000, 400, 60, unique = 850, note = "Pages of about 400 KB; most searches are typed only once."),
+                    CacheKind("Account balance before a transfer", 50, 600, 200_000, 10, 0, note = "Read from the core banking system."),
                 ),
+                other = 300,
                 exactCount = 40, approximateCount = 3,
                 report = 12, reportWithView = 2,
             ),

@@ -70,8 +70,8 @@ private fun initialScreen(options: LaunchOptions): Screen {
         game.setPolicy(Policy(scenario.initialPolicy.capacity, BatchMode.Greenest))
         game.advance(options.ticks)
     } else if (options.careful && Control.CACHING in scenario.controls) {
-        // Like a careful player: cached as allowed, 32 GB, with HyperLogLog and the materialized view.
-        game.setPolicy(scenario.initialPolicy.copy(cache = CacheConfig(32, listOf(1_440, 15, 1, 0), approximateCount = true, materializedView = true)))
+        // Like a careful player: cached as allowed, one cache server, with HyperLogLog and the materialized view.
+        game.setPolicy(scenario.initialPolicy.copy(cache = CacheConfig(1, listOf(1_440, 15, 1, 0, 0), approximateCount = true, materializedView = true)))
         game.advance(options.ticks)
     } else if (options.careful && Control.SPRINTS in scenario.controls) {
         // Like a careful team: profiling first, then by the measurements.

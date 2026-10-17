@@ -25,13 +25,16 @@ import de.wannerit.loadshift.core.ServerState
  * is, blue for interactive work, amber for a batch job.
  */
 @Composable
-fun HallView(servers: List<Server>, version: Int, interactive: Boolean, batch: Boolean, modifier: Modifier = Modifier) {
+fun HallView(
+    servers: List<Server>, version: Int, interactive: Boolean, batch: Boolean, modifier: Modifier = Modifier,
+    cacheSlots: Int = 0, cacheOn: Int = 0, cachePower: Int = 0,
+) {
     val on = servers.count { it.state.isPowered }
-    val itPower = servers.sumOf { it.power() }
+    val itPower = servers.sumOf { it.power() } + cachePower
     Column(modifier.padding(16.dp)) {
         Canvas(Modifier.fillMaxWidth().weight(1f)) {
             // The server list is the same object after every tick; reading the version redraws the hall.
-            if (version >= 0) drawHall(servers)
+            if (version >= 0) drawHall(servers, cacheSlots, cacheOn)
         }
         Row(
             Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
@@ -41,8 +44,13 @@ fun HallView(servers: List<Server>, version: Int, interactive: Boolean, batch: B
             LegendSwatch(Palette.booting, t("Booting"))
             if (interactive) LegendSwatch(Palette.slab, t("Web requests"), Palette.interactiveLoad)
             if (batch) LegendSwatch(Palette.slab, t("Batch job"), Palette.batchLoad)
+            if (cacheSlots > 0) LegendSwatch(Palette.cache, t("Cache server"))
             Spacer(Modifier.weight(1f))
-            Txt(t("%lld of %lld servers on · %@ kW IT power", on, servers.size, Format.kilowatts(itPower)), Type.callout, maxLines = 1)
+            Txt(
+                if (cacheSlots > 0) t("%lld of %lld servers on + %lld cache servers · %@ kW IT power", on, servers.size, cacheOn, Format.kilowatts(itPower))
+                else t("%lld of %lld servers on · %@ kW IT power", on, servers.size, Format.kilowatts(itPower)),
+                Type.callout, maxLines = 1,
+            )
         }
     }
 }
@@ -56,8 +64,10 @@ private const val RACK_GAP = 0.45
 /** Isometric projection of floor coordinates (x to the right back, y to the left front, z up). */
 private fun iso(x: Double, y: Double, z: Double) = Offset(((x - y) * 0.866).toFloat(), ((x + y) * 0.5 - z).toFloat())
 
-private fun DrawScope.drawHall(servers: List<Server>) {
-    val racks = maxOf(1, (servers.size + SLOTS_PER_RACK - 1) / SLOTS_PER_RACK)
+private fun DrawScope.drawHall(servers: List<Server>, cacheSlots: Int, cacheOn: Int) {
+    val serverRacks = maxOf(1, (servers.size + SLOTS_PER_RACK - 1) / SLOTS_PER_RACK)
+    // E3: one more rack for the cache servers.
+    val racks = serverRacks + if (cacheSlots > 0) 1 else 0
     val length = racks * RACK_WIDTH + (racks - 1) * RACK_GAP
     val fx0 = -0.6; val fx1 = length + 0.6; val fy0 = -0.6; val fy1 = RACK_DEPTH + 0.9
     // Fit the projected floor and racks into the canvas.
@@ -88,6 +98,15 @@ private fun DrawScope.drawHall(servers: List<Server>) {
 
         // Servers on the front, from the bottom up.
         val slotHeight = (top - 0.2) / SLOTS_PER_RACK
+        if (rack == serverRacks) {
+            // Cache servers: violet while they run, grey when off.
+            for (slot in 0 until cacheSlots) {
+                val z0 = 0.1 + slot * slotHeight + 0.025; val z1 = z0 + slotHeight - 0.05
+                val slab = polygon(p(x0 + 0.07, y1, z0), p(x1 - 0.07, y1, z0), p(x1 - 0.07, y1, z1), p(x0 + 0.07, y1, z1))
+                drawPath(slab, if (slot < cacheOn) Palette.cache else Palette.off)
+            }
+            continue
+        }
         for (slot in 0 until SLOTS_PER_RACK) {
             val index = rack * SLOTS_PER_RACK + slot
             if (index >= servers.size) break

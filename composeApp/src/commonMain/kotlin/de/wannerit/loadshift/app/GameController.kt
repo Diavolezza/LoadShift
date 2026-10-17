@@ -149,6 +149,8 @@ class GameController(val scenario: Scenario) {
     }
 
     private fun prefillSprint() {
+        // Not in E2: twelve sprints, a plan that appears by itself would surprise more than help.
+        if (scenario.growth != null) return
         val last = lastSprintPlans[scenario.number]?.get(currentDay) ?: return
         sprintDraft = last.filter { it !in sprintDone && it !in sprintCarried }
     }
@@ -258,13 +260,13 @@ class GameController(val scenario: Scenario) {
 
     // Caching (E3)
 
-    var cacheSize by mutableIntStateOf(32)
-    var cacheTtl by mutableStateOf(listOf(0, 0, 0, 0))
+    var cacheServers by mutableIntStateOf(0)
+    var cacheTtl by mutableStateOf(listOf<Int>())
     var cacheCount by mutableStateOf(false)
     var cacheView by mutableStateOf(false)
 
     val draftCache: CacheConfig
-        get() = CacheConfig(cacheSize, cacheTtl, cacheCount, cacheView)
+        get() = CacheConfig(cacheServers, cacheTtl, cacheCount, cacheView)
 
     fun setTtl(kind: Int, minutes: Int) {
         cacheTtl = cacheTtl.toMutableList().also { while (it.size <= kind) it += 0; it[kind] = minutes }
@@ -312,7 +314,7 @@ class GameController(val scenario: Scenario) {
         draftSafety = policy.deadlineSafety
         scenario.caching?.let { model ->
             val c = policy.cache
-            if (c.sizeGb > 0) cacheSize = c.sizeGb
+            cacheServers = c.servers
             cacheTtl = model.kinds.indices.map { c.ttlMinutes.getOrElse(it) { 0 } }
             cacheCount = c.approximateCount
             cacheView = c.materializedView
@@ -355,7 +357,7 @@ class GameController(val scenario: Scenario) {
         draftKind = d.kind; draftHour = d.hour; draftThreshold = d.threshold; draftSafety = d.safety
         capKind = d.capKind; capFixed = d.capFixed; capTarget = d.capTarget; capMinimumOn = d.capMinimumOn
         capMinimum = d.capMinimum; capFrom = d.capFrom; capTo = d.capTo
-        cacheSize = d.cache.sizeGb.takeIf { it > 0 } ?: cacheSize
+        cacheServers = d.cache.servers
         if (d.cache.ttlMinutes.isNotEmpty()) cacheTtl = d.cache.ttlMinutes
         cacheCount = d.cache.approximateCount; cacheView = d.cache.materializedView
         // A new run starts with the rules the last run started with (the panel shows the last run's final ones).
@@ -478,13 +480,13 @@ class GameController(val scenario: Scenario) {
         }
         if (scenario.caching != null) {
             fun run(c: CacheConfig) = Simulation.replay(scenario, scenario.initialPolicy.copy(cache = c)).totals
-            val careful = CacheConfig(32, listOf(1_440, 15, 1, 0))
+            val allowed = CacheConfig(1, listOf(1_440, 15, 1, 0, 0))
             return listOf(
                 t("No cache (reference)") to reference.totals,
-                t("Everything cached for a day") to run(CacheConfig(64, listOf(1_440, 1_440, 1_440, 1_440))),
-                t("Cached as allowed, 32 GB") to run(careful),
-                t("Cached as allowed, 256 GB") to run(careful.copy(sizeGb = 256)),
-                t("Cached as allowed, 32 GB, with HyperLogLog and materialized view") to run(careful.copy(approximateCount = true, materializedView = true)),
+                t("Everything allowed, search too, 4 cache servers (the team's plan)") to run(allowed.copy(servers = 4, ttlMinutes = listOf(1_440, 15, 1, 60, 0))),
+                t("As allowed, without search, 2 cache servers") to run(allowed.copy(servers = 2)),
+                t("As allowed, without search, 1 cache server") to run(allowed),
+                t("The same with HyperLogLog and materialized view") to run(allowed.copy(approximateCount = true, materializedView = true)),
             )
         }
         if (hasSprints) {

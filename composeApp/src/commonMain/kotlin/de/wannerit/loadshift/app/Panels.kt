@@ -101,7 +101,8 @@ fun NowBox(game: GameController) {
     val capacity = last?.capacity ?: simulation.readyCapacity
     val served = last?.served ?: minOf(demandNow, capacity)
     val inAnHour = simulation.scenario.interactive.expected(simulation.tick + GameTime.TICKS_PER_HOUR)
-    val itPower = simulation.servers.sumOf { it.power() }
+    val caching = simulation.scenario.caching
+    val itPower = simulation.servers.sumOf { it.power() } + (caching?.power(simulation.policy.cache) ?: 0)
     Card(Modifier.fillMaxWidth(), color = Palette.background, padding = 14.dp) {
         Txt(t("Right now"), Type.subheading)
         Spacer(Modifier.padding(4.dp))
@@ -111,7 +112,7 @@ fun NowBox(game: GameController) {
             t("Utilization") to (if (capacity == 0) "–" else Format.wholePercent(served * 1_000 / capacity)),
             t("Expected load in 1 h") to "$inAnHour",
             t("IT power") to "${Format.kilowatts(itPower)} kW",
-        )
+        ) + listOfNotNull(caching?.let { t("Cache servers") to "${it.servers(simulation.policy.cache)}" })
         for ((label, value) in rows) {
             Row(Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
                 Txt(label, Type.callout, Modifier.weight(1f))

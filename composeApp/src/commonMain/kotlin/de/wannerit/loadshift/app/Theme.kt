@@ -32,6 +32,7 @@ object Palette {
     val off = Color(0xFFD6D6D6)
     val slab = Color(0xFF404D4A)
     val booting = Color(0xFFB8D1EB)
+    val cache = Color(0xFF8E6FD8)
     val interactiveLoad = Color(0xFF5C9EF2)
     val batchLoad = amber
 

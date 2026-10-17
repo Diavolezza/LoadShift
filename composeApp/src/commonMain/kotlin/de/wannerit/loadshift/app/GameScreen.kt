@@ -31,6 +31,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import de.wannerit.loadshift.core.CacheModel
 import de.wannerit.loadshift.core.Control
 import de.wannerit.loadshift.core.GameTime
 import de.wannerit.loadshift.core.Scenario
@@ -62,7 +63,12 @@ fun GameScreen(game: GameController, onExit: () -> Unit, onNext: ((Scenario) -> 
                 if (Control.PLACEMENT in game.scenario.controls) {
                     PlacementBoard(game, Modifier.weight(1f).fillMaxHeight())
                 } else {
-                    HallView(game.simulation.servers, game.version, game.hasInteractive, game.hasBatch, Modifier.weight(1f).fillMaxHeight())
+                    HallView(
+                        game.simulation.servers, game.version, game.hasInteractive, game.hasBatch, Modifier.weight(1f).fillMaxHeight(),
+                        cacheSlots = if (game.scenario.caching != null) CacheModel.MAX_SERVERS else 0,
+                        cacheOn = game.scenario.caching?.servers(game.simulation.policy.cache) ?: 0,
+                        cachePower = game.scenario.caching?.power(game.simulation.policy.cache) ?: 0,
+                    )
                 }
                 VDivider()
                 ControlPanel(game, Modifier.width(panelWidth).fillMaxHeight())

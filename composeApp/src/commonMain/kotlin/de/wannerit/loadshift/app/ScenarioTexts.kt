@@ -24,17 +24,17 @@ class ScenarioTexts(
     companion object {
         fun of(scenario: Scenario): ScenarioTexts = when (scenario.number) {
             103 -> ScenarioTexts(
-                situation = "The web shop serves four kinds of data: product images, catalog pages, exchange rates and, before a transfer, account balances. Today every request computes or fetches its answer anew. Autoscaling keeps the servers in line with the work.",
-                idea = "A cache keeps answers for a while, so that the next request is cheap. It works because a few items get most of the requests – the bestsellers, the euro rate. Three things decide: what may be cached at all, how long an entry may live (the TTL – a business question, not a technical one), and how much memory is worth its power.",
+                situation = "The web shop serves five kinds of data: product images, catalog pages, exchange rates, search results and, before a transfer, account balances. Today every request computes or fetches its answer anew. The team has ordered four cache servers with 64 GB each, to be on the safe side; nothing is cached yet. Autoscaling keeps the web servers in line with the work.",
+                idea = "A cache keeps answers for a while, so that the next request is cheap. It works because a few items get most of the requests – the bestsellers, the euro rate. Four things decide: what may be cached at all, how long an entry may live (the TTL – a business question, not a technical one), whether the same thing is asked again, and how much memory is worth its power.",
                 screen = listOf(
                     "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals.",
                     "Your racks: grey servers are off, light blue ones are booting, the blue bar shows how busy a server is.",
-                    "Caching: the cache size, for each kind of data whether it is cached, its TTL and what the business allows, two more measures. Below it the situation right now.",
+                    "Caching: the cache servers and the memory used right now, for each kind of data whether it is cached, its TTL and what the business allows, two more measures. Below it the situation right now.",
                     "Carbon intensity of the grid with the forecast, the load so far and the expected load (dotted); the lines on the right show how many servers a load needs.",
                 ),
                 comparedWith = "compared with the reference operator, who caches nothing.",
                 rules = "SLA at least 99 %, at most 1 ‰ stale answers and less CO₂ than the reference",
-                remark = "A cache is a bet on repetition. It wins where many requests ask for the same thing – images, rates, popular pages – and loses where the answer must be current: a cached account balance is not a saving but an error. More memory brings fewer extra hits than it costs: the hot set is small. HyperLogLog and the materialized view follow the same idea: keep a little, compute less – as long as the business accepts the result.",
+                remark = "A cache is a bet on repetition. It wins where many requests ask for the same thing – images, rates, popular pages – and loses where the answer must be current or is asked only once: a cached account balance is an error, a cached search that nobody repeats only fills memory. Size the memory by what it holds, not by what might come: the hot set fits into one server, more servers only draw power. HyperLogLog and the materialized view follow the same idea: keep a little, compute less – as long as the business accepts the result.",
                 term = "Caching",
                 termText = "Keeping results for a while so that they need not be computed or fetched again. The time to live (TTL) says how long an entry counts, the hit rate how often a request finds its answer in the cache. A cache trades memory and freshness for computation.",
             )

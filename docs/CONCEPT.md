@@ -357,7 +357,7 @@ work per request or per job; the effect shows in the SCI per 1,000 requests and 
 |---|---|---|---|---|---|
 | E1 | Measure first | web shop, Germany | 4 weeks (weekly sprints) | engineering backlog, team capacity, profiling | The team's estimates of where the energy goes are wrong. One sprint of profiling shows the real hot spots (for example an N+1 database query and JSON serialization, not the image service everybody suspects). Optimizing by guess wastes sprints; less work per request also means fewer servers and less hardware (G9, G1). Term: Profiling. |
 | E2 | Growing data | web shop, Germany | 12 months (one game day each) | backlog with algorithmic complexity, carry-over | The data grows every month. A batch job with O(n²) and a lookup in a list instead of a hash map get more expensive month by month; a database index stops a query from scanning everything. Fixing early saves the most; waiting costs energy and, at some point, hardware (G9, G6). Term: Algorithmic Complexity. |
-| E3 | Hit or miss | web shop, Germany | 2 days | cache size, per kind of data cached or not and its TTL, two more measures | Four kinds of data with different popularity and different business limits on their age: product images (a day), catalog pages (15 min), exchange rates (1 min), the account balance before a transfer (must be current). A cache saves work while it hits, but its servers draw power all the time; a bigger cache brings few extra hits, a TTL longer than allowed brings stale answers (0 stars). Two more measures follow the same idea: counting unique visitors with HyperLogLog instead of keeping every ID, and a materialized view for the sales dashboard (costs storage) (G9, G1). Term: Caching. |
+| E3 | Hit or miss | web shop, Germany | 2 days | cache servers, per kind of data cached or not and its TTL, two more measures | Five kinds of data with different popularity, size, cost and business limits on their age: product images (a day), catalog pages (15 min), exchange rates (1 min), search results (1 h, but most searches are typed only once), the account balance before a transfer (must be current). All cached kinds share the memory of the cache servers (LRU). The team has ordered four cache servers "to be on the safe side". A cache saves work while it hits, but every cache server draws power all day; a TTL longer than allowed brings stale answers (0 stars); search results fill half the memory and hardly hit. Two more measures follow the same idea: counting unique visitors with HyperLogLog instead of keeping every ID, and a materialized view for the sales dashboard (G9, G1). Term: Caching. |
 
 Backlog items (game values, to be tuned in the lesson tests): database index, removing an N+1 query, a cache
 (saves work, but the cache server draws power too), compressing images, pagination instead of loading
@@ -664,29 +664,42 @@ After each step the game is played by a person before the next step begins (**pl
 
 - Timeline: the scale follows the data, server lines every 5, 10 or 20 servers, one label per day from six days on.
 
-**As built in step 4, part 5** (E3, ideas from the Green IT lecture):
+**As built in step 4, part 5** (E3, ideas from the Green IT lecture; reworked after the first play test):
 
 - Core: `CacheModel` with kinds of data (share of the requests, cost per request, number of items, item size,
-  allowed age). Requests follow a Zipf distribution over the items [S21]; with the request rate R, the TTL T and
-  n items an item stays in the cache while it is asked for at least once per TTL. The hit rate is
-  `(H(m) − H(m+a) + H(a)) / H(n)` with `a = R·T/H(n)`, m the items that fit and `H(x) ≈ ln x + γ + 1/(2x)`.
-  Cache servers: one per 64 GB, 156 W plus 0.375 W per GB, with embodied emissions like any server; a hit still
-  costs 2 % of the work. A TTL longer than the business allows makes that share of the hits stale.
-- `Policy.cache` (`CacheConfig`: size, TTL per kind, HyperLogLog, materialized view); `Scenario.caching`,
-  `Scenario.staleLimit` (‰ of the requests); goal and end-card row "Stale answers".
+  allowed age, share asked only once) and work no cache can save (cart, checkout, login). Requests follow a Zipf
+  distribution over the items [S21]: with the request rate R, the time T an entry stays and n items, item i is in the
+  cache with probability a/(a + i), a = R·T/H(n). The cache then holds a·(H(n+a) − H(a)) items and hits
+  (H(n) − H(n+a) + H(a)) / H(n), `H(x) ≈ ln x + γ + 1/(2x)`. Requests asked only once never hit but are stored too.
+- All cached kinds share the memory of the cache servers (64 GB each, 180 W all day, embodied emissions like any
+  server). If the TTLs need more memory than there is, the least recently used entries go first: all entries stay
+  the same time t, or their TTL if shorter, with t such that the memory is just full (LRU, Che's approximation
+  [S23]). A hit still costs 2 % of the work, a miss 8 % more (look up, serialize, store). A TTL longer than the
+  business allows makes that share of the hits stale.
+- `Policy.cache` (`CacheConfig`: cache servers, TTL per kind, HyperLogLog, materialized view); `Scenario.caching`,
+  `Scenario.staleLimit` (‰ of the requests); goal and end-card row "Stale answers". The panel shows the memory used
+  right now and per kind its hit rate and memory; the hall shows the cache servers in their own rack (violet).
 - HyperLogLog [S22]: the exact count of unique visitors keeps every ID and costs work per request; the estimate
   with about 2 % error costs a fraction. Materialized view: the sales dashboard reads a stored result instead of
-  aggregating every 15 minutes; it costs storage in the cache.
-- E3 "Hit or miss": 2 days, 30 servers with autoscaling at 70 %, goals ★★ −45 %, ★★★ −60 %, at most 1 ‰ stale.
+  aggregating every 15 minutes.
+- E3 "Hit or miss": 2 days, 30 web servers with autoscaling at 70 %, four cache servers ordered, nothing cached;
+  goals ★★ −32 %, ★★★ −40 %, at most 1 ‰ stale.
 
 | Cache | CO₂ vs. reference | Stars |
 |---|---:|---:|
 | none (reference) | – | – |
-| everything for a day | – | 0 (stale) |
-| as allowed, 32 GB | −54 % | ★★ |
-| as allowed, 256 GB | −43 % | ★ |
-| as allowed, 32 GB, HyperLogLog and materialized view | −63 % | ★★★ |
+| everything for a day, or the balance cached | – | 0 (stale) |
+| everything allowed, search too, 4 servers (the team's plan) | −24 % | ★ |
+| as allowed without search, 2 servers | −30 % | ★ |
+| as allowed, 1 server (with or without search) | −33 % | ★★ |
+| as allowed, 4 servers, HyperLogLog and view | −31 % | ★ |
+| as allowed, 1 server, HyperLogLog and view | −41 % | ★★★ |
 
+- E1: twelve backlog items, 50 story points for 32 in four sprints – some items are left at the end (lazy loading,
+  session cache, TLS session reuse, JVM update, precomputed shipping costs). By the estimates −22 % ★, profiling
+  first −46 % ★★★.
+- E2: the last run's sprint plans are not offered again (twelve sprints: a plan that appears by itself surprises
+  more than it helps); E1 keeps them.
 - Debriefs: E1 names Amdahl's law (the checkout), E2 the rebound effect (freed capacity fills up with features).
 - Planned from the same lecture: scenario 6 "Heat wave" with the PUE trap (switching servers off raises the PUE,
   but CO₂ falls – the score counts CO₂, not PUE); a note on JVM start time (Native Image, CRaC) in scenario 4,
@@ -722,7 +735,7 @@ music. Not taken over: maps, paths, the tower-and-creep rules, opponents, networ
 | D17 | Engineering | a second track "Engineering" (E1 profiling, E2 growing data, E3 caching) next to the operations scenarios; backlog with team capacity, coarser time steps; no real code in the game |
 | D18 | Bin packing | scenario 5 "Consolidation": VMs on hosts by hand, two dimensions (CPU, RAM), heuristics in "what if"; the operations scenarios after it move up by one |
 | D19 | Order of the scenarios | a star opens the next scenario (the story), but a switch "Open all scenarios" opens everything for courses that take the topics in another order; stars still count |
-| D20 | Caching | its own Engineering scenario E3 instead of a backlog item; the TTL is a business rule per kind of data, breaking it gives stale answers and no stars; HyperLogLog and the materialized view as extra measures |
+| D20 | Caching | its own Engineering scenario E3 instead of a backlog item; the TTL is a business rule per kind of data, breaking it gives stale answers and no stars; all kinds share the memory of whole cache servers (LRU), so the decisions are what to cache and how many servers; HyperLogLog and the materialized view as extra measures |
 
 ---
 
@@ -752,3 +765,4 @@ music. Not taken over: maps, paths, the tower-and-creep rules, opponents, networ
 | S20 | *It's Not Easy Being Green: On the Energy Efficiency of Programming Languages*, arXiv:2410.05460 (the language matters less than the implementation and the runtime setup). https://arxiv.org/abs/2410.05460 |
 | S21 | L. Breslau, P. Cao, L. Fan, G. Phillips, S. Shenker: *Web Caching and Zipf-like Distributions: Evidence and Implications*, IEEE INFOCOM 1999. |
 | S22 | P. Flajolet, É. Fusy, O. Gandouet, F. Meunier: *HyperLogLog: the analysis of a near-optimal cardinality estimation algorithm*, AofA 2007. |
+| S23 | H. Che, Y. Tung, Z. Wang: *Hierarchical Web caching systems: modeling, design and experimental results*, IEEE JSAC 20(7), 2002 (the characteristic time of an LRU cache). |
