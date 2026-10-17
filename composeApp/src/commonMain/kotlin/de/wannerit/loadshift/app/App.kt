@@ -71,6 +71,10 @@ private fun initialScreen(options: LaunchOptions): Screen {
         // Plan like a careful player: every job into the greenest hours of the forecast.
         game.setPolicy(Policy(scenario.initialPolicy.capacity, BatchMode.Greenest))
         game.advance(options.ticks)
+    } else if (options.careful && Control.TRAINING in scenario.controls) {
+        // Like a careful player: six servers, cap 60 %, the greenest hours.
+        game.setPolicy(scenario.initialPolicy.copy(training = de.wannerit.loadshift.core.TrainingConfig(6, 600, true)))
+        game.advance(options.ticks)
     } else if (options.careful && Control.RENEWAL in scenario.controls) {
         // Like a careful player: the whole budget into Warsaw at once.
         game.changeRenewal(0, scenario.renewal?.budgetPerYear ?: 0)

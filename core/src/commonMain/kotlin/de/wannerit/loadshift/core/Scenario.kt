@@ -34,6 +34,9 @@ enum class Control {
 
     /** O7: replacing old servers by new ones, per site and quarter. */
     RENEWAL,
+
+    /** O8: servers, power cap and schedule of an AI training run. */
+    TRAINING,
 }
 
 /** The special goal of a scenario: the third star. */
@@ -103,6 +106,8 @@ data class Scenario(
     val cooling: CoolingModel? = null,
     /** O7: two sites with old fleets; one game day is a quarter. */
     val renewal: RenewalModel? = null,
+    /** O8: an AI training run. */
+    val training: TrainingModel? = null,
 ) {
     /** Expected interactive work at a tick: the web load or the VMs' profiles (what an operator can plan with). */
     fun expectedDemand(tick: Int): Int = interactive.expected(tick) + vms.sumOf { it.expectedMilli(tick) } / 1_000
@@ -118,7 +123,8 @@ data class Scenario(
 
     /** The goals a result reaches. */
     fun goalsMet(totals: Totals, reference: Totals): GoalsMet {
-        val rules = totals.sla >= slaTarget && totals.worstSiteSla >= slaTarget && totals.deadlinesMissed == 0 && totals.emissions < reference.emissions &&
+        val rules = totals.sla >= slaTarget && totals.worstSiteSla >= slaTarget &&
+            (training == null || totals.trainingFinishedAt != null) && totals.deadlinesMissed == 0 && totals.emissions < reference.emissions &&
             (staleLimit == null || totals.stalePerTenThousand <= staleLimit)
         val reduction = rules && totals.emissions * 1_000 <= reference.emissions * (1_000 - goals.reduction)
         val special = rules && when (val goal = goals.special) {
@@ -265,6 +271,24 @@ data class Scenario(
             renewal = RenewalModel(listOf(Site("Warsaw", GridRegion.POLAND), Site("Paris", GridRegion.FRANCE))),
         )
 
+        /**
+         * Scenario 8, "Training run": a language model for the shop's search must be trained within three days of a
+         * German spring – sunny middays, windy and calm days. Eight GPU servers; the reference operator trains with all
+         * of them at once, without a cap, from the first minute.
+         */
+        val TRAINING_RUN = Scenario(
+            number = 8, title = "Training run", setting = GridSetting(GridRegion.GERMANY, Season.SPRING), days = 3,
+            // A calm day, a windy day, a calm day.
+            weather = WeatherMode.Days(listOf(1_150, 650, 1_100)),
+            seed = 8, fleet = listOf(FleetEntry(ServerKind.GPU_CURRENT, 8)),
+            interactive = InteractiveLoad(peak = 0),
+            controls = setOf(Control.TRAINING),
+            initialPolicy = Policy(CapacityMode.AllOn),
+            referencePolicy = Policy(CapacityMode.AllOn),
+            goals = StarGoals(200, SpecialGoal.Reduction(270)),
+            training = TrainingModel(work = 240_000),
+        )
+
         /** The 24 VMs of scenario 5. */
         private val SHOP_VMS = List(8) { VmKind.FRONT_END } + List(6) { VmKind.BATCH_WORKER } + List(4) { VmKind.REPORTING } +
             List(2) { VmKind.DATABASE } + List(4) { VmKind.CACHE }
@@ -398,6 +422,6 @@ data class Scenario(
             staleLimit = 5,
         )
 
-        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, OLD_IRON, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS)
+        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, OLD_IRON, TRAINING_RUN, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS)
     }
 }

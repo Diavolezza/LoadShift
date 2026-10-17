@@ -51,7 +51,7 @@ fun HallView(
             }
             LegendSwatch(Palette.off, t("Off"))
             LegendSwatch(Palette.booting, t("Booting"))
-            if (interactive) LegendSwatch(Palette.slab, t("Web requests"), Palette.interactiveLoad)
+            if (interactive) LegendSwatch(Palette.slab, if (servers.any { it.kind == ServerKind.GPU_CURRENT }) t("Training") else t("Web requests"), Palette.interactiveLoad)
             if (batch) LegendSwatch(Palette.slab, t("Batch job"), Palette.batchLoad)
             if (cacheSlots > 0) LegendSwatch(Palette.cache, t("Cache server"))
             if (servers.any { it.kind == ServerKind.CPU_OLD }) LegendSwatch(Palette.old, t("Old server"))

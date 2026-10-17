@@ -57,6 +57,8 @@ fun ControlPanel(game: GameController, modifier: Modifier = Modifier) {
             NowBox(game)
         } else if (Control.PLACEMENT in game.scenario.controls) {
             PlacementPanel(game)
+        } else if (Control.TRAINING in game.scenario.controls) {
+            TrainingPanel(game)
         } else if (Control.RENEWAL in game.scenario.controls) {
             RenewalPanel(game)
         } else if (Control.COOLING in game.scenario.controls) {
@@ -364,7 +366,7 @@ private fun ForecastNews(game: GameController) {
 
 /** One rule to choose, with its explanation and, when chosen, its setting. */
 @Composable
-private fun RuleOption(chosen: Boolean, onChoose: () -> Unit, title: String, text: String, setting: (@Composable () -> Unit)? = null) {
+fun RuleOption(chosen: Boolean, onChoose: () -> Unit, title: String, text: String, setting: (@Composable () -> Unit)? = null) {
     Column(
         Modifier.fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))

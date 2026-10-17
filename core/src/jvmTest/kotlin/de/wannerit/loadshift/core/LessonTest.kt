@@ -379,6 +379,37 @@ class LessonTest {
         assertEquals(1, stars("2 and 2 every year"))
     }
 
+    @Test fun scenario8TrainingRun() {
+        val scenario = Scenario.TRAINING_RUN
+        val reference = Simulation.reference(scenario)
+        fun run(servers: Int, cap: Int, greenest: Boolean) =
+            Simulation.replay(scenario, scenario.initialPolicy.copy(training = TrainingConfig(servers, cap, greenest)))
+        val runs = listOf("reference: 8, 100 %, now" to reference) + listOf(
+            Triple(8, 1_000, true), Triple(8, 700, false), Triple(8, 800, false), Triple(8, 600, false),
+            Triple(8, 700, true), Triple(8, 800, true), Triple(8, 600, true),
+            Triple(6, 1_000, true), Triple(6, 700, true), Triple(6, 600, true),
+            Triple(4, 1_000, false), Triple(4, 700, false), Triple(5, 700, true), Triple(7, 700, true),
+        ).map { (n, c, g) -> "$n, ${c / 10} %, ${if (g) "greenest" else "now"}" to run(n, c, g) }
+        val lines = mutableListOf(title(scenario), HEADER + "  done at  restarts")
+        for ((name, sim) in runs) {
+            val done = sim.totals.trainingFinishedAt?.let { GameTime(it).let { t -> "d${t.day + 1} ${t.clockText}" } } ?: "NOT DONE"
+            lines += line(name, sim.totals, reference.totals) + "  " + done.padStart(9) + "  " + sim.totals.trainingRestarts +
+                "  " + "★".repeat(scenario.stars(sim.totals, reference.totals))
+        }
+        report(8, lines)
+        assertTrue(reference.totals.trainingFinishedAt != null)
+        val byName = runs.toMap()
+        fun stars(name: String) = scenario.stars(byName.getValue(name).totals, reference.totals)
+        // One lever alone: one star – the greenest hours, the power cap.
+        assertEquals(1, stars("8, 100 %, greenest"))
+        assertEquals(1, stars("8, 70 %, now"))
+        // Both: two stars; with fewer servers that wait less for each other: three.
+        assertEquals(2, stars("8, 70 %, greenest"))
+        assertEquals(3, stars("6, 60 %, greenest"))
+        // Too few servers at a low cap, all the time: the deadline is missed – no star.
+        assertEquals(0, stars("4, 70 %, now"))
+    }
+
     @Test fun e1MeasureFirst() {
         val scenario = Scenario.MEASURE_FIRST
         val reference = Simulation.reference(scenario)

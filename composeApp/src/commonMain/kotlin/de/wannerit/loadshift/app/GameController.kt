@@ -17,6 +17,7 @@ import de.wannerit.loadshift.core.ScheduledMinimum
 import de.wannerit.loadshift.core.Scenario
 import de.wannerit.loadshift.core.Simulation
 import de.wannerit.loadshift.core.Totals
+import de.wannerit.loadshift.core.TrainingConfig
 import de.wannerit.loadshift.core.VmKind
 import de.wannerit.loadshift.core.forSite
 import de.wannerit.loadshift.core.plus
@@ -113,19 +114,22 @@ class GameController(val scenario: Scenario) {
     /** New servers per site, bought so far (installed or arriving at the start of the next quarter). */
     var renewDraft by mutableStateOf(List(siteCount) { 0 })
         private set
-    /** New servers bought before the current year. */
-    private var boughtBeforeYear = 0
-    private var budgetYear = 0
+    /** New servers bought in each year (by the year in which the game was paused to buy them). */
+    private val boughtInYear = mutableMapOf<Int, Int>()
     fun installed(site: Int): Int = version.let { sims[site].policy.renewed }
     val year: Int get() = scenario.renewal?.year(currentDay.coerceAtMost(scenario.days - 1)) ?: 0
     /** New servers the budget still pays for this year. */
-    val budgetLeft: Int get() = (scenario.renewal?.budgetPerYear ?: 0) - (renewDraft.sum() - boughtBeforeYear)
+    val budgetLeft: Int get() = version.let { (scenario.renewal?.budgetPerYear ?: 0) - (boughtInYear[year] ?: 0) }
     val canRenew: Boolean get() = hasRenewal && !isFinished
 
     fun changeRenewal(site: Int, delta: Int) {
         if (!canRenew) return
-        val n = (renewDraft[site] + delta).coerceIn(installed(site), renewDraft[site] + maxOf(0, budgetLeft))
+        // More: as far as this year's budget goes; fewer: only servers bought this year that have not arrived yet.
+        val boughtNow = boughtInYear[year] ?: 0
+        val n = (renewDraft[site] + delta).coerceIn(maxOf(installed(site), renewDraft[site] - boughtNow), renewDraft[site] + maxOf(0, budgetLeft))
+        boughtInYear[year] = boughtNow + (n - renewDraft[site])
         renewDraft = renewDraft.toMutableList().also { it[site] = n }
+        changed()
     }
 
     /** Lets the quarters run. */
@@ -137,10 +141,6 @@ class GameController(val scenario: Scenario) {
     /** O7, before a tick: at the start of a quarter the bought servers arrive; a new year brings a new budget. */
     private fun beforeTick() {
         if (!hasRenewal || (current.tick - scenario.startTick) % GameTime.TICKS_PER_DAY != 0) return
-        if (year != budgetYear) {
-            budgetYear = year
-            boughtBeforeYear = renewDraft.sum()
-        }
         for (i in sims.indices) {
             if (renewDraft[i] > sims[i].policy.renewed) {
                 sims[i].policy = sims[i].policy.copy(renewed = renewDraft[i])
@@ -333,6 +333,14 @@ class GameController(val scenario: Scenario) {
     var capFrom by mutableIntStateOf(18)
     var capTo by mutableIntStateOf(22)
 
+    // Training (O8)
+
+    val hasTraining: Boolean get() = scenario.training != null
+    var trainServers by mutableIntStateOf(8)
+    var trainCap by mutableIntStateOf(1_000)
+    var trainGreenest by mutableStateOf(false)
+    val draftTraining: TrainingConfig get() = TrainingConfig(trainServers, trainCap, trainGreenest)
+
     // Cooling (scenario 6)
 
     var draftSetpoint by mutableIntStateOf(20)
@@ -369,6 +377,7 @@ class GameController(val scenario: Scenario) {
             if (Control.CAPACITY_RULES in scenario.controls) policy = policy.copy(capacity = draftCapacity)
             if (Control.CACHING in scenario.controls) policy = policy.copy(cache = draftCache)
             if (Control.COOLING in scenario.controls) policy = policy.copy(setpoint = draftSetpoint)
+            if (Control.TRAINING in scenario.controls) policy = policy.copy(training = draftTraining)
             return policy
         }
 
@@ -395,6 +404,7 @@ class GameController(val scenario: Scenario) {
         }
         draftSafety = policy.deadlineSafety
         draftSetpoint = policy.setpoint
+        trainServers = policy.training.servers; trainCap = policy.training.cap; trainGreenest = policy.training.greenest
         scenario.caching?.let { model ->
             val c = policy.cache
             cacheServers = c.servers
@@ -422,6 +432,7 @@ class GameController(val scenario: Scenario) {
         val kind: RuleKind, val hour: Int, val threshold: Int, val safety: Boolean,
         val capKind: CapacityKind, val capFixed: Int, val capTarget: Int, val capMinimumOn: Boolean, val capMinimum: Int,
         val capFrom: Int, val capTo: Int, val startPolicy: Policy?, val cache: CacheConfig, val setpoint: Int,
+        val training: TrainingConfig,
     )
 
     private companion object {
@@ -431,7 +442,7 @@ class GameController(val scenario: Scenario) {
     /** Keeps the panel's settings for the next run (a new run starts with the scenario's rules, the panel keeps yours). */
     fun saveDraft() {
         drafts[scenario.number] = Draft(draftKind, draftHour, draftThreshold, draftSafety, capKind, capFixed, capTarget,
-            capMinimumOn, capMinimum, capFrom, capTo, startPolicy ?: current.policy.takeIf { current.history.isEmpty() }, draftCache, draftSetpoint)
+            capMinimumOn, capMinimum, capFrom, capTo, startPolicy ?: current.policy.takeIf { current.history.isEmpty() }, draftCache, draftSetpoint, draftTraining)
     }
 
     private fun restoreDraft() {
@@ -443,6 +454,7 @@ class GameController(val scenario: Scenario) {
         if (d.cache.ttlMinutes.isNotEmpty()) cacheTtl = d.cache.ttlMinutes
         cacheCount = d.cache.approximateCount; cacheView = d.cache.materializedView; cacheInvalidate = d.cache.invalidate; cacheWarmUp = d.cache.warmUp
         draftSetpoint = d.setpoint
+        trainServers = d.training.servers; trainCap = d.training.cap; trainGreenest = d.training.greenest
         // A new run starts with the rules the last run started with (the panel shows the last run's final ones).
         if (d.startPolicy != null && current.history.isEmpty() && !hasSprints) {
             current.policy = d.startPolicy
@@ -536,6 +548,17 @@ class GameController(val scenario: Scenario) {
 
     /** "What if" for the debrief: the whole scenario replayed with other rules, with the same load and grid mix. */
     fun whatIf(): List<Pair<String, Totals>> {
+        if (hasTraining) {
+            fun run(n: Int, cap: Int, greenest: Boolean) = Simulation.replay(scenario, scenario.initialPolicy.copy(training = TrainingConfig(n, cap, greenest))).totals
+            return listOf(
+                t("8 servers, no cap, at once (reference)") to referenceTotals,
+                t("8 servers, no cap, greenest hours") to run(8, 1_000, true),
+                t("8 servers, cap 70 %, at once") to run(8, 700, false),
+                t("8 servers, cap 70 %, greenest hours") to run(8, 700, true),
+                t("6 servers, cap 60 %, greenest hours") to run(6, 600, true),
+                t("4 servers, cap 70 %, at once") to run(4, 700, false),
+            )
+        }
         if (hasRenewal) {
             /** Both sites with plans: day → new servers installed by then. */
             fun run(vararg plans: Map<Int, Int>): Totals = plans.mapIndexed { site, plan ->
@@ -659,8 +682,7 @@ class GameController(val scenario: Scenario) {
         speed = Speed.PAUSED
         sims = newSims()
         renewDraft = List(siteCount) { 0 }
-        boughtBeforeYear = 0
-        budgetYear = 0
+        boughtInYear.clear()
         restoreDraft()
         startPolicy = null
         team = Team(scenario.backlog, scenario.sprintPoints)

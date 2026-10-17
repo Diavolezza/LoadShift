@@ -131,7 +131,9 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
         }
 
         // Lower lane
-        if (batchLane) {
+        if (scenario.training != null) {
+            drawTraining(lowTop, lowBottom)
+        } else if (batchLane) {
             drawJobs(lowTop, lowBottom)
             text(t("Batch jobs – light: arrival to deadline, outlined: planned, filled: running or done"), Offset(left, lowTop - 12f * density), Type.style(12, FontWeight.SemiBold))
         } else {
@@ -194,6 +196,9 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
                 tick < now -> t("Running: %@", names.joinToString(", "))
                 else -> t("Planned: %@", names.joinToString(", "))
             }
+        } else if (scenario.training != null) {
+            if (record != null) lines += t("%lld GPU servers on, progress %@", record.serversOn,
+                Format.wholePercent(minOf(1_000L, record.trainingDone * 1_000 / (scenario.training?.work ?: 1)).toInt()))
         } else if (record != null) {
             lines += t("Load %lld, capacity %lld (%lld servers on)", record.demand, record.capacity, record.serversOn)
             if (record.inTime < record.demand) lines += t("In time: %@", Format.wholePercent(record.inTime * 1_000 / maxOf(1, record.demand)))
@@ -292,6 +297,47 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
             drawRect(kindColor(k).copy(alpha = 0.7f), Offset(lx, top + 4f * density), Size(10f * density, 10f * density))
             lx -= 12f * density
         }
+    }
+
+    /**
+     * O8: when the GPUs train (blue: training, light: loading the checkpoint after a pause; ahead dashed: the plan with
+     * the rules now) and the progress (line, 100 % at the top).
+     */
+    private fun DrawScope.drawTraining(top: Float, bottom: Float) {
+        val model = scenario.training ?: return
+        val history = simulation.history
+        val plan = if (now < end) simulation.projectedHistory(simulation.policy) else emptyList()
+        val barTop = top + (bottom - top) * 0.55f
+        fun bars(records: List<de.wannerit.loadshift.core.TickRecord>, before: Long, planned: Boolean) {
+            var last = before
+            for (r in records) {
+                if (r.itPower > 0) {
+                    val progressed = r.trainingDone > last
+                    val color = (if (progressed) Palette.interactiveLoad else Palette.booting).copy(alpha = if (planned) 0.45f else 1f)
+                    drawRect(color, Offset(x(r.tick), barTop), Size(maxOf(1f, x(r.tick + 1) - x(r.tick)), bottom - barTop))
+                }
+                last = r.trainingDone
+            }
+        }
+        bars(history, 0, false)
+        bars(plan, simulation.totals.trainingDone, true)
+        fun yP(done: Long) = barTop - (barTop - top) * (minOf(done, model.work.toLong()).toFloat() / model.work)
+        val line = Path().apply {
+            moveTo(x(start), yP(0))
+            history.forEach { lineTo(x(it.tick + 1), yP(it.trainingDone)) }
+        }
+        drawPath(line, Palette.accent, style = Stroke(2f * density))
+        if (plan.isNotEmpty()) {
+            val ahead = Path().apply {
+                moveTo(x(now), yP(simulation.totals.trainingDone))
+                plan.forEach { lineTo(x(it.tick + 1), yP(it.trainingDone)) }
+            }
+            drawPath(ahead, Palette.accent.copy(alpha = 0.6f), style = Stroke(1.5f * density, pathEffect = PathEffect.dashPathEffect(floatArrayOf(4f * density, 3f * density))))
+        }
+        drawLine(Palette.accent.copy(alpha = 0.3f), Offset(left, top), Offset(right, top), 1f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(3f * density, 3f * density)))
+        text("100 %", Offset(right + 6f * density, top))
+        drawLine(Color.Gray.copy(alpha = 0.5f), Offset(left, bottom), Offset(right, bottom), 1f)
+        text(t("Training – green: progress, blue: GPUs training, light: loading after a pause; dashed: the plan with the rules now"), Offset(left, top - 12f * density), Type.style(12, FontWeight.SemiBold))
     }
 
     /** Scenario 6: outside temperature (line, dashed ahead), setpoint (step line), hours the outside air cools (green). */

@@ -72,6 +72,8 @@ data class Policy(
     val renewed: Int = 0,
     /** O7, the reference operator: buys new servers whenever the coming quarter would be short of capacity. */
     val buyWhenShort: Boolean = false,
+    /** O8: how the training runs. */
+    val training: TrainingConfig = TrainingConfig(),
 ) {
     companion object {
         /**

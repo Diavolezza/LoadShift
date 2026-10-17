@@ -72,7 +72,7 @@ fun GameScreen(game: GameController, onExit: () -> Unit, onNext: ((Scenario) -> 
                     }
                 } else {
                     HallView(
-                        game.simulation.servers, game.version, game.hasInteractive, game.hasBatch, Modifier.weight(1f).fillMaxHeight(),
+                        game.simulation.servers, game.version, game.hasInteractive || game.hasTraining, game.hasBatch, Modifier.weight(1f).fillMaxHeight(),
                         cacheSlots = if (game.scenario.caching != null) CacheModel.MAX_SERVERS else 0,
                         cacheOn = game.scenario.caching?.servers(game.simulation.policy.cache) ?: 0,
                         cachePower = game.scenario.caching?.power(game.simulation.policy.cache) ?: 0,
@@ -119,6 +119,10 @@ private fun TopBar(game: GameController, onExit: () -> Unit) {
         if (game.hasBatch) {
             Metric(t("Jobs done"), "${simulation.totals.jobsDone} / ${simulation.jobs.size}",
                 if (simulation.totals.deadlinesMissed == 0) Palette.ink else Palette.red)
+        }
+        simulation.scenario.training?.let { model ->
+            Metric(t("Training"), Format.wholePercent(minOf(1_000L, simulation.totals.trainingDone * 1_000 / model.work).toInt()),
+                if (simulation.totals.trainingFinishedAt != null) Palette.accent else Palette.ink)
         }
         if (simulation.scenario.cooling != null) {
             Metric(t("PUE now"), if (last == null || last.itPower == 0) "–" else Format.number(last.facilityPower.toDouble() / last.itPower, 2))
@@ -195,6 +199,13 @@ private fun GoalBar(game: GameController) {
         if (game.hasInteractive) {
             GoalItem(minOf(totals.sla, totals.worstSiteSla) >= scenario.slaTarget, change != null,
                 if (game.hasRenewal) t("SLA ≥ %@ at each site", Format.percent(scenario.slaTarget)) else t("SLA ≥ %@", Format.percent(scenario.slaTarget)))
+            GoalItem((change ?: 0) < 0, change != null,
+                if (change == null) t("CO₂ vs. reference") else t("CO₂ vs. reference: %@", Format.changePermille(change)))
+        }
+        if (game.hasTraining) {
+            val done = totals.trainingFinishedAt
+            GoalItem(done != null, done != null || game.isFinished,
+                if (done != null) t("Training done: %@", timeText(done)) else t("Training done by the end of day %lld", scenario.days))
             GoalItem((change ?: 0) < 0, change != null,
                 if (change == null) t("CO₂ vs. reference") else t("CO₂ vs. reference: %@", Format.changePermille(change)))
         }
@@ -278,6 +289,10 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
                         add((if (game.hasRenewal) t("SLA (lowest site)") else t("SLA")) to (Format.percent(minOf(you.sla, you.worstSiteSla)) to Format.percent(minOf(ref.sla, ref.worstSiteSla))))
                         add(t("Servers on (mean)") to (Format.number(you.meanServersOn / 1_000.0, 1) to Format.number(ref.meanServersOn / 1_000.0, 1)))
                         add(t("Mean utilization") to (Format.wholePercent(you.meanUtilization) to Format.wholePercent(ref.meanUtilization)))
+                    }
+                    if (game.hasTraining) {
+                        add(t("Training done") to ((you.trainingFinishedAt?.let { timeText(it) } ?: t("not done")) to (ref.trainingFinishedAt?.let { timeText(it) } ?: t("not done"))))
+                        add(t("Resumed after a pause") to ("${you.trainingRestarts}" to "${ref.trainingRestarts}"))
                     }
                     if (game.hasBatch) {
                         val n = game.simulation.jobs.size

@@ -334,7 +334,7 @@ Engineering track opens after scenario 1, because it builds on the SCI per reque
 | 5 | Consolidation | Germany, autumn | 1 day | placing VMs on hosts by hand (two dimensions: CPU and RAM) | Bin packing: fewer hosts running means less idle power. Pack by the peaks, not the means; VMs with opposite daily profiles fit together; often the RAM is full before the CPU; packing too tight lets the peaks collide (G6, D18). Term: Consolidation (Bin Packing). |
 | 6 | Heat wave | Germany, summer | 3 days | inlet setpoint (18–27 °C), capacity rule | Outside air cools for free while it is 6 K below the setpoint; in the heat the chiller works, the hotter the more. A warmer setpoint saves chiller power, above 25 °C the server fans eat it up: the sweet spot is 25 °C. The PUE trap: fewer servers save the most energy but raise the PUE (fixed facility power); 27 °C and all servers on give the best PUE and more CO₂. The stars count CO₂ (G5, D21). Term: PUE (Power Usage Effectiveness). |
 | 7 | Old iron | Warsaw and Paris | 3 years (12 quarters, one game day each) | where and when new servers go: a budget of four a year | Two data centers with the same old fleet (24 servers, four years old). The shop grows by 15 % a year; every year a generation that needs 17 % less power; from year 3 the old servers fail. A new server does the work of two old ones; making it emits 550 kg, booked over six years. In the Polish grid a new server saves many times that, in the French grid hardly anything: new hardware first where the grid is dirty, at the clean site only what the capacity needs, as late as possible (G6, G1, D22). Term: Embodied Carbon. |
-| 8 | Training run | Germany, spring | 3 days | AI training, power cap | Run the training in clean hours and cap the GPUs (G3, G6). |
+| 8 | Training run | Germany, spring (calm, windy, calm) | 3 days | GPU servers in parallel, power cap, schedule (without a break or greenest hours) | A model needs a fixed amount of GPU work by the end of day 3. The greenest hours move the work into wind and sun; a power cap saves energy for a little time [S7]; fewer servers waste less time waiting for each other. A pause costs a checkpoint load (G3, G6). Term: Carbon-Aware Training (Power Capping). |
 | 9 | Eco mode | Poland, summer | 2 days | streaming eco mode | Lower quality when the grid is dirty (G7). Term: Demand Shaping. |
 | 10 | Two sites | Norway and Germany | 3 days | moving workloads between sites | Batch and training move to Norway; interactive stays close to the users (latency) (G8). Term: Location Shifting. |
 | 11 | Dark doldrums | Germany, winter, windless | 7 days | all | Little sun, no wind, high prices – everything together, with a hard SCI target. |
@@ -776,6 +776,26 @@ After each step the game is played by a person before the next step begins (**pl
 grid curves and their generator, the forecast model, the electricity price formula, the embodied and SCI
 bookkeeping, the build script with its watcher, the string catalog tools, the App Store tools, sound effects and
 music. Not taken over: maps, paths, the tower-and-creep rules, opponents, network play.
+
+**As built in step 5, part 3** (scenario 8, "Training run"):
+
+- Core: `TrainingModel` (work 240 server-hours; GPUs draw 90 % of their dynamic range without a cap; speed at a cap
+  60/70/80/90 % = 87/93/97/100 %; each additional server loses 4 % throughput; resuming costs one tick).
+  `Policy.training` (`TrainingConfig`: servers, cap, greenest). Greenest hours: the training runs now if this tick is
+  among the greenest of the ticks left that it still needs (a tenth and two ticks in reserve), by the forecast made
+  now. The first star needs the training done by the deadline. Weather: calm, windy, calm.
+- App: training panel (progress, servers, cap, schedule, hours left against hours to the deadline); the lower lane
+  shows when the GPUs train, the progress, and ahead the plan with the rules now (`Simulation.projectedHistory`).
+- Goals ★★ −20 %, ★★★ −27 %.
+
+| Rules | CO₂ vs. reference | Stars |
+|---|---:|---:|
+| 8 servers, no cap, at once (reference) | – | – |
+| 8, no cap, greenest hours | −15.8 % | ★ |
+| 8, cap 70 %, at once | −12.7 % | ★ |
+| 8, cap 70 %, greenest hours | −23.9 % | ★★ |
+| 6, cap 60 %, greenest hours | −29.5 % | ★★★ |
+| 4, cap 70 %, at once | (not done in time) | 0 |
 
 ---
 

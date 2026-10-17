@@ -46,6 +46,10 @@ data class Totals(
     var failedServers: Int = 0,
     /** O7: the lowest SLA of the sites added up, per mille (the SLA counts per site). */
     var worstSiteSla: Int = 1_000,
+    /** O8: training work done, thousandths of a server-hour; the tick it was finished; resumes after a pause. */
+    var trainingDone: Long = 0,
+    var trainingFinishedAt: Int? = null,
+    var trainingRestarts: Int = 0,
 ) {
     /** Share of the demand served in time, per mille. */
     val sla: Int get() = if (demand == 0L) 1_000 else (inTime * 1_000 / demand).toInt()
@@ -104,6 +108,8 @@ data class TickRecord(
     /** O7: embodied emissions so far (µg) and the capacity of all servers installed, work units. */
     val embodiedSoFar: Long = 0,
     val fleetCapacity: Int = 0,
+    /** O8: training work done so far, thousandths of a server-hour. */
+    val trainingDone: Long = 0,
 )
 
 /** E3: memory used (tenths of GB), memory of the running cache servers (GB), hits (per mille of the cacheable requests), memory per kind (tenths of GB). */
@@ -232,6 +238,17 @@ class Simulation private constructor(
         return copy.totals
     }
 
+    /** The rest of the scenario with a policy, by the forecast made now: the ticks it would bring (O8: the plan). */
+    fun projectedHistory(with: Policy): List<TickRecord> {
+        val copy = copy()
+        copy.policy = with
+        copy.plannedAt = tick
+        copy.trainedLastTick = trainedLastTick
+        copy.historyList.clear()
+        copy.run()
+        return copy.historyList
+    }
+
     // Planning batch jobs by hand
 
     /** Plans a job to start at a tick (not before its arrival or now). Started jobs cannot be moved. */
@@ -259,6 +276,7 @@ class Simulation private constructor(
         finishBooting()
         updateJobs()
         applyCapacityPolicy()
+        val training = trainNow()
         startBatchJobs()
 
         val requests = if (plannedAt == null) scenario.interactive.actual(tick, scenario.seed) else scenario.interactive.expected(tick)
@@ -300,6 +318,7 @@ class Simulation private constructor(
             val server = serverList[i]
             val job = server.job
             val newUtilization = when {
+                training != null && server.kind == ServerKind.GPU_CURRENT -> if (server.state.isOn) training else 0
                 job != null -> if (jobList[job].state is BatchJobState.Running && server.state.isOn) 1_000 else 0
                 hostUtilization != null -> if (server.state.isOn) hostUtilization[i] else 0
                 server.state.isOn && server.kind.servesInteractive -> utilization
@@ -361,7 +380,7 @@ class Simulation private constructor(
                 inTime = inTime, serversOn = poweredOn, batchServers = batchServers, itPower = itPower,
                 facilityPower = facilityPower, emissionsSoFar = totals.emissions, hostDemandMilli = hostMilli,
                 setpoint = policy.setpoint, cache = cacheRecord,
-                embodiedSoFar = totals.embodied, fleetCapacity = serverList.sumOf { it.kind.capacity },
+                embodiedSoFar = totals.embodied, fleetCapacity = serverList.sumOf { it.kind.capacity }, trainingDone = totals.trainingDone,
             ),
         )
         tick += 1
@@ -476,6 +495,46 @@ class Simulation private constructor(
             var capacity = serverList.sumOf { it.kind.capacity }
             while (capacity < needed) { install(model); capacity += ServerKind.CPU_CURRENT.capacity }
         }
+    }
+
+    /** O8: whether the training runs this tick; the result is the GPUs' draw, or null without a training. */
+    internal var trainedLastTick = false
+
+    private fun trainNow(): Int? {
+        val model = scenario.training ?: return null
+        val config = policy.training
+        val left = model.work - totals.trainingDone
+        val perTick = model.perTick(config)
+        val run = left > 0 && perTick > 0 && (!config.greenest || greenestNow(left, perTick))
+        val gpus = serverList.indices.filter { serverList[it].kind == ServerKind.GPU_CURRENT }
+        for ((k, i) in gpus.withIndex()) {
+            serverList[i] = serverList[i].copy(state = if (run && k < config.servers) ServerState.On else ServerState.Off)
+        }
+        if (run) {
+            // Resuming after a pause: loading the checkpoint, no progress yet.
+            if (!trainedLastTick && totals.trainingDone > 0) totals.trainingRestarts += 1
+            val loading = !trainedLastTick && totals.trainingDone > 0
+            if (!loading) {
+                totals.trainingDone += perTick
+                if (totals.trainingDone >= model.work && totals.trainingFinishedAt == null) totals.trainingFinishedAt = tick
+            }
+        }
+        trainedLastTick = run
+        return model.draw(config.cap)
+    }
+
+    /**
+     * Greenest hours: the training runs now if this tick is among the greenest of the ticks left before the deadline
+     * that it still needs (with a margin of a tenth and the loading after pauses) – by the forecast made now.
+     */
+    private fun greenestNow(left: Long, perTick: Int): Boolean {
+        val ticksLeft = scenario.endTick - tick
+        val needed = ((left + perTick - 1) / perTick).toInt()
+        val withMargin = needed + needed / 10 + 2
+        if (withMargin >= ticksLeft) return true
+        val forecast = (tick until scenario.endTick).map { grid.forecastTenths(it, plannedAt ?: tick) }
+        val threshold = forecast.sorted()[withMargin - 1]
+        return forecast[0] <= threshold
     }
 
     private fun switchOn(i: Int) {
