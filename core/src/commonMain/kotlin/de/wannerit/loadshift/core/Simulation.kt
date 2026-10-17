@@ -88,6 +88,8 @@ class Simulation private constructor(
     private val historyList: MutableList<TickRecord>,
     plannedAt: Int?,
     private val missedCounted: MutableSet<Int>,
+    /** Batch rule and deadline safety of the last tick: a changed rule plans the jobs not started yet anew. */
+    private var batchRuleSeen: Pair<BatchMode, Boolean>?,
 ) {
     /** The next tick to simulate. */
     var tick: Int = tick
@@ -118,6 +120,7 @@ class Simulation private constructor(
         historyList = ArrayList(scenario.endTick - scenario.startTick),
         plannedAt = null,
         missedCounted = mutableSetOf(),
+        batchRuleSeen = null,
     ) {
         // The start shows the servers as the policy wants them (the first tick would switch them anyway).
         applyCapacityPolicy()
@@ -126,7 +129,7 @@ class Simulation private constructor(
     /** An independent copy (the simulation is mutable; projections and "what if" run on copies). */
     fun copy(): Simulation = Simulation(
         scenario, policy, grid, serverList.toMutableList(), jobList.toMutableList(), tick, totals.copy(),
-        historyList.toMutableList(), plannedAt, missedCounted.toMutableSet(),
+        historyList.toMutableList(), plannedAt, missedCounted.toMutableSet(), batchRuleSeen,
     )
 
     val time: GameTime get() = GameTime(tick)
@@ -355,6 +358,18 @@ class Simulation private constructor(
     /** Starts the jobs the batch policy wants to start now, if enough servers are free. */
     private fun startBatchJobs() {
         if (jobList.isEmpty()) return
+        // A changed rule: jobs not started yet are planned again by the new rule (plans by hand stay).
+        val rule = policy.batch to policy.deadlineSafety
+        var ruleChanged = false
+        if (rule != batchRuleSeen) {
+            if (batchRuleSeen != null && policy.batch.isRule) {
+                ruleChanged = true
+                for (i in jobList.indices) {
+                    if (jobList[i].state is BatchJobState.Planned) jobList[i] = jobList[i].copy(state = BatchJobState.Waiting)
+                }
+            }
+            batchRuleSeen = rule
+        }
         when (val mode = policy.batch) {
             BatchMode.ByHand -> {}
             BatchMode.Asap -> for (i in jobList.indices) {
@@ -367,14 +382,25 @@ class Simulation private constructor(
                 if (job.state == BatchJobState.Waiting && job.spec.arrival <= tick) {
                     var start = job.spec.arrival
                     while (GameTime(start).hour != mode.hour || GameTime(start).minute != 0) start += 1
-                    jobList[i] = job.copy(state = BatchJobState.Planned(minOf(start, maxOf(job.spec.latestStart, tick))))
+                    val safe = if (policy.deadlineSafety) minOf(start, maxOf(job.spec.latestStart, tick)) else start
+                    jobList[i] = job.copy(state = BatchJobState.Planned(safe))
                 }
             }
             BatchMode.Greenest -> {
                 val arrived = jobList.any {
                     it.spec.arrival == tick || (it.spec.arrival < tick && it.state == BatchJobState.Waiting)
                 }
-                if (arrived) replanGreenest()
+                if (arrived || ruleChanged) replanGreenest()
+            }
+            is BatchMode.Threshold -> {
+                val now = plannedAt?.let { grid.forecastTenths(tick, it) } ?: grid.intensityTenths(tick)
+                for (i in jobList.indices) {
+                    val job = jobList[i]
+                    if (job.state != BatchJobState.Waiting || job.spec.arrival > tick) continue
+                    val clean = now <= mode.gramsPerKWh * 10
+                    val due = policy.deadlineSafety && tick >= job.spec.latestStart
+                    if (clean || due) jobList[i] = job.copy(state = BatchJobState.Planned(tick))
+                }
             }
         }
         for (i in jobList.indices) {

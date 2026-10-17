@@ -24,8 +24,8 @@ sealed interface BatchMode {
     data object Asap : BatchMode
 
     /**
-     * Every job starts at the next given full hour after its arrival ("nightly batch at 01:00"), or at its latest
-     * start if that comes first.
+     * Every job starts at the next given full hour after its arrival ("nightly batch at 01:00"); with the deadline
+     * safety at its latest start if that comes first.
      */
     data class AtHour(val hour: Int) : BatchMode
 
@@ -34,9 +34,22 @@ sealed interface BatchMode {
      * free servers into account; plans are made again whenever a job arrives.
      */
     data object Greenest : BatchMode
+
+    /**
+     * A job starts as soon as the carbon intensity of the grid is at or below the threshold (g/kWh) – the value
+     * now, not the forecast; with the deadline safety at its latest start at the latest.
+     */
+    data class Threshold(val gramsPerKWh: Int) : BatchMode
+
+    /** A rule that the simulation follows (everything but planning by hand). */
+    val isRule: Boolean get() = this != ByHand
 }
 
-data class Policy(val capacity: CapacityMode, val batch: BatchMode = BatchMode.Asap) {
+/**
+ * The rules for capacity and batch work. [deadlineSafety] (CONCEPT.md 5.2): whatever the batch rule, a job starts
+ * when waiting longer would miss its deadline (fixed hour and threshold; the other rules never wait that long).
+ */
+data class Policy(val capacity: CapacityMode, val batch: BatchMode = BatchMode.Asap, val deadlineSafety: Boolean = true) {
     companion object {
         /**
          * What the reference operator does unless a scenario says otherwise: all servers on, batch jobs as soon as
@@ -46,6 +59,9 @@ data class Policy(val capacity: CapacityMode, val batch: BatchMode = BatchMode.A
 
         /** Allowed range of the target utilization, per mille. */
         val TARGET_RANGE = 400..900
+
+        /** Thresholds the player can choose for batch work, g/kWh. */
+        val THRESHOLD_RANGE = 50..400
 
         /** Ticks the autoscaler looks ahead beyond the boot time: one hour. */
         const val LOOKAHEAD = GameTime.TICKS_PER_HOUR

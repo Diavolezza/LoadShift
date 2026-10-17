@@ -324,7 +324,7 @@ Ten scenarios, each introducing one idea. Region and season are chosen so that t
 |---|---|---|---|---|---|
 | 1 | Night shift | Germany, autumn | 1 day | servers on/off by hand | Idle power: at night 20 % load, all servers on wastes energy; switching on takes 30 minutes, so plan ahead (G2). |
 | 2 | Wait for the sun | Spain (annual profile) | 2 days | batch jobs planned by hand, forecast | Reports and backups move into the midday dip – the night is not clean in a solar grid (G3). |
-| 3 | When the wind drops | Great Britain, winter | 3 days | batch rules (greenest hours, threshold), deadline safety | The rules automate what the player planned by hand in scenario 2; the forecast is uncertain, a threshold plus the safety rule beats a fixed window (G3). |
+| 3 | When the wind drops | Great Britain, winter | 3 days | batch rules (fixed hour, greenest hours, threshold), deadline safety | The rules automate what the player planned by hand in scenario 2. A fixed threshold works while the wind blows and fails when it drops: without the deadline safety jobs miss their deadlines, with it they start at the last moment in dirty hours. A rule that compares the hours of the (uncertain) forecast adapts to the weather (G3, D15). |
 | 4 | Headroom | Germany, winter | 2 days | capacity rules with autoscaling (target utilization), money, SLA penalty | Autoscaling automates what the player did by hand in scenario 1; a marketing campaign doubles the load: too little headroom costs SLA, too much costs energy (G4). |
 | 5 | Heat wave | Germany, summer | 3 days | cooling type, setpoint | PUE rises with the outside temperature; setpoint and free cooling (G5). |
 | 6 | Old iron | France and Poland | 3 years (monthly steps) | buying and retiring servers | Replacing hardware pays off in Poland, hardly in France (G6, G1). |
@@ -335,7 +335,8 @@ Ten scenarios, each introducing one idea. Region and season are chosen so that t
 
 Each scenario has:
 
-- a **briefing** (half a screen: situation, goal, the one idea, what is new on the screen),
+- a **briefing**: situation, the one idea, its **technical term** (D16), a small preview of the play screen with
+  numbered areas and what they show, facts and goals,
 - the play,
 - a **debrief** (section 8.2) with a short explanation of the idea and one source.
 
@@ -412,7 +413,7 @@ After each step the game is played by a person before the next step begins (**pl
 | 0 | Repo, build script with watcher, Xcode project, empty core package, README, license | builds and tests run on the Mac – **done** (version 0.0) |
 | 1 | Core: clock, grid curves and forecast, interactive load, servers with power, autoscaling, SLA, emissions | headless run of scenario 1 prints plausible numbers; tests green – **done** (version 0.1) |
 | 2 | Minimal UI: top bar with speed control, timeline, capacity tab, simple hall | scenario 1 playable; **play test** – done; revised after the play test (version 0.2.1): start at 00:00, switching by hand, goals and stars, "what if" |
-| 3 | Batch with policies and deadline safety; reference operator; debrief | scenarios 2 and 3 playable; **play test** – scenario 2 built (version 0.3), scenario 3 open |
+| 3 | Batch with policies and deadline safety; reference operator; debrief | scenarios 2 and 3 playable; **play test** – scenario 2 built (version 0.3), scenario 3 built (version 0.3.6) |
 | 4 | Money, events, automatic pause | scenario 4; **play test** |
 | 5 | Cooling and PUE, outside temperature | scenario 5; **play test** |
 | 6 | Embodied emissions, buying/retiring, monthly time scale, SCI | scenario 6; **play test** |
@@ -512,6 +513,31 @@ After each step the game is played by a person before the next step begins (**pl
   on time, mean g/kWh and "what if" (as soon as possible, at 01:00, at 11:00, by the forecast).
 - The dotted server lines in the load lane are lighter after the second play test.
 
+**As built in step 3, part 2** (scenario 3 and play-test changes):
+
+- Core: batch rule `Threshold(g/kWh)` (starts when the intensity now is at or below it) and `Policy.deadlineSafety`
+  (fixed hour and threshold start a job at its latest start at the latest; switchable). A changed rule plans the
+  jobs not started yet anew. `WeatherMode.Days`: one weather factor per day. A changed capacity policy applies at
+  once, also while paused, with the same result as at the next tick.
+- Scenario 3: Great Britain, winter, 3 days, weather 1.0 / 0.55 (storm) / 1.7 (windless), 12 CPU servers, 9 jobs.
+  Goals: ★★ −10 %, ★★★ batch work ≤ 140 g/kWh.
+
+| Rule | CO₂ vs. reference | Batch work g/kWh | Deadlines missed | Stars |
+|---|---:|---:|---:|---:|
+| as soon as possible (reference) | – | 169 | 0 | – |
+| greenest hours by the forecast | −14 % | 135 | 0 | ★★★ |
+| at 03:00, with safety | −4 % | 160 | 0 | ★ |
+| at 03:00, without safety | −16 % | 144 | 1 | – |
+| below 140 g/kWh, with safety | −1 % | 166 | 0 | ★ |
+| below 140 g/kWh, without safety | −32 % | 114 | 3 | – |
+
+- App: rules panel with a draft (four rules, hour and threshold with plus and minus, deadline safety) and
+  "Apply"; the job list shows what the rule has planned. "What if" for scenario 3: as soon as possible, 03:00,
+  below 150 with and without safety, greenest hours.
+- Briefing: the technical term of the scenario in a box (Rightsizing, Time Shifting, Carbon-Aware Scheduling), also
+  on the scenario card and in the debrief; a live preview of the play screen in its start state with markers ①–④.
+  End card: "To scenario N" once it is open.
+
 **Taken over from the Carbon Rush prototype** (copied, checked for every reference to its origin):
 grid curves and their generator, the forecast model, the electricity price formula, the embodied and SCI
 bookkeeping, the build script with its watcher, the string catalog tools, the App Store tools, sound effects and
@@ -537,6 +563,8 @@ music. Not taken over: maps, paths, the tower-and-creep rules, opponents, networ
 | D12 | Preview of the day's result | not during the run; "what if" in the debrief instead (principle 4) |
 | D13 | Scenario 2 | batch jobs planned by hand; batch rules come with scenario 3 (same pattern as D11) |
 | D14 | Technology | Kotlin Multiplatform + Compose Multiplatform instead of Swift: web (Wasm) and desktop first, Android and iOS later; close to Java for lecturer and students |
+| D15 | Lesson of scenario 3 | relative rule (greenest hours of the forecast) beats an absolute threshold; the deadline safety is a switch, so its effect can be seen |
+| D16 | Technical terms | every scenario names the term for what the player does (briefing, scenario card, debrief), in English in both languages |
 
 ---
 

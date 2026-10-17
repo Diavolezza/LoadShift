@@ -64,6 +64,16 @@ sealed interface WeatherMode {
 
     /** The same factor every day, per mille of the curve ("a windless week": a factor above 1,000). */
     data class Fixed(val factor: Int) : WeatherMode
+
+    /**
+     * One factor per day of the scenario, per mille of the curve ("windy, normal, windless"); before the first and
+     * after the last day the nearest one applies.
+     */
+    data class Days(val factors: List<Int>) : WeatherMode {
+        init {
+            require(factors.isNotEmpty()) { "at least one day" }
+        }
+    }
 }
 
 class Grid(val setting: GridSetting, private val seed: Long, val weatherMode: WeatherMode = WeatherMode.Drawn) {
@@ -88,6 +98,7 @@ class Grid(val setting: GridSetting, private val seed: Long, val weatherMode: We
     fun weather(day: Int): Int {
         val mode = weatherMode
         if (mode is WeatherMode.Fixed) return mode.factor
+        if (mode is WeatherMode.Days) return mode.factors[day.coerceIn(0, mode.factors.size - 1)]
         // Two uniform draws give a triangular distribution around the middle.
         val t = SeededRandom.value(seed, 1, day, 1_001) + SeededRandom.value(seed, 2, day, 1_001) - 1_000
         return if (t >= 0) 1_000 + t * (weatherHigh - 1_000) / 1_000

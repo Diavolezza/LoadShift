@@ -13,6 +13,9 @@ enum class Control {
 
     /** Planning batch jobs by hand: a start time per job. */
     BATCH_BY_HAND,
+
+    /** Rules for batch jobs: as soon as possible, fixed hour, greenest hours, threshold; deadline safety. */
+    BATCH_RULES,
 }
 
 /** The special goal of a scenario: the third star. */
@@ -128,6 +131,34 @@ data class Scenario(
             ),
         )
 
-        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN)
+        /**
+         * Scenario 3, "When the wind drops": the batch cluster in Great Britain in winter, three days. A windy day
+         * makes the grid clean, then the wind drops and stays away. The player sets a rule instead of planning
+         * each job; the forecast is uncertain (±25 % a day ahead), and without the deadline safety a rule that
+         * waits for clean power misses deadlines once the wind has gone.
+         */
+        val WHEN_THE_WIND_DROPS = Scenario(
+            number = 3, title = "When the wind drops", setting = GridSetting(GridRegion.GREAT_BRITAIN, Season.WINTER),
+            weather = WeatherMode.Days(listOf(1_000, 550, 1_700)), days = 3,
+            seed = 3, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 12)),
+            interactive = InteractiveLoad(peak = 0),
+            controls = setOf(Control.BATCH_RULES),
+            initialPolicy = Policy(CapacityMode.Manual(0), BatchMode.Asap),
+            referencePolicy = Policy(CapacityMode.Manual(0), BatchMode.Asap),
+            goals = StarGoals(100, SpecialGoal.BatchIntensity(140)),
+            batchJobs = listOf(
+                BatchJobSpec.of("Daily report", 4, 3, GameTime.at(0, 0), GameTime.at(0, 18)),
+                BatchJobSpec.of("Backup", 3, 4, GameTime.at(0, 1), GameTime.at(1, 8)),
+                BatchJobSpec.of("Data import", 6, 2, GameTime.at(0, 7), GameTime.at(1, 14)),
+                BatchJobSpec.of("Recommendations", 6, 5, GameTime.at(0, 12), GameTime.at(1, 22)),
+                BatchJobSpec.of("Daily report", 4, 3, GameTime.at(1, 0), GameTime.at(1, 18)),
+                BatchJobSpec.of("Backup", 3, 4, GameTime.at(1, 1), GameTime.at(2, 8)),
+                BatchJobSpec.of("Image conversion", 5, 4, GameTime.at(1, 10), GameTime.at(2, 16)),
+                BatchJobSpec.of("Daily report", 4, 3, GameTime.at(2, 0), GameTime.at(2, 18)),
+                BatchJobSpec.of("Search index", 4, 3, GameTime.at(2, 6), GameTime.at(3, 0)),
+            ),
+        )
+
+        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS)
     }
 }

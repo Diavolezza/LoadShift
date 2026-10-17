@@ -109,6 +109,63 @@ class LessonTest {
         assertTrue(scenario.stars(night.totals, reference.totals) <= 1)
     }
 
+    @Test fun scenario3WhenTheWindDrops() {
+        val scenario = Scenario.WHEN_THE_WIND_DROPS
+        val off = CapacityMode.Manual(0)
+        val reference = Simulation.reference(scenario)
+        val runs = mutableListOf<Pair<String, Simulation>>("reference: as soon as" to reference)
+        runs += "greenest (forecast)" to Simulation.replay(scenario, Policy(off, BatchMode.Greenest))
+        for (h in listOf(3, 13)) {
+            runs += "at %02d:00, safety".format(h) to Simulation.replay(scenario, Policy(off, BatchMode.AtHour(h)))
+            runs += "at %02d:00, no safety".format(h) to Simulation.replay(scenario, Policy(off, BatchMode.AtHour(h), false))
+        }
+        for (g in listOf(100, 120, 140, 160, 180, 200)) {
+            runs += "below $g, safety" to Simulation.replay(scenario, Policy(off, BatchMode.Threshold(g)))
+            runs += "below $g, no safety" to Simulation.replay(scenario, Policy(off, BatchMode.Threshold(g), false))
+        }
+        val lines = mutableListOf(title(scenario), "$HEADER  batch g/kWh  missed")
+        for ((name, simulation) in runs) {
+            val t = simulation.totals
+            lines += line(name, t, reference.totals) +
+                String.format(Locale.ROOT, "  %11d  %6d", (t.meanBatchIntensityTenths + 5) / 10, t.deadlinesMissed) +
+                "  " + "★".repeat(scenario.stars(t, reference.totals))
+        }
+        lines += ""
+        lines += "Hour   " + (0 until scenario.days).joinToString("") { "day ${it + 1} (fc)    " }
+        val grid = Grid(scenario.setting, scenario.seed, scenario.weather)
+        for (hour in 0 until 24 step 2) {
+            lines += "%02d:00  ".format(hour) + (0 until scenario.days).joinToString("") { day ->
+                val tick = day * GameTime.TICKS_PER_DAY + hour * GameTime.TICKS_PER_HOUR
+                "%4d (%4d)    ".format(grid.intensity(tick), grid.forecast(tick, maxOf(0, tick - GameTime.TICKS_PER_DAY)))
+            }
+        }
+        for ((name, simulation) in runs.take(2) + runs.filter { it.first == "below 140, safety" }) {
+            lines += "  $name: " + simulation.jobs.joinToString("  ") { job ->
+                val start = job.startedAt?.let { GameTime(it) }
+                "${job.id}@${start?.let { "d${it.day + 1} ${it.clockText}" } ?: "–"}"
+            }
+        }
+        report(3, lines)
+
+        assertEquals(0, reference.totals.deadlinesMissed, "the reference meets every deadline")
+        assertEquals(0, scenario.stars(reference.totals, reference.totals))
+        val run = runs.toMap()
+        fun stars(name: String) = scenario.stars(run.getValue(name).totals, reference.totals)
+        fun missed(name: String) = run.getValue(name).totals.deadlinesMissed
+        // The rule from the forecast earns all three stars.
+        assertEquals(0, missed("greenest (forecast)"))
+        assertEquals(3, stars("greenest (forecast)"))
+        // Waiting without the deadline safety misses deadlines once the wind has dropped: no star.
+        assertTrue(missed("at 03:00, no safety") > 0)
+        assertTrue(missed("below 140, no safety") > 0)
+        assertEquals(0, stars("below 140, no safety"))
+        // With the safety the deadlines hold, but a fixed hour or threshold is not much better than the reference.
+        for (name in listOf("at 03:00, safety", "below 140, safety", "below 200, safety")) {
+            assertEquals(0, missed(name), name)
+            assertTrue(stars(name) <= 1, name)
+        }
+    }
+
     private companion object {
         val sections = sortedMapOf<Int, List<String>>()
 

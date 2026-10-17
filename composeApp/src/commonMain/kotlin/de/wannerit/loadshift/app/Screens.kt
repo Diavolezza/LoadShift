@@ -21,6 +21,7 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.layout.Spacer
@@ -82,7 +83,7 @@ fun ScenarioListScreen(onSelect: (Scenario) -> Unit) {
                     ScenarioCard(scenario, Progress.isUnlocked(scenario.number)) { onSelect(scenario) }
                 }
             }
-            Txt(t("More scenarios follow: forecasts and wind, headroom and autoscaling, cooling, hardware, AI training, eco mode, two sites."), Type.style(20, color = Palette.secondary))
+            Txt(t("More scenarios follow: headroom and autoscaling, cooling, hardware, AI training, eco mode, two sites."), Type.style(20, color = Palette.secondary))
         }
     }
 }
@@ -102,6 +103,7 @@ private fun ScenarioCard(scenario: Scenario, unlocked: Boolean, onClick: () -> U
             if (unlocked) StarRow(Progress.stars(scenario.number), 22.dp) else LockIcon(22.dp)
         }
         Txt(t(scenario.title), Type.heading)
+        Txt(ScenarioTexts.of(scenario).term, Type.style(16, FontWeight.SemiBold, Palette.accent))
         Txt("${t(scenario.setting.region.title)} · ${t(scenario.setting.season.title)} · ${days(scenario.days)}", Type.style(17, color = Palette.secondary))
         if (!unlocked) Txt(t("Earn a star in the scenario before."), Type.callout)
     }
@@ -154,6 +156,7 @@ private fun Story(scenario: Scenario, texts: ScenarioTexts, modifier: Modifier) 
                 Txt(t(text), Type.bodyLarge)
             }
         }
+        Term(texts)
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Txt(t("On the screen"), Type.heading)
             ScreenPreview(scenario, Modifier.fillMaxWidth())
@@ -164,6 +167,20 @@ private fun Story(scenario: Scenario, texts: ScenarioTexts, modifier: Modifier) 
                 }
             }
         }
+    }
+}
+
+/** The technical term of the scenario, with its meaning: what the player does has a name in the field. */
+@Composable
+fun Term(texts: ScenarioTexts, modifier: Modifier = Modifier) {
+    Column(
+        modifier.fillMaxWidth().background(Palette.accent.copy(alpha = 0.08f), RoundedCornerShape(14.dp))
+            .border(1.dp, Palette.accent.copy(alpha = 0.35f), RoundedCornerShape(14.dp)).padding(18.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Txt(t("Technical term"), Type.style(15, FontWeight.SemiBold, Palette.accent))
+        Txt(texts.term, Type.style(24, FontWeight.Bold))
+        Txt(t(texts.termText), Type.bodyLarge)
     }
 }
 
@@ -187,9 +204,14 @@ private fun ScreenPreview(scenario: Scenario, modifier: Modifier) {
             ) {
                 GameScreen(game, onExit = {})
             }
-            // On top: takes every click, so the preview is only a picture.
+            // On top: takes every click, so the preview is only a picture; the mouse wheel still scrolls the page.
             Box(Modifier.matchParentSize().pointerInput(Unit) {
-                awaitPointerEventScope { while (true) awaitPointerEvent().changes.forEach { it.consume() } }
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent()
+                        if (event.type != PointerEventType.Scroll) event.changes.forEach { it.consume() }
+                    }
+                }
             })
             markers.forEachIndexed { i, (x, y) ->
                 Marker(i + 1, Modifier.offset(x * scale - 14.dp, y * scale - 14.dp))

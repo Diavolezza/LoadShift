@@ -8,6 +8,10 @@ package de.wannerit.loadshift.app
 internal val GERMAN: Map<String, String> = mapOf(
     "%@ has no start time and must start by %@, or it misses its deadline." to
         "%1\$@ hat keine Startzeit und muss bis %2\$@ starten, sonst verpasst er seine Frist.",
+    "%@, with deadline safety" to
+        "%@, mit Fristsicherung",
+    "%@, without deadline safety" to
+        "%@, ohne Fristsicherung",
     "%lld days" to
         "%lld Tage",
     "%lld days, from 00:00" to
@@ -34,6 +38,16 @@ internal val GERMAN: Map<String, String> = mapOf(
         "1 Tag",
     "1 day, from 00:00" to
         "1 Tag, ab 00:00",
+    "A fixed threshold works while the wind blows. When it drops, the jobs wait in vain: without the deadline safety they miss their deadlines, with it they start at the last moment – often in the dirtiest hours. A rule that compares the hours of the forecast adapts to the weather." to
+        "Ein fester Schwellwert funktioniert, solange der Wind weht. Lässt er nach, warten die Jobs vergeblich: Ohne Fristsicherung verpassen sie ihre Fristen, mit ihr starten sie im letzten Moment – oft in den schmutzigsten Stunden. Eine Regel, die die Stunden der Prognose vergleicht, passt sich dem Wetter an.",
+    "A job starts as soon as the grid is at or below %lld g/kWh – the value now, not the forecast." to
+        "Ein Job startet, sobald der Strom höchstens %lld g/kWh hat – der Wert jetzt, nicht die Prognose.",
+    "A job that would otherwise miss its deadline starts when there is just enough time left (with a fixed hour and a threshold)." to
+        "Ein Job, der sonst seine Frist verpassen würde, startet, wenn die Zeit gerade noch reicht (bei fester Uhrzeit und Schwellwert).",
+    "A rule decides when each job starts – you no longer plan every job by hand. Choose a rule and apply it; you can change it at any time." to
+        "Eine Regel entscheidet, wann jeder Job startet – du planst nicht mehr jeden Job von Hand. Wähle eine Regel und übernimm sie; du kannst sie jederzeit ändern.",
+    "A scheduler starts jobs by rules that look at the carbon intensity – now or in the forecast. It automates Time Shifting; Google shifts flexible work in its data centers this way, with day-ahead forecasts." to
+        "Ein Scheduler startet Jobs nach Regeln, die auf die CO₂-Intensität schauen – jetzt oder in der Prognose. Das automatisiert Time Shifting; Google verschiebt so flexible Arbeit in seinen Rechenzentren, mit Prognosen für den nächsten Tag.",
     "Active: %@" to
         "Aktiv: %@",
     "All on" to
@@ -50,6 +64,14 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Übernehmen",
     "arrives %@" to
         "kommt %@",
+    "As soon as possible" to
+        "So früh wie möglich",
+    "as soon as possible" to
+        "so früh wie möglich",
+    "at %@" to
+        "um %@ Uhr",
+    "At a fixed hour" to
+        "Zu einer festen Uhrzeit",
     "Autoscale" to
         "Autoscaling",
     "Autoscaling at %@" to
@@ -68,6 +90,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Batch-Jobs – hell: Ankunft bis Frist, umrandet: geplant, gefüllt: läuft oder fertig",
     "Batch jobs" to
         "Batch-Jobs",
+    "Batch rule" to
+        "Batch-Regel",
     "batch work at %lld g/kWh or less on average" to
         "Batch-Arbeit im Schnitt bei höchstens %lld g/kWh",
     "Batch work Ø %lld g/kWh (reference %lld)" to
@@ -78,12 +102,22 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Batch-Arbeit: noch kein Job gelaufen",
     "batch ≤ %lld g/kWh" to
         "Batch ≤ %lld g/kWh",
+    "below %lld g/kWh" to
+        "unter %lld g/kWh",
+    "Below 150 g/kWh, with deadline safety" to
+        "Unter 150 g/kWh, mit Fristsicherung",
+    "Below 150 g/kWh, without deadline safety" to
+        "Unter 150 g/kWh, ohne Fristsicherung",
+    "Below a threshold" to
+        "Unter einem Schwellwert",
     "Best result" to
         "Bestes Ergebnis",
     "Booting" to
         "Startet",
     "booting" to
         "startet",
+    "by hand" to
+        "von Hand",
     "Capacity" to
         "Kapazität",
     "Capacity: %lld load units" to
@@ -118,6 +152,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Tag %1\$lld, %2\$@",
     "Day complete" to
         "Tag geschafft",
+    "Deadline safety" to
+        "Fristsicherung",
     "Deadlines missed: %lld" to
         "Fristen verpasst: %lld",
     "done %@" to
@@ -136,8 +172,16 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Jeder Job um 11:00",
     "Every job at night, at 01:00" to
         "Jeder Job nachts um 01:00",
+    "Every job at night, at 03:00" to
+        "Jeder Job nachts um 03:00",
     "every job by its deadline and less CO₂ than the reference" to
         "jeder Job rechtzeitig und weniger CO₂ als die Referenz",
+    "Every job is planned into the hours with the lowest forecast before its deadline; planned again when a job arrives." to
+        "Jeder Job wird in die Stunden mit der niedrigsten Prognose vor seiner Frist geplant; neu geplant, wenn ein Job ankommt.",
+    "Every job starts at the next %@ after it arrives." to
+        "Jeder Job startet nach seiner Ankunft beim nächsten Mal um %@ Uhr.",
+    "Every job starts when it arrives." to
+        "Jeder Job startet, sobald er da ist.",
     "Every server runs all the time – like the reference operator." to
         "Alle Server laufen ständig – wie beim Referenzbetreiber.",
     "Expected load in 1 h" to
@@ -156,6 +200,12 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Ziele",
     "Great Britain" to
         "Großbritannien",
+    "Greenest hours (forecast)" to
+        "Sauberste Stunden (Prognose)",
+    "Greenest hours by the forecast" to
+        "Sauberste Stunden nach Prognose",
+    "greenest hours" to
+        "sauberste Stunden",
     "Grid now" to
         "Netz jetzt",
     "Image conversion" to
@@ -178,8 +228,10 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Mittlere Auslastung",
     "Missed" to
         "Verpasst",
-    "More scenarios follow: forecasts and wind, headroom and autoscaling, cooling, hardware, AI training, eco mode, two sites." to
-        "Weitere Szenarien folgen: Prognosen und Wind, Reserve und Autoscaling, Kühlung, Hardware, KI-Training, Eco-Modus, zwei Standorte.",
+    "More scenarios follow: headroom and autoscaling, cooling, hardware, AI training, eco mode, two sites." to
+        "Weitere Szenarien folgen: Reserve und Autoscaling, Kühlung, Hardware, KI-Training, Eco-Modus, zwei Standorte.",
+    "Moving flexible work into the hours when the grid is cleanest. Together with Location Shifting it is called Demand Shifting – part of the Green Software Foundation principle Carbon Awareness." to
+        "Flexible Arbeit in die Stunden verschieben, in denen der Strom am saubersten ist. Zusammen mit Location Shifting heißt das Demand Shifting – ein Teil des Prinzips Carbon Awareness der Green Software Foundation.",
     "New rule" to
         "Neue Regel",
     "Night shift" to
@@ -204,10 +256,14 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Ein Stern schaltet das nächste Szenario frei.",
     "Plan" to
         "Planen",
+    "planned %@" to
+        "geplant %@",
     "Planned by the forecast (from scenario 3)" to
         "Nach Prognose geplant (ab Szenario 3)",
     "planned" to
         "geplant",
+    "Planning every job by hand does not scale. A rule does it for you: at a fixed hour, below a threshold, or into the greenest hours of the forecast. But the forecast is uncertain – ±25 % a day ahead in a wind grid – and a rule that waits for clean power may wait in vain. The deadline safety makes sure that no job misses its deadline." to
+        "Jeden Job von Hand zu planen, skaliert nicht. Eine Regel übernimmt das: zu einer festen Uhrzeit, unter einem Schwellwert oder in die saubersten Stunden der Prognose. Doch die Prognose ist unsicher – in einem Windnetz ±25 % einen Tag im Voraus –, und eine Regel, die auf sauberen Strom wartet, wartet vielleicht vergeblich. Die Fristsicherung sorgt dafür, dass kein Job seine Frist verpasst.",
     "Play again" to
         "Noch einmal",
     "Plus and minus for the servers, and the situation right now." to
@@ -216,6 +272,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Polen",
     "Power" to
         "Leistung",
+    "Recommendations" to
+        "Empfehlungen",
     "Reference" to
         "Referenz",
     "Remove the plan" to
@@ -226,6 +284,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Regel",
     "Run a greener data center" to
         "Ein Rechenzentrum klimafreundlich betreiben",
+    "Running only as much capacity as the load needs. An idle server still draws power, so servers that are not needed are switched off. Green Software Foundation principle: energy efficiency." to
+        "Nur so viel Kapazität betreiben, wie die Last braucht. Ein Server im Leerlauf zieht trotzdem Strom, deshalb werden nicht benötigte Server abgeschaltet. Prinzip der Green Software Foundation: Energy Efficiency.",
     "runs until %@" to
         "läuft bis %@",
     "Scenario %lld: %@" to
@@ -264,6 +324,10 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Wirkt sofort. Abgeschaltete Server stoppen sofort, eingeschaltete starten 30 Minuten lang.",
     "Target utilization: %@" to
         "Zielauslastung: %@",
+    "Technical term" to
+        "Fachbegriff",
+    "The batch rule: choose one, set it and apply it. Below it the jobs with their deadlines and what the rule has planned for them." to
+        "Die Batch-Regel: wählen, einstellen, übernehmen. Darunter die Jobs mit ihren Fristen und was die Regel für sie geplant hat.",
     "The carbon intensity with the forecast, and below it one row per job – light: the time between arrival and deadline, outlined: planned, filled: running or done." to
         "Die CO₂-Intensität mit Prognose und darunter eine Zeile pro Job – hell: die Zeit zwischen Ankunft und Frist, umrandet: geplant, gefüllt: läuft oder fertig.",
     "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals. The game also pauses when a job must start within the hour." to
@@ -282,8 +346,12 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Derselbe Ablauf mit genau derselben Last und demselben Strommix – nur die Regeln sind anders:",
     "The servers needed for the expected load of the next hour run. A low target leaves headroom for peaks but more servers idle; a high target is efficient but gets slow at peaks." to
         "Es laufen die Server, die für die erwartete Last der nächsten Stunde nötig sind. Ein niedriges Ziel lässt Reserve für Spitzen, aber mehr Server stehen im Leerlauf; ein hohes Ziel ist effizient, wird aber bei Spitzen langsam.",
+    "The web shop's analytics cluster in Great Britain: twelve servers, nine jobs in three days. It is winter, and the British grid depends on the wind. Today is an ordinary winter day; tomorrow a storm front brings plenty of wind power, the day after the wind drops and gas power plants take over." to
+        "Der Analyse-Cluster des Webshops in Großbritannien: zwölf Server, neun Jobs in drei Tagen. Es ist Winter, und das britische Netz hängt am Wind. Heute ist ein gewöhnlicher Wintertag; morgen bringt eine Sturmfront viel Windstrom, übermorgen lässt der Wind nach, und Gaskraftwerke übernehmen.",
     "The web shop's batch cluster in Spain: ten servers for reports, backups, imports and conversions. Over two days seven jobs arrive, each with a deadline. Nobody minds when a job runs – as long as it is finished in time." to
         "Der Batch-Cluster des Webshops in Spanien: zehn Server für Reports, Backups, Importe und Konvertierungen. In zwei Tagen kommen sieben Jobs, jeder mit einer Frist. Wann ein Job läuft, ist egal – solange er rechtzeitig fertig ist.",
+    "This rule is active." to
+        "Diese Regel ist aktiv.",
     "To scenario %lld" to
         "Weiter zu Szenario %lld",
     "Too late for the deadline – start by %@." to
@@ -294,10 +362,16 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Auslastung",
     "Wait for the sun" to
         "Warten auf die Sonne",
+    "waiting" to
+        "wartet",
     "Web requests" to
         "Web-Requests",
     "What if …" to
         "Was wäre, wenn …",
+    "What you did is called %@. %@" to
+        "Was du gemacht hast, heißt %1\$@. %2\$@",
+    "When the wind drops" to
+        "Wenn der Wind nachlässt",
     "Whole year" to
         "Jahresmittel",
     "You run the data center of a web shop in Germany. Its 20 servers are sized for the Christmas season. Today is an ordinary autumn day: in the evening many people shop, at night hardly anyone. It is midnight, and the previous shift has left every server on." to

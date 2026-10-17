@@ -232,6 +232,7 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
                     }
                 }
                 Table(listOf("", t("You"), t("Reference")), rows.map { listOf(it.first, it.second.first, it.second.second) })
+                Txt(t("What you did is called %@. %@", texts.term, t(texts.termText)), Type.style(15, color = Palette.secondary))
                 Txt(t(texts.remark), Type.style(15, color = Palette.secondary))
                 WhatIf(game)
             }

@@ -102,6 +102,7 @@ class GameController(val scenario: Scenario) {
     fun setPolicy(policy: Policy) {
         current.policy = policy
         current.applyPolicy()
+        resetDraft()
         changed()
     }
 
@@ -113,6 +114,49 @@ class GameController(val scenario: Scenario) {
 
     fun setWantedServers(n: Int) {
         setPolicy(simulation.policy.copy(capacity = CapacityMode.Manual(n.coerceIn(0, scenario.serverCount))))
+    }
+
+    // Batch rules (scenario 3): the player edits a draft and applies it
+
+    /** The kinds of batch rule the panel offers. */
+    enum class RuleKind { ASAP, HOUR, GREENEST, THRESHOLD }
+
+    var draftKind by mutableStateOf(RuleKind.ASAP)
+    var draftHour by mutableIntStateOf(3)
+    var draftThreshold by mutableIntStateOf(150)
+    var draftSafety by mutableStateOf(true)
+
+    /** The batch rule of the draft. */
+    val draftBatch: BatchMode
+        get() = when (draftKind) {
+            RuleKind.ASAP -> BatchMode.Asap
+            RuleKind.HOUR -> BatchMode.AtHour(draftHour)
+            RuleKind.GREENEST -> BatchMode.Greenest
+            RuleKind.THRESHOLD -> BatchMode.Threshold(draftThreshold)
+        }
+
+    /** The draft is what runs now. */
+    val draftIsActive: Boolean
+        get() = simulation.policy.batch == draftBatch && simulation.policy.deadlineSafety == draftSafety
+
+    fun applyDraft() {
+        setPolicy(simulation.policy.copy(batch = draftBatch, deadlineSafety = draftSafety))
+    }
+
+    /** Sets the draft to the rule that runs now. */
+    private fun resetDraft() {
+        val policy = current.policy
+        draftSafety = policy.deadlineSafety
+        draftKind = when (val mode = policy.batch) {
+            is BatchMode.AtHour -> RuleKind.HOUR.also { draftHour = mode.hour }
+            BatchMode.Greenest -> RuleKind.GREENEST
+            is BatchMode.Threshold -> RuleKind.THRESHOLD.also { draftThreshold = mode.gramsPerKWh }
+            else -> RuleKind.ASAP
+        }
+    }
+
+    init {
+        resetDraft()
     }
 
     // Batch jobs by hand
@@ -146,6 +190,17 @@ class GameController(val scenario: Scenario) {
 
     /** "What if" for the debrief: the whole scenario replayed with other rules, with the same load and grid mix. */
     fun whatIf(): List<Pair<String, Totals>> {
+        if (hasBatch && Control.BATCH_RULES in scenario.controls) {
+            val capacity = scenario.referencePolicy.capacity
+            fun replay(mode: BatchMode, safety: Boolean = true) = Simulation.replay(scenario, Policy(capacity, mode, safety)).totals
+            return listOf(
+                t("Every job as soon as it arrives (reference)") to reference.totals,
+                t("Every job at night, at 03:00") to replay(BatchMode.AtHour(3)),
+                t("Below 150 g/kWh, with deadline safety") to replay(BatchMode.Threshold(150)),
+                t("Below 150 g/kWh, without deadline safety") to replay(BatchMode.Threshold(150), false),
+                t("Greenest hours by the forecast") to replay(BatchMode.Greenest),
+            )
+        }
         if (hasBatch) {
             val capacity = scenario.referencePolicy.capacity
             fun replay(mode: BatchMode) = Simulation.replay(scenario, Policy(capacity, mode)).totals
@@ -170,6 +225,7 @@ class GameController(val scenario: Scenario) {
     fun restart() {
         speed = Speed.PAUSED
         current = Simulation(scenario)
+        resetDraft()
         stars = 0
         showEnd = false
         urgentJob = null
