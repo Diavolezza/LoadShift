@@ -56,7 +56,17 @@ data class Totals(
     /** O10: rules broken by the choice of sites; energy of data transfers (mWh, in [facilityEnergy]). */
     var rulesBroken: Int = 0,
     var transferEnergy: Long = 0,
+    /** E4: answers of the shop assistant, their quality summed (per mille each), and the answers in time. */
+    var answers: Long = 0,
+    var answerQualitySum: Long = 0,
+    var answersInTime: Long = 0,
 ) {
+    /** E4: mean quality of the answers, per mille. */
+    val meanAnswerQuality: Int get() = if (answers == 0L) 1_000 else (answerQualitySum / answers).toInt()
+
+    /** E4: share of the answers in time, per mille. */
+    val answersOnTime: Int get() = if (answers == 0L) 1_000 else (answersInTime * 1_000 / answers).toInt()
+
     /** O9: the viewers' mean rating, per mille. */
     val meanRating: Int get() = if (ratedStreams == 0L) 1_000 else (ratingSum / ratedStreams).toInt()
 
@@ -123,6 +133,8 @@ data class TickRecord(
     val eco: Boolean = false,
     /** O8, O11: the GPUs trained (or loaded the checkpoint) in this tick. */
     val training: Boolean = false,
+    /** E4: what the models drew. */
+    val inference: InferenceRecord? = null,
 )
 
 /** E3: memory used (tenths of GB), memory of the running cache servers (GB), hits (per mille of the cacheable requests), memory per kind (tenths of GB). */
@@ -368,6 +380,26 @@ class Simulation private constructor(
             poweredOn += cacheServers
             totals.stale += (requests * 1_000.0 * caching.staleShare(policy.cache, scenario.interactive.expected(tick), tick)).roundToLong()
         }
+        // E4: the shop assistant's models on their own GPU servers (switched by the load, like the cache servers).
+        var inferenceRecord: InferenceRecord? = null
+        scenario.inference?.let { model ->
+            val peak = scenario.interactive.peak
+            val curve = if (peak == 0) 0 else scenario.interactive.expected(tick) * 1_000 / peak
+            val config = policy.inference
+            val energy = model.energy(config, curve)
+            val gpuWatts = model.kinds.indices.filter { model.answerer(config, it).gpu }.sumOf { energy[it] } / Units.MILLIWATT_HOURS_PER_WATT_TICK
+            val servers = model.servers(gpuWatts)
+            val idleWatts = maxOf(0.0, servers * ServerKind.GPU_CURRENT.idlePower - gpuWatts)
+            val kindWatts = energy.map { (it / Units.MILLIWATT_HOURS_PER_WATT_TICK).roundToInt() }
+            itPower += kindWatts.sum() + idleWatts.roundToInt()
+            embodied += servers * ServerKind.GPU_CURRENT.embodiedPerTick
+            poweredOn += servers
+            val answers = (model.rate(curve) * InferenceModel.SECONDS_PER_TICK).roundToLong()
+            totals.answers += answers
+            totals.answerQualitySum += answers * model.quality(config)
+            totals.answersInTime += answers * model.onTime(config) / 1_000
+            inferenceRecord = InferenceRecord(kindWatts, idleWatts.roundToInt(), servers)
+        }
         totals.requests += requests
         scenario.streaming?.let { streaming ->
             totals.ratingSum += requests.toLong() * streaming.rating(policy.streaming, grid.intensity(tick))
@@ -412,6 +444,7 @@ class Simulation private constructor(
                 embodiedSoFar = totals.embodied, fleetCapacity = serverList.sumOf { it.kind.capacity }, trainingDone = totals.trainingDone,
                 eco = scenario.streaming?.ecoActive(policy.streaming, (intensity + 5) / 10) ?: false,
                 training = training != null && trainedLastTick,
+                inference = inferenceRecord,
             ),
         )
         tick += 1

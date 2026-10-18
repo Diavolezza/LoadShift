@@ -113,6 +113,21 @@ class ScenarioTexts(
                 term = "PUE (Power Usage Effectiveness)",
                 termText = "Facility energy divided by IT energy: 1.0 would mean that all power goes to the servers. The worldwide average is about 1.5, hyperscalers reach 1.1. A warmer setpoint and cooling with outside air (free cooling) lower it.",
             )
+            104 -> ScenarioTexts(
+                situation = "The web shop has a new assistant in its chat window. The team's prototype sends every question to a large language model, one question at a time – it was the quickest way to get it working. Since then, three in ten questions are \"Where is my order?\", and the assistant runs on GPU servers day and night.",
+                idea = "Not every question needs the largest model – some need no model at all. Choose for each kind of question who answers it, and keep the quality of the answers up. A GPU answers several questions almost as fast as one: batching shares the work, but every answer waits a little.",
+                screen = listOf(
+                    "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals: the quality of the answers, answers in time and less CO₂.",
+                    "The hall: the shop's servers and, in the extra rack, the GPU servers for the models (violet: running).",
+                    "The shop assistant: who answers each kind of question, with the quality of the answers, and the batching window. Below it the quality and the answers in time with your settings.",
+                    "Carbon intensity of the grid; below it the assistant's power by kind of question (colors as in the panel) and the idle rest of the GPU servers.",
+                ),
+                comparedWith = "compared with the reference operator, who sends every question to the large model, one at a time.",
+                rules = "Quality of the answers at least 92 %, 95 % of the answers within 3 s and less CO₂ than the reference",
+                remark = "The largest saving needed no AI: a status lookup answers \"Where is my order?\" better than any model, for a five-hundredth of the energy. A small model is good enough where the answer is in the product data; the large one pays off where it adds quality – complaints and advice. Batching is the second lever: the GPU reads the model's weights once per step for the whole batch, and serving systems cut the energy per answer many times this way [S27] – as long as the wait stays below what the customers accept. Reasoning bought three points of quality for complaints, at two and a half times the energy and nine seconds of waiting. The numbers are game values in the range of published measurements [S25, S26]; they differ a lot between models, hardware and the way the models are served – measure your own.",
+                term = "Green AI (Right-sizing Models)",
+                termText = "Choosing the smallest model that is good enough for a task – or no model at all – and serving it efficiently, for example with batching or a cache for frequent answers. More and more of the energy of AI goes into answering (inference), not into training.",
+            )
             103 -> ScenarioTexts(
                 situation = "The web shop serves five kinds of data: product images, catalog pages, exchange rates, search results and, before a transfer, account balances. Today every request computes or fetches its answer anew. The team has ordered four cache servers with 64 GB each, to be on the safe side; nothing is cached yet. On day 2 at 18:00 a sale starts with new prices in the whole catalog – from then on a page with an old price is a stale answer. Autoscaling keeps the web servers in line with the work.",
                 idea = "A cache keeps answers for a while, so that the next request is cheap. It works because a few items get most of the requests – the bestsellers, the euro rate. Four things decide: what may be cached at all, how long an entry may live (the TTL – a business question, not a technical one), whether the same thing is asked again, and how much memory is worth its power.",

@@ -5,6 +5,8 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import de.wannerit.loadshift.core.BatchMode
+import de.wannerit.loadshift.core.InferenceConfig
+import de.wannerit.loadshift.core.Answerer
 import de.wannerit.loadshift.core.CacheConfig
 import de.wannerit.loadshift.core.CapacityMode
 import de.wannerit.loadshift.core.Control
@@ -389,6 +391,18 @@ class GameController(val scenario: Scenario) {
         streamMax = List(n) { if (it == device) quality else streamMax.getOrElse(it) { Quality.UHD } }
     }
 
+    // Shop assistant (E4)
+
+    val hasInference: Boolean get() = scenario.inference != null
+    var aiAnswerers by mutableStateOf(listOf<Answerer>())
+    var aiWindow by mutableIntStateOf(0)
+    val draftInference: InferenceConfig get() = InferenceConfig(aiAnswerers, aiWindow)
+
+    fun setAnswerer(kind: Int, answerer: Answerer) {
+        val n = scenario.inference?.kinds?.size ?: return
+        aiAnswerers = List(n) { if (it == kind) answerer else aiAnswerers.getOrElse(it) { Answerer.LARGE } }
+    }
+
     // Training (O8)
 
     val hasTraining: Boolean get() = scenario.training != null
@@ -442,6 +456,7 @@ class GameController(val scenario: Scenario) {
             if (Control.COOLING in scenario.controls) policy = policy.copy(setpoint = draftSetpoint)
             if (Control.TRAINING in scenario.controls) policy = policy.copy(training = draftTraining)
             if (Control.STREAMING in scenario.controls) policy = policy.copy(streaming = draftStreaming)
+            if (Control.INFERENCE in scenario.controls) policy = policy.copy(inference = draftInference)
             return policy
         }
 
@@ -474,6 +489,10 @@ class GameController(val scenario: Scenario) {
             streamMax = m.devices.indices.map { c.maxQuality.getOrElse(it) { Quality.UHD } }
             streamEco = c.eco; streamEcoAbove = c.ecoAbove; streamEcoQuality = c.ecoQuality
         }
+        scenario.inference?.let { m ->
+            aiAnswerers = m.kinds.indices.map { policy.inference.answerers.getOrElse(it) { Answerer.LARGE } }
+            aiWindow = policy.inference.windowMs
+        }
         scenario.caching?.let { model ->
             val c = policy.cache
             cacheServers = c.servers
@@ -503,6 +522,7 @@ class GameController(val scenario: Scenario) {
         val capFrom: Int, val capTo: Int, val startPolicy: Policy?, val cache: CacheConfig, val setpoint: Int,
         val training: TrainingConfig,
         val streaming: StreamingConfig,
+        val inference: InferenceConfig,
     )
 
     private companion object {
@@ -512,7 +532,7 @@ class GameController(val scenario: Scenario) {
     /** Keeps the panel's settings for the next run (a new run starts with the scenario's rules, the panel keeps yours). */
     fun saveDraft() {
         drafts[scenario.number] = Draft(draftKind, draftHour, draftThreshold, draftSafety, capKind, capFixed, capTarget,
-            capMinimumOn, capMinimum, capFrom, capTo, startPolicy ?: current.policy.takeIf { current.history.isEmpty() }, draftCache, draftSetpoint, draftTraining, draftStreaming)
+            capMinimumOn, capMinimum, capFrom, capTo, startPolicy ?: current.policy.takeIf { current.history.isEmpty() }, draftCache, draftSetpoint, draftTraining, draftStreaming, draftInference)
     }
 
     private fun restoreDraft() {
@@ -527,6 +547,8 @@ class GameController(val scenario: Scenario) {
         trainServers = d.training.servers; trainCap = d.training.cap; trainGreenest = d.training.greenest
         if (d.streaming.maxQuality.isNotEmpty()) streamMax = d.streaming.maxQuality
         streamEco = d.streaming.eco; streamEcoAbove = d.streaming.ecoAbove; streamEcoQuality = d.streaming.ecoQuality
+        if (d.inference.answerers.isNotEmpty()) aiAnswerers = d.inference.answerers
+        aiWindow = d.inference.windowMs
         // A new run starts with the rules the last run started with (the panel shows the last run's final ones).
         if (d.startPolicy != null && current.history.isEmpty() && !hasSprints) {
             current.policy = d.startPolicy
@@ -657,6 +679,23 @@ class GameController(val scenario: Scenario) {
                 t("The same, eco mode HD above 650 g/kWh") to run(byDevice.copy(eco = true, ecoAbove = 650)),
                 t("The same, eco mode HD above 550 g/kWh") to run(byDevice.copy(eco = true, ecoAbove = 550)),
                 t("The same, eco mode SD above 650 g/kWh") to run(byDevice.copy(eco = true, ecoAbove = 650, ecoQuality = Quality.SD)),
+            )
+        }
+        scenario.inference?.let {
+            fun code(c: String, window: Int) = InferenceConfig(c.map { ch ->
+                when (ch) { 'N' -> Answerer.NONE; 'S' -> Answerer.SMALL; 'L' -> Answerer.LARGE; else -> Answerer.REASONING }
+            }, window)
+            fun run(c: String, window: Int) = Simulation.replay(scenario, scenario.initialPolicy.copy(inference = code(c, window))).totals
+            return listOf(
+                t("Large model for everything, one question at a time (reference)") to referenceTotals,
+                t("Order status without AI") to run("NLLLL", 0),
+                t("Order status and greetings without AI") to run("NNLLL", 0),
+                t("Small model for everything") to run("SSSSS", 0),
+                t("Large model for everything, batching 1 s") to run("LLLLL", 1_000),
+                t("Status and greetings without AI, batching 1 s") to run("NNLLL", 1_000),
+                t("The same, small model for product questions") to run("NNSLL", 1_000),
+                t("The same, batching 2 s") to run("NNSLL", 2_000),
+                t("The same with 1 s, reasoning for complaints") to run("NNSRL", 1_000),
             )
         }
         if (isCapstone) {

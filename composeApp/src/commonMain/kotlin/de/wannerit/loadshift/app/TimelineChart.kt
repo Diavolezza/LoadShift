@@ -159,7 +159,9 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
         }
 
         // Lower lane
-        if (lane == Lane.ALL) {
+        if (scenario.inference != null) {
+            drawInference(lowTop, lowBottom, future)
+        } else if (lane == Lane.ALL) {
             // O11: the shop's load, the batch jobs and the training, one under the other.
             val gap = 24f * density
             val h = lowBottom - lowTop - 2 * gap
@@ -415,6 +417,51 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
         }
         axis(top, bottom, scaleTop.toInt().toString())
         text(t("Outside temperature, °C – dashed: forecast; black: setpoint; green: the outside air cools"), Offset(left, top - 12f * density), Type.style(12, FontWeight.SemiBold))
+    }
+
+    /** E4: the shop assistant's power, stacked by kind of question; grey the idle rest of the GPU servers. */
+    private fun DrawScope.drawInference(top: Float, bottom: Float, future: List<Int>) {
+        val model = scenario.inference ?: return
+        val records = simulation.history.mapNotNull { r -> r.inference?.let { r.tick to it } }
+        val config = simulation.policy.inference
+        val peak = scenario.interactive.peak
+        fun curve(tick: Int) = if (peak == 0) 0 else scenario.interactive.expected(tick) * 1_000 / peak
+        // Expected power with the rules now (W), for the rest of the run.
+        val expected = future.map { tick ->
+            val energy = model.energy(config, curve(tick))
+            val gpu = model.kinds.indices.filter { model.answerer(config, it).gpu }.sumOf { energy[it] } / 250.0
+            val servers = model.servers(gpu)
+            tick to (energy.sum() / 250.0 + maxOf(0.0, servers * de.wannerit.loadshift.core.ServerKind.GPU_CURRENT.idlePower - gpu)).toInt()
+        }
+        val maxW = maxOf(1_000, (records.map { it.second.kindWatts.sum() + it.second.idleWatts } + expected.map { it.second }).maxOrNull() ?: 1_000)
+        val scaleTop = niceCeiling((maxW + 999) / 1_000).toFloat()
+        fun yW(watts: Int) = bottom - (bottom - top) * (watts / 1_000f / scaleTop)
+        fun kindColor(k: Int) = Palette.cacheKinds[k % Palette.cacheKinds.size]
+        if (records.isNotEmpty()) {
+            // Stacked areas: the kinds of question from the bottom, the idle rest on top.
+            val layers = model.kinds.size + 1
+            for (layer in (0 until layers).reversed()) {
+                fun upTo(r: de.wannerit.loadshift.core.InferenceRecord) = r.kindWatts.take(layer + 1).sum() + if (layer == model.kinds.size) r.idleWatts else 0
+                val area = Path().apply {
+                    moveTo(x(records[0].first), bottom)
+                    for ((tick, r) in records) { lineTo(x(tick), yW(upTo(r))); lineTo(x(tick + 1), yW(upTo(r))) }
+                    lineTo(x(records.last().first + 1), bottom)
+                    close()
+                }
+                drawPath(area, Color.White)
+                drawPath(area, if (layer == model.kinds.size) Color.Gray.copy(alpha = 0.35f) else kindColor(layer).copy(alpha = 0.6f))
+            }
+        }
+        if (expected.size > 1) {
+            val line = Path().apply {
+                moveTo(x(expected[0].first), yW(expected[0].second))
+                expected.drop(1).forEach { lineTo(x(it.first), yW(it.second)) }
+            }
+            drawPath(line, Palette.ink.copy(alpha = 0.5f), style = Stroke(1.5f * density, pathEffect = PathEffect.dashPathEffect(floatArrayOf(4f * density, 3f * density))))
+        }
+        axis(top, bottom, "${scaleTop.toInt()} kW")
+        text(t("Shop assistant, kW – colors: the kinds of question as in the panel; grey: GPU servers idle; dashed: expected with the rules now"),
+            Offset(left, top - 12f * density), Type.style(12, FontWeight.SemiBold))
     }
 
     private fun DrawScope.axis(top: Float, bottom: Float, maxLabel: String) {

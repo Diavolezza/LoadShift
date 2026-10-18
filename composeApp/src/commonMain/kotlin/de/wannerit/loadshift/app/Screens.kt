@@ -78,7 +78,7 @@ fun AboutContent(modifier: Modifier = Modifier) {
                 Txt(t("Version %@", BuildInfo.VERSION), Type.callout)
             }
         }
-        Txt(t("A teaching game about Green IT: run a data center so that it serves its users reliably and emits as little CO₂ as possible – by switching servers, shifting work in time and, later, writing better software."), Type.body)
+        Txt(t("A simulation game for teaching Green IT: run a data center so that it serves its users reliably and emits as little CO₂ as possible – by switching servers, shifting work in time and, later, writing better software."), Type.body)
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Txt("© 2026 Gerhard Wanner · " + t("MIT License"), Type.callout)
             Txt(t("Grid data: Electricity Maps, Grid Review 2025 (life-cycle, imports included)"), Type.caption)
@@ -330,7 +330,12 @@ private fun SideCard(scenario: Scenario, texts: ScenarioTexts, onStart: () -> Un
             Fact(if (sites != null) t("%@ and %@", t(sites[0].region.title), t(sites[1].region.title)) else t(scenario.setting.region.title))
             Fact(t(scenario.setting.season.title))
             Fact(if (scenario.days == 1) t("1 day, from 00:00") else t("%lld days, from 00:00", scenario.days))
-            if (scenario.training != null && scenario.interactive.peak > 0) {
+            val inference = scenario.inference
+            if (inference != null) {
+                Fact(t("A shop assistant: up to %lld questions a second", inference.peakRate))
+                Fact(t("%lld GPU servers for the language models", inference.gpuServers))
+                Fact(t("%lld kinds of question", inference.kinds.size))
+            } else if (scenario.training != null && scenario.interactive.peak > 0) {
                 val gpus = scenario.fleet.filter { it.kind == de.wannerit.loadshift.core.ServerKind.GPU_CURRENT }.sumOf { it.count }
                 Fact(t("%lld CPU servers for the shop and the batch jobs", scenario.serverCount - gpus))
                 Fact(t("%lld GPU servers for the training", gpus))

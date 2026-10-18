@@ -29,6 +29,8 @@ import de.wannerit.loadshift.core.ServerState
 fun HallView(
     servers: List<Server>, version: Int, interactive: Boolean, batch: Boolean, modifier: Modifier = Modifier,
     cacheSlots: Int = 0, cacheOn: Int = 0, cachePower: Int = 0,
+    /** E4: the extra rack holds GPU servers for the language models instead of cache servers. */
+    gpuRack: Boolean = false,
     /** O7: two halls side by side – a short status line only. */
     compact: Boolean = false,
 ) {
@@ -37,7 +39,7 @@ fun HallView(
     Column(modifier.padding(16.dp)) {
         Canvas(Modifier.fillMaxWidth().weight(1f)) {
             // The server list is the same object after every tick; reading the version redraws the hall.
-            if (version >= 0) drawHall(servers, cacheSlots, cacheOn)
+            if (version >= 0) drawHall(servers, cacheSlots, cacheOn, if (gpuRack) Palette.trainingLoad else Palette.cache)
         }
         Row(
             Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
@@ -54,11 +56,12 @@ fun HallView(
             if (interactive && servers.any { it.kind.servesInteractive }) LegendSwatch(Palette.slab, t("Web requests"), Palette.interactiveLoad)
             if (servers.any { it.kind == ServerKind.GPU_CURRENT }) LegendSwatch(Palette.slab, t("Training"), Palette.trainingLoad)
             if (batch) LegendSwatch(Palette.slab, t("Batch job"), Palette.batchLoad)
-            if (cacheSlots > 0) LegendSwatch(Palette.cache, t("Cache server"))
+            if (cacheSlots > 0) LegendSwatch(if (gpuRack) Palette.trainingLoad else Palette.cache, if (gpuRack) t("GPU server for the models") else t("Cache server"))
             if (servers.any { it.kind == ServerKind.CPU_OLD }) LegendSwatch(Palette.old, t("Old server"))
             Spacer(Modifier.weight(1f))
             Txt(
-                if (cacheSlots > 0) t("%lld of %lld servers on + %lld cache servers · %@ kW IT power", on, servers.size, cacheOn, Format.kilowatts(itPower))
+                if (cacheSlots > 0 && gpuRack) t("%lld of %lld servers on + %lld GPU servers · %@ kW IT power", on, servers.size, cacheOn, Format.kilowatts(itPower))
+                else if (cacheSlots > 0) t("%lld of %lld servers on + %lld cache servers · %@ kW IT power", on, servers.size, cacheOn, Format.kilowatts(itPower))
                 else t("%lld of %lld servers on · %@ kW IT power", on, servers.size, Format.kilowatts(itPower)),
                 Type.callout, maxLines = 1,
             )
@@ -75,7 +78,7 @@ private const val RACK_GAP = 0.45
 /** Isometric projection of floor coordinates (x to the right back, y to the left front, z up). */
 private fun iso(x: Double, y: Double, z: Double) = Offset(((x - y) * 0.866).toFloat(), ((x + y) * 0.5 - z).toFloat())
 
-private fun DrawScope.drawHall(servers: List<Server>, cacheSlots: Int, cacheOn: Int) {
+private fun DrawScope.drawHall(servers: List<Server>, cacheSlots: Int, cacheOn: Int, extraColor: Color) {
     val serverRacks = maxOf(1, (servers.size + SLOTS_PER_RACK - 1) / SLOTS_PER_RACK)
     // E3: one more rack for the cache servers.
     val racks = serverRacks + if (cacheSlots > 0) 1 else 0
@@ -114,7 +117,7 @@ private fun DrawScope.drawHall(servers: List<Server>, cacheSlots: Int, cacheOn: 
             for (slot in 0 until cacheSlots) {
                 val z0 = 0.1 + slot * slotHeight + 0.025; val z1 = z0 + slotHeight - 0.05
                 val slab = polygon(p(x0 + 0.07, y1, z0), p(x1 - 0.07, y1, z0), p(x1 - 0.07, y1, z1), p(x0 + 0.07, y1, z1))
-                drawPath(slab, if (slot < cacheOn) Palette.cache else Palette.off)
+                drawPath(slab, if (slot < cacheOn) extraColor else Palette.off)
             }
             continue
         }

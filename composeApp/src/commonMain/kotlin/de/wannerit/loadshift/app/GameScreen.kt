@@ -82,9 +82,11 @@ fun GameScreen(game: GameController, onExit: () -> Unit, onNext: ((Scenario) -> 
                 } else {
                     HallView(
                         game.simulation.servers, game.version, game.hasInteractive || game.hasTraining, game.hasBatch, Modifier.weight(1f).fillMaxHeight(),
-                        cacheSlots = if (game.scenario.caching != null) CacheModel.MAX_SERVERS else 0,
-                        cacheOn = game.scenario.caching?.servers(game.simulation.policy.cache) ?: 0,
-                        cachePower = game.scenario.caching?.power(game.simulation.policy.cache) ?: 0,
+                        cacheSlots = if (game.scenario.caching != null) CacheModel.MAX_SERVERS else game.scenario.inference?.gpuServers ?: 0,
+                        cacheOn = game.scenario.caching?.servers(game.simulation.policy.cache) ?: game.simulation.history.lastOrNull()?.inference?.servers ?: 0,
+                        cachePower = game.scenario.caching?.power(game.simulation.policy.cache)
+                            ?: game.simulation.history.lastOrNull()?.inference?.let { it.kindWatts.sum() + it.idleWatts } ?: 0,
+                        gpuRack = game.hasInference,
                     )
                 }
                 VDivider()
@@ -135,7 +137,8 @@ private fun TopBar(game: GameController, onExit: () -> Unit) {
         if (!game.hasRenewal) Metric(t("Grid now"), "$intensity g/kWh", Palette.intensity(intensity))
         val totals = game.totals
         Metric(t("CO₂ so far"), if (game.hasRenewal) "${Format.tonnes(totals.emissions)} t" else "${Format.kilograms(totals.emissions)} kg")
-        if (game.hasInteractive) {
+        // E4: the shop's own servers are not the topic; the assistant's goals take their place.
+        if (game.hasInteractive && !game.hasInference) {
             val sla = minOf(totals.sla, totals.worstSiteSla)
             Metric(if (game.hasRenewal) t("SLA (lowest site)") else t("SLA"), Format.percent(sla),
                 if (sla >= simulation.scenario.slaTarget) Palette.ink else Palette.red)
@@ -143,6 +146,12 @@ private fun TopBar(game: GameController, onExit: () -> Unit) {
         if (game.hasBatch) {
             Metric(t("Jobs done"), "${game.jobsDone} / ${game.jobsTotal}",
                 if (totals.deadlinesMissed == 0) Palette.ink else Palette.red)
+        }
+        simulation.scenario.inference?.let { model ->
+            val q = game.totals.meanAnswerQuality
+            val o = game.totals.answersOnTime
+            Metric(t("Quality"), Format.percent(q), if (q >= model.qualityTarget) Palette.ink else Palette.red)
+            Metric(t("In time"), Format.percent(o), if (o >= model.onTimeTarget) Palette.ink else Palette.red)
         }
         simulation.scenario.streaming?.let { model ->
             val rating = simulation.totals.meanRating
@@ -196,9 +205,13 @@ private fun SpeedControl(game: GameController) {
     }
 }
 
+/** "−70 %" for whole percents, "−50,5 %" otherwise – the goal bar is short of room. */
+private fun shortChange(permille: Long): String =
+    Format.changePermille(permille).let { if (permille % 10 == 0L) it.replace(",0 %", " %").replace(".0 %", " %") else it }
+
 private fun specialShort(goal: SpecialGoal): String = when (goal) {
     is SpecialGoal.MeanUtilization -> t("utilization ≥ %@", Format.wholePercent(goal.permille))
-    is SpecialGoal.Reduction -> t("CO₂ from %@", Format.changePermille(-goal.permille.toLong()))
+    is SpecialGoal.Reduction -> t("CO₂ %@", shortChange(-goal.permille.toLong()))
     is SpecialGoal.BatchIntensity -> t("batch ≤ %lld g/kWh", goal.gramsPerKWh)
     is SpecialGoal.MaxServersOn -> t("≤ %lld hosts", goal.servers)
 }
@@ -226,11 +239,17 @@ private fun GoalBar(game: GameController) {
                 Format.number(totals.stale.toDouble() / maxOf(1, totals.requests), 2) + " ‰", Format.number(limit / 10.0, 1) + " ‰"))
         }
         if (game.hasInteractive) {
-            GoalItem(minOf(totals.sla, totals.worstSiteSla) >= scenario.slaTarget, change != null,
+            if (!game.hasInference) GoalItem(minOf(totals.sla, totals.worstSiteSla) >= scenario.slaTarget, change != null,
                 if (game.hasRenewal) t("SLA ≥ %@ at each site", Format.percent(scenario.slaTarget)) else t("SLA ≥ %@", Format.percent(scenario.slaTarget)))
             GoalItem((change ?: 0) < 0, change != null,
                 if (change == null) t("CO₂ vs. reference") else if (game.isCapstone && !game.isFinished) t("CO₂ expected: %@", Format.changePermille(change))
                 else t("CO₂ vs. reference: %@", Format.changePermille(change)))
+        }
+        scenario.inference?.let { model ->
+            GoalItem(totals.meanAnswerQuality >= model.qualityTarget, change != null,
+                t("Quality of the answers ≥ %@", Format.percent(model.qualityTarget)))
+            GoalItem(totals.answersOnTime >= model.onTimeTarget, change != null,
+                t("%@ of the answers within %lld s", Format.percent(model.onTimeTarget), model.limitTenths / 10))
         }
         scenario.streaming?.let { model ->
             GoalItem(totals.meanRating >= model.ratingTarget, change != null,
@@ -273,7 +292,7 @@ private fun GoalBar(game: GameController) {
         Spacer(Modifier.weight(1f))
         Row(verticalAlignment = Alignment.CenterVertically) {
             StarLabel(2, 13.dp)
-            Txt(t("CO₂ from %@", Format.changePermille(-scenario.goals.reduction.toLong())), Type.callout)
+            Txt(t("CO₂ %@", shortChange(-scenario.goals.reduction.toLong())), Type.callout)
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
             StarLabel(3, 13.dp)
@@ -354,10 +373,16 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
                     if (scenario.staleLimit != null) {
                         add(t("Stale answers (‰)") to (Format.number(you.stale.toDouble() / maxOf(1, you.requests), 2) to Format.number(ref.stale.toDouble() / maxOf(1, ref.requests), 2)))
                     }
-                    if (game.hasInteractive) {
+                    if (game.hasInteractive && !game.hasInference) {
                         add((if (game.hasRenewal) t("SLA (lowest site)") else t("SLA")) to (Format.percent(minOf(you.sla, you.worstSiteSla)) to Format.percent(minOf(ref.sla, ref.worstSiteSla))))
                         add(t("Servers on (mean)") to (Format.number(you.meanServersOn / 1_000.0, 1) to Format.number(ref.meanServersOn / 1_000.0, 1)))
                         add(t("Mean utilization") to (Format.wholePercent(you.meanUtilization) to Format.wholePercent(ref.meanUtilization)))
+                    }
+                    if (scenario.inference != null) {
+                        add(t("Quality of the answers") to (Format.percent(you.meanAnswerQuality) to Format.percent(ref.meanAnswerQuality)))
+                        add(t("Answers in time") to (Format.percent(you.answersOnTime) to Format.percent(ref.answersOnTime)))
+                        fun gpu(sim: de.wannerit.loadshift.core.Simulation) = sim.history.sumOf { it.inference?.servers ?: 0 }.toDouble() / maxOf(1, sim.history.size)
+                        add(t("GPU servers (mean)") to (Format.number(gpu(game.simulation), 1) to Format.number(gpu(game.reference), 1)))
                     }
                     if (scenario.streaming != null) add(t("Viewers' rating") to (Format.percent(you.meanRating) to Format.percent(ref.meanRating)))
                     if (game.hasTraining) {
@@ -435,7 +460,7 @@ private fun WhatIf(game: GameController) {
             Spacer(Modifier.weight(labelWeight))
             Txt(t("CO₂ vs. you"), Type.caption.copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.18f))
             if (pue) Txt(t("PUE"), Type.caption.copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.12f))
-            Txt(if (game.hasBatch) t("Missed") else t("SLA"), Type.caption.copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.14f))
+            Txt(if (game.hasBatch) t("Missed") else if (game.hasInference) t("Quality") else t("SLA"), Type.caption.copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.14f))
             Spacer(Modifier.weight(0.16f))
         }
         // Settings with more stars than the player has reached stay hidden: the second run should not be a recipe.
@@ -448,7 +473,10 @@ private fun WhatIf(game: GameController) {
                 else Txt(label, Type.callout, Modifier.weight(labelWeight))
                 Txt(Format.change(totals.emissions, you.emissions), Type.callout.copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.18f))
                 if (pue) Txt(Format.number(totals.pue / 1_000.0, 2), Type.callout.copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.12f))
-                if (game.hasBatch) {
+                val inference = game.scenario.inference
+                if (inference != null) {
+                    Txt(Format.percent(totals.meanAnswerQuality), Type.style(15, color = if (totals.meanAnswerQuality >= inference.qualityTarget) Palette.ink else Palette.red).copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.14f))
+                } else if (game.hasBatch) {
                     Txt("${totals.deadlinesMissed}", Type.style(15, color = if (totals.deadlinesMissed == 0) Palette.ink else Palette.red).copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.14f))
                 } else {
                     Txt(Format.percent(totals.sla), Type.style(15, color = if (totals.sla >= game.scenario.slaTarget) Palette.ink else Palette.red).copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.14f))

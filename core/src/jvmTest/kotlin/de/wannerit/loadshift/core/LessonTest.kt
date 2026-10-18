@@ -740,4 +740,41 @@ class LessonTest {
         // The training waits for the wind and is still done in time.
         assertTrue(byName.getValue("auto 80, green+replan, 4/60/green").totals.trainingFinishedAt != null)
     }
+
+    @Test fun e4RightSizedAi() {
+        val scenario = Scenario.RIGHT_SIZED_AI
+        val reference = Simulation.reference(scenario)
+        fun config(code: String, window: Int) = InferenceConfig(code.split(" ").map { c ->
+            when (c) { "N" -> Answerer.NONE; "S" -> Answerer.SMALL; "L" -> Answerer.LARGE; else -> Answerer.REASONING }
+        }, window)
+        fun run(code: String, window: Int) = Simulation.replay(scenario, scenario.initialPolicy.copy(inference = config(code, window)))
+        val combos = listOf(
+            "S S S S S" to 0, "N N N N N" to 0, "N L L L L" to 0, "N N L L L" to 0, "N N S L L" to 0,
+            "N N S L L" to 250, "N N S L L" to 1_000, "N N S L L" to 2_000, "L L L L L" to 1_000, "L L L L L" to 250,
+            "N N L L L" to 1_000, "N N S R L" to 1_000, "N S S L L" to 1_000, "N N S L S" to 1_000, "N N L L L" to 250,
+        )
+        val runs = combos.map { (c, w) -> "$c, ${w} ms" to run(c, w) }
+        val lines = mutableListOf(title(scenario), HEADER + "  quality  on time  GPU servers")
+        for ((name, sim) in listOf("reference: L L L L L, 0 ms" to reference) + runs) {
+            val t = sim.totals
+            val gpu = sim.history.sumOf { it.inference?.servers ?: 0 }.toDouble() / sim.history.size
+            lines += line(name, t, reference.totals) + "  " + "%.1f".format(t.meanAnswerQuality / 10.0) + "  " +
+                "%.1f".format(t.answersOnTime / 10.0) + "  " + "%.1f".format(gpu) + "  " + "★".repeat(scenario.stars(t, reference.totals))
+        }
+        report(104, lines)
+        val byName = runs.toMap()
+        fun stars(name: String) = scenario.stars(byName.getValue(name).totals, reference.totals)
+        // One lever alone: one star – fewer large-model answers, or batching.
+        assertEquals(1, stars("N N L L L, 0 ms"))
+        assertEquals(1, stars("N N S L L, 0 ms"))
+        assertEquals(1, stars("L L L L L, 1000 ms"))
+        // No AI where none is needed plus batching: two; the small model for the product questions too: three.
+        assertEquals(2, stars("N N L L L, 1000 ms"))
+        assertEquals(3, stars("N N S L L, 1000 ms"))
+        // The traps: small or no AI everywhere loses quality; reasoning and a long batching window make answers late.
+        assertEquals(0, stars("S S S S S, 0 ms"))
+        assertEquals(0, stars("N N S L S, 1000 ms"))
+        assertEquals(0, stars("N N S R L, 1000 ms"))
+        assertEquals(0, stars("N N S L L, 2000 ms"))
+    }
 }

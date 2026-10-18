@@ -67,7 +67,13 @@ private fun initialScreen(options: LaunchOptions): Screen {
     scenario ?: return Screen.List
     if (!options.play) return Screen.Briefing(scenario)
     val game = GameController(scenario)
-    if (options.careful && game.isCapstone) {
+    if (options.careful && game.hasInference) {
+        // Like a careful player: no AI for the order status and greetings, the small model for product questions,
+        // batching 1 s.
+        val a = de.wannerit.loadshift.core.Answerer.entries
+        game.setPolicy(scenario.initialPolicy.copy(inference = de.wannerit.loadshift.core.InferenceConfig(listOf(a[0], a[0], a[1], a[2], a[2]), 1_000)))
+        game.advance(options.ticks)
+    } else if (options.careful && game.isCapstone) {
         // Like a careful player: autoscaling at 80 %, batch jobs and training in the greenest hours (training capped
         // at 60 %), the plan made again when the forecast is revised.
         game.setPolicy(Policy(de.wannerit.loadshift.core.CapacityMode.Autoscale(800), BatchMode.Greenest,

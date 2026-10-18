@@ -76,6 +76,8 @@ data class Policy(
     val training: TrainingConfig = TrainingConfig(),
     /** O9: qualities and eco mode of the streaming service. */
     val streaming: StreamingConfig = StreamingConfig(),
+    /** E4: who answers each kind of question, and the batching window. */
+    val inference: InferenceConfig = InferenceConfig(),
 ) {
     companion object {
         /**

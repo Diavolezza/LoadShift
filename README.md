@@ -1,9 +1,9 @@
 # Load Shift
 
-A teaching game about Green IT – from code to data center. It runs in the browser and as a desktop app for
+A simulation game for teaching Green IT – from code to data center. It runs in the browser and as a desktop app for
 Windows, macOS and Linux (Android and iOS later). You run a data center or improve the software that runs in it:
 switch off idle servers, move flexible work into clean hours, cool wisely, renew hardware where it pays off, measure
-before you optimize, cache what repeats. Serve your users reliably and emit as little CO₂ as possible.
+before you optimize, cache what repeats, use AI models only as large as needed. Serve your users reliably and emit as little CO₂ as possible.
 
 The game is a simulation, not a race: pause at any time, plan in peace, and let time run faster when nothing needs
 to be decided. Each scenario introduces one idea and names its technical term; a debrief compares your result with
@@ -34,6 +34,7 @@ The app speaks English and German (switch on the start page); everything in this
 | E1 | Measure first | Profiling |
 | E2 | Growing data | Algorithmic complexity |
 | E3 | Hit or miss | Caching |
+| E4 | Right-sized AI | Green AI (Right-sizing Models) |
 
 In German the operations scenarios are called B1–B9 ("Betrieb"). A star in one scenario opens the next; teachers can
 open all scenarios in the About dialog. More scenarios are planned (`docs/CONCEPT.md`, section 9).

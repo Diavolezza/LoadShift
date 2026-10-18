@@ -1,6 +1,6 @@
 # Load Shift – Game Concept
 
-Load Shift is a teaching game about Green IT for iPad, Mac and iPhone. The player runs a data center through
+Load Shift is a simulation game for teaching Green IT (web, desktop; later iPad and phones). The player runs a data center through
 days and weeks: servers, workloads, cooling and electricity from a real-world grid mix. The goal is to serve the
 users reliably and to emit as little CO₂ as possible. The game is a simulation, not a race: the player can pause at
 any time, plan in peace and let time run faster when nothing needs to be decided.
@@ -358,6 +358,7 @@ work per request or per job; the effect shows in the SCI per 1,000 requests and 
 | E1 | Measure first | web shop, Germany | 4 weeks (weekly sprints) | engineering backlog, team capacity, profiling | The team's estimates of where the energy goes are wrong. One sprint of profiling shows the real hot spots (for example an N+1 database query and JSON serialization, not the image service everybody suspects). Optimizing by guess wastes sprints; less work per request also means fewer servers and less hardware (G9, G1). Term: Profiling. |
 | E2 | Growing data | web shop, Germany | 12 months (one game day each) | backlog with algorithmic complexity, carry-over | The data grows every month. A batch job with O(n²) and a lookup in a list instead of a hash map get more expensive month by month; a database index stops a query from scanning everything. Fixing early saves the most; waiting costs energy and, at some point, hardware (G9, G6). Term: Algorithmic Complexity. |
 | E3 | Hit or miss | web shop, Germany | 2 days | cache servers, per kind of data cached or not and its TTL, two more measures | Five kinds of data with different popularity, size, cost and business limits on their age: product images (a day), catalog pages (15 min), exchange rates (1 min), search results (1 h, but most searches are typed only once), the account balance before a transfer (must be current). All cached kinds share the memory of the cache servers (LRU). The team has ordered four cache servers "to be on the safe side". A cache saves work while it hits, but every cache server draws power all day; a TTL longer than allowed brings stale answers (0 stars); search results fill half the memory and hardly hit. Two more measures follow the same idea: counting unique visitors with HyperLogLog instead of keeping every ID, and a materialized view for the sales dashboard (G9, G1). Term: Caching. |
+| E4 | Right-sized AI | web shop, Germany | 2 days | per kind of question who answers it (no AI, small model, large model, large model with reasoning), batching window | The team's prototype sends every question of the shop assistant to the large model, one at a time. A status lookup answers "Where is my order?" better than any model; a small model is good enough where the answer is in the product data; the large model pays off for complaints and advice. Batching shares the GPU's work among questions but every answer waits; reasoning adds a little quality and a long wait. Rules: answer quality at least 92 %, 95 % of the answers within 3 s (G9, G1). Term: Green AI (Right-sizing Models). |
 
 Backlog items (game values, to be tuned in the lesson tests): database index, removing an N+1 query, a cache
 (saves work, but the cache server draws power too), compressing images, pagination instead of loading
@@ -874,6 +875,34 @@ not energy.
 | autoscaling 70 %, the same | −51.0 % | ★★★ |
 | autoscaling 60 %, the same | −49.4 % | ★★ |
 
+**As built in step 5, part 7** (E4, "Right-sized AI"):
+
+- Core: `InferenceModel` – five kinds of question with a share and an answer quality per answerer (`Answerer`: no
+  AI 0.002 Wh / 0.3 s, small model 0.12 Wh / 0.8 s, large model 1.0 Wh / 2.0 s, large model with reasoning 2.5 Wh
+  / 9 s per answer without batching – game values in the range of [S25]–[S27]); the questions follow the shop's
+  daily curve, 12 a second at the peak. Batching: the batch is the questions that arrive in the window (at most 32);
+  the energy per answer falls to 0.1 + 0.9 / b^0.8 of the unbatched value [S27], every answer waits the window. GPU
+  servers (up to 6, 9.3 kW at full load) switch with the power; idle rest and embodied emissions count. `Policy.inference`,
+  `Totals.meanAnswerQuality` and `answersOnTime`; the first star needs both.
+- App: panel with the energy and time per answer, a card per kind of question (chips with the quality per answerer),
+  the batching window and the quality and answers in time of the draft; the hall's extra rack holds the GPU servers
+  (violet); the timeline's lower lane stacks the assistant's power by kind of question.
+- Goals ★★ −70 %, ★★★ −76 %. The quantization of the models is left out on purpose: measured savings depend so much on
+  the implementation that int8 decoding can even need more energy than float32 [S27].
+
+| Who answers (status, greetings, product, complaints, advice), batching | CO₂ vs. reference | Quality | In time | Stars |
+|---|---:|---:|---:|---:|
+| large everywhere, one at a time (reference) | – | 95.9 % | 100 % | – |
+| small everywhere | −79.3 % | 88.3 % | 100 % | 0 |
+| no AI, no AI, large, large, large | −36.1 % | 95.9 % | 100 % | ★ |
+| no AI, no AI, small, large, large | −59.9 % | 93.5 % | 100 % | ★ |
+| large everywhere, batching 1 s | −66.7 % | 95.9 % | 100 % | ★ |
+| no AI, no AI, large, large, large, batching 1 s | −72.5 % | 95.9 % | 100 % | ★★ |
+| no AI, no AI, small, large, large, batching 1 s | −76.8 % | 93.5 % | 100 % | ★★★ |
+| the same, batching 2 s | −80.3 % | 93.5 % | 69.9 % | 0 |
+| the same with 1 s, reasoning for complaints | −61.2 % | 93.9 % | 84.9 % | 0 |
+| no AI, no AI, small, large, small, batching 1 s | −80.5 % | 91.2 % | 100 % | 0 |
+
 ---
 
 ## 13 Decisions
@@ -936,3 +965,6 @@ not energy.
 | S22 | P. Flajolet, É. Fusy, O. Gandouet, F. Meunier: *HyperLogLog: the analysis of a near-optimal cardinality estimation algorithm*, AofA 2007. |
 | S23 | H. Che, Y. Tung, Z. Wang: *Hierarchical Web caching systems: modeling, design and experimental results*, IEEE JSAC 20(7), 2002 (the characteristic time of an LRU cache). |
 | S24 | J. Aslan, K. Mayers, J. G. Koomey, C. France: *Electricity Intensity of Internet Data Transmission: Untangling the Estimates*, Journal of Industrial Ecology 22(4), 2018 (0.06 kWh/GB in 2015, halving about every two years; other studies differ by orders of magnitude, and the energy of fixed networks grows less than proportionally with the data). The game uses 5 kWh/TB for a transfer between data centers. |
+| S25 | C. Elsworth, K. Huang, D. Patterson et al.: *Measuring the environmental impact of delivering AI at Google Scale*, arXiv:2508.15734, 2025 (median Gemini text prompt 0.24 Wh including idle machines and overhead; 33 times less within a year through model improvements, quantization, distilled models and better utilization). https://arxiv.org/abs/2508.15734 |
+| S26 | J. You: *How much energy does ChatGPT use?*, Epoch AI, 2025 (about 0.3 Wh for a typical GPT-4o query; reasoning models write about 2.5 times as many tokens). https://epoch.ai/blog/how-much-energy-does-chatgpt-use |
+| S27 | J. Delavande, R. Pierrard, S. Luccioni: *Understanding Efficiency: Quantization, Batching, and Serving Strategies in LLM Energy Use*, arXiv:2601.22362, 2026 (serving with batching cuts the energy per request of an 8B model 12.5 to 100 times; int8 decoding can need more energy than float32). https://arxiv.org/abs/2601.22362 |

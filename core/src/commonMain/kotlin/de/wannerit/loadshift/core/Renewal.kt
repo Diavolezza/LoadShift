@@ -46,6 +46,7 @@ fun Scenario.forSite(site: Int): Scenario {
 operator fun Totals.plus(o: Totals): Totals = Totals(
     ticks = maxOf(ticks, o.ticks), demand = demand + o.demand, served = served + o.served, inTime = inTime + o.inTime,
     requestsServed = requestsServed + o.requestsServed, requests = requests + o.requests, stale = stale + o.stale,
+    answers = answers + o.answers, answerQualitySum = answerQualitySum + o.answerQualitySum, answersInTime = answersInTime + o.answersInTime,
     itEnergy = itEnergy + o.itEnergy, facilityEnergy = facilityEnergy + o.facilityEnergy,
     operational = operational + o.operational, embodied = embodied + o.embodied,
     serverTicks = serverTicks + o.serverTicks, capacityTicks = capacityTicks + o.capacityTicks,

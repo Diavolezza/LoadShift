@@ -29,6 +29,9 @@ enum class Control {
     /** E3: what to cache, for how long, in how much memory. */
     CACHING,
 
+    /** E4: who answers each kind of question (no AI, a small or large model), and batching. */
+    INFERENCE,
+
     /** Scenario 6: the inlet temperature setpoint of the cooling. */
     COOLING,
 
@@ -124,6 +127,8 @@ data class Scenario(
     val rulesBroken: Int = 0,
     /** O11: at most this many servers work for batch jobs at a time – the rest belong to the shop (null: all). */
     val batchLimit: Int? = null,
+    /** E4: a shop assistant with language models. */
+    val inference: InferenceModel? = null,
 ) {
     /** Expected interactive work at a tick: the web load or the VMs' profiles (what an operator can plan with). */
     fun expectedDemand(tick: Int): Int = interactive.expected(tick) + vms.sumOf { it.expectedMilli(tick) } / 1_000
@@ -143,7 +148,8 @@ data class Scenario(
             (training == null || totals.trainingFinishedAt != null) &&
             (streaming == null || totals.meanRating >= streaming.ratingTarget) &&
             totals.rulesBroken == 0 && totals.deadlinesMissed == 0 && totals.emissions < reference.emissions &&
-            (staleLimit == null || totals.stalePerTenThousand <= staleLimit)
+            (staleLimit == null || totals.stalePerTenThousand <= staleLimit) &&
+            (inference == null || (totals.meanAnswerQuality >= inference.qualityTarget && totals.answersOnTime >= inference.onTimeTarget))
         val reduction = rules && totals.emissions * 1_000 <= reference.emissions * (1_000 - goals.reduction)
         val special = rules && when (val goal = goals.special) {
             is SpecialGoal.MeanUtilization -> totals.meanUtilization >= goal.permille
@@ -524,6 +530,33 @@ data class Scenario(
             staleLimit = 5,
         )
 
-        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, OLD_IRON, TRAINING_RUN, ECO_MODE, TWO_SITES, DARK_DOLDRUMS, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS)
+        /**
+         * E4, "Right-sized AI": the shop assistant. The team's prototype sends every question to the large model, one at
+         * a time. Many questions need no AI at all (the order status is a lookup), some are answered as well by a small
+         * model; the large model is worth it where it adds quality. Batching shares the GPU's work among questions but
+         * makes them wait; reasoning helps complaints a little and makes them wait long.
+         */
+        val RIGHT_SIZED_AI = Scenario(
+            number = 104, label = "E4", track = Track.ENGINEERING, unlockAfter = 103,
+            title = "Right-sized AI", setting = GridSetting(GridRegion.GERMANY, Season.AUTUMN), days = 2,
+            seed = 14, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 10)),
+            interactive = InteractiveLoad(peak = 120),
+            controls = setOf(Control.INFERENCE),
+            initialPolicy = Policy(CapacityMode.Autoscale(700), inference = InferenceConfig(List(5) { Answerer.LARGE }, 0)),
+            referencePolicy = Policy(CapacityMode.Autoscale(700), inference = InferenceConfig(List(5) { Answerer.LARGE }, 0)),
+            goals = StarGoals(700, SpecialGoal.Reduction(760)),
+            inference = InferenceModel(
+                kinds = listOf(
+                    QuestionKind("Where is my order?", 300, listOf(980, 950, 970, 970), "The status of one order, from the order database."),
+                    QuestionKind("Greetings and thanks", 100, listOf(950, 970, 980, 980), "\"Hello\", \"Thank you\", \"Bye\"."),
+                    QuestionKind("Questions about a product", 300, listOf(700, 880, 960, 970), "Size, material, care – the answer is in the product data."),
+                    QuestionKind("Returns and complaints", 150, listOf(750, 780, 930, 960), "Needs the order, the return rules and a friendly tone."),
+                    QuestionKind("Outfit advice", 150, listOf(600, 800, 950, 960), "What goes with these shoes? Needs taste and the whole catalog."),
+                ),
+                peakRate = 12, qualityTarget = 920, onTimeTarget = 950, gpuServers = 6,
+            ),
+        )
+
+        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, OLD_IRON, TRAINING_RUN, ECO_MODE, TWO_SITES, DARK_DOLDRUMS, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS, RIGHT_SIZED_AI)
     }
 }
