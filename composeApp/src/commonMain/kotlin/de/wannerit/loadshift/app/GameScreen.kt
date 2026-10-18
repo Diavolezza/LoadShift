@@ -62,7 +62,9 @@ fun GameScreen(game: GameController, onExit: () -> Unit, onNext: ((Scenario) -> 
     @Suppress("UNUSED_VARIABLE") val redraw = game.version
     BoxWithConstraints(Modifier.fillMaxSize().background(Palette.background)) {
         val panelWidth = (maxWidth * 0.32f).coerceIn(300.dp, 380.dp)
-        val timelineHeight = (maxHeight * (if (game.isCapstone) 0.46f else 0.3f)).coerceAtLeast(190.dp)
+        // Scenarios with tabs show all their kinds of work below, one under the other: more height for the timeline.
+        val allLanes = game.isCapstone || game.scenario.contract != null
+        val timelineHeight = (maxHeight * (if (allLanes) 0.46f else 0.3f)).coerceAtLeast(190.dp)
         Column(Modifier.fillMaxSize()) {
             TopBar(game, onExit)
             GoalBar(game)
@@ -106,11 +108,7 @@ fun GameScreen(game: GameController, onExit: () -> Unit, onNext: ((Scenario) -> 
                     }
                 }
             } else TimelineChart(game.simulation, game.version, Modifier.fillMaxWidth().height(timelineHeight).background(Palette.panel),
-                lane = if (game.isCapstone) Lane.ALL else if (game.scenario.contract != null) when (game.tabs.getOrNull(game.panelTab)) {
-                    GameController.PanelTab.SHOP -> Lane.LOAD
-                    GameController.PanelTab.BATCH -> Lane.JOBS
-                    else -> Lane.CONTRACT
-                } else null)
+                lane = if (allLanes) Lane.ALL else null)
         }
         if (game.showEnd) EndCard(game, onExit, onNext, onOverview)
     }
@@ -370,7 +368,8 @@ fun StartOverChip(onStartOver: () -> Unit) {
 fun GoalItem(ok: Boolean, started: Boolean, text: String) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         if (started) CheckMark(ok, warning = !ok) else CheckMark(false)
-        Txt(text, Type.callout, maxLines = 1)
+        // A goal that is missed right now in red: it is what keeps the first star away.
+        Txt(text, if (started && !ok) Type.style(15, FontWeight.SemiBold, Palette.red) else Type.callout, maxLines = 1)
     }
 }
 
@@ -403,6 +402,10 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
                     GoalLine(met.rules, 1, t(texts.rules))
                     GoalLine(met.reduction, 2, t("CO₂ %@ or better", Format.changePermille(-scenario.goals.reduction.toLong())))
                     GoalLine(met.special, 3, specialLong(scenario.goals.special))
+                }
+                if (!met.rules) {
+                    val missed = missedRules(game)
+                    if (missed.isNotEmpty()) Txt(t("No star because: %@", missed.joinToString("; ")), Type.style(16, FontWeight.SemiBold, Palette.red))
                 }
                 val rows = buildList {
                     if (game.hasRenewal) {
@@ -492,6 +495,39 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
             }
         }
     }
+}
+
+/** What keeps the first star away, in words – the same tests as Scenario.goalsMet. */
+private fun missedRules(game: GameController): List<String> {
+    val s = game.scenario
+    val y = game.totals
+    val r = game.referenceTotals
+    val out = mutableListOf<String>()
+    val sla = minOf(y.sla, y.worstSiteSla)
+    if (sla < s.slaTarget) out += t("SLA %@ (at least %@)", Format.percent(sla), Format.percent(s.slaTarget))
+    if (s.training != null && y.trainingFinishedAt == null) out += t("training not done")
+    s.streaming?.let { if (y.meanRating < it.ratingTarget) out += t("viewers' rating %@ (at least %@)", Format.percent(y.meanRating), Format.percent(it.ratingTarget)) }
+    if (y.rulesBroken > 0) out += when {
+        s.location != null -> t("customer data moved abroad")
+        s.pipeline != null -> t("released without UI tests")
+        s.services != null -> t("positions or traffic too old")
+        else -> t("rules broken: %lld", y.rulesBroken)
+    }
+    if (y.deadlinesMissed > 0) out += t("deadlines missed: %lld", y.deadlinesMissed)
+    if (y.emissions >= r.emissions) out += t("not less CO₂ than the reference")
+    s.staleLimit?.let { if (y.stalePerTenThousand > it) out += t("too many stale answers") }
+    s.web?.let { if (y.meanLcp > it.lcpLimit) out += t("LCP %@ s (at most %@ s)", Format.number(y.meanLcp / 10.0, 1), Format.number(it.lcpLimit / 10.0, 1)) }
+    s.services?.let { if (y.meanLatency > it.latencyLimit) out += t("tracking %lld ms (at most %lld ms)", y.meanLatency, it.latencyLimit) }
+    s.contract?.let {
+        if (y.energyCost * 1_000 > r.energyCost * it.budgetPermille) out += t("electricity cost %@ of the reference (at most %@)",
+            Format.wholePercent((y.energyCost * 1_000 / maxOf(1L, r.energyCost)).toInt()), Format.wholePercent(it.budgetPermille))
+    }
+    s.pipeline?.let { if (y.meanFeedback > it.feedbackLimit * 10) out += t("feedback %@ min (at most %lld min)", Format.number(y.meanFeedback / 10.0, 1), it.feedbackLimit) }
+    s.inference?.let {
+        if (y.meanAnswerQuality < it.qualityTarget) out += t("quality of the answers %@ (at least %@)", Format.percent(y.meanAnswerQuality), Format.percent(it.qualityTarget))
+        if (y.answersOnTime < it.onTimeTarget) out += t("answers in time %@ (at least %@)", Format.percent(y.answersOnTime), Format.percent(it.onTimeTarget))
+    }
+    return out
 }
 
 /** A simple table: first column left, the others right. */

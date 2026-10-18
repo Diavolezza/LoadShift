@@ -162,7 +162,18 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
         }
 
         // Lower lane
-        if (lane == Lane.CONTRACT) {
+        if (lane == Lane.ALL && scenario.contract != null) {
+            // O11 "Green on paper": the contract's clean energy, the shop's load and the batch jobs, one under the other.
+            val gap = 24f * density
+            val h = lowBottom - lowTop - 2 * gap
+            val contractBottom = lowTop + h * 0.36f
+            val loadTop = contractBottom + gap
+            val loadBottom = loadTop + h * 0.28f
+            drawContract(lowTop, contractBottom)
+            drawLoad(loadTop, loadBottom, future)
+            drawJobs(loadBottom + gap, lowBottom)
+            text(t("Batch jobs – light: arrival to deadline, outlined: planned, filled: running or done"), Offset(left, loadBottom + gap - 12f * density), Type.style(12, FontWeight.SemiBold))
+        } else if (lane == Lane.CONTRACT) {
             drawContract(lowTop, lowBottom)
         } else if (scenario.services != null) {
             drawServices(lowTop, lowBottom)

@@ -328,6 +328,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Analyseplattform",
     "Answers in time" to
         "Antworten in der Zeit",
+    "answers in time %@ (at least %@)" to
+        "Antworten rechtzeitig %@ (mindestens %@)",
     "Answers within %lld s" to
         "Antworten innerhalb von %lld s",
     "Apply" to
@@ -578,8 +580,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "CO₂-Intensität des Stroms; darunter die Leistung der drei Teile: Rechenzentrum, Netz und die Geräte der Besucher.",
     "Carbon intensity of the grid; below it the servers on – build agents and test environments – and the UI tests at night." to
         "CO₂-Intensität des Stroms; darunter die laufenden Server – Build-Agents und Testumgebungen – und die UI-Tests in der Nacht.",
-    "Carbon intensity of the grid; below it, depending on the tab, the data center's power and the clean energy of the contract in the same hour, the shop's load or the batch jobs." to
-        "CO₂-Intensität des Stroms; darunter, je nach Tab, die Leistung des Rechenzentrums und der saubere Strom aus dem Vertrag in derselben Stunde, die Last des Shops oder die Batch-Jobs.",
+    "Carbon intensity of the grid; below it, one under the other, the data center's power with the clean energy of the contract in the same hour, the shop's load and the batch jobs." to
+        "CO₂-Intensität des Stroms; darunter, übereinander, die Leistung des Rechenzentrums mit dem sauberen Strom aus dem Vertrag in derselben Stunde, die Last des Shops und die Batch-Jobs.",
     "Carry out the plan" to
         "Plan umsetzen",
     "Catalog pages" to
@@ -724,6 +726,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Kunden- und LKW-Service als Serverless-Funktionen",
     "Customer data moved abroad" to
         "Kundendaten ins Ausland verschoben",
+    "customer data moved abroad" to
+        "Kundendaten ins Ausland verschoben",
     "Customer data stays in Germany" to
         "Kundendaten bleiben in Deutschland",
     "Customer portal" to
@@ -770,6 +774,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Fristsicherung",
     "Deadlines missed: %lld" to
         "Fristen verpasst: %lld",
+    "deadlines missed: %lld" to
+        "Fristen verpasst: %lld",
     "Delete duplicates and old files" to
         "Duplikate und Altbestände löschen",
     "Dependencies and build results in a shared store (for example S3) instead of on the agent's disk." to
@@ -810,6 +816,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Strom",
     "Electricity contract" to
         "Stromvertrag",
+    "electricity cost %@ of the reference (at most %@)" to
+        "Stromkosten %@ der Referenz (höchstens %@)",
     "Electricity cost (€)" to
         "Stromkosten (€)",
     "Electricity cost so far (reference)" to
@@ -892,6 +900,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Schnellere String-Verarbeitung in den Templates",
     "Feedback" to
         "Rückmeldung",
+    "feedback %@ min (at most %lld min)" to
+        "Rückmeldung %@ min (höchstens %lld min)",
     "Feedback (min)" to
         "Rückmeldung (min)",
     "Feedback within 20 minutes, UI tests before the release and less CO₂ than the reference" to
@@ -1078,6 +1088,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Invalidierung",
     "Inventory" to
         "Inventur",
+    "inventory %@ from the real footprint (at most ±%@)" to
+        "Inventur %@ neben dem wahren Fußabdruck (höchstens ±%@)",
     "Inventory and plan" to
         "Inventur und Plan",
     "Inventory within ±%@ of the real footprint" to
@@ -1118,6 +1130,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Lazy Loading",
     "Lazy-load the product images" to
         "Produktbilder erst beim Scrollen laden",
+    "LCP %@ s (at most %@ s)" to
+        "LCP %@ s (höchstens %@ s)",
     "LCP (75 % of the visits faster)" to
         "LCP (75 % der Besuche schneller)",
     "LCP at most 2.5 s and less CO₂ than the reference" to
@@ -1268,6 +1282,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Keine Instanz läuft, solange niemand sie aufruft; ein Aufruf startet eine (der erste nach einer Pause dauert Sekunden).",
     "No job" to
         "Kein Job",
+    "No star because: %@" to
+        "Kein Stern, weil: %@",
     "none" to
         "keiner",
     "Norway" to
@@ -1280,6 +1296,10 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Nicht jedes Grün ist gleich grün. Zertifikate ändern den Bericht, nicht den Strom. Ein Windpark liefert sauberen Strom nur, solange der Wind weht – die Arbeit in diesen Stunden ist sauber. 24/7 CO₂-freier Strom deckt jede Stunde, aber er kostet. Zähle in der Stunde, nicht auf dem Papier.",
     "Not every question needs the largest model – some need no model at all. Choose for each kind of question who answers it, and keep the quality of the answers up. A GPU answers several questions almost as fast as one: batching shares the work, but every answer waits a little." to
         "Nicht jede Frage braucht das größte Modell – manche gar keins. Wähle für jede Art von Frage, wer sie beantwortet, und halte die Qualität der Antworten hoch. Eine GPU beantwortet mehrere Fragen fast so schnell wie eine: Batching teilt die Arbeit, aber jede Antwort wartet ein wenig.",
+    "not less CO₂ next year" to
+        "nächstes Jahr nicht weniger CO₂",
+    "not less CO₂ than the reference" to
+        "nicht weniger CO₂ als die Referenz",
     "Not made" to
         "Nicht geschafft",
     "not planned" to
@@ -1360,6 +1380,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Außentemperatur mit Vorhersage und Sollwert; grün: Stunden, in denen die Außenluft kühlt. Darunter Last und Kapazität.",
     "Outside temperature, °C – dashed: forecast; black: setpoint; green: the outside air cools" to
         "Außentemperatur, °C – gestrichelt: Vorhersage; schwarz: Sollwert; grün: die Außenluft kühlt",
+    "over budget" to
+        "Budget überschritten",
     "Own data center" to
         "Eigenes Rechenzentrum",
     "Own data center: how the meter's energy is split" to
@@ -1422,6 +1444,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Positionen und Verkehr aktuell",
     "Positions or traffic too old" to
         "Positionen oder Verkehr zu alt",
+    "positions or traffic too old" to
+        "Positionen oder Verkehrslage zu alt",
     "Power" to
         "Leistung",
     "Power cap" to
@@ -1462,6 +1486,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Qualität",
     "Quality of the answers" to
         "Qualität der Antworten",
+    "quality of the answers %@ (at least %@)" to
+        "Qualität der Antworten %@ (mindestens %@)",
     "Quality of the answers at least 92 %, 95 % of the answers within 3 s and less CO₂ than the reference" to
         "Qualität der Antworten mindestens 92 %, 95 % der Antworten innerhalb von 3 s und weniger CO₂ als die Referenz",
     "Quality of the answers ≥ %@" to
@@ -1506,6 +1532,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Release mit getesteter UI",
     "Released without UI tests" to
         "Release ohne UI-Tests",
+    "released without UI tests" to
+        "ohne UI-Tests freigegeben",
     "Remote build cache" to
         "Remote-Build-Cache",
     "remote cache" to
@@ -1554,6 +1582,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Routen",
     "Rule" to
         "Regel",
+    "rules broken: %lld" to
+        "Regeln verletzt: %lld",
     "Run" to
         "Start",
     "Running build and test infrastructure only when and as much as it is needed: build agents on demand with a shared cache, test impact analysis, expensive tests at clean times, test environments off when nobody uses them, fewer replicas outside production." to
@@ -1624,6 +1654,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Größe, Material, Pflege – die Antwort steht in den Produktdaten.",
     "sizes for the screen" to
         "Größen passend zum Bildschirm",
+    "SLA %@ (at least %@)" to
+        "SLA %@ (mindestens %@)",
     "SLA (lowest site)" to
         "SLA (schwächster Standort)",
     "SLA at least %@ and less CO₂ than the reference" to
@@ -1968,8 +2000,12 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Zu spät für die Frist – spätestens %@ starten.",
     "Too little: above 85 % utilization requests get slow." to
         "Zu knapp: Über 85 % Auslastung werden Requests langsam.",
+    "too many stale answers" to
+        "zu viele veraltete Antworten",
     "too many story points" to
         "zu viele Story Points",
+    "tracking %lld ms (at most %lld ms)" to
+        "Tracking %lld ms (höchstens %lld ms)",
     "Tracking within 250 ms, positions at most 1 min and traffic at most 5 min old, and less CO₂ than the reference" to
         "Tracking innerhalb von 250 ms, Positionen höchstens 1 min und Verkehr höchstens 5 min alt und weniger CO₂ als die Referenz",
     "Traffic" to
@@ -1990,6 +2026,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Training fertig: %@",
     "Training jobs that do not have to finish at a particular hour are moved into the hours with the cleanest electricity, paused at checkpoints and resumed; together with power capping of the GPUs this is one of the most effective levers for the footprint of AI." to
         "Trainingsjobs, die zu keiner bestimmten Stunde fertig sein müssen, werden in die Stunden mit dem saubersten Strom verschoben, an Checkpoints pausiert und fortgesetzt; zusammen mit einem Power Cap für die GPUs ist das einer der wirksamsten Hebel für den Fußabdruck von KI.",
+    "training not done" to
+        "Training nicht fertig",
     "Training run" to
         "Trainingslauf",
     "Training run: progress, GPU servers, power cap and when to train – choose, set, apply." to
@@ -2058,6 +2096,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Bewertung der Zuschauer",
     "Viewers' rating %@ (at least %@)" to
         "Bewertung %1\$@ (mindestens %2\$@)",
+    "viewers' rating %@ (at least %@)" to
+        "Bewertung der Zuschauer:innen %@ (mindestens %@)",
     "Viewers' rating at least 93 % and less CO₂ than the reference" to
         "Bewertung der Zuschauer mindestens 93 % und weniger CO₂ als die Referenz",
     "Wait for the sun" to

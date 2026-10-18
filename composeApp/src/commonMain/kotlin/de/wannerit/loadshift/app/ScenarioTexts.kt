@@ -45,7 +45,7 @@ class ScenarioTexts(
                     "The game starts paused. Clock and speed – pause, 1×, 4×, 16×, 64× – and below it your goals: SLA, deadlines, electricity cost and less CO₂, counted in the hour.",
                     "Your racks: grey servers are off, the blue bar shows web requests, the amber bar batch jobs.",
                     "Three tabs: the electricity contract with the CO₂ counted three ways, the shop's capacity rule and the batch rule.",
-                    "Carbon intensity of the grid; below it, depending on the tab, the data center's power and the clean energy of the contract in the same hour, the shop's load or the batch jobs.",
+                    "Carbon intensity of the grid; below it, one under the other, the data center's power with the clean energy of the contract in the same hour, the shop's load and the batch jobs.",
                 ),
                 comparedWith = "compared with the reference operator, who buys the grid mix, runs the shop with autoscaling at 50 % and starts every job at once.",
                 rules = "SLA at least 99 %, every job by its deadline, electricity cost at most 10 % above the reference and less CO₂ than the reference, counted in the hour",

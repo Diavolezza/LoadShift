@@ -376,6 +376,15 @@ private fun PortfolioEnd(game: PortfolioController, onExit: () -> Unit, onOvervi
                     GoalLine(met.reduction, 2, t("CO₂ %@ or better", Format.changePermille(-scenario.goals.reduction.toLong())))
                     GoalLine(met.special, 3, specialLong(scenario.goals.special))
                 }
+                if (!met.rules) {
+                    val missed = buildList {
+                        if (kotlin.math.abs(r.inventoryError) > game.model.inventoryLimit) add(t("inventory %@ from the real footprint (at most ±%@)",
+                            Format.changePermille(r.inventoryError), Format.wholePercent(game.model.inventoryLimit)))
+                        if (r.inventoryCost + r.planCost > game.model.budget) add(t("over budget"))
+                        if (r.afterKg >= r.trueKg) add(t("not less CO₂ next year"))
+                    }
+                    if (missed.isNotEmpty()) Txt(t("No star because: %@", missed.joinToString("; ")), Type.style(16, FontWeight.SemiBold, Palette.red))
+                }
                 Table(listOf("", t("t CO₂")), listOf(
                     listOf(t("Your inventory"), tonnes(r.inventoryKg) + "  (" + Format.changePermille(r.inventoryError) + ")"),
                     listOf(t("Real footprint, location-based"), tonnes(r.trueKg)),
