@@ -97,6 +97,27 @@ fun AboutContent(modifier: Modifier = Modifier) {
                 Txt(t("For courses that take the topics in another order. Stars still count."), Type.caption)
             }
         }
+        ResetProgress()
+    }
+}
+
+/** All stars gone, for a new player on the same device; a second click within three seconds confirms. */
+@Composable
+private fun ResetProgress() {
+    var asking by remember { mutableStateOf(false) }
+    androidx.compose.runtime.LaunchedEffect(asking) {
+        if (asking) { kotlinx.coroutines.delay(3_000); asking = false }
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Txt(
+            if (asking) t("Really delete all stars?") else "↺ " + t("Reset progress"),
+            Type.style(15, FontWeight.SemiBold, if (asking) Color.White else Palette.ink),
+            Modifier.clip(RoundedCornerShape(50)).background(if (asking) Palette.red else Palette.background)
+                .border(1.dp, Palette.divider, RoundedCornerShape(50))
+                .clickable { if (asking) { asking = false; Progress.resetAll() } else asking = true }
+                .padding(horizontal = 14.dp, vertical = 6.dp),
+        )
+        Txt(t("Deletes the stars of all scenarios on this device, for example before a course. The scenarios close again."), Type.caption)
     }
 }
 
@@ -115,30 +136,69 @@ fun CheckBox(on: Boolean) {
     }
 }
 
-/** The campaign: all scenarios with their stars; a scenario opens when the one before has a star. */
+/**
+ * The campaign: "continue with" the next open scenario, then one tab per track with small cards; locked scenarios
+ * only as a narrow row. A scenario opens when the one before has a star.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ScenarioListScreen(onSelect: (Scenario) -> Unit) {
     var about by remember { mutableStateOf(false) }
+    @Suppress("UNUSED_VARIABLE") val redraw = Progress.version
+    val next = nextScenario()
+    var tab by remember { mutableStateOf(Storage.getInt("tab").takeIf { it in Track.entries.indices } ?: (next?.track?.ordinal ?: 0)) }
     BoxWithConstraints(Modifier.fillMaxSize().background(Palette.background)) {
-        val side = (maxWidth * 0.05f).coerceAtLeast(32.dp)
+        val side = (maxWidth * 0.04f).coerceAtLeast(28.dp)
+        val columns = ((maxWidth - side * 2 + 12.dp) / 200.dp).toInt().coerceIn(2, 6)
+        val cardWidth = (maxWidth - side * 2 - 12.dp * (columns - 1)) / columns - 1.dp
         Column(
-            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = side, vertical = 48.dp),
-            verticalArrangement = Arrangement.spacedBy(28.dp),
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = side, vertical = 36.dp),
+            verticalArrangement = Arrangement.spacedBy(22.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp)) {
-                RackIcon(64.dp)
+                RackIcon(56.dp)
                 Column(Modifier.weight(1f)) {
-                    Txt("Load Shift", Type.style(52, FontWeight.Bold))
-                    Txt(t("Green IT – from code to data center"), Type.style(22, color = Palette.secondary))
+                    Txt("Load Shift", Type.style(44, FontWeight.Bold))
+                    Txt(t("Green IT – from code to data center"), Type.style(19, color = Palette.secondary))
                 }
                 LanguageSwitch()
             }
-            for ((track, title) in listOf(Track.OPERATIONS to t("Operations"), Track.ENGINEERING to t("Engineering"), Track.PORTFOLIO to t("Portfolio"))) {
-                Txt(title, Type.title)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                    for (scenario in Scenario.ALL.filter { it.track == track }) {
-                        ScenarioCard(scenario, Progress.isUnlocked(scenario)) { onSelect(scenario) }
+            if (next != null) ContinueCard(next) { onSelect(next) }
+            // Tabs, one per track, with the scenarios that have a star.
+            Column {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    for ((track, title) in listOf(Track.OPERATIONS to t("Operations"), Track.ENGINEERING to t("Engineering"), Track.PORTFOLIO to t("Portfolio"))) {
+                        val all = Scenario.ALL.filter { it.track == track }
+                        val done = all.count { Progress.stars(it.number) > 0 }
+                        val on = tab == track.ordinal
+                        Column(Modifier.width(androidx.compose.foundation.layout.IntrinsicSize.Max).clip(RoundedCornerShape(8.dp)).clickable { tab = track.ordinal; Storage.setInt("tab", tab) }) {
+                            Row(Modifier.padding(horizontal = 18.dp, vertical = 10.dp), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Txt(title, Type.style(19, FontWeight.SemiBold, if (on) Palette.ink else Palette.secondary))
+                                Txt(t("%lld / %lld ★", done, all.size), Type.style(14, color = Palette.secondary))
+                            }
+                            Box(Modifier.fillMaxWidth().height(3.dp).background(if (on) Palette.accent else Color.Transparent))
+                        }
+                    }
+                }
+                HDivider()
+            }
+            val track = Track.entries[tab]
+            val scenarios = Scenario.ALL.filter { it.track == track }
+            val groups = if (track == Track.OPERATIONS) listOf(
+                t("Basics") to scenarios.filter { (it.label.toIntOrNull() ?: 0) <= 6 },
+                t("Going deeper") to scenarios.filter { (it.label.toIntOrNull() ?: 0) in 7..11 },
+                t("Capstone") to scenarios.filter { (it.label.toIntOrNull() ?: 0) >= 12 },
+            ) else listOf(null to scenarios)
+            for ((title, group) in groups) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    if (title != null) Txt(title.uppercase(), Type.style(14, FontWeight.Bold, Palette.secondary))
+                    val open = group.filter { Progress.isUnlocked(it) }
+                    val locked = group - open.toSet()
+                    if (open.isNotEmpty()) FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        for (scenario in open) ScenarioCard(scenario, scenario == next, Modifier.width(cardWidth)) { onSelect(scenario) }
+                    }
+                    if (locked.isNotEmpty()) FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        for (scenario in locked) LockedChip(scenario)
                     }
                 }
             }
@@ -155,6 +215,41 @@ fun ScenarioListScreen(onSelect: (Scenario) -> Unit) {
         }
     }
 }
+
+/**
+ * The scenario to continue with: the first open one without a star in the track played last, else in any track
+ * (null when every open scenario has a star).
+ */
+private fun nextScenario(): Scenario? {
+    val last = Scenario.ALL.firstOrNull { it.number == Storage.getInt("lastScenario") }
+    fun firstOpen(list: List<Scenario>) = list.firstOrNull { Progress.isUnlocked(it) && Progress.stars(it.number) == 0 }
+    return last?.let { l -> firstOpen(Scenario.ALL.filter { it.track == l.track }) } ?: firstOpen(Scenario.ALL)
+}
+
+@Composable
+private fun ContinueCard(scenario: Scenario, onClick: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(Palette.panel).border(2.dp, Palette.accent, RoundedCornerShape(18.dp))
+            .clickable(onClick = onClick).padding(horizontal = 24.dp, vertical = 18.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(24.dp),
+    ) {
+        Column {
+            Txt(t("Continue with").uppercase(), Type.style(13, FontWeight.SemiBold, Palette.secondary))
+            Txt(scenario.shownLabel, Type.style(44, FontWeight.Bold, Palette.accent))
+        }
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Txt(t(scenario.title), Type.style(26, FontWeight.Bold))
+            Txt(ScenarioTexts.of(scenario).term, Type.style(15, FontWeight.SemiBold, Palette.accent))
+            Txt(cardFacts(scenario), Type.style(15, color = Palette.secondary))
+        }
+        PrimaryButton("▶  " + t("To the briefing"), large = true, onClick = onClick)
+    }
+}
+
+/** "Germany · autumn · 2 days", or what a portfolio scenario is about. */
+private fun cardFacts(scenario: Scenario): String = scenario.abatement?.let { t("%lld measures · three years", it.measures.size) }
+    ?: scenario.portfolio?.let { t("%lld applications · a year", it.apps.size) }
+    ?: "${t(scenario.setting.region.title)} · ${t(scenario.setting.season.title)} · ${days(scenario.days)}"
 
 private fun days(n: Int) = if (n == 1) t("1 day") else t("%lld days", n)
 
@@ -177,34 +272,44 @@ private fun LanguageSwitch() {
 val Scenario.shownLabel: String get() = if (track == Track.OPERATIONS) t("O%@", label) else label
 
 @Composable
-private fun ScenarioCard(scenario: Scenario, unlocked: Boolean, onClick: () -> Unit) {
+private fun ScenarioCard(scenario: Scenario, highlighted: Boolean, modifier: Modifier, onClick: () -> Unit) {
     Column(
-        Modifier.width(360.dp).alpha(if (unlocked) 1f else 0.6f)
-            .clip(RoundedCornerShape(18.dp))
-            .background(Palette.panel)
-            .clickable(enabled = unlocked, onClick = onClick).padding(22.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier.height(118.dp).clip(RoundedCornerShape(14.dp)).background(Palette.panel)
+            .border(if (highlighted) 2.dp else 0.dp, if (highlighted) Palette.accent else Color.Transparent, RoundedCornerShape(14.dp))
+            .clickable(onClick = onClick).padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(3.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Txt(scenario.shownLabel, Type.style(34, FontWeight.Bold, if (unlocked) Palette.accent else Palette.secondary), Modifier.weight(1f))
-            if (unlocked) StarRow(Progress.stars(scenario.number), 22.dp) else LockIcon(22.dp)
+            Txt(scenario.shownLabel, Type.style(24, FontWeight.Bold, Palette.accent), Modifier.weight(1f))
+            StarRow(Progress.stars(scenario.number), 15.dp)
         }
-        Txt(t(scenario.title), Type.heading)
-        Txt(ScenarioTexts.of(scenario).term, Type.style(16, FontWeight.SemiBold, Palette.accent))
-        val portfolio = scenario.portfolio
-        Txt(if (scenario.abatement != null) t("%lld measures · three years", scenario.abatement!!.measures.size)
-            else if (portfolio != null) t("%lld applications · a year", portfolio.apps.size)
-            else "${t(scenario.setting.region.title)} · ${t(scenario.setting.season.title)} · ${days(scenario.days)}", Type.style(17, color = Palette.secondary))
-        if (!unlocked) {
-            val before = Scenario.ALL.firstOrNull { it.number == scenario.unlockAfter }?.shownLabel ?: ""
-            Txt(t("Earn a star in scenario %@ first.", before), Type.callout)
-        }
+        Txt(t(scenario.title), Type.style(16, FontWeight.SemiBold), maxLines = 2)
+        Spacer(Modifier.weight(1f))
+        Txt(ScenarioTexts.of(scenario).term, Type.style(13, FontWeight.SemiBold, Palette.accent), maxLines = 1)
+    }
+}
+
+/** A locked scenario: a narrow chip with a padlock; what opens it is said when the mouse is not needed – in words. */
+@Composable
+private fun LockedChip(scenario: Scenario) {
+    val before = Scenario.ALL.firstOrNull { it.number == scenario.unlockAfter }?.shownLabel ?: ""
+    Row(
+        Modifier.background(Palette.panel.copy(alpha = 0.5f), RoundedCornerShape(10.dp)).border(1.dp, Palette.divider, RoundedCornerShape(10.dp))
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        LockIcon(15.dp)
+        Txt(scenario.shownLabel, Type.style(14, FontWeight.Bold, Palette.secondary))
+        Txt(t(scenario.title), Type.style(14, color = Palette.secondary))
+        Txt("· " + t("after %@", before), Type.style(13, color = Palette.secondary))
     }
 }
 
 /** Briefing before a scenario (CONCEPT.md 9): situation, the one idea, the screen; facts, goals and start beside it. */
 @Composable
 fun BriefingScreen(scenario: Scenario, onStart: () -> Unit, onBack: () -> Unit) {
+    // The start page continues with the track played last.
+    androidx.compose.runtime.LaunchedEffect(scenario) { Storage.setInt("lastScenario", scenario.number) }
     val texts = ScenarioTexts.of(scenario)
     BoxWithConstraints(Modifier.fillMaxSize().background(Palette.background)) {
         val wide = maxWidth > 900.dp

@@ -46,7 +46,8 @@ The app speaks English and German (switch on the start page); everything in this
 | P2 | Where to start | Marginal Abatement Cost Curve (MACC) |
 
 In German the operations scenarios are called B1–B12 ("Betrieb"). A star in one scenario opens the next; teachers can
-open all scenarios in the About dialog. `docs/CONCEPT.md`, section 9.4, maps every scenario to the learning goals of the
+open all scenarios or reset the progress in the About dialog. The start page continues with the next open
+scenario and shows one tab per track. `docs/CONCEPT.md`, section 9.4, maps every scenario to the learning goals of the
 iSAQB Advanced Level module GREEN, for courses that follow it. More scenarios are planned (section 9).
 
 ## Running the game

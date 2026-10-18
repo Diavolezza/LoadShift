@@ -50,6 +50,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "%1\$@: %2\$@ → %3\$@",
     "%@: peak %lld" to
         "%1\$@: Spitze %2\$lld",
+    "%lld / %lld ★" to
+        "%lld / %lld ★",
     "%lld agents always on, or only as many as the waiting jobs need; an agent started on demand boots for 3 minutes." to
         "%lld Agents immer an oder nur so viele, wie die wartenden Jobs brauchen; ein Agent auf Abruf startet in 3 Minuten.",
     "%lld agents, %lld environment servers" to
@@ -304,6 +306,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Index auf die Bestelltabelle legen",
     "Add caching" to
         "Caching einführen",
+    "after %@" to
+        "nach %@",
     "agents %@" to
         "Agents %@",
     "Agents and environments always on, all tests with every commit (reference)" to
@@ -442,6 +446,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Zurück zum Webshop – diesmal zu seinem Code. Das Autoscaling hält die Server passend zur Last; weniger CPU-Arbeit pro Request heißt also weniger Server. Dein Team hat 8 Story Points pro Sprint und einen Backlog voller Ideen, jede mit der Schätzung des Teams, was sie spart. Vier Sprints; jeder Spieltag zeigt die Woche nach einem Sprint.",
     "Backup storage" to
         "Backup-Speicher",
+    "Basics" to
+        "Grundlagen",
     "Batch job" to
         "Batch-Job",
     "Batch jobs" to
@@ -594,6 +600,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Kapazitätsregel",
     "Capacity: %lld load units" to
         "Kapazität: %lld Lasteinheiten",
+    "Capstone" to
+        "Abschluss",
     "Carbon intensity of the grid with the forecast, the eco threshold and the hours with eco mode on (green); below it the load and capacity." to
         "CO₂-Intensität des Stroms mit Prognose, der Eco-Schwelle und den Stunden mit Eco-Modus (grün); darunter Last und Kapazität.",
     "Carbon intensity of the grid with the forecast, the load of all VMs and the capacity of the running hosts." to
@@ -696,6 +704,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Auf 4 Server konsolidieren",
     "Consolidation" to
         "Konsolidierung",
+    "Continue with" to
+        "Weiter mit",
     "Cooled by" to
         "Gekühlt mit",
     "Cooling" to
@@ -824,6 +834,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Fristen verpasst: %lld",
     "Delete duplicates and old files" to
         "Duplikate und Altbestände löschen",
+    "Deletes the stars of all scenarios on this device, for example before a course. The scenarios close again." to
+        "Löscht die Sterne aller Szenarien auf diesem Gerät, etwa vor einem Kurs. Die Szenarien sind danach wieder gesperrt.",
     "Dependencies and build results in a shared store (for example S3) instead of on the agent's disk." to
         "Abhängigkeiten und Build-Ergebnisse in einem gemeinsamen Speicher (zum Beispiel S3) statt auf der Platte des Agents.",
     "Design tool" to
@@ -1014,6 +1026,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Deutschland",
     "Goals" to
         "Ziele",
+    "Going deeper" to
+        "Vertiefung",
     "good data" to
         "gute Daten",
     "GPS positions reused for" to
@@ -1582,6 +1596,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "wirklich %@ t",
     "Really %@ t in three years" to
         "Wirklich %@ t in drei Jahren",
+    "Really delete all stars?" to
+        "Wirklich alle Sterne löschen?",
     "Really saved, location-based" to
         "Wirklich eingespart, standortbasiert",
     "Really start over?" to
@@ -1618,6 +1634,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Entfernt sie sofort aus dem Cache (Tag 2, 18:00); der Cache füllt sich neu. Ohne das zeigen gecachte Seiten die alten Preise, bis sie ablaufen.",
     "Replace the 600 oldest desktop PCs by laptops" to
         "Die 600 ältesten Desktop-PCs durch Laptops ersetzen",
+    "Reset progress" to
+        "Fortschritt zurücksetzen",
     "Response" to
         "Antwort",
     "Response time" to

@@ -22,10 +22,27 @@ object Progress {
         Storage.setInt("unlockAll", if (on) 1 else 0)
     }
 
-    fun stars(scenario: Int): Int = Storage.getInt("stars.$scenario")
+    /** Changes with every new best result, so that the screens that show stars are drawn again. */
+    var version by mutableStateOf(0)
+        private set
+
+    fun stars(scenario: Int): Int {
+        @Suppress("UNUSED_VARIABLE") val v = version
+        return Storage.getInt("stars.$scenario")
+    }
 
     fun record(stars: Int, scenario: Int) {
-        if (stars > stars(scenario)) Storage.setInt("stars.$scenario", stars)
+        if (stars > stars(scenario)) {
+            Storage.setInt("stars.$scenario", stars)
+            version++
+        }
+    }
+
+    /** No stars anywhere: every scenario that needs another closes again. */
+    fun resetAll() {
+        for (s in Scenario.ALL) Storage.setInt("stars.${s.number}", 0)
+        Storage.setInt("lastScenario", 0)
+        version++
     }
 
     /** A scenario is open when it needs no other, or the one it follows has at least one star. */
