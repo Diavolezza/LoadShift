@@ -9,7 +9,12 @@ import de.wannerit.loadshift.core.Scenario
 expect object Storage {
     fun getInt(key: String): Int
     fun setInt(key: String, value: Int)
+    fun getString(key: String): String
+    fun setString(key: String, value: String)
 }
+
+/** Puts a text on the system clipboard (where the platform allows it). */
+expect fun copyText(text: String)
 
 /** Best stars per scenario, kept on the device. */
 object Progress {

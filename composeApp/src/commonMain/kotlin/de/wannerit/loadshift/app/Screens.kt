@@ -98,6 +98,7 @@ fun AboutContent(modifier: Modifier = Modifier) {
             }
         }
         ResetProgress()
+        CodeCheck()
     }
 }
 
@@ -142,7 +143,7 @@ fun CheckBox(on: Boolean) {
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun ScenarioListScreen(onSelect: (Scenario) -> Unit) {
+fun ScenarioListScreen(onLexicon: () -> Unit = {}, onSelect: (Scenario) -> Unit) {
     var about by remember { mutableStateOf(false) }
     @Suppress("UNUSED_VARIABLE") val redraw = Progress.version
     val next = nextScenario()
@@ -161,6 +162,8 @@ fun ScenarioListScreen(onSelect: (Scenario) -> Unit) {
                     Txt("Load Shift", Type.style(44, FontWeight.Bold))
                     Txt(t("Green IT – from code to data center"), Type.style(19, color = Palette.secondary))
                 }
+                Txt(t("Glossary"), Type.style(16, FontWeight.SemiBold, Palette.accent),
+                    Modifier.clip(RoundedCornerShape(10.dp)).background(Palette.panel).clickable(onClick = onLexicon).padding(horizontal = 14.dp, vertical = 10.dp))
                 LanguageSwitch()
                 InfoButton { about = true }
             }
@@ -210,7 +213,9 @@ fun ScenarioListScreen(onSelect: (Scenario) -> Unit) {
                     .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { about = false },
                 contentAlignment = Alignment.Center,
             ) {
-                AboutContent(Modifier.widthIn(max = 520.dp).background(Palette.panel, RoundedCornerShape(20.dp)))
+                // A click into the dialog keeps it open; only a click beside it closes it.
+                AboutContent(Modifier.widthIn(max = 520.dp).background(Palette.panel, RoundedCornerShape(20.dp))
+                    .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {})
             }
         }
     }

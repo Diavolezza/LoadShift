@@ -47,6 +47,7 @@ private sealed interface Screen {
     data class Game(val controller: GameController) : Screen
     data class Portfolio(val controller: PortfolioController) : Screen
     data class Abatement(val controller: AbatementController) : Screen
+    data object Lexicon : Screen
 }
 
 @Composable
@@ -56,7 +57,8 @@ fun App(options: LaunchOptions = LaunchOptions()) {
     if (Type.family != family) Type.family = family
     var screen by remember { mutableStateOf(initialScreen(options)) }
     when (val s = screen) {
-        Screen.List -> ScenarioListScreen { screen = Screen.Briefing(it) }
+        Screen.List -> ScenarioListScreen(onLexicon = { screen = Screen.Lexicon }) { screen = Screen.Briefing(it) }
+        Screen.Lexicon -> LexiconScreen(onBack = { screen = Screen.List }) { screen = Screen.Briefing(it) }
         is Screen.Briefing -> BriefingScreen(s.scenario, onStart = {
             screen = if (s.scenario.portfolio != null) Screen.Portfolio(PortfolioController(s.scenario))
                 else if (s.scenario.abatement != null) Screen.Abatement(AbatementController(s.scenario)) else Screen.Game(GameController(s.scenario))
