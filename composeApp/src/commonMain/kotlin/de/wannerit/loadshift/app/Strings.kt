@@ -854,6 +854,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Dunkelflaute",
     "Data" to
         "Daten",
+    "Data center" to
+        "Rechenzentrum",
     "Data diet" to
         "Datendiät",
     "Data import" to
@@ -2308,6 +2310,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Das Anwendungsportfolio aufräumen: jede Anwendung nach Geschäftswert und technischem Zustand einordnen, dann lassen, verbessern, migrieren oder abschalten – das TIME-Modell, bekannt gemacht von Gartner. Projekte brauchen Zeit und Leute; gespart wird, wenn das alte System wirklich aus ist, nicht, wenn das neue startet.",
     "Time recording" to
         "Zeiterfassung",
+    "Timeline" to
+        "Verlauf",
     "to %@" to
         "bis %@",
     "To scenario %@" to

@@ -65,16 +65,13 @@ fun GameScreen(game: GameController, onExit: () -> Unit, onNext: ((Scenario) -> 
         val panelWidth = (maxWidth * 0.32f).coerceIn(300.dp, 380.dp)
         // Scenarios with tabs show all their kinds of work below, one under the other: more height for the timeline.
         val allLanes = game.isCapstone || game.scenario.contract != null
-        // A low screen (a phone held sideways): the page scrolls and keeps a height the hall, panel and timeline fit into.
+        // A low screen (a phone held sideways): hall and timeline share the left side, one at a time, so the panel
+        // and what its changes do are always in view together.
         val low = maxHeight < 640.dp
         val compact = maxWidth < 1150.dp
-        val height = if (low) (if (allLanes) 860.dp else 720.dp) else maxHeight
-        val timelineHeight = (height * (if (allLanes) 0.46f else 0.3f)).coerceAtLeast(190.dp)
-        Column(if (low) Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).height(height) else Modifier.fillMaxSize()) {
-            TopBar(game, onExit, compact)
-            GoalBar(game, compact)
-            HDivider()
-            Row(Modifier.fillMaxWidth().weight(1f)) {
+        val timelineHeight = (maxHeight * (if (allLanes) 0.46f else 0.3f)).coerceAtLeast(190.dp)
+        val hall: @Composable (Modifier) -> Unit = { modifier ->
+            Row(modifier) {
                 if (Control.PLACEMENT in game.scenario.controls) {
                     PlacementBoard(game, Modifier.weight(1f).fillMaxHeight())
                 } else if (game.multiSite) {
@@ -97,27 +94,63 @@ fun GameScreen(game: GameController, onExit: () -> Unit, onNext: ((Scenario) -> 
                         workLabel = if (game.hasPipeline) t("Build agent at work") else if (game.hasServices) t("Services at work") else null,
                     )
                 }
-                VDivider()
-                ControlPanel(game, Modifier.width(panelWidth).fillMaxHeight())
             }
-            HDivider()
-            if (game.hasRenewal) QuarterChart(game, Modifier.fillMaxWidth().height(timelineHeight).background(Palette.panel))
+        }
+        val timeline: @Composable (Modifier) -> Unit = { modifier ->
+            if (game.hasRenewal) QuarterChart(game, modifier.background(Palette.panel))
             else if (game.scenario.location != null) {
                 // O10: both sites side by side, each with the other's grid as a thin line.
                 val sites = game.scenario.location!!.sites
-                Row(Modifier.fillMaxWidth().height(timelineHeight).background(Palette.panel)) {
+                Row(modifier.background(Palette.panel)) {
                     for (i in sites.indices) {
                         if (i > 0) VDivider()
                         TimelineChart(game.simulationOf(i), game.version, Modifier.weight(1f).fillMaxHeight(),
                             other = t(sites[1 - i].title) to game.simulationOf(1 - i), siteName = t(sites[i].title))
                     }
                 }
-            } else TimelineChart(game.simulation, game.version, Modifier.fillMaxWidth().height(timelineHeight).background(Palette.panel),
-                lane = if (allLanes) Lane.ALL else null)
+            } else TimelineChart(game.simulation, game.version, modifier.background(Palette.panel), lane = if (allLanes) Lane.ALL else null)
+        }
+        Column(Modifier.fillMaxSize()) {
+            TopBar(game, onExit, compact)
+            GoalBar(game, compact)
+            HDivider()
+            Row(Modifier.fillMaxWidth().weight(1f)) {
+                if (low) {
+                    // The placement board is where one plays; elsewhere the timeline shows what the settings do.
+                    var showHall by remember(game.scenario) { mutableStateOf(Control.PLACEMENT in game.scenario.controls) }
+                    Column(Modifier.weight(1f).fillMaxHeight()) {
+                        Row(
+                            Modifier.fillMaxWidth().background(Palette.panel).padding(horizontal = 12.dp, vertical = 4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        ) {
+                            ViewChip(t("Timeline"), !showHall) { showHall = false }
+                            ViewChip(t("Data center"), showHall) { showHall = true }
+                        }
+                        HDivider()
+                        if (showHall) hall(Modifier.weight(1f).fillMaxWidth()) else timeline(Modifier.weight(1f).fillMaxWidth())
+                    }
+                } else hall(Modifier.weight(1f).fillMaxHeight())
+                VDivider()
+                ControlPanel(game, Modifier.width(if (low) 280.dp else panelWidth).fillMaxHeight())
+            }
+            if (!low) {
+                HDivider()
+                timeline(Modifier.fillMaxWidth().height(timelineHeight))
+            }
         }
         if (game.showEnd) EndCard(game, onExit, onNext, onOverview)
         RotateHint(maxWidth, maxHeight)
     }
+}
+
+/** One of the two views on a low screen: the timeline or the data centre. */
+@Composable
+private fun ViewChip(label: String, selected: Boolean, onClick: () -> Unit) {
+    Txt(
+        label, Type.style(13, FontWeight.SemiBold, if (selected) Palette.panel else Palette.ink),
+        Modifier.clip(RoundedCornerShape(8.dp)).background(if (selected) Palette.accent else Palette.background)
+            .clickable(onClick = onClick).padding(horizontal = 12.dp, vertical = 5.dp),
+    )
 }
 
 @Composable

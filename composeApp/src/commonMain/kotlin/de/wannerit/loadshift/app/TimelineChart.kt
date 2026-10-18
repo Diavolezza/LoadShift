@@ -694,7 +694,8 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
                     drawRoundRect(Palette.amber, po, ps, radius, style = dash)
                 }
             }
-            text(t(job.spec.name), Offset(right + 6f * density, y0 + rowHeight / 2), Type.style(11, color = Palette.ink.copy(alpha = 0.8f)))
+            // On a low chart the names would lie on top of each other; the tooltip still names the jobs.
+            if (rowHeight >= 11f * density) text(t(job.spec.name), Offset(right + 6f * density, y0 + rowHeight / 2), Type.style(11, color = Palette.ink.copy(alpha = 0.8f)))
         }
     }
 

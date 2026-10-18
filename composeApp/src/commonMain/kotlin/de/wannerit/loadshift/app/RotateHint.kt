@@ -6,18 +6,22 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -67,5 +71,19 @@ fun RotateHint(width: Dp, height: Dp) {
                 Type.style(17, color = Palette.secondary).copy(textAlign = TextAlign.Center))
             SecondaryButton(t("Continue upright")) { Upright.anyway = true }
         }
+    }
+}
+
+/**
+ * A phone held sideways is only about 330 points high. The play screens are drawn a little smaller there,
+ * so the panel's controls and the chart fit next to each other.
+ */
+@Composable
+fun FitLowScreen(content: @Composable () -> Unit) {
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val density = LocalDensity.current
+        if (maxWidth > maxHeight && maxHeight < 500.dp) {
+            CompositionLocalProvider(LocalDensity provides Density(density.density * 0.85f, density.fontScale)) { content() }
+        } else content()
     }
 }

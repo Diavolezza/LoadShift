@@ -65,12 +65,14 @@ fun App(options: LaunchOptions = LaunchOptions()) {
                 else if (s.scenario.abatement != null) Screen.Abatement(AbatementController(s.scenario))
                 else if (s.scenario.tidy != null) Screen.Tidy(TidyController(s.scenario)) else Screen.Game(GameController(s.scenario))
         }, onBack = { screen = Screen.List })
-        is Screen.Tidy -> TidyScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List })
-        is Screen.Abatement -> AbatementScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List })
-        is Screen.Portfolio -> PortfolioScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List })
-        is Screen.Game -> GameScreen(s.controller, onExit = { s.controller.saveDraft(); screen = Screen.Briefing(s.controller.scenario) },
-            onNext = { s.controller.saveDraft(); screen = Screen.Briefing(it) },
-            onOverview = { s.controller.saveDraft(); screen = Screen.List })
+        is Screen.Tidy -> FitLowScreen { TidyScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }) }
+        is Screen.Abatement -> FitLowScreen { AbatementScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }) }
+        is Screen.Portfolio -> FitLowScreen { PortfolioScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }) }
+        is Screen.Game -> FitLowScreen {
+            GameScreen(s.controller, onExit = { s.controller.saveDraft(); screen = Screen.Briefing(s.controller.scenario) },
+                onNext = { s.controller.saveDraft(); screen = Screen.Briefing(it) },
+                onOverview = { s.controller.saveDraft(); screen = Screen.List })
+        }
     }
 }
 
