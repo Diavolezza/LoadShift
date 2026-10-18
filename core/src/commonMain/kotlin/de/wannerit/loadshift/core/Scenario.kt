@@ -668,7 +668,7 @@ data class Scenario(
          * has its own source of data; better data costs from the same budget as the measures.
          */
         val INVENTORY = Scenario(
-            number = 201, label = "P1", track = Track.PORTFOLIO, unlockAfter = 12,
+            number = 201, label = "P1", track = Track.PORTFOLIO, unlockAfter = 101,
             title = "Inventory", setting = GridSetting(GridRegion.GERMANY, Season.YEAR), days = 1,
             seed = 21, fleet = emptyList(), interactive = InteractiveLoad(peak = 0), controls = emptySet(),
             goals = StarGoals(200, SpecialGoal.Reduction(250)),
