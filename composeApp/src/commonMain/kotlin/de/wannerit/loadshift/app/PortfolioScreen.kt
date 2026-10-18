@@ -41,15 +41,25 @@ import de.wannerit.loadshift.core.PortfolioResult
 import de.wannerit.loadshift.core.Scenario
 import de.wannerit.loadshift.core.Source
 
-/** State of a portfolio scenario: the data bought, the plan, and whether the year is done. */
+/**
+ * State of a portfolio scenario: the data bought, the plan, and whether the year is done. The first time, data once
+ * bought stay bought; after a year has been played the player knows the real numbers anyway, so a replay starts with
+ * the last choices and every choice can be changed freely.
+ */
 class PortfolioController(val scenario: Scenario) {
     val model = scenario.portfolio!!
-    var inventory by mutableStateOf(Inventory())
+    private val last = lastChoices[scenario.number]
+    var inventory by mutableStateOf(last?.first ?: Inventory())
         private set
-    var plan by mutableStateOf(emptySet<Int>())
+    var plan by mutableStateOf(last?.second ?: emptySet())
         private set
     var finished by mutableStateOf(false)
         private set
+    /** A replay: the data can be dropped again. */
+    var replay by mutableStateOf(last != null)
+        private set
+
+    private fun fits(inv: Inventory) = model.inventoryCost(inv) + planCost <= model.budget
 
     val dataCost: Int get() = model.inventoryCost(inventory)
     val planCost: Int get() = model.planCost(plan)
@@ -62,16 +72,23 @@ class PortfolioController(val scenario: Scenario) {
     /** A key for the own data center: once bought it stays bought, switching back costs nothing. */
     fun chooseKey(key: OnPremKey) {
         if (finished) return
-        if (key in inventory.bought) inventory = inventory.copy(key = key)
+        if (replay) {
+            val next = inventory.copy(key = key, bought = setOf(OnPremKey.SERVERS, key))
+            if (fits(next)) inventory = next
+        } else if (key in inventory.bought) inventory = inventory.copy(key = key)
         else if (key.costEuro <= left) inventory = inventory.copy(key = key, bought = inventory.bought + key)
     }
 
     fun recalculate() {
-        if (!finished && !inventory.recalculated && model.recalculateCost <= left) inventory = inventory.copy(recalculated = true)
+        if (finished) return
+        if (inventory.recalculated) { if (replay) inventory = inventory.copy(recalculated = false) }
+        else if (model.recalculateCost <= left) inventory = inventory.copy(recalculated = true)
     }
 
     fun ask(i: Int) {
-        if (!finished && i !in inventory.asked && model.askCost <= left) inventory = inventory.copy(asked = inventory.asked + i)
+        if (finished) return
+        if (i in inventory.asked) { if (replay) inventory = inventory.copy(asked = inventory.asked - i) }
+        else if (model.askCost <= left) inventory = inventory.copy(asked = inventory.asked + i)
     }
 
     fun canAfford(i: Int) = i in plan || model.apps[i].measure.costEuro <= left
@@ -84,12 +101,25 @@ class PortfolioController(val scenario: Scenario) {
     fun finish() {
         finished = true
         Progress.record(stars, scenario.number)
+        lastChoices[scenario.number] = inventory to plan
     }
 
+    /** Play the year again with the same choices, all of them open to change. */
+    fun restart() {
+        finished = false
+        replay = true
+    }
+
+    /** Back to the start: no data bought, no measure planned. */
     fun startOver() {
         inventory = Inventory()
         plan = emptySet()
         finished = false
+    }
+
+    private companion object {
+        /** The last choices per scenario while the app runs: a replay from the briefing starts with them too. */
+        val lastChoices = mutableMapOf<Int, Pair<Inventory, Set<Int>>>()
     }
 
     /** The same budget with other data, each planned the careful way: the measures with the most expected saving per euro. */
@@ -238,6 +268,9 @@ private fun AppCard(game: PortfolioController, i: Int) {
         if (app.hosting == Hosting.SAAS && i !in game.inventory.asked && !game.finished) {
             Txt(t("Ask the supplier for data · %@", euros(model.askCost)), Type.style(13, FontWeight.SemiBold, if (model.askCost <= game.left) Palette.accent else Palette.secondary),
                 Modifier.clip(RoundedCornerShape(6.dp)).clickable { game.ask(i) }.padding(vertical = 2.dp))
+        } else if (app.hosting == Hosting.SAAS && game.replay && !game.finished) {
+            Txt(t("Do not ask the supplier · +%@", euros(model.askCost)), Type.style(13, FontWeight.SemiBold, Palette.secondary),
+                Modifier.clip(RoundedCornerShape(6.dp)).clickable { game.ask(i) }.padding(vertical = 2.dp))
         }
         HDivider()
         val m = app.measure
@@ -295,7 +328,8 @@ private fun PortfolioPanel(game: PortfolioController, modifier: Modifier) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             QualityDots(3); Txt(t("good data"), Type.caption); Spacer(Modifier.width(10.dp)); QualityDots(1); Txt(t("rough"), Type.caption)
         }
-        Txt(t("Data you buy stays bought. It costs from the same budget as the measures."), Type.style(15, color = Palette.secondary))
+        Txt(if (game.replay) t("Another try: your last choices are set, and every one can be changed – the data too.")
+            else t("Data you buy stays bought. It costs from the same budget as the measures."), Type.style(15, color = Palette.secondary))
         Txt(t("Own data center: how the meter's energy is split"), Type.subheading)
         val notes = mapOf(
             OnPremKey.SERVERS to t("The servers each application has in the CMDB. Free."),
@@ -304,7 +338,7 @@ private fun PortfolioPanel(game: PortfolioController, modifier: Modifier) {
         )
         for (k in OnPremKey.entries) {
             val bought = k in game.inventory.bought
-            RuleOption(game.inventory.key == k, { game.chooseKey(k) }, t(k.title) + if (bought && k.costEuro > 0) " · " + t("bought") else "", notes.getValue(k))
+            RuleOption(game.inventory.key == k, { game.chooseKey(k) }, t(k.title) + if (bought && k.costEuro > 0 && !game.replay) " · " + t("bought") else "", notes.getValue(k))
         }
         Txt(t("Cloud"), Type.subheading)
         Row(
@@ -400,7 +434,7 @@ private fun PortfolioEnd(game: PortfolioController, onExit: () -> Unit, onOvervi
                 Modifier.fillMaxWidth().padding(horizontal = 30.dp, vertical = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                PrimaryButton(t("Play again")) { game.startOver() }
+                PrimaryButton(t("Play again")) { game.restart() }
                 SecondaryButton(t("Look at the cards")) { closed = true }
                 SecondaryButton(t("To the briefing"), onClick = onExit)
                 if (onOverview != null) SecondaryButton(t("To the overview"), onClick = onOverview)

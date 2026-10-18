@@ -326,6 +326,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Ein Server im Leerlauf zieht noch etwa ein Viertel seiner Maximalleistung. Schalte ab, was nicht gebraucht wird – aber ein eingeschalteter Server braucht 30 Minuten, bis er arbeiten kann.",
     "Analytics platform" to
         "Analyseplattform",
+    "Another try: your last choices are set, and every one can be changed – the data too." to
+        "Neuer Versuch: Deine letzten Entscheidungen sind gesetzt, und jede lässt sich ändern – auch die Daten.",
     "Answers in time" to
         "Antworten in der Zeit",
     "answers in time %@ (at least %@)" to
@@ -784,6 +786,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Design-Werkzeug",
     "Designing and building web pages so that they transfer and compute as little as possible: images in modern formats and the right size, no media that plays by itself, less third-party code. It counts the network and the users' devices, not only the servers – and it usually makes pages faster." to
         "Webseiten so gestalten und bauen, dass sie so wenig wie möglich übertragen und rechnen: Bilder in modernen Formaten und passender Größe, keine Medien, die von selbst abspielen, weniger Code von Dritten. Es zählt das Netz und die Geräte der Nutzer, nicht nur die Server – und macht Seiten meist schneller.",
+    "Do not ask the supplier · +%@" to
+        "Anbieter doch nicht fragen · +%@",
     "Doing more when the electricity is clean and less when it is dirty – by Time Shifting, Location Shifting and Demand Shaping. Together with energy efficiency and hardware efficiency it is one of the three principles of the Green Software Foundation; in a dark doldrums all three are needed." to
         "Mehr tun, wenn der Strom sauber ist, und weniger, wenn er schmutzig ist – durch Time Shifting, Location Shifting und Demand Shaping. Zusammen mit Energieeffizienz und Hardware-Effizienz ist es eines der drei Prinzipien der Green Software Foundation; in einer Dunkelflaute braucht es alle drei.",
     "done %@" to
