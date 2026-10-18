@@ -192,7 +192,8 @@ private fun ScenarioCard(scenario: Scenario, unlocked: Boolean, onClick: () -> U
         Txt(t(scenario.title), Type.heading)
         Txt(ScenarioTexts.of(scenario).term, Type.style(16, FontWeight.SemiBold, Palette.accent))
         val portfolio = scenario.portfolio
-        Txt(if (portfolio != null) t("%lld applications · a year", portfolio.apps.size)
+        Txt(if (scenario.abatement != null) t("%lld measures · three years", scenario.abatement!!.measures.size)
+            else if (portfolio != null) t("%lld applications · a year", portfolio.apps.size)
             else "${t(scenario.setting.region.title)} · ${t(scenario.setting.season.title)} · ${days(scenario.days)}", Type.style(17, color = Palette.secondary))
         if (!unlocked) {
             val before = Scenario.ALL.firstOrNull { it.number == scenario.unlockAfter }?.shownLabel ?: ""
@@ -280,11 +281,13 @@ fun Term(texts: ScenarioTexts, modifier: Modifier = Modifier) {
 @Composable
 private fun ScreenPreview(scenario: Scenario, modifier: Modifier) {
     val portfolio = remember(scenario) { scenario.portfolio?.let { PortfolioController(scenario) } }
-    val game = remember(scenario) { if (portfolio == null) GameController(scenario) else null }
+    val abatement = remember(scenario) { scenario.abatement?.let { AbatementController(scenario) } }
+    val game = remember(scenario) { if (portfolio == null && abatement == null) GameController(scenario) else null }
     val width = 1366.dp
     val height = 960.dp
     // Marker positions on the full-size screen (GameScreen at 1366 × 960: panel 380 wide, timeline 288 high).
-    val markers = if (portfolio != null) listOf(470.dp to 36.dp, 40.dp to 150.dp, 300.dp to 345.dp, (width - 36.dp) to 136.dp)
+    val markers = if (abatement != null) listOf(470.dp to 36.dp, 40.dp to 150.dp, 40.dp to 440.dp, (width - 36.dp) to 136.dp)
+        else if (portfolio != null) listOf(470.dp to 36.dp, 40.dp to 150.dp, 300.dp to 345.dp, (width - 36.dp) to 136.dp)
         else listOf(470.dp to 36.dp, 40.dp to 150.dp, (width - 36.dp) to 136.dp, (width - 36.dp) to (height - 258.dp))
     BoxWithConstraints(modifier) {
         val scale = maxWidth / width
@@ -296,7 +299,8 @@ private fun ScreenPreview(scenario: Scenario, modifier: Modifier) {
                 Modifier.wrapContentSize(Alignment.TopStart, unbounded = true).requiredSize(width, height)
                     .graphicsLayer { scaleX = scale; scaleY = scale; transformOrigin = TransformOrigin(0f, 0f) },
             ) {
-                if (portfolio != null) PortfolioScreen(portfolio, onExit = {}) else GameScreen(game!!, onExit = {})
+                if (abatement != null) AbatementScreen(abatement, onExit = {})
+                else if (portfolio != null) PortfolioScreen(portfolio, onExit = {}) else GameScreen(game!!, onExit = {})
             }
             // On top: takes every click, so the preview is only a picture; the mouse wheel still scrolls the page.
             Box(Modifier.matchParentSize().pointerInput(Unit) {
@@ -330,7 +334,13 @@ private fun SideCard(scenario: Scenario, texts: ScenarioTexts, onStart: () -> Un
     val perServer = scenario.fleet.firstOrNull()?.kind?.capacity ?: 0
     Column(modifier.background(Palette.panel, RoundedCornerShape(20.dp)).padding(28.dp), verticalArrangement = Arrangement.spacedBy(22.dp)) {
         val portfolio = scenario.portfolio
-        if (portfolio != null) Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        val abatement = scenario.abatement
+        if (abatement != null) Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Fact(t("%lld measures on a consultant's list", abatement.measures.size))
+            Fact(t("Footprint: about %@ t CO₂ a year", tonnes(abatement.footprintKgPerYear)))
+            Fact(t("Budget for the measures: %@ €", Format.number(abatement.budget.toDouble())))
+            Fact(t("Counted: three years, location-based"))
+        } else if (portfolio != null) Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             fun count(h: de.wannerit.loadshift.core.Hosting) = portfolio.apps.count { it.hosting == h }
             Fact(t("%lld applications in the own data center", count(de.wannerit.loadshift.core.Hosting.ON_PREM)))
             Fact(t("%lld applications in the cloud", count(de.wannerit.loadshift.core.Hosting.CLOUD)))

@@ -991,4 +991,41 @@ class LessonTest {
         assertEquals(3, stars("power, recalculated, video + sharing"))
         assertEquals(3, stars("power, recalculated, all suppliers"))
     }
+
+    @Test fun p2WhereToStart() {
+        val scenario = Scenario.WHERE_TO_START
+        val model = scenario.abatement!!
+        val lines = mutableListOf("P2 Where to start: baseline ${model.baselineKg / 1_000} t over ${model.years} years, budget ${model.budget} €",
+            "  measure                                                      consultant €/t  t/3y  real t alone")
+        for (i in model.consultantOrder) {
+            val m = model.measures[i]
+            lines += "  " + m.title.take(60).padEnd(60) + "%8d".format(model.consultantEuroPerTonne(i)) + "%7d".format(model.consultantKg(i) / 1_000) + "%9d".format(model.savedKg(setOf(i)) / 1_000)
+        }
+        fun idx(vararg titles: String) = titles.map { model.indexOf(it).also { i -> check(i >= 0) { it } } }.toSet()
+        val plans = listOf(
+            "along the consultant's curve" to model.alongTheCurve(),
+            "curve without certificates" to model.alongTheCurve() - idx("Guarantees of origin for the own data center"),
+            "best plan" to model.best(),
+            "without certificates and laptops, no cloud move" to idx("Switch the test environments off at night and at weekends",
+                "Move the analytics platform to Stockholm", "Rightsize the analytics cluster from 120 to 60 VMs", "Smaller recommendation model, trained once a week",
+                "Camera off by default in large meetings", "Retention rule for the old videos", "Build agents only on demand",
+                "Shorter retention, cold storage class"),
+        )
+        val results = plans.associate { (name, plan) ->
+            val r = model.result(plan)
+            lines += "  " + name.padEnd(58) + "%8d €".format(r.costEuro) + "%7d t".format(r.savedKg / 1_000) + "%7.1f %%".format(r.reductionPermille / 10.0) + "  " + "★".repeat(model.stars(r, scenario.goals))
+            lines += "    " + plan.sorted().joinToString(", ") { model.measures[it].title.take(28) }
+            name to r
+        }
+        report(202, lines)
+        fun stars(name: String) = model.stars(results.getValue(name), scenario.goals)
+        // Along the curve: certificates first, the test environments and the analytics cluster twice – one star.
+        assertEquals(1, stars("along the consultant's curve"))
+        assertEquals(3, stars("best plan"))
+        // Leaving out the second measure for the test environments costs the third star: overlapping measures still add a little.
+        assertEquals(2, stars("without certificates and laptops, no cloud move"))
+        // The laptops save less than making them emits within three years.
+        assertTrue(model.savedKg(idx("Replace the 600 oldest desktop PCs by laptops")) < 0)
+        assertEquals(0L, model.savedKg(idx("Guarantees of origin for the own data center")))
+    }
 }

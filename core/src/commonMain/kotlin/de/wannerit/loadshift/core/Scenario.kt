@@ -151,6 +151,8 @@ data class Scenario(
     val contract: ContractModel? = null,
     /** Portfolio track: the company's applications, a year at a time. */
     val portfolio: PortfolioModel? = null,
+    /** P2: a list of measures as a marginal abatement cost curve. */
+    val abatement: AbatementModel? = null,
 ) {
     /** Expected interactive work at a tick: the web load or the VMs' profiles (what an operator can plan with). */
     fun expectedDemand(tick: Int): Int = interactive.expected(tick) + vms.sumOf { it.expectedMilli(tick) } / 1_000
@@ -713,6 +715,55 @@ data class Scenario(
             ),
         )
 
-        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, OLD_IRON, TRAINING_RUN, ECO_MODE, TWO_SITES, GREEN_ON_PAPER, DARK_DOLDRUMS, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS, DATA_DIET, CHATTY_SERVICES, RIGHT_SIZED_AI, GREEN_PIPELINE, INVENTORY)
+        /**
+         * P2, "Where to start": sixteen measures on a consultant's abatement cost curve, a budget for three years.
+         */
+        val WHERE_TO_START = Scenario(
+            number = 202, label = "P2", track = Track.PORTFOLIO, unlockAfter = 201,
+            title = "Where to start", setting = GridSetting(GridRegion.GERMANY, Season.YEAR), days = 1,
+            seed = 22, fleet = emptyList(), interactive = InteractiveLoad(peak = 0), controls = emptySet(),
+            goals = StarGoals(240, SpecialGoal.Reduction(260)),
+            abatement = AbatementModel(
+                budget = 200_000, footprintKgPerYear = 955_000,
+                targets = mapOf("test" to 88_000L, "analytics" to 120_000L, "model" to 90_000L, "video" to 45_000L, "sharing" to 35_000L,
+                    "pcs" to 60_000L, "erp" to 104_000L, "warehouse" to 120_000L, "build" to 30_000L, "backup" to 15_000L, "crm" to 15_000L, "mail" to 24_000L),
+                measures = listOf(
+                    AbatementMeasure("Switch the test environments off at night and at weekends", "Test environments", "8 servers, used on weekdays 8–18",
+                        15_000, 53_000, 1, "test", 60),
+                    AbatementMeasure("Move the test environments to the cloud, on demand", "Test environments", "The same 8 servers; the migration takes four quarters",
+                        40_000, 70_000, 4, "test", 80),
+                    AbatementMeasure("Move the analytics platform to Stockholm", "Analytics platform", "A region with clean power; the move takes two quarters",
+                        30_000, 96_000, 2, "analytics", 80),
+                    AbatementMeasure("Rightsize the analytics cluster from 120 to 60 VMs", "Analytics platform", "The same cluster",
+                        20_000, 60_000, 1, "analytics", 50),
+                    AbatementMeasure("Smaller recommendation model, trained once a week", "Recommendation model", "Two quarters of work for the data science team",
+                        40_000, 45_000, 2, "model", 50),
+                    AbatementMeasure("Camera off by default in large meetings", "Video conferencing", "A setting of the supplier",
+                        10_000, 18_000, 1, "video", 40),
+                    AbatementMeasure("Retention rule for the old videos", "Cloud file sharing", "Marketing has stored its videos there for years",
+                        15_000, 21_000, 1, "sharing", 60),
+                    AbatementMeasure("Replace the 600 oldest desktop PCs by laptops", "Workplace", "A laptop uses about 65 % less electricity; making one emits about 300 kg CO₂e",
+                        45_000, 40_000, 2, "pcs", 65, embodiedKg = 180_000),
+                    AbatementMeasure("Guarantees of origin for the own data center", "Own data center", "1,000 MWh a year from hydro plants that have run for decades; the market-based report counts them as zero",
+                        40_000, 400_000, 0),
+                    AbatementMeasure("Solar panels on the data center's roof", "Own data center", "100 kWp, about 95 MWh a year used on site; building takes four quarters",
+                        120_000, 38_000, 4, onSiteKgPerYear = 38_000),
+                    AbatementMeasure("ERP on new, more efficient servers", "ERP", "Making the 8 new servers emits about 10 t CO₂e; three quarters",
+                        120_000, 36_000, 3, "erp", 35, embodiedKg = 10_000),
+                    AbatementMeasure("Archive old data of the data warehouse", "Data warehouse", "Two quarters",
+                        60_000, 36_000, 2, "warehouse", 30),
+                    AbatementMeasure("Build agents only on demand", "Build pipeline", "A setting of the pipeline",
+                        15_000, 15_000, 1, "build", 50),
+                    AbatementMeasure("Shorter retention, cold storage class", "Backup storage", "A setting of the cloud provider",
+                        10_000, 7_500, 1, "backup", 50),
+                    AbatementMeasure("Clean up attachments and old records", "CRM", "One quarter",
+                        30_000, 4_500, 1, "crm", 30),
+                    AbatementMeasure("Archive old mailboxes", "Mail", "One quarter",
+                        20_000, 4_800, 1, "mail", 20),
+                ),
+            ),
+        )
+
+        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, OLD_IRON, TRAINING_RUN, ECO_MODE, TWO_SITES, GREEN_ON_PAPER, DARK_DOLDRUMS, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS, DATA_DIET, CHATTY_SERVICES, RIGHT_SIZED_AI, GREEN_PIPELINE, INVENTORY, WHERE_TO_START)
     }
 }

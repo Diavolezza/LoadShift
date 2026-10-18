@@ -23,6 +23,21 @@ class ScenarioTexts(
 ) {
     companion object {
         fun of(scenario: Scenario): ScenarioTexts = when (scenario.number) {
+            202 -> ScenarioTexts(
+                situation = "The inventory is done: about 955 t CO₂ a year, the employees' PCs included. A consultancy has listed sixteen measures and drawn them as a curve: each bar a measure, its width the CO₂ it saves in three years, its height what a tonne avoided costs. The board has 200,000 € and wants to know where to start.",
+                idea = "Start where a tonne is cheapest – that is what the curve is for. But the curve was made one measure at a time, from each measure's saving in a year once it works. Check what that leaves out before you follow it.",
+                screen = listOf(
+                    "At the top: what the consultant's list promises for your plan and the budget left; below it your goals.",
+                    "The consultant's curve: each bar a measure – its width the CO₂ it saves in three years, its height the cost of a tonne. Click a bar to put the measure into the plan.",
+                    "The sixteen measures with their facts, numbered like the bars. A click on a card puts it into the plan too.",
+                    "Your plan: the budget, what it costs and the button that carries it out. Counted are three years, quarter by quarter, location-based.",
+                ),
+                comparedWith = "compared with three years without any measure, location-based.",
+                rules = "Within the budget and less CO₂ over three years",
+                remark = "The consultant's curve put the certificates first: 1,200 t for 40,000 € – in the market-based report. In the grid they changed nothing. Two measures on the same servers do not add up: switching the test environments off at night and moving them to the cloud on demand work on the same 88 t a year, and the second saves only what the first leaves – and only after four quarters of migration. The same holds for moving the analytics platform and rightsizing it. Replacing 600 desktop PCs by laptops saves electricity every year, but making the laptops emits more than that saves in three years. A curve of single measures is a good start: it shows where a tonne is cheap. It needs a second look for overlaps, lead times and the CO₂ of new hardware.",
+                term = "Marginal Abatement Cost Curve (MACC)",
+                termText = "Measures sorted by what it costs to avoid a tonne of CO₂: each bar's width is the amount a measure avoids, its height the cost per tonne; the cheapest are on the left, some even save money. McKinsey made such curves known from 2007 on. They compare measures one at a time and assume that they do not affect each other.",
+            )
             201 -> ScenarioTexts(
                 situation = "The CIO wants to know where the IT's CO₂ comes from – and to cut it by a quarter next year. Eighteen applications: six in the own data center in Stuttgart, six with a cloud provider in Frankfurt, six as SaaS. Free of charge are the data center's meter and the servers in the CMDB, the cloud provider's carbon tool and the invoices. Better data costs money – from the same budget of 150,000 € that must also pay for the measures.",
                 idea = "Before you can cut, you have to know where. Each hosting path has its own source of data, and each source counts in its own way. Decide where better data is worth its money – then put the measures where the footprint is.",

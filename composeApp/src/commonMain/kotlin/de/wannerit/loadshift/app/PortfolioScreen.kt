@@ -137,8 +137,8 @@ class PortfolioController(val scenario: Scenario) {
     }
 }
 
-private fun tonnes(kg: Long): String = Format.number(kg / 1_000.0, if (kg in 1..9_999) 1 else 0)
-private fun euros(euro: Int): String = Format.number(euro.toDouble()) + " €"
+internal fun tonnes(kg: Long): String = Format.number(kg / 1_000.0, if (kg in 1..9_999) 1 else 0)
+internal fun euros(euro: Int): String = Format.number(euro.toDouble()) + " €"
 
 fun hostingTitle(h: Hosting): String = when (h) {
     Hosting.ON_PREM -> t("Own data center")

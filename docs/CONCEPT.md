@@ -386,6 +386,7 @@ are. Better data cost money from the same budget as the measures.
 | # | Title | Setting | Length | New controls | Idea |
 |---|---|---|---|---|---|
 | P1 | Inventory | 18 applications: 6 in the own data center (Stuttgart, 1,000 MWh a year, 400 g/kWh), 6 with a cloud provider (Frankfurt), 6 as SaaS; budget 150,000 € | a year | how the own data center's metered energy is split (by servers in the CMDB, free; by CPU time from the monitoring, 5,000 €; measured power per server, 20,000 €), cloud recalculated from the usage data location-based (8,000 €) instead of the provider's market-based tool, data asked from each SaaS supplier (2,000 € each, one supplier sends none), one measure per application | Each hosting path has its own source of data, and each counts in its own way. The provider's tool counts its certificates: the cloud looks almost clean, and the largest single emitter (an analytics cluster) looks like nothing. Servers as the key make many small servers look big; CPU time hides idle servers that are on around the clock (test environments). Spend-based numbers make the expensive CRM look large and the cheap video conferencing and file sharing small. The plan follows the data; the stars count what really changes. Term: Carbon Accounting. |
+| P2 | Where to start | the same company, 955 t a year with the employees' PCs; budget 200,000 € | three years in quarters | sixteen measures from a consultant's list, drawn as a marginal abatement cost curve (€ per tonne over three years from each measure's gross saving a year); a click on a bar or a card puts a measure into the plan | The curve ranks measures one at a time. What it leaves out decides the result: certificates come first on the curve (1,200 t for 40,000 €) and change nothing location-based; two measures on the same servers (test environments off at night and in the cloud on demand; the analytics platform moved and rightsized) do not add up; a project of four quarters saves only after it; 600 laptops instead of desktop PCs emit more in their making than they save in three years. Term: Marginal Abatement Cost Curve (MACC) [S41]. |
 
 **As built (P1).** The first star needs the inventory within ±15 % of the real footprint (so the cloud must be
 recalculated) and the budget kept; ★★ −20 %, ★★★ −25 % next year. With the free data a careful plan (the
@@ -396,8 +397,12 @@ suppliers' data change one or two decisions. The spend-based factor (120 g CO₂
 remaining share (3 %) are game values; spend-based factors per industry come from environmentally extended
 input-output tables [S39], the dual reporting of Scope 2 from the GHG Protocol [S40].
 
-**Further portfolio scenarios (planned).** P2 *Where to start*: a list of measures with cost and effect, the most
-CO₂ per euro first (marginal abatement cost curve), and the measure everybody wants that saves little. P3 *Tidy up
+**As built (P2).** The saving is counted per quarter and emission source: what is left after all measures that work by
+then, minus the embodied CO₂ of new hardware, plus energy made on site. ★ within the budget and less CO₂; ★★ −24 %,
+★★★ −26 % over three years. Along the consultant's curve −22.8 % (★), with or without the certificates; the best plan
+−26.8 % (★★★) – it keeps both measures for the test environments, since the second still adds a little.
+
+**Further portfolio scenarios (planned).** P3 *Tidy up
 with TIME*: three years in quarters; the applications in the four TIME quadrants (tolerate, invest, migrate,
 eliminate) with measures for each; a replaced application saves only once it is switched off. P4 *Out of the cloud?*
 – an application moves into the own data center for data sovereignty; utilization, PUE and the grid decide. P5
@@ -431,6 +436,7 @@ the app (O = operations, B in German).
 | E6 Right-sized AI | LG 8-2, LG 8-3, LG 8-4 |
 | E7 Green pipeline | LG 9-1 to LG 9-4 |
 | P1 Inventory | LG 2-2 Scope 2, LG 4-3 providers' carbon tools, LG 4-4 measuring in enterprise environments, LG 7-3 |
+| P2 Where to start | LG 2-3 reduction targets and measures in the company, LG 1-4 hardware efficiency, LG 2-2 market-based against location-based |
 
 Each scenario has:
 
@@ -1156,3 +1162,4 @@ the numbers stay so that saved stars keep their scenario):
 | S38 | Google: *24/7 carbon-free energy* (hourly CFE score of its data centers, 66 % in the latest report). https://blog.google/around-the-globe/google-europe/how-carbon-free-energy-around-the-clock-can-work/ |
 | S39 | US EPA: *Supply Chain Greenhouse Gas Emission Factors v1.3 by NAICS-6* (spend-based factors from an environmentally extended input-output model). https://catalog.data.gov/dataset/supply-chain-greenhouse-gas-emission-factors-v1-2-by-naics-6 |
 | S40 | GHG Protocol: *Scope 2 Guidance* (2015): Scope 2 reported both location-based and market-based. https://ghgprotocol.org/scope-2-guidance |
+| S41 | McKinsey & Company: *Pathways to a Low-Carbon Economy – Version 2 of the Global Greenhouse Gas Abatement Cost Curve*, 2009 (the first version 2007). https://www.mckinsey.com/capabilities/sustainability/our-insights/pathways-to-a-low-carbon-economy |

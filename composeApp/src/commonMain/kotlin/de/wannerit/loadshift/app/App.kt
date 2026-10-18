@@ -46,6 +46,7 @@ private sealed interface Screen {
     data class Briefing(val scenario: Scenario) : Screen
     data class Game(val controller: GameController) : Screen
     data class Portfolio(val controller: PortfolioController) : Screen
+    data class Abatement(val controller: AbatementController) : Screen
 }
 
 @Composable
@@ -57,8 +58,10 @@ fun App(options: LaunchOptions = LaunchOptions()) {
     when (val s = screen) {
         Screen.List -> ScenarioListScreen { screen = Screen.Briefing(it) }
         is Screen.Briefing -> BriefingScreen(s.scenario, onStart = {
-            screen = if (s.scenario.portfolio != null) Screen.Portfolio(PortfolioController(s.scenario)) else Screen.Game(GameController(s.scenario))
+            screen = if (s.scenario.portfolio != null) Screen.Portfolio(PortfolioController(s.scenario))
+                else if (s.scenario.abatement != null) Screen.Abatement(AbatementController(s.scenario)) else Screen.Game(GameController(s.scenario))
         }, onBack = { screen = Screen.List })
+        is Screen.Abatement -> AbatementScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List })
         is Screen.Portfolio -> PortfolioScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List })
         is Screen.Game -> GameScreen(s.controller, onExit = { s.controller.saveDraft(); screen = Screen.Briefing(s.controller.scenario) },
             onNext = { s.controller.saveDraft(); screen = Screen.Briefing(it) },
@@ -70,6 +73,15 @@ private fun initialScreen(options: LaunchOptions): Screen {
     val scenario = Scenario.ALL.firstOrNull { it.number == options.scenario } ?: if (options.play) Scenario.NIGHT_SHIFT else null
     scenario ?: return Screen.List
     if (!options.play) return Screen.Briefing(scenario)
+    if (scenario.abatement != null) {
+        val a = AbatementController(scenario)
+        if (options.careful) {
+            // Like a careful manager: the best plan within the budget.
+            for (i in a.model.best()) a.toggle(i)
+            if (options.ticks > 0) a.finish()
+        }
+        return Screen.Abatement(a)
+    }
     if (scenario.portfolio != null) {
         val p = PortfolioController(scenario)
         if (options.careful) {
