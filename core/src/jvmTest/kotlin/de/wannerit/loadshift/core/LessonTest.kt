@@ -869,4 +869,47 @@ class LessonTest {
         assertEquals(0, stars("D c t N 30 O 1"))
         assertEquals(0, stars("D c t X 1 O 1"))
     }
+
+    @Test fun e7ChattyServices() {
+        val scenario = Scenario.CHATTY_SERVICES
+        val reference = Simulation.reference(scenario)
+        // Code: cut (M, L modulith), protocol (J, G), master data (S, E), GPS TTL s, map TTL s, serverless (f/-).
+        fun config(code: String): ServiceConfig {
+            val c = code.split(" ")
+            return ServiceConfig(
+                cut = if (c[0] == "M") ServiceCut.MICROSERVICES else ServiceCut.MODULITH,
+                protocol = if (c[1] == "J") Protocol.REST_JSON else Protocol.GRPC,
+                masterData = if (c[2] == "S") MasterData.SYNC else MasterData.EVENTS,
+                gpsTtl = c[3].toInt(), mapTtl = c[4].toInt(), serverless = c[5] == "f",
+            )
+        }
+        fun run(code: String) = Simulation.replay(scenario, scenario.initialPolicy.copy(services = config(code)))
+        val codes = listOf(
+            "M J S 10 60 -", "M J S 60 300 -", "M J S 300 3600 -", "M G S 60 300 -", "M J E 60 300 -", "M G E 60 300 -",
+            "M G E 60 300 f", "M J S 60 300 f", "L J S 60 300 -", "L G S 60 300 -", "L J S 0 0 -", "M J S 0 300 -",
+            "M G E 10 60 f", "L J S 10 60 -",
+        )
+        val runs = codes.map { it to run(it) }
+        val lines = mutableListOf(title(scenario), HEADER + "  latency ms  stale h  servers")
+        for ((name, sim) in listOf("reference: M J S 0 0 -" to reference) + runs) {
+            val t = sim.totals
+            lines += line(name, t, reference.totals) + "  " + t.meanLatency + "  " + t.rulesBroken + "  " +
+                "%.1f".format(t.meanServersOn / 1_000.0) + "  " + "★".repeat(scenario.stars(t, reference.totals))
+        }
+        report(107, lines)
+        val byName = runs.toMap()
+        fun stars(name: String) = scenario.stars(byName.getValue(name).totals, reference.totals)
+        // The cache for the external calls makes the tracking fast enough: one star.
+        assertEquals(1, stars("M J S 60 300 -"))
+        // Events instead of synchronous calls: two; with gRPC too: two; plus serverless functions: three.
+        assertEquals(2, stars("M J E 60 300 -"))
+        assertEquals(2, stars("M G E 60 300 -"))
+        assertEquals(3, stars("M G E 60 300 f"))
+        // The modular monolith: three at once.
+        assertEquals(3, stars("L J S 60 300 -"))
+        // The traps: positions and traffic too old; serverless functions called on every request; no cache, too slow.
+        assertEquals(0, stars("M J S 300 3600 -"))
+        assertEquals(0, stars("M J S 60 300 f"))
+        assertEquals(0, stars("L J S 0 0 -"))
+    }
 }

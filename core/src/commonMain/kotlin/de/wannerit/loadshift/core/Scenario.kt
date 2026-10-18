@@ -38,6 +38,9 @@ enum class Control {
     /** E6: build agents, caches, tests, triggers and test environments. */
     PIPELINE,
 
+    /** E7: cut, protocol, master data, caches for external calls, serverless. */
+    SERVICES,
+
     /** Scenario 6: the inlet temperature setpoint of the cooling. */
     COOLING,
 
@@ -139,6 +142,8 @@ data class Scenario(
     val web: WebModel? = null,
     /** E6: a team's CI/CD pipeline and test environments. */
     val pipeline: PipelineModel? = null,
+    /** E7: the logistics system's services. */
+    val services: ServiceModel? = null,
 ) {
     /** Expected interactive work at a tick: the web load or the VMs' profiles (what an operator can plan with). */
     fun expectedDemand(tick: Int): Int = interactive.expected(tick) + vms.sumOf { it.expectedMilli(tick) } / 1_000
@@ -160,6 +165,7 @@ data class Scenario(
             totals.rulesBroken == 0 && totals.deadlinesMissed == 0 && totals.emissions < reference.emissions &&
             (staleLimit == null || totals.stalePerTenThousand <= staleLimit) &&
             (web == null || totals.meanLcp <= web.lcpLimit) &&
+            (services == null || totals.meanLatency <= services.latencyLimit) &&
             (pipeline == null || totals.meanFeedback <= pipeline.feedbackLimit * 10) &&
             (inference == null || (totals.meanAnswerQuality >= inference.qualityTarget && totals.answersOnTime >= inference.onTimeTarget))
         val reduction = rules && totals.emissions * 1_000 <= reference.emissions * (1_000 - goals.reduction)
@@ -603,6 +609,23 @@ data class Scenario(
             pipeline = PipelineModel(),
         )
 
-        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, OLD_IRON, TRAINING_RUN, ECO_MODE, TWO_SITES, DARK_DOLDRUMS, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS, RIGHT_SIZED_AI, DATA_DIET, GREEN_PIPELINE)
+        /**
+         * E7, "Chatty services": the logistics system. Four microservices talk REST with JSON, the routes service asks the
+         * truck and customer services and two external providers on every tracking request. The tracking is too slow;
+         * the provider's positions may be one minute old, the traffic information five.
+         */
+        val CHATTY_SERVICES = Scenario(
+            number = 107, label = "E7", track = Track.ENGINEERING, unlockAfter = 106,
+            title = "Chatty services", setting = GridSetting(GridRegion.GERMANY, Season.AUTUMN), days = 2,
+            seed = 17, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 30)),
+            interactive = InteractiveLoad(peak = 0),
+            controls = setOf(Control.SERVICES),
+            initialPolicy = Policy(CapacityMode.Manual(0)),
+            referencePolicy = Policy(CapacityMode.Manual(0)),
+            goals = StarGoals(400, SpecialGoal.Reduction(485)),
+            services = ServiceModel(),
+        )
+
+        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, OLD_IRON, TRAINING_RUN, ECO_MODE, TWO_SITES, DARK_DOLDRUMS, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS, RIGHT_SIZED_AI, DATA_DIET, GREEN_PIPELINE, CHATTY_SERVICES)
     }
 }

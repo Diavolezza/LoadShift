@@ -49,6 +49,7 @@ operator fun Totals.plus(o: Totals): Totals = Totals(
     visits = visits + o.visits, lcpSum = lcpSum + o.lcpSum, kilobytes = kilobytes + o.kilobytes,
     networkEnergy = networkEnergy + o.networkEnergy, deviceEnergy = deviceEnergy + o.deviceEnergy,
     networkOperational = networkOperational + o.networkOperational, deviceOperational = deviceOperational + o.deviceOperational,
+    trackingRequests = trackingRequests + o.trackingRequests, latencySum = latencySum + o.latencySum,
     commits = commits + o.commits, feedbackSum = feedbackSum + o.feedbackSum,
     answers = answers + o.answers, answerQualitySum = answerQualitySum + o.answerQualitySum, answersInTime = answersInTime + o.answersInTime,
     itEnergy = itEnergy + o.itEnergy, facilityEnergy = facilityEnergy + o.facilityEnergy,

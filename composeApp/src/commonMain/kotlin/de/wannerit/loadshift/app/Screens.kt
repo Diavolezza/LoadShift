@@ -332,7 +332,12 @@ private fun SideCard(scenario: Scenario, texts: ScenarioTexts, onStart: () -> Un
             Fact(if (scenario.days == 1) t("1 day, from 00:00") else t("%lld days, from 00:00", scenario.days))
             val inference = scenario.inference
             val pipeline = scenario.pipeline
-            if (pipeline != null) {
+            val services = scenario.services
+            if (services != null) {
+                Fact(t("A logistics system: four microservices, two external providers"))
+                Fact(t("Up to %lld tracking requests a second", services.peakRate))
+                Fact(t("%lld servers", scenario.serverCount))
+            } else if (pipeline != null) {
                 Fact(t("%lld developers, %lld build agents", pipeline.developers, pipeline.agents))
                 Fact(t("%lld test environments with 3 replicas each", pipeline.environments))
                 Fact(t("Release on Friday at 14:00"))

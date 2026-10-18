@@ -162,7 +162,9 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
         }
 
         // Lower lane
-        if (scenario.pipeline != null) {
+        if (scenario.services != null) {
+            drawServices(lowTop, lowBottom)
+        } else if (scenario.pipeline != null) {
             drawPipeline(lowTop, lowBottom)
         } else if (scenario.web != null) {
             drawWeb(lowTop, lowBottom)
@@ -424,6 +426,31 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
         }
         axis(top, bottom, scaleTop.toInt().toString())
         text(t("Outside temperature, °C – dashed: forecast; black: setpoint; green: the outside air cools"), Offset(left, top - 12f * density), Type.style(12, FontWeight.SemiBold))
+    }
+
+    /** E7: CPU in cores, stacked: the services' own work and the rest (communication, external calls, idle instances). */
+    private fun DrawScope.drawServices(top: Float, bottom: Float) {
+        val records = simulation.history.mapNotNull { r -> r.services?.let { r.tick to it } }
+        val maxCores = maxOf(1, (records.maxOfOrNull { it.second.cpuMs } ?: 1_000) / 1_000)
+        val scaleTop = niceCeiling(maxCores).toFloat()
+        fun yC(ms: Int) = bottom - (bottom - top) * (ms / 1_000f / scaleTop)
+        if (records.isNotEmpty()) {
+            for (layer in 1 downTo 0) {
+                val area = Path().apply {
+                    moveTo(x(records[0].first), bottom)
+                    for ((tick, r) in records) {
+                        val y = yC(if (layer == 0) r.cpuMs - r.overheadMs else r.cpuMs)
+                        lineTo(x(tick), y); lineTo(x(tick + 1), y)
+                    }
+                    lineTo(x(records.last().first + 1), bottom)
+                    close()
+                }
+                drawPath(area, Color.White)
+                drawPath(area, (if (layer == 0) Palette.interactiveLoad else Palette.amber).copy(alpha = 0.65f))
+            }
+        }
+        axis(top, bottom, t("%lld cores", scaleTop.toInt()))
+        text(t("CPU – blue: the services' own work, amber: communication, external calls and idle instances"), Offset(left, top - 12f * density), Type.style(12, FontWeight.SemiBold))
     }
 
     /** E6: build agents and test environment servers on, stacked; a violet mark for the nightly UI tests. */

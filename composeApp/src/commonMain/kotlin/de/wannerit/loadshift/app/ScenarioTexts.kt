@@ -113,6 +113,21 @@ class ScenarioTexts(
                 term = "PUE (Power Usage Effectiveness)",
                 termText = "Facility energy divided by IT energy: 1.0 would mean that all power goes to the servers. The worldwide average is about 1.5, hyperscalers reach 1.1. A warmer setpoint and cooling with outside air (free cooling) lower it.",
             )
+            107 -> ScenarioTexts(
+                situation = "A logistics company's system: customers track their deliveries, dispatchers plan the trucks' routes. It was split into four microservices – tracking, routes, customers and trucks – that call each other with REST and JSON. For every tracking request the routes service asks the customer and the truck service, the GPS provider for the truck's position and the map service for the traffic. In the evening up to 15,000 customers a second look where their parcel is – and the tracking takes a third of a second.",
+                idea = "In a distributed system, communication is work: every call is serialized, sent, received and deserialized, and every instance runs its runtime even without a request. Fewer and leaner calls, data that is already there and a cut that fits save energy – as long as the customers still see where their truck really is.",
+                screen = listOf(
+                    "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals: the tracking within 250 ms, data up to date and less CO₂.",
+                    "The hall: the servers the services run on; the blue bar shows how busy they are.",
+                    "The architecture: a diagram of the services and their calls as your settings would build them, the cut, the communication between the services and how long the providers' answers are reused. Below it the work and the response time at the evening peak.",
+                    "Carbon intensity of the grid; below it the CPU: the services' own work and what communication, external calls and idle instances add.",
+                ),
+                comparedWith = "compared with the reference operator, who keeps the four microservices with REST, synchronous calls and no cache.",
+                rules = "Tracking within 250 ms, positions at most 1 min and traffic at most 5 min old, and less CO₂ than the reference",
+                remark = "The cut changed the most: in a modular monolith the calls between the modules are method calls, and two instances run instead of eight. In a measurement with Kepler from a training for the iSAQB module GREEN, a modular monolith needed 39 % of the energy of the same application as microservices; benchmarks show the microservices' strength in scaling instead [S34]. Microservices can come close: events with a local copy of the master data save two calls per request, gRPC with Protobuf halves the bytes of JSON [S33], and serverless functions save idle instances – but only for services that are rarely called: called on every request, they cost more than they save. The cache for the providers made the tracking fast enough in the first place; reused for too long, it shows the customers a truck that has long driven on.",
+                term = "Green Software Architecture",
+                termText = "Choosing the architecture style, the cut and the communication with their energy in mind: fewer remote calls, compact formats, asynchronous events where data may be a little late, caches for external calls, scale to zero for rarely used parts.",
+            )
             106 -> ScenarioTexts(
                 situation = "A team of 40 developers works on the web shop. Every commit starts the full pipeline – build, unit and system tests and the slow UI tests – on 16 build agents that run day and night. Six test environments – integration, acceptance and four for previews – run with three replicas each, at night and at the weekend too. On Friday at 14:00 the week's release goes out.",
                 idea = "A pipeline is a data center of its own, and most of it waits: agents without a job, environments nobody uses at night. Start only what is needed, run only the tests a change can break, run the slow tests when the grid is clean – and keep the team's feedback fast and the release tested.",

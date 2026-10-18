@@ -64,6 +64,8 @@ fun ControlPanel(game: GameController, modifier: Modifier = Modifier) {
             NowBox(game)
         } else if (Control.PLACEMENT in game.scenario.controls) {
             PlacementPanel(game)
+        } else if (Control.SERVICES in game.scenario.controls) {
+            ServicesPanel(game)
         } else if (Control.PIPELINE in game.scenario.controls) {
             PipelinePanel(game)
         } else if (Control.PAGES in game.scenario.controls) {

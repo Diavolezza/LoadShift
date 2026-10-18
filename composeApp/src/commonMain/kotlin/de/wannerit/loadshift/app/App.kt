@@ -67,7 +67,12 @@ private fun initialScreen(options: LaunchOptions): Screen {
     scenario ?: return Screen.List
     if (!options.play) return Screen.Briefing(scenario)
     val game = GameController(scenario)
-    if (options.careful && game.hasPipeline) {
+    if (options.careful && game.hasServices) {
+        // Like a careful player: cache 1 min / 5 min, gRPC, events, serverless functions.
+        game.setPolicy(scenario.initialPolicy.copy(services = de.wannerit.loadshift.core.ServiceConfig(de.wannerit.loadshift.core.ServiceCut.MICROSERVICES,
+            de.wannerit.loadshift.core.Protocol.GRPC, de.wannerit.loadshift.core.MasterData.EVENTS, 60, 300, true)))
+        game.advance(options.ticks)
+    } else if (options.careful && game.hasPipeline) {
         // Like a careful player: agents on demand with a remote cache, test impact analysis, UI tests at night,
         // environments on weekdays 7–19 with one replica.
         game.setPolicy(scenario.initialPolicy.copy(pipeline = de.wannerit.loadshift.core.PipelineConfig(de.wannerit.loadshift.core.Runners.ON_DEMAND, true, true,

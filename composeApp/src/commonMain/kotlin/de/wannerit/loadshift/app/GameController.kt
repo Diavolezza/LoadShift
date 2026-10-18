@@ -5,6 +5,10 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import de.wannerit.loadshift.core.BatchMode
+import de.wannerit.loadshift.core.MasterData
+import de.wannerit.loadshift.core.Protocol
+import de.wannerit.loadshift.core.ServiceCut
+import de.wannerit.loadshift.core.ServiceConfig
 import de.wannerit.loadshift.core.Trigger
 import de.wannerit.loadshift.core.Runners
 import de.wannerit.loadshift.core.Environments
@@ -400,6 +404,11 @@ class GameController(val scenario: Scenario) {
         streamMax = List(n) { if (it == device) quality else streamMax.getOrElse(it) { Quality.UHD } }
     }
 
+    // Services (E7)
+
+    val hasServices: Boolean get() = scenario.services != null
+    var servicesDraft by mutableStateOf(ServiceConfig())
+
     // Pipeline (E6)
 
     val hasPipeline: Boolean get() = scenario.pipeline != null
@@ -478,6 +487,7 @@ class GameController(val scenario: Scenario) {
             if (Control.INFERENCE in scenario.controls) policy = policy.copy(inference = draftInference)
             if (Control.PAGES in scenario.controls) policy = policy.copy(pages = pageDraft)
             if (Control.PIPELINE in scenario.controls) policy = policy.copy(pipeline = pipelineDraft)
+            if (Control.SERVICES in scenario.controls) policy = policy.copy(services = servicesDraft)
             return policy
         }
 
@@ -512,6 +522,7 @@ class GameController(val scenario: Scenario) {
         }
         pageDraft = policy.pages
         pipelineDraft = policy.pipeline
+        servicesDraft = policy.services
         scenario.inference?.let { m ->
             aiAnswerers = m.kinds.indices.map { policy.inference.answerers.getOrElse(it) { Answerer.LARGE } }
             aiWindow = policy.inference.windowMs
@@ -548,6 +559,7 @@ class GameController(val scenario: Scenario) {
         val inference: InferenceConfig,
         val pages: PageConfig,
         val pipeline: PipelineConfig,
+        val services: ServiceConfig,
     )
 
     private companion object {
@@ -557,7 +569,7 @@ class GameController(val scenario: Scenario) {
     /** Keeps the panel's settings for the next run (a new run starts with the scenario's rules, the panel keeps yours). */
     fun saveDraft() {
         drafts[scenario.number] = Draft(draftKind, draftHour, draftThreshold, draftSafety, capKind, capFixed, capTarget,
-            capMinimumOn, capMinimum, capFrom, capTo, startPolicy ?: current.policy.takeIf { current.history.isEmpty() }, draftCache, draftSetpoint, draftTraining, draftStreaming, draftInference, pageDraft, pipelineDraft)
+            capMinimumOn, capMinimum, capFrom, capTo, startPolicy ?: current.policy.takeIf { current.history.isEmpty() }, draftCache, draftSetpoint, draftTraining, draftStreaming, draftInference, pageDraft, pipelineDraft, servicesDraft)
     }
 
     private fun restoreDraft() {
@@ -576,6 +588,7 @@ class GameController(val scenario: Scenario) {
         aiWindow = d.inference.windowMs
         pageDraft = d.pages
         pipelineDraft = d.pipeline
+        servicesDraft = d.services
         // A new run starts with the rules the last run started with (the panel shows the last run's final ones).
         if (d.startPolicy != null && current.history.isEmpty() && !hasSprints) {
             current.policy = d.startPolicy
@@ -706,6 +719,22 @@ class GameController(val scenario: Scenario) {
                 t("The same, eco mode HD above 650 g/kWh") to run(byDevice.copy(eco = true, ecoAbove = 650)),
                 t("The same, eco mode HD above 550 g/kWh") to run(byDevice.copy(eco = true, ecoAbove = 550)),
                 t("The same, eco mode SD above 650 g/kWh") to run(byDevice.copy(eco = true, ecoAbove = 650, ecoQuality = Quality.SD)),
+            )
+        }
+        scenario.services?.let {
+            val base = ServiceConfig()
+            fun run(c: ServiceConfig) = Simulation.replay(scenario, scenario.initialPolicy.copy(services = c)).totals
+            val cached = base.copy(gpsTtl = 60, mapTtl = 300)
+            return listOf(
+                t("Microservices, REST, synchronous calls, no cache (reference)") to referenceTotals,
+                t("Cache: positions 1 min, traffic 5 min") to run(cached),
+                t("The same, positions 5 min, traffic 1 h") to run(base.copy(gpsTtl = 300, mapTtl = 3_600)),
+                t("Cache, gRPC with Protobuf") to run(cached.copy(protocol = Protocol.GRPC)),
+                t("Cache, events for the master data") to run(cached.copy(masterData = MasterData.EVENTS)),
+                t("Cache, gRPC, events, serverless functions") to run(cached.copy(protocol = Protocol.GRPC, masterData = MasterData.EVENTS, serverless = true)),
+                t("Cache, serverless functions, but synchronous calls") to run(cached.copy(serverless = true)),
+                t("Modular monolith with cache") to run(cached.copy(cut = ServiceCut.MODULITH)),
+                t("Modular monolith without cache") to run(base.copy(cut = ServiceCut.MODULITH)),
             )
         }
         scenario.pipeline?.let {

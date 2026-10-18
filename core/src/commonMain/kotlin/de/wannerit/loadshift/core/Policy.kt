@@ -82,6 +82,8 @@ data class Policy(
     val pages: PageConfig = PageConfig(),
     /** E6: the CI/CD pipeline and the test environments. */
     val pipeline: PipelineConfig = PipelineConfig(),
+    /** E7: how the logistics system's services are cut and talk to each other. */
+    val services: ServiceConfig = ServiceConfig(),
 ) {
     companion object {
         /**

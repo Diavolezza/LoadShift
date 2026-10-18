@@ -71,7 +71,13 @@ data class Totals(
     /** E6: commits, their feedback time summed (tenths of a minute each). */
     var commits: Long = 0,
     var feedbackSum: Long = 0,
+    /** E7: tracking requests and their response time summed (ms each). */
+    var trackingRequests: Long = 0,
+    var latencySum: Long = 0,
 ) {
+    /** E7: mean response time of the tracking, ms. */
+    val meanLatency: Int get() = if (trackingRequests == 0L) 0 else (latencySum / trackingRequests).toInt()
+
     /** E6: mean time from a commit to its first result, tenths of a minute. */
     val meanFeedback: Int get() = if (commits == 0L) 0 else (feedbackSum / commits).toInt()
 
@@ -159,6 +165,8 @@ data class TickRecord(
     val web: WebRecord? = null,
     /** E6: the pipeline's servers. */
     val pipeline: PipelineRecord? = null,
+    /** E7: the logistics system's servers. */
+    val services: ServiceRecord? = null,
 )
 
 /** E3: memory used (tenths of GB), memory of the running cache servers (GB), hits (per mille of the cacheable requests), memory per kind (tenths of GB). */
@@ -332,7 +340,7 @@ class Simulation private constructor(
         finishBooting()
         updateJobs()
         applyCapacityPolicy()
-        val pipelineUtil = scenario.pipeline?.let { stepPipeline(it) }
+        val pipelineUtil = scenario.pipeline?.let { stepPipeline(it) } ?: scenario.services?.let { stepServices(it) }
         val training = trainNow()
         startBatchJobs()
 
@@ -493,6 +501,7 @@ class Simulation private constructor(
                 inference = inferenceRecord,
                 web = webRecord,
                 pipeline = pipelineRecord,
+                services = servicesRecord,
             ),
         )
         tick += 1
@@ -607,6 +616,34 @@ class Simulation private constructor(
             var capacity = serverList.sumOf { it.kind.capacity }
             while (capacity < needed) { install(model); capacity += ServerKind.CPU_CURRENT.capacity }
         }
+    }
+
+    // E7: the logistics system
+
+    private var servicesRecord: ServiceRecord? = null
+
+    /** Switches the servers the services need this tick; counts response times and stale data (a broken rule). */
+    private fun stepServices(m: ServiceModel): IntArray {
+        val c = policy.services
+        val hour = GameTime(tick).hour
+        val curve = InteractiveLoad.DAILY_CURVE[hour]
+        val rate = m.peakRate * curve / 1_000.0
+        val cpu = m.cpuPerSecond(c, rate)
+        val servers = minOf(serverList.size, m.servers(c, rate))
+        val requests = (rate * 3_600 / GameTime.TICKS_PER_HOUR).toLong()
+        totals.trackingRequests += requests
+        totals.latencySum += requests * m.latency(c, rate)
+        // Stale data is a broken rule once per hour it lasts (counted at the full hour).
+        if (!m.fresh(c) && GameTime(tick).minute == 0) totals.rulesBroken += 1
+        val util = IntArray(serverList.size)
+        for (i in serverList.indices) {
+            val on = i < servers
+            serverList[i] = serverList[i].copy(state = if (on) ServerState.On else ServerState.Off)
+            util[i] = if (on) minOf(1_000, (cpu / (servers * ServiceModel.SERVER_MS) * 1_000).toInt()) else 0
+        }
+        val own = rate * 10.0
+        servicesRecord = ServiceRecord(servers, cpu.toInt(), (cpu - own).toInt())
+        return util
     }
 
     // E6: the pipeline

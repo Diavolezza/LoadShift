@@ -361,6 +361,7 @@ work per request or per job; the effect shows in the SCI per 1,000 requests and 
 | E4 | Right-sized AI | web shop, Germany | 2 days | per kind of question who answers it (no AI, small model, large model, large model with reasoning), batching window | The team's prototype sends every question of the shop assistant to the large model, one at a time. A status lookup answers "Where is my order?" better than any model; a small model is good enough where the answer is in the product data; the large model pays off for complaints and advice. Batching shares the GPU's work among questions but every answer waits; reasoning adds a little quality and a long wait. Rules: answer quality at least 92 %, 95 % of the answers within 3 s (G9, G1). Term: Green AI (Right-sizing Models). |
 | E5 | Data diet | web shop, Germany | 2 days | image format and sizes, lazy loading, product video, list length, how visitors are counted | A visit weighs 12 MB. Counted with the network and the visitors' devices (energy per GB after the Sustainable Web Design Model [S28]), the data center is the smallest part. The video that plays by itself is half the weight; modern formats in the right size and lazy loading below the fold do the rest. Two traps make the page slow: converting images on every request, and lazy loading the first image. Rule: LCP at most 2.5 s [S30] (G9, G1). Term: Sustainable Web Design. |
 | E6 | Green pipeline | a team of 40 developers, Germany | 7 days (Monday to Sunday) | build agents (always on or on demand), remote build cache, test impact analysis, UI and load tests (every commit, nightly in the greenest hours, never), trigger (every commit, every 30 minutes, every 2 hours), test environments (day and night, weekdays 7–19, on demand) and their replicas | Most of a pipeline waits: environments at night and at the weekend, agents without a job. Agents on demand lose their local cache – without a remote cache the feedback gets too slow; batching commits saves runs but makes the team wait; without UI tests the release goes out untested. Rules: feedback within 20 minutes, UI tests in the 24 hours before Friday's release (iSAQB GREEN, LZ 9-1 to 9-4). Term: Green CI/CD. |
+| E7 | Chatty services | logistics system, Germany | 2 days | cut (microservices, modular monolith), protocol (REST with JSON, gRPC with Protobuf), master data (synchronous calls, events with a local copy), serverless functions for the customer and truck services, how long GPS positions and traffic information are reused | Communication is work: every remote call serializes and deserializes, every instance runs its runtime without load. The modular monolith saves most; microservices get close with events, gRPC and serverless functions – serverless only pays for services that are rarely called. The cache for the external providers makes the tracking fast enough; reused too long, the data are too old. Rules: tracking within 250 ms on average, positions at most 1 min and traffic at most 5 min old (iSAQB GREEN, LZ 6-1, 6-2, 6-4; the system follows the logistics example of a GREEN training). Term: Green Software Architecture. |
 
 Backlog items (game values, to be tuned in the lesson tests): database index, removing an N+1 query, a cache
 (saves work, but the cache server draws power too), compressing images, pagination instead of loading
@@ -958,6 +959,35 @@ not energy.
 | on demand, cache, TIA, nightly, every 30 minutes | −85.3 % | 22.5 min | 0 |
 | on demand, cache, TIA, UI tests never | −81.6 % | 7.5 min | 0 (release) |
 
+**As built in step 5, part 10** (E7, "Chatty services"):
+
+- Core: `ServiceModel` and `ServiceConfig`. Tracking requests follow the daily curve, 15,000 a second at the peak.
+  CPU per request: 10 ms own work, 4 ms per remote hop with JSON or 1.5 ms with gRPC (half the bytes [S33]), 0.3 ms
+  in the monolith; external calls 3 ms each when they go out, 0.2 ms from the cache (calls out: trucks or regions per
+  reuse time, at most one per request); 6 ms per call to a serverless function. Instances that always run (two per
+  microservice, two for Kafka with events, one for the cache; two for the monolith; none for serverless functions)
+  cost 600 ms of CPU a second each. Servers: the work at 70 % of 32 cores, at least one per four instances; the
+  simulation switches them directly. Response time: 30 ms + 12 ms per JSON hop (5 with gRPC) + 25 ms per function
+  call + 120 ms (GPS) and 150 ms (traffic) for each call that goes out. Data older than allowed count as a broken rule
+  for every hour.
+- App: architecture panel with a diagram of the draft (boxes and calls, sync and events, cache, functions), the
+  settings, the CPU per request and the response time at the peak; timeline lane with the CPU split into own work and
+  overhead.
+- Goals ★★ −40 %, ★★★ −48.5 %.
+
+| Cut, protocol, master data, functions, reuse GPS / traffic | CO₂ vs. reference | Response | Stars |
+|---|---:|---:|---:|
+| microservices, JSON, sync, –, none / none (reference) | – | 336 ms | – |
+| the same with reuse 1 min / 5 min | −16.6 % | 66 ms | ★ |
+| reuse 5 min / 1 h | −16.6 % | 66 ms | 0 (data too old) |
+| reuse, gRPC | −39.1 % | 45 ms | ★ |
+| reuse, events | −40.5 % | 42 ms | ★★ |
+| reuse, gRPC, events | −48.0 % | 35 ms | ★★ |
+| reuse, gRPC, events, functions | −48.9 % | 35 ms | ★★★ |
+| reuse, functions with synchronous calls | +19.0 % | 116 ms | 0 |
+| modular monolith with reuse | −53.5 % | 30 ms | ★★★ |
+| modular monolith without reuse | −36.6 % | 300 ms | 0 |
+
 ---
 
 ## 13 Decisions
@@ -1028,3 +1058,6 @@ not energy.
 | S30 | web.dev: *Largest Contentful Paint (LCP)* (good: at most 2.5 s at the 75th percentile; a lazily loaded LCP image delays it). https://web.dev/articles/lcp |
 | S31 | M. Fowler: *The Rise of Test Impact Analysis*, martinfowler.com, 2017. https://martinfowler.com/articles/rise-test-impact-analysis.html |
 | S32 | Green Coding Solutions: *Eco CI* (energy estimation for GitHub Actions and GitLab pipelines, based on SPECpower). https://www.green-coding.io/projects/eco-ci/ |
+| S33 | K. Maeda: *Performance evaluation of object serialization libraries in XML, JSON and binary formats*, Second International Conference on Digital Information and Communication Technology and its Applications, 2012 (Protobuf about half the size of JSON, faster to serialize and deserialize). |
+| S34 | N. Bjørndal, M. Mazzara, A. Bucchiarone, N. Dragoni, S. Dustdar: *Migration from Monolith to Microservices: Benchmarking a Case Study*, Journal of Object Technology 20(3), 2021. https://doi.org/10.5381/jot.2021.20.2.a3 |
+| S35 | iSAQB: *Curriculum for the Advanced Level module GREEN* (learning goals on architecture styles, communication, CI/CD). https://github.com/isaqb-org/curriculum-green |
