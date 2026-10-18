@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -149,34 +150,41 @@ fun ScenarioListScreen(onLexicon: () -> Unit = {}, onSelect: (Scenario) -> Unit)
     val next = nextScenario()
     var tab by remember { mutableStateOf(Storage.getInt("tab").takeIf { it in Track.entries.indices } ?: (next?.track?.ordinal ?: 0)) }
     BoxWithConstraints(Modifier.fillMaxSize().background(Palette.background)) {
-        val side = (maxWidth * 0.04f).coerceAtLeast(28.dp)
-        val columns = ((maxWidth - side * 2 + 12.dp) / 200.dp).toInt().coerceIn(2, 6)
+        // A phone held upright: the buttons go under the title, the card for "continue with" stacks.
+        val narrow = maxWidth < 700.dp
+        val side = if (narrow) 16.dp else (maxWidth * 0.04f).coerceAtLeast(28.dp)
+        val columns = ((maxWidth - side * 2 + 12.dp) / 200.dp).toInt().coerceIn(if (narrow) 1 else 2, 6)
         val cardWidth = (maxWidth - side * 2 - 12.dp * (columns - 1)) / columns - 1.dp
         Column(
-            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = side, vertical = 36.dp),
-            verticalArrangement = Arrangement.spacedBy(22.dp),
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = side, vertical = if (narrow) 20.dp else 36.dp),
+            verticalArrangement = Arrangement.spacedBy(if (narrow) 16.dp else 22.dp),
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp)) {
-                RackIcon(56.dp)
-                Column(Modifier.weight(1f)) {
-                    Txt("Load Shift", Type.style(44, FontWeight.Bold))
-                    Txt(t("Green IT – from code to data center"), Type.style(19, color = Palette.secondary))
-                }
+            @Composable
+            fun buttons() {
                 Txt(t("Glossary"), Type.style(16, FontWeight.SemiBold, Palette.accent),
                     Modifier.clip(RoundedCornerShape(10.dp)).background(Palette.panel).clickable(onClick = onLexicon).padding(horizontal = 14.dp, vertical = 10.dp))
                 LanguageSwitch()
                 InfoButton { about = true }
             }
-            if (next != null) ContinueCard(next) { onSelect(next) }
-            // Tabs, one per track, with the scenarios that have a star.
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(if (narrow) 12.dp else 18.dp)) {
+                RackIcon(if (narrow) 44.dp else 56.dp)
+                Column(Modifier.weight(1f)) {
+                    Txt("Load Shift", Type.style(if (narrow) 32 else 44, FontWeight.Bold))
+                    Txt(t("Green IT – from code to data center"), Type.style(if (narrow) 15 else 19, color = Palette.secondary))
+                }
+                if (!narrow) buttons()
+            }
+            if (narrow) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) { buttons() }
+            if (next != null) ContinueCard(next, narrow) { onSelect(next) }
+            // Tabs, one per track, with the scenarios that have a star; on a phone they scroll sideways.
             Column {
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     for ((track, title) in listOf(Track.OPERATIONS to t("Operations"), Track.ENGINEERING to t("Engineering"), Track.PORTFOLIO to t("Portfolio"))) {
                         val all = Scenario.ALL.filter { it.track == track }
                         val done = all.count { Progress.stars(it.number) > 0 }
                         val on = tab == track.ordinal
                         Column(Modifier.width(androidx.compose.foundation.layout.IntrinsicSize.Max).clip(RoundedCornerShape(8.dp)).clickable { tab = track.ordinal; Storage.setInt("tab", tab) }) {
-                            Row(Modifier.padding(horizontal = 18.dp, vertical = 10.dp), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Row(Modifier.padding(horizontal = if (narrow) 10.dp else 18.dp, vertical = 10.dp), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 Txt(title, Type.style(19, FontWeight.SemiBold, if (on) Palette.ink else Palette.secondary))
                                 Txt(t("%lld / %lld ★", done, all.size), Type.style(14, color = Palette.secondary))
                             }
@@ -243,7 +251,27 @@ private fun nextScenario(): Scenario? {
 }
 
 @Composable
-private fun ContinueCard(scenario: Scenario, onClick: () -> Unit) {
+private fun ContinueCard(scenario: Scenario, narrow: Boolean, onClick: () -> Unit) {
+    if (narrow) {
+        Column(
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(Palette.panel).border(2.dp, Palette.accent, RoundedCornerShape(18.dp))
+                .clickable(onClick = onClick).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Txt(scenario.shownLabel, Type.style(32, FontWeight.Bold, Palette.accent))
+                Column {
+                    Txt(t("Continue with").uppercase(), Type.style(12, FontWeight.SemiBold, Palette.secondary))
+                    Txt(t(scenario.title), Type.style(20, FontWeight.Bold))
+                }
+            }
+            Txt(ScenarioTexts.of(scenario).term, Type.style(15, FontWeight.SemiBold, Palette.accent))
+            Txt(cardFacts(scenario), Type.style(14, color = Palette.secondary))
+            Spacer(Modifier.height(6.dp))
+            PrimaryButton("▶  " + t("To the briefing"), Modifier.fillMaxWidth(), onClick = onClick)
+        }
+        return
+    }
     Row(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(Palette.panel).border(2.dp, Palette.accent, RoundedCornerShape(18.dp))
             .clickable(onClick = onClick).padding(horizontal = 24.dp, vertical = 18.dp),
