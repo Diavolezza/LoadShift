@@ -133,6 +133,7 @@ fun TidyScreen(game: TidyController, onExit: () -> Unit, onOverview: (() -> Unit
             }
         }
         if (game.finished) TidyEnd(game, onExit, onOverview)
+        RotateHint(maxWidth, maxHeight)
     }
 }
 

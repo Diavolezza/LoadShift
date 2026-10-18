@@ -754,6 +754,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Auf 4 Server konsolidieren",
     "Consolidation" to
         "Konsolidierung",
+    "Continue upright" to
+        "Trotzdem hochkant weiter",
     "Continue with" to
         "Weiter mit",
     "Cooled by" to
@@ -2068,6 +2070,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Die Emissionen von Herstellung, Transport und Entsorgung der Hardware, im Gegensatz zu denen des Stroms, den sie verbraucht. In der SCI werden sie über die Lebensdauer der Hardware verteilt; in einem sauberen Strommix können sie der größere Teil sein. Hardware-Effizienz heißt: Hardware lange und gut nutzen – und sie dort ersetzen, wo die gesparte Energie sie aufwiegt.",
     "The free data got the footprint wrong in three ways. The cloud provider's tool counted its certificates: the cloud looked almost clean, and the analytics platform – the largest single emitter – looked like nothing; moving it to a clean region removed more CO₂ per euro than any other measure. Splitting the data center's energy by servers made the 24 small intranet servers look big; splitting it by CPU time made the test environments look tiny – but idle servers draw power too, and switching them off at night saved a lot. The invoices made the CRM look large because it is expensive; video conferencing and the old videos in the file sharing are cheap and large. Better data paid off where it changed a decision, and not where it did not. Real portfolios have the same three paths; the GHG Protocol asks for Scope 2 both location-based and market-based." to
         "Die kostenlosen Daten lagen auf drei Arten daneben. Das Werkzeug des Cloud-Anbieters rechnete seine Zertifikate ein: Die Cloud sah fast sauber aus, und die Analyseplattform – der größte einzelne Verursacher – sah nach nichts aus; der Umzug in eine saubere Region nahm mehr CO₂ pro Euro weg als jede andere Maßnahme. Die Energie des Rechenzentrums nach Servern verteilt ließ die 24 kleinen Intranet-Server groß aussehen; nach CPU-Zeit verteilt sahen die Testumgebungen winzig aus – aber auch Server im Leerlauf ziehen Strom, und sie nachts abzuschalten sparte viel. Die Rechnungen ließen das CRM groß aussehen, weil es teuer ist; Videokonferenzen und die alten Videos in der Dateiablage sind billig und groß. Bessere Daten lohnten sich dort, wo sie eine Entscheidung änderten, und nicht, wo sie es nicht taten. Echte Portfolios haben dieselben drei Pfade; das GHG Protocol verlangt Scope 2 sowohl standortbasiert als auch marktbasiert.",
+    "The game needs the width: the hall, the controls and the timeline sit side by side. Hold your phone sideways." to
+        "Das Spiel braucht die Breite: Halle, Steuerung und Zeitleiste stehen nebeneinander. Halte dein Telefon quer.",
     "The game pauses at the start of every year. You can pause any time and buy; the servers arrive at the start of the next quarter." to
         "Das Spiel hält zu Beginn jedes Jahres an. Du kannst jederzeit anhalten und kaufen; die Server kommen zu Beginn des nächsten Quartals.",
     "The game starts paused and pauses at the start of every sprint. Clock and speed – pause, 1×, 4×, 16× – and below it your goals." to
@@ -2370,6 +2374,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Di",
     "Tune the database, consolidate the servers" to
         "Datenbank tunen, Server konsolidieren",
+    "Turn your device" to
+        "Dreh dein Gerät",
     "TVs" to
         "Fernseher",
     "Two and two every year" to

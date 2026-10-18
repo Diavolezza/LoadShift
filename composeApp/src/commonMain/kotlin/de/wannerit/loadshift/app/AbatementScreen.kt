@@ -119,6 +119,7 @@ fun AbatementScreen(game: AbatementController, onExit: () -> Unit, onOverview: (
             }
         }
         if (game.finished) AbatementEnd(game, onExit, onOverview)
+        RotateHint(maxWidth, maxHeight)
     }
 }
 

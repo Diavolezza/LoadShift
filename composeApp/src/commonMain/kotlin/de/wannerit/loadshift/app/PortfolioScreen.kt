@@ -164,6 +164,7 @@ fun PortfolioScreen(game: PortfolioController, onExit: () -> Unit, onOverview: (
             }
         }
         if (game.finished) PortfolioEnd(game, onExit, onOverview)
+        RotateHint(maxWidth, maxHeight)
     }
 }
 

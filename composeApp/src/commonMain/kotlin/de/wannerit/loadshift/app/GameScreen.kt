@@ -111,6 +111,7 @@ fun GameScreen(game: GameController, onExit: () -> Unit, onNext: ((Scenario) -> 
                 lane = if (allLanes) Lane.ALL else null)
         }
         if (game.showEnd) EndCard(game, onExit, onNext, onOverview)
+        RotateHint(maxWidth, maxHeight)
     }
 }
 
