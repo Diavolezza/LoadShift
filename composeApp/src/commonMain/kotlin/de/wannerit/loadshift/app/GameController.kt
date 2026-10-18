@@ -59,7 +59,8 @@ enum class Speed(val ticksPerSecond: Int) {
  * [version] changes with every change. Reading [simulation] reads [version], so every composable that looks at the
  * simulation redraws after a change – Compose skips a composable whose arguments are the same objects as before.
  */
-class GameController(val scenario: Scenario) {
+/** [fresh]: without the panel settings kept from the last run (the briefing's preview must not show them). */
+class GameController(val scenario: Scenario, fresh: Boolean = false) {
     /** O7: one simulation per site, all in step; the screen shows the [site] chosen. Other scenarios: one. */
     private val siteCount = scenario.renewal?.sites?.size ?: scenario.location?.sites?.size ?: 1
     /** O10: the jobs that run in Oslo (chosen before the start). */
@@ -563,7 +564,7 @@ class GameController(val scenario: Scenario) {
 
     init {
         resetDraft()
-        restoreDraft()
+        if (!fresh) restoreDraft()
     }
 
     /** The draft of the last run of this scenario (kept while the app runs). */

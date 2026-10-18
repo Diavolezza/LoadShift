@@ -162,6 +162,7 @@ fun ScenarioListScreen(onSelect: (Scenario) -> Unit) {
                     Txt(t("Green IT – from code to data center"), Type.style(19, color = Palette.secondary))
                 }
                 LanguageSwitch()
+                InfoButton { about = true }
             }
             if (next != null) ContinueCard(next) { onSelect(next) }
             // Tabs, one per track, with the scenarios that have a star.
@@ -202,7 +203,6 @@ fun ScenarioListScreen(onSelect: (Scenario) -> Unit) {
                     }
                 }
             }
-            Txt(t("About Load Shift"), Type.style(16, FontWeight.SemiBold, Palette.accent), Modifier.clip(RoundedCornerShape(6.dp)).clickable { about = true }.padding(vertical = 4.dp, horizontal = 2.dp))
         }
         if (about) {
             Box(
@@ -213,6 +213,17 @@ fun ScenarioListScreen(onSelect: (Scenario) -> Unit) {
                 AboutContent(Modifier.widthIn(max = 520.dp).background(Palette.panel, RoundedCornerShape(20.dp)))
             }
         }
+    }
+}
+
+/** "i" in a circle: about Load Shift, for teachers. */
+@Composable
+private fun InfoButton(onClick: () -> Unit) {
+    Box(
+        Modifier.size(42.dp).clip(CircleShape).background(Palette.panel).border(1.5.dp, Palette.accent, CircleShape).clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Txt("i", Type.style(22, FontWeight.Bold, Palette.accent).copy(textAlign = TextAlign.Center))
     }
 }
 
@@ -385,9 +396,10 @@ fun Term(texts: ScenarioTexts, modifier: Modifier = Modifier) {
 /** The play screen as the scenario starts, drawn small: not clickable, with numbered markers for the four areas. */
 @Composable
 private fun ScreenPreview(scenario: Scenario, modifier: Modifier) {
-    val portfolio = remember(scenario) { scenario.portfolio?.let { PortfolioController(scenario) } }
-    val abatement = remember(scenario) { scenario.abatement?.let { AbatementController(scenario) } }
-    val game = remember(scenario) { if (portfolio == null && abatement == null) GameController(scenario) else null }
+    // Always the scenario's starting state – never the player's last settings, which may be a solution.
+    val portfolio = remember(scenario) { scenario.portfolio?.let { PortfolioController(scenario, fresh = true) } }
+    val abatement = remember(scenario) { scenario.abatement?.let { AbatementController(scenario, fresh = true) } }
+    val game = remember(scenario) { if (portfolio == null && abatement == null) GameController(scenario, fresh = true) else null }
     val width = 1366.dp
     val height = 960.dp
     // Marker positions on the full-size screen (GameScreen at 1366 × 960: panel 380 wide, timeline 288 high).

@@ -46,9 +46,9 @@ import de.wannerit.loadshift.core.Source
  * bought stay bought; after a year has been played the player knows the real numbers anyway, so a replay starts with
  * the last choices and every choice can be changed freely.
  */
-class PortfolioController(val scenario: Scenario) {
+class PortfolioController(val scenario: Scenario, fresh: Boolean = false) {
     val model = scenario.portfolio!!
-    private val last = lastChoices[scenario.number]
+    private val last = if (fresh) null else lastChoices[scenario.number]
     var inventory by mutableStateOf(last?.first ?: Inventory())
         private set
     var plan by mutableStateOf(last?.second ?: emptySet())

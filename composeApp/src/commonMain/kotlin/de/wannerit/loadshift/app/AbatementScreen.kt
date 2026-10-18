@@ -48,9 +48,9 @@ import de.wannerit.loadshift.core.AbatementResult
 import de.wannerit.loadshift.core.Scenario
 
 /** State of P2: the plan, whether the three years are done; a replay starts with the last plan. */
-class AbatementController(val scenario: Scenario) {
+class AbatementController(val scenario: Scenario, fresh: Boolean = false) {
     val model = scenario.abatement!!
-    var plan by mutableStateOf(lastPlans[scenario.number] ?: emptySet())
+    var plan by mutableStateOf((if (fresh) null else lastPlans[scenario.number]) ?: emptySet())
         private set
     var finished by mutableStateOf(false)
         private set
