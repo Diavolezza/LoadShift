@@ -28,7 +28,7 @@ fun LocationPanel(game: GameController) {
     val greenest = game.simulation.policy.batch == BatchMode.Greenest
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Txt(t("Location"), Type.heading)
-        Txt(t("Before the start you decide which jobs run in Oslo: the grid there is almost free of CO₂, but only %lld servers are free. A job that moves needs its data there first – the transfer takes time, and the network needs energy in the German grid.", model.servers[1]), Type.style(15, color = Palette.secondary))
+        Txt(t("Before the start you decide which jobs run in Oslo: the grid there is almost free of CO₂, but only %lld servers are available. A job that moves needs its data there first – the transfer takes time, and the network needs energy in the German grid.", model.servers[1]), Type.style(15, color = Palette.secondary))
 
         Txt(t("Batch rule at both sites"), Type.style(15, FontWeight.SemiBold))
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {

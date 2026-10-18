@@ -137,7 +137,7 @@ private fun AbatementTopBar(game: AbatementController, onExit: () -> Unit) {
             Txt(if (game.finished) t("Plan carried out") else t("The plan"), Type.style(24, FontWeight.SemiBold))
         }
         Row(Modifier.align(Alignment.CenterEnd), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(22.dp)) {
-            Metric(t("Promised by the list"), t("−%@ t", tonnes(game.promisedKg)))
+            Metric(t("According to the list"), t("−%@ t", tonnes(game.promisedKg)))
             Metric(t("Budget left"), euros(game.left))
         }
     }
@@ -280,9 +280,9 @@ private fun AbatementPanel(game: AbatementController, modifier: Modifier) {
                 }
             }
         }
-        Txt(t("The consultant's list promises %@ t over three years for these measures – %@ of the %@ t the company emits in that time.",
+        Txt(t("For these measures the consultant's list gives %@ t over three years – %@ of the %@ t the company emits in that time.",
             tonnes(game.promisedKg), Format.wholePercent((game.promisedKg * 1_000 / model.baselineKg).toInt()), tonnes(model.baselineKg)), Type.callout)
-        Txt(t("Counted are three years, quarter by quarter, location-based. The stars count what really changes."), Type.caption)
+        Txt(t("Counted are three years, quarter by quarter, location-based. The stars go by what really changes."), Type.caption)
         PrimaryButton(t("Carry out the plan"), Modifier.fillMaxWidth(), enabled = !game.finished && game.plan.isNotEmpty()) { game.finish() }
     }
 }
@@ -328,7 +328,7 @@ private fun AbatementEnd(game: AbatementController, onExit: () -> Unit, onOvervi
                 }
                 Table(listOf("", t("t CO₂")), listOf(
                     listOf(t("Three years without measures"), tonnes(r.baselineKg)),
-                    listOf(t("Promised by the consultant's list"), "−" + tonnes(game.promisedKg)),
+                    listOf(t("According to the consultant's list"), "−" + tonnes(game.promisedKg)),
                     listOf(t("Really saved, location-based"), (if (r.savedKg < 0) "+" else "−") + tonnes(kotlin.math.abs(r.savedKg))),
                     listOf(t("Spent (€)"), Format.number(r.costEuro.toDouble())),
                 ), firstWidth = 0.6f)

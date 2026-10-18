@@ -371,7 +371,7 @@ private fun PortfolioPanel(game: PortfolioController, modifier: Modifier) {
         }
         Txt(t("By your inventory the measures save %@ t a year – %@ of %@ t.", tonnes(game.expectedSaving),
             Format.wholePercent(if (game.inventoryKg == 0L) 0 else (game.expectedSaving * 1_000 / game.inventoryKg).toInt()), tonnes(game.inventoryKg)), Type.callout)
-        Txt(t("The measures take effect next year. The stars count what really changes."), Type.caption)
+        Txt(t("The measures take effect next year. The stars go by what really changes."), Type.caption)
         PrimaryButton(t("Carry out the plan"), Modifier.fillMaxWidth(), enabled = !game.finished && game.plan.isNotEmpty()) { game.finish() }
     }
 }

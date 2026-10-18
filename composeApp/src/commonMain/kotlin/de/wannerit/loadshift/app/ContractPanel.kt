@@ -17,7 +17,7 @@ fun ContractPanel(game: GameController) {
     val model = game.scenario.contract ?: return
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Txt(t("Electricity contract"), Type.heading)
-        Txt(t("The board wants a green data center. The report counts contracted green energy as zero; the stars count only clean energy that is there in the same hour. The cost of electricity may rise by at most %@.",
+        Txt(t("The board wants a green data center. In the report, contracted green energy counts as zero; for the stars, only clean energy that is there in the same hour counts. The cost of electricity may rise by at most %@.",
             Format.wholePercent(model.budgetPermille - 1_000)), Type.style(15, color = Palette.secondary))
         val notes = mapOf(
             Contract.GREY to t("The grid as it is, %@ ct/kWh.", Format.number(model.priceTenthsCent / 10.0, 1)),

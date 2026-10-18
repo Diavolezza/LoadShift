@@ -27,7 +27,7 @@ class ScenarioTexts(
                 situation = "The inventory is done: about 955 t CO₂ a year, the employees' PCs included. A consultancy has listed sixteen measures and drawn them as a curve: each bar a measure, its width the CO₂ it saves in three years, its height what a tonne avoided costs. The board has 200,000 € and wants to know where to start.",
                 idea = "Start where a tonne is cheapest – that is what the curve is for. But the curve was made one measure at a time, from each measure's saving in a year once it works. Check what that leaves out before you follow it.",
                 screen = listOf(
-                    "At the top: what the consultant's list promises for your plan and the budget left; below it your goals.",
+                    "At the top: what the consultant's list gives for your plan and the budget left; below it your goals.",
                     "The consultant's curve: each bar a measure – its width the CO₂ it saves in three years, its height the cost of a tonne. Click a bar to put the measure into the plan.",
                     "The sixteen measures with their facts, numbered like the bars. A click on a card puts it into the plan too.",
                     "Your plan: the budget, what it costs and the button that carries it out. Counted are three years, quarter by quarter, location-based.",
@@ -145,7 +145,7 @@ class ScenarioTexts(
             )
             6 -> ScenarioTexts(
                 situation = "The web shop in a German summer, with 40 servers. A heat wave is coming: 28 °C today, 35 °C tomorrow, 37 °C the day after. Autoscaling runs at 50 % target utilization, the cooling keeps 20 °C at the server inlets – the way the last shift left it. Management watches the PUE: the Energy Efficiency Act asks existing data centers for at most 1.5 from July 2027.",
-                idea = "Cooling is the biggest part of the facility's own power. Outside air cools for free when it is cooler than the server inlets; in a heat wave the chiller does the work, and the hotter it is outside, the more power it needs. Servers tolerate warmer air than most data centers give them – up to 27 °C – but above 25 °C their fans speed up. And the PUE, facility power divided by IT power, does not always point the right way.",
+                idea = "Cooling is the biggest part of the facility's own power. Outside air cools for free when it is at least 6 °C cooler than the setpoint; in a heat wave the chiller does the work, and the hotter it is outside, the more power it needs. Servers tolerate warmer air than most data centers give them – up to 27 °C – but above 25 °C their fans speed up. And the PUE, facility power divided by IT power, does not always point the right way.",
                 screen = listOf(
                     "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals. On the right the PUE right now.",
                     "Your racks: grey servers are off, light blue ones are booting, the blue bar shows how busy a server is.",

@@ -289,7 +289,7 @@ private fun JobStatus(game: GameController, job: BatchJob, now: Int) {
 private fun BatchRules(game: GameController) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Txt(t("Batch rule"), Type.heading)
-        Txt(t("A rule decides when each job starts – you no longer plan every job by hand. Choose a rule and apply it; you can change it at any time."), Type.style(15, color = Palette.secondary))
+        Txt(t("A rule sets when each job starts – you no longer plan every job by hand. Choose a rule and apply it; you can change it at any time."), Type.style(15, color = Palette.secondary))
         if (game.forecastNews) ForecastNews(game)
         RuleOption(game.draftKind == GameController.RuleKind.ASAP, { game.draftKind = GameController.RuleKind.ASAP }, t("As soon as possible"), t("Every job starts when it arrives."))
         RuleOption(game.draftKind == GameController.RuleKind.HOUR, { game.draftKind = GameController.RuleKind.HOUR }, t("At a fixed hour"), t("Every job starts at the next %@ after it arrives.", GameTime.at(0, game.draftHour).clockText)) {
