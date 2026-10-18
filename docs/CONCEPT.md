@@ -360,10 +360,10 @@ work per request or per job; the effect shows in the SCI per 1,000 requests and 
 | E1 | Measure first | web shop, Germany | 4 weeks (weekly sprints) | engineering backlog, team capacity, profiling | The team's estimates of where the energy goes are wrong. One sprint of profiling shows the real hot spots (for example an N+1 database query and JSON serialization, not the image service everybody suspects). Optimizing by guess wastes sprints; less work per request also means fewer servers and less hardware (G9, G1). Term: Profiling. |
 | E2 | Growing data | web shop, Germany | 12 months (one game day each) | backlog with algorithmic complexity, carry-over | The data grows every month. A batch job with O(n²) and a lookup in a list instead of a hash map get more expensive month by month; a database index stops a query from scanning everything. Fixing early saves the most; waiting costs energy and, at some point, hardware (G9, G6). Term: Algorithmic Complexity. |
 | E3 | Hit or miss | web shop, Germany | 2 days | cache servers, per kind of data cached or not and its TTL, two more measures | Five kinds of data with different popularity, size, cost and business limits on their age: product images (a day), catalog pages (15 min), exchange rates (1 min), search results (1 h, but most searches are typed only once), the account balance before a transfer (must be current). All cached kinds share the memory of the cache servers (LRU). The team has ordered four cache servers "to be on the safe side". A cache saves work while it hits, but every cache server draws power all day; a TTL longer than allowed brings stale answers (0 stars); search results fill half the memory and hardly hit. Two more measures follow the same idea: counting unique visitors with HyperLogLog instead of keeping every ID, and a materialized view for the sales dashboard (G9, G1). Term: Caching. |
-| E4 | Right-sized AI | web shop, Germany | 2 days | per kind of question who answers it (no AI, small model, large model, large model with reasoning), batching window | The team's prototype sends every question of the shop assistant to the large model, one at a time. A status lookup answers "Where is my order?" better than any model; a small model is good enough where the answer is in the product data; the large model pays off for complaints and advice. Batching shares the GPU's work among questions but every answer waits; reasoning adds a little quality and a long wait. Rules: answer quality at least 92 %, 95 % of the answers within 3 s (G9, G1). Term: Green AI (Right-sizing Models). |
-| E5 | Data diet | web shop, Germany | 2 days | image format and sizes, lazy loading, product video, list length, how visitors are counted | A visit weighs 12 MB. Counted with the network and the visitors' devices (energy per GB after the Sustainable Web Design Model [S28]), the data center is the smallest part. The video that plays by itself is half the weight; modern formats in the right size and lazy loading below the fold do the rest. Two traps make the page slow: converting images on every request, and lazy loading the first image. Rule: LCP at most 2.5 s [S30] (G9, G1). Term: Sustainable Web Design. |
-| E6 | Green pipeline | a team of 40 developers, Germany | 7 days (Monday to Sunday) | build agents (always on or on demand), remote build cache, test impact analysis, UI and load tests (every commit, nightly in the greenest hours, never), trigger (every commit, every 30 minutes, every 2 hours), test environments (day and night, weekdays 7–19, on demand) and their replicas | Most of a pipeline waits: environments at night and at the weekend, agents without a job. Agents on demand lose their local cache – without a remote cache the feedback gets too slow; batching commits saves runs but makes the team wait; without UI tests the release goes out untested. Rules: feedback within 20 minutes, UI tests in the 24 hours before Friday's release (iSAQB GREEN, LZ 9-1 to 9-4). Term: Green CI/CD. |
-| E7 | Chatty services | logistics system, Germany | 2 days | cut (microservices, modular monolith, monolith with the route optimization as a service of its own), protocol (REST with JSON, gRPC with Protobuf), master data (synchronous calls, events with a local copy), serverless functions for the customer and truck services, how long GPS positions and traffic information are reused | Communication is work: every remote call serializes and deserializes, every instance runs its runtime without load. The modular monolith saves the calls but scales as a whole – it keeps the capacity for the hourly route optimization (200 cores for ten minutes) ready from 6 to 20, while a service of its own scales for its ten minutes; microservices reach three stars with events, gRPC and serverless functions, the monolith with the optimization cut out – serverless only pays for services that are rarely called. The cache for the external providers makes the tracking fast enough; reused too long, the data are too old. Rules: tracking within 250 ms on average, positions at most 1 min and traffic at most 5 min old (iSAQB GREEN, LZ 6-1, 6-2, 6-4). Term: Green Software Architecture. |
+| E4 | Data diet | web shop, Germany | 2 days | image format and sizes, lazy loading, product video, list length, how visitors are counted | A visit weighs 12 MB. Counted with the network and the visitors' devices (energy per GB after the Sustainable Web Design Model [S28]), the data center is the smallest part. The video that plays by itself is half the weight; modern formats in the right size and lazy loading below the fold do the rest. Two traps make the page slow: converting images on every request, and lazy loading the first image. Rule: LCP at most 2.5 s [S30] (G9, G1). Term: Sustainable Web Design. |
+| E5 | Chatty services | logistics system, Germany | 2 days | cut (microservices, modular monolith, monolith with the route optimization as a service of its own), protocol (REST with JSON, gRPC with Protobuf), master data (synchronous calls, events with a local copy), serverless functions for the customer and truck services, how long GPS positions and traffic information are reused | Communication is work: every remote call serializes and deserializes, every instance runs its runtime without load. The modular monolith saves the calls but scales as a whole – it keeps the capacity for the hourly route optimization (200 cores for ten minutes) ready from 6 to 20, while a service of its own scales for its ten minutes; microservices reach three stars with events, gRPC and serverless functions, the monolith with the optimization cut out – serverless only pays for services that are rarely called. The cache for the external providers makes the tracking fast enough; reused too long, the data are too old. Rules: tracking within 250 ms on average, positions at most 1 min and traffic at most 5 min old (iSAQB GREEN, LZ 6-1, 6-2, 6-4). Term: Green Software Architecture. |
+| E6 | Right-sized AI | web shop, Germany | 2 days | per kind of question who answers it (no AI, small model, large model, large model with reasoning), batching window | The team's prototype sends every question of the shop assistant to the large model, one at a time. A status lookup answers "Where is my order?" better than any model; a small model is good enough where the answer is in the product data; the large model pays off for complaints and advice. Batching shares the GPU's work among questions but every answer waits; reasoning adds a little quality and a long wait. Rules: answer quality at least 92 %, 95 % of the answers within 3 s (G9, G1). Term: Green AI (Right-sizing Models). |
+| E7 | Green pipeline | a team of 40 developers, Germany | 7 days (Monday to Sunday) | build agents (always on or on demand), remote build cache, test impact analysis, UI and load tests (every commit, nightly in the greenest hours, never), trigger (every commit, every 30 minutes, every 2 hours), test environments (day and night, weekdays 7–19, on demand) and their replicas | Most of a pipeline waits: environments at night and at the weekend, agents without a job. Agents on demand lose their local cache – without a remote cache the feedback gets too slow; batching commits saves runs but makes the team wait; without UI tests the release goes out untested. Rules: feedback within 20 minutes, UI tests in the 24 hours before Friday's release (iSAQB GREEN, LZ 9-1 to 9-4). Term: Green CI/CD. |
 
 Backlog items (game values, to be tuned in the lesson tests): database index, removing an N+1 query, a cache
 (saves work, but the cache server draws power too), compressing images, pagination instead of loading
@@ -426,10 +426,10 @@ the app (O = operations, B in German).
 | E1 Measure first | LG 4-2 narrowing down hotspots, LG 4-3, LG 5-1 sensible starting points |
 | E2 Growing data | LG 5-2 complexity, LG 5-3 data handling |
 | E3 Hit or miss | LG 5-2 caches, LG 3-2 freshness against efficiency |
-| E4 Right-sized AI | LG 8-2, LG 8-3, LG 8-4 |
-| E5 Data diet | LG 6-4 Web Sustainability Guidelines, LG 1-3 data traffic, LG 3-2 |
-| E6 Green pipeline | LG 9-1 to LG 9-4 |
-| E7 Chatty services | LG 6-1 architecture styles, LG 6-2 communication |
+| E4 Data diet | LG 6-4 Web Sustainability Guidelines, LG 1-3 data traffic, LG 3-2 |
+| E5 Chatty services | LG 6-1 architecture styles, LG 6-2 communication |
+| E6 Right-sized AI | LG 8-2, LG 8-3, LG 8-4 |
+| E7 Green pipeline | LG 9-1 to LG 9-4 |
 | P1 Inventory | LG 2-2 Scope 2, LG 4-3 providers' carbon tools, LG 4-4 measuring in enterprise environments, LG 7-3 |
 
 Each scenario has:
@@ -937,7 +937,7 @@ not energy.
 | autoscaling 70 %, the same | −51.0 % | ★★★ |
 | autoscaling 60 %, the same | −49.4 % | ★★ |
 
-**As built in step 5, part 7** (E4, "Right-sized AI"):
+**As built in step 5, part 7** (E6, "Right-sized AI"):
 
 - Core: `InferenceModel` – five kinds of question with a share and an answer quality per answerer (`Answerer`: no
   AI 0.002 Wh / 0.3 s, small model 0.12 Wh / 0.8 s, large model 1.0 Wh / 2.0 s, large model with reasoning 2.5 Wh
@@ -965,7 +965,7 @@ not energy.
 | the same with 1 s, reasoning for complaints | −61.2 % | 93.9 % | 84.9 % | 0 |
 | no AI, no AI, small, large, small, batching 1 s | −80.5 % | 91.2 % | 100 % | 0 |
 
-**As built in step 5, part 8** (E5, "Data diet"):
+**As built in step 5, part 8** (E4, "Data diet"):
 
 - Core: `WebModel` and `PageConfig` (image format JPEG / WebP / AVIF converted once / AVIF converted on every
   request, sizes for the screen, lazy loading off / below the fold / all images, product video plays by itself or on
@@ -991,7 +991,7 @@ not energy.
 | AVIF converted on every request | −74.5 % | 1.7 | 2.8 s | 0 |
 | lazy loading for all images | −79.8 % | 1.7 | 2.6 s | 0 |
 
-**As built in step 5, part 9** (E6, "Green pipeline"):
+**As built in step 5, part 9** (E7, "Green pipeline"):
 
 - Core: `PipelineModel` and `PipelineConfig`. Four commits per tick on weekdays from 8 to 18; a run needs build 3 min
   (14 without a cache: an agent on demand starts empty unless the cache is remote), unit tests 5 (1.5 with test impact
@@ -1044,7 +1044,7 @@ the numbers stay so that saved stars keep their scenario):
 | 24/7 carbon-free | −80.8 % | 133 kg | 116 % | 0 (budget) |
 | 24/7 carbon-free, autoscaling 80 % | −81.8 % | 118 kg | 103 % | ★★★ |
 
-**As built in step 5, part 10** (E7, "Chatty services"):
+**As built in step 5, part 10** (E5, "Chatty services"):
 
 - Core: `ServiceModel` and `ServiceConfig`. Tracking requests follow the daily curve, 15,000 a second at the peak.
   CPU per request: 10 ms own work, 4 ms per remote hop with JSON or 1.5 ms with gRPC (half the bytes [S33]), 0.3 ms
@@ -1108,6 +1108,7 @@ the numbers stay so that saved stars keep their scenario):
 | D24 | Capstone (scenario 11) | stars by CO₂ reduction, not a hard SCI target; the three kinds of work share one draft in tabs, so the controls stay those of the scenarios that introduced them; the forecast update is the one new twist, because a plan days ahead is where a forecast error costs most |
 | D25 | "What if" and replays | settings in the debrief's "what if" that reach more stars than the player's best so far are shown without their label ("a setting you have not found yet") – the numbers stay, the recipe does not; a "start over" button in the goal bar returns to the scenario's starting rules and choices (a second click confirms) |
 | D26 | Portfolio track | a third track for a company's applications (P1 "Inventory" first); no clock, a year at a time; the data the player buys come from the same budget as the measures; the stars count the real footprint, location-based; opens after O11 "Green on paper", which teaches location-based and market-based |
+| D27 | Order of the Engineering scenarios | along the blocks of the iSAQB module GREEN: code (E1–E3), the page and the architecture (E4 Data diet, E5 Chatty services), AI (E6 Right-sized AI), the development process (E7 Green pipeline); the scenario numbers in the code stay (104–107), so stars kept on a device stay with their scenario – only the labels and the order of opening changed |
 
 ---
 

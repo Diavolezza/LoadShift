@@ -24,7 +24,7 @@ import de.wannerit.loadshift.core.PipelineModel
 import de.wannerit.loadshift.core.Runners
 import de.wannerit.loadshift.core.Trigger
 
-/** E6: build agents, caches, tests, triggers and test environments. */
+/** E7: build agents, caches, tests, triggers and test environments. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun PipelinePanel(game: GameController) {

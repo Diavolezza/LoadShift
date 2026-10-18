@@ -405,22 +405,22 @@ class GameController(val scenario: Scenario) {
         streamMax = List(n) { if (it == device) quality else streamMax.getOrElse(it) { Quality.UHD } }
     }
 
-    // Services (E7)
+    // Services (E5)
 
     val hasServices: Boolean get() = scenario.services != null
     var servicesDraft by mutableStateOf(ServiceConfig())
 
-    // Pipeline (E6)
+    // Pipeline (E7)
 
     val hasPipeline: Boolean get() = scenario.pipeline != null
     var pipelineDraft by mutableStateOf(PipelineConfig())
 
-    // Pages (E5)
+    // Pages (E4)
 
     val hasWeb: Boolean get() = scenario.web != null
     var pageDraft by mutableStateOf(PageConfig())
 
-    // Shop assistant (E4)
+    // Shop assistant (E6)
 
     val hasInference: Boolean get() = scenario.inference != null
     var aiAnswerers by mutableStateOf(listOf<Answerer>())

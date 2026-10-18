@@ -741,7 +741,7 @@ class LessonTest {
         assertTrue(byName.getValue("auto 80, green+replan, 4/60/green").totals.trainingFinishedAt != null)
     }
 
-    @Test fun e4RightSizedAi() {
+    @Test fun e6RightSizedAi() {
         val scenario = Scenario.RIGHT_SIZED_AI
         val reference = Simulation.reference(scenario)
         fun config(code: String, window: Int) = InferenceConfig(code.split(" ").map { c ->
@@ -778,7 +778,7 @@ class LessonTest {
         assertEquals(0, stars("N N S L L, 2000 ms"))
     }
 
-    @Test fun e5DataDiet() {
+    @Test fun e4DataDiet() {
         val scenario = Scenario.DATA_DIET
         val reference = Simulation.reference(scenario)
         // Code: format (J, W, A, L = AVIF live), responsive (r/-), lazy (o, b, a), video (A autoplay, C on click),
@@ -824,7 +824,7 @@ class LessonTest {
         assertEquals(0, stars("A r a C S s"))
     }
 
-    @Test fun e6GreenPipeline() {
+    @Test fun e7GreenPipeline() {
         val scenario = Scenario.GREEN_PIPELINE
         val reference = Simulation.reference(scenario)
         // Code: runners (A always on, D on demand), remote cache (c/-), test impact (t/-), heavy (E every commit,
@@ -870,7 +870,7 @@ class LessonTest {
         assertEquals(0, stars("D c t X 1 O 1"))
     }
 
-    @Test fun e7ChattyServices() {
+    @Test fun e5ChattyServices() {
         val scenario = Scenario.CHATTY_SERVICES
         val reference = Simulation.reference(scenario)
         // Code: cut (M, L modulith), protocol (J, G), master data (S, E), GPS TTL s, map TTL s, serverless (f/-).

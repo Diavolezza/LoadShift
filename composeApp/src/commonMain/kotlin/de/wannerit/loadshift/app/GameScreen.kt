@@ -142,7 +142,7 @@ private fun TopBar(game: GameController, onExit: () -> Unit) {
         if (!game.hasRenewal) Metric(t("Grid now"), "$intensity g/kWh", Palette.intensity(intensity))
         val totals = game.totals
         Metric(t("CO₂ so far"), if (game.hasRenewal) "${Format.tonnes(totals.emissions)} t" else "${Format.kilograms(totals.emissions)} kg")
-        // E4: the shop's own servers are not the topic; the assistant's goals take their place.
+        // E6: the shop's own servers are not the topic; the assistant's goals take their place.
         simulation.scenario.contract?.let {
             Metric(t("In the report"), "${Format.kilograms(game.totals.marketOperational)} kg")
         }
@@ -413,7 +413,7 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
                     } else {
                         add(t("CO₂ (kg)") to (Format.kilograms(you.emissions) to Format.kilograms(ref.emissions)))
                         add(t("of it embodied (kg)") to (Format.kilograms(you.embodied) to Format.kilograms(ref.embodied)))
-                        // E5: the network and the visitors' devices count too.
+                        // E4: the network and the visitors' devices count too.
                         fun energy(x: de.wannerit.loadshift.core.Totals) = x.facilityEnergy + x.networkEnergy + x.deviceEnergy
                         add(t("Energy (kWh)") to (Format.kilowattHours(energy(you)) to Format.kilowattHours(energy(ref))))
                     }

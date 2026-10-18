@@ -35,10 +35,10 @@ The app speaks English and German (switch on the start page); everything in this
 | E1 | Measure first | Profiling |
 | E2 | Growing data | Algorithmic complexity |
 | E3 | Hit or miss | Caching |
-| E4 | Right-sized AI | Green AI (Right-sizing Models) |
-| E5 | Data diet | Sustainable Web Design |
-| E6 | Green pipeline | Green CI/CD |
-| E7 | Chatty services | Green Software Architecture |
+| E4 | Data diet | Sustainable Web Design |
+| E5 | Chatty services | Green Software Architecture |
+| E6 | Right-sized AI | Green AI (Right-sizing Models) |
+| E7 | Green pipeline | Green CI/CD |
 
 | | Portfolio | Term |
 |---|---|---|

@@ -76,13 +76,13 @@ data class Policy(
     val training: TrainingConfig = TrainingConfig(),
     /** O9: qualities and eco mode of the streaming service. */
     val streaming: StreamingConfig = StreamingConfig(),
-    /** E4: who answers each kind of question, and the batching window. */
+    /** E6: who answers each kind of question, and the batching window. */
     val inference: InferenceConfig = InferenceConfig(),
-    /** E5: how heavy the shop's pages are. */
+    /** E4: how heavy the shop's pages are. */
     val pages: PageConfig = PageConfig(),
-    /** E6: the CI/CD pipeline and the test environments. */
+    /** E7: the CI/CD pipeline and the test environments. */
     val pipeline: PipelineConfig = PipelineConfig(),
-    /** E7: how the logistics system's services are cut and talk to each other. */
+    /** E5: how the logistics system's services are cut and talk to each other. */
     val services: ServiceConfig = ServiceConfig(),
     /** B12: the electricity contract. */
     val contract: Contract = Contract.GREY,
