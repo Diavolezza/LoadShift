@@ -220,8 +220,20 @@ private fun GoalBar(game: GameController) {
             val done = totals.trainingFinishedAt
             GoalItem(done != null, done != null || game.isFinished,
                 if (done != null) t("Training done: %@", timeText(done)) else t("Training done by the end of day %lld", scenario.days))
-            if (!game.hasInteractive) GoalItem((change ?: 0) < 0, change != null,
-                if (change == null) t("CO₂ vs. reference") else t("CO₂ vs. reference: %@", Format.changePermille(change)))
+            if (!game.hasInteractive) {
+                // O8: CO₂ so far would favour waiting for the wind; CO₂ per percent of training done is fair (like the
+                // batch intensity in O2 and O3) – the SCI idea on a small scale: emissions per unit of work.
+                // Compared with the reference after the same amount of work, not over its whole run.
+                val model = scenario.training!!
+                fun perPercent(operational: Long, done: Long) = operational / (done * 100.0 / model.work)
+                val mine = if (totals.trainingDone > 0) perPercent(totals.operational, totals.trainingDone) else null
+                val refAt = game.reference.history.firstOrNull { it.trainingDone >= totals.trainingDone && it.trainingDone > 0 }
+                    ?: game.reference.history.last()
+                val refPerPercent = perPercent(refAt.emissionsSoFar - refAt.embodiedSoFar, refAt.trainingDone)
+                GoalItem(mine != null && mine <= refPerPercent * 1.001, mine != null,
+                    if (mine == null) t("CO₂ per percent of training: none trained yet")
+                    else t("CO₂ per percent of training: %@ kg (reference %@ kg)", Format.number(mine / 1e9, 1), Format.number(refPerPercent / 1e9, 1)))
+            }
         }
         if (scenario.location != null) {
             GoalItem(totals.rulesBroken == 0, true, if (totals.rulesBroken == 0) t("Customer data stays in Germany") else t("Customer data moved abroad"))

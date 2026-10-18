@@ -786,6 +786,9 @@ music. Not taken over: maps, paths, the tower-and-creep rules, opponents, networ
   now. The first star needs the training done by the deadline. Weather: calm, windy, calm.
 - App: training panel (progress, servers, cap, schedule, hours left against hours to the deadline); the lower lane
   shows when the GPUs train, the progress, and ahead the plan with the rules now (`Simulation.projectedHistory`).
+- During the run the goal bar shows the CO₂ per percent of training done, compared with the reference after the
+  same amount of work – CO₂ so far would favour waiting for the wind (like the batch intensity in scenarios 2 and 3;
+  the SCI idea on a small scale: emissions per unit of work).
 - Goals ★★ −20 %, ★★★ −27 %.
 
 | Rules | CO₂ vs. reference | Stars |

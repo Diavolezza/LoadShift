@@ -414,6 +414,10 @@ internal val GERMAN: Map<String, String> = mapOf(
         "CO₂ %@ oder besser",
     "CO₂ from %@" to
         "CO₂ ab %@",
+    "CO₂ per percent of training: %@ kg (reference %@ kg)" to
+        "CO₂ pro Prozent Training: %1\$@ kg (Referenz %2\$@ kg)",
+    "CO₂ per percent of training: none trained yet" to
+        "CO₂ pro Prozent Training: noch nichts trainiert",
     "CO₂ per quarter, t – dark: electricity, light: hardware; red: Warsaw, green: Paris; black line: reference" to
         "CO₂ je Quartal, t – dunkel: Strom, hell: Hardware; rot: Warschau, grün: Paris; schwarzer Strich: Referenz",
     "CO₂ so far" to
