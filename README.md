@@ -40,8 +40,13 @@ The app speaks English and German (switch on the start page); everything in this
 | E6 | Green pipeline | Green CI/CD |
 | E7 | Chatty services | Green Software Architecture |
 
-In German the operations scenarios are called B1–B9 ("Betrieb"). A star in one scenario opens the next; teachers can
-open all scenarios in the About dialog. More scenarios are planned (`docs/CONCEPT.md`, section 9).
+| | Portfolio | Term |
+|---|---|---|
+| P1 | Inventory | Carbon Accounting |
+
+In German the operations scenarios are called B1–B12 ("Betrieb"). A star in one scenario opens the next; teachers can
+open all scenarios in the About dialog. `docs/CONCEPT.md`, section 9.4, maps every scenario to the learning goals of the
+iSAQB Advanced Level module GREEN, for courses that follow it. More scenarios are planned (section 9).
 
 ## Running the game
 

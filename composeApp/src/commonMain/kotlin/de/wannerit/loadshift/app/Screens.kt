@@ -134,7 +134,7 @@ fun ScenarioListScreen(onSelect: (Scenario) -> Unit) {
                 }
                 LanguageSwitch()
             }
-            for ((track, title) in listOf(Track.OPERATIONS to t("Operations"), Track.ENGINEERING to t("Engineering"))) {
+            for ((track, title) in listOf(Track.OPERATIONS to t("Operations"), Track.ENGINEERING to t("Engineering"), Track.PORTFOLIO to t("Portfolio"))) {
                 Txt(title, Type.title)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
                     for (scenario in Scenario.ALL.filter { it.track == track }) {
@@ -191,7 +191,9 @@ private fun ScenarioCard(scenario: Scenario, unlocked: Boolean, onClick: () -> U
         }
         Txt(t(scenario.title), Type.heading)
         Txt(ScenarioTexts.of(scenario).term, Type.style(16, FontWeight.SemiBold, Palette.accent))
-        Txt("${t(scenario.setting.region.title)} · ${t(scenario.setting.season.title)} · ${days(scenario.days)}", Type.style(17, color = Palette.secondary))
+        val portfolio = scenario.portfolio
+        Txt(if (portfolio != null) t("%lld applications · a year", portfolio.apps.size)
+            else "${t(scenario.setting.region.title)} · ${t(scenario.setting.season.title)} · ${days(scenario.days)}", Type.style(17, color = Palette.secondary))
         if (!unlocked) {
             val before = Scenario.ALL.firstOrNull { it.number == scenario.unlockAfter }?.shownLabel ?: ""
             Txt(t("Earn a star in scenario %@ first.", before), Type.callout)
@@ -277,11 +279,13 @@ fun Term(texts: ScenarioTexts, modifier: Modifier = Modifier) {
 /** The play screen as the scenario starts, drawn small: not clickable, with numbered markers for the four areas. */
 @Composable
 private fun ScreenPreview(scenario: Scenario, modifier: Modifier) {
-    val game = remember(scenario) { GameController(scenario) }
+    val portfolio = remember(scenario) { scenario.portfolio?.let { PortfolioController(scenario) } }
+    val game = remember(scenario) { if (portfolio == null) GameController(scenario) else null }
     val width = 1366.dp
     val height = 960.dp
     // Marker positions on the full-size screen (GameScreen at 1366 × 960: panel 380 wide, timeline 288 high).
-    val markers = listOf(470.dp to 36.dp, 40.dp to 150.dp, (width - 36.dp) to 136.dp, (width - 36.dp) to (height - 258.dp))
+    val markers = if (portfolio != null) listOf(470.dp to 36.dp, 40.dp to 150.dp, 300.dp to 345.dp, (width - 36.dp) to 136.dp)
+        else listOf(470.dp to 36.dp, 40.dp to 150.dp, (width - 36.dp) to 136.dp, (width - 36.dp) to (height - 258.dp))
     BoxWithConstraints(modifier) {
         val scale = maxWidth / width
         Box(
@@ -292,7 +296,7 @@ private fun ScreenPreview(scenario: Scenario, modifier: Modifier) {
                 Modifier.wrapContentSize(Alignment.TopStart, unbounded = true).requiredSize(width, height)
                     .graphicsLayer { scaleX = scale; scaleY = scale; transformOrigin = TransformOrigin(0f, 0f) },
             ) {
-                GameScreen(game, onExit = {})
+                if (portfolio != null) PortfolioScreen(portfolio, onExit = {}) else GameScreen(game!!, onExit = {})
             }
             // On top: takes every click, so the preview is only a picture; the mouse wheel still scrolls the page.
             Box(Modifier.matchParentSize().pointerInput(Unit) {
@@ -325,7 +329,15 @@ private fun Marker(number: Int, modifier: Modifier = Modifier) {
 private fun SideCard(scenario: Scenario, texts: ScenarioTexts, onStart: () -> Unit, modifier: Modifier) {
     val perServer = scenario.fleet.firstOrNull()?.kind?.capacity ?: 0
     Column(modifier.background(Palette.panel, RoundedCornerShape(20.dp)).padding(28.dp), verticalArrangement = Arrangement.spacedBy(22.dp)) {
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        val portfolio = scenario.portfolio
+        if (portfolio != null) Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            fun count(h: de.wannerit.loadshift.core.Hosting) = portfolio.apps.count { it.hosting == h }
+            Fact(t("%lld applications in the own data center", count(de.wannerit.loadshift.core.Hosting.ON_PREM)))
+            Fact(t("%lld applications in the cloud", count(de.wannerit.loadshift.core.Hosting.CLOUD)))
+            Fact(t("%lld applications as SaaS", count(de.wannerit.loadshift.core.Hosting.SAAS)))
+            Fact(t("Budget for data and measures: %@ €", Format.number(portfolio.budget.toDouble())))
+            Fact(t("Counted: a year, location-based"))
+        } else Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             val sites = scenario.location?.sites
             Fact(if (sites != null) t("%@ and %@", t(sites[0].region.title), t(sites[1].region.title)) else t(scenario.setting.region.title))
             Fact(t(scenario.setting.season.title))

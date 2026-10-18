@@ -319,7 +319,8 @@ account are needed; the lecturer collects the cards. No online ranking at first 
 
 ## 9 Scenarios (campaign)
 
-Two tracks (D17): **Operations** – running the data center – and **Engineering** – the software that runs in it.
+Three tracks (D17, D26): **Operations** – running the data center –, **Engineering** – the software that runs in
+it – and **Portfolio** – all applications of a company, in its own data center, in the cloud and as SaaS.
 Each scenario introduces one idea. Region and season are chosen so that the idea has a clear effect. The
 Engineering track opens after scenario 1, because it builds on the SCI per request from the first debrief.
 
@@ -373,6 +374,63 @@ benchmarks; for a typical web service waiting on the database the language matte
 **Not in the game:** writing or reading real code and measuring it. That belongs in exercises of the lecture
 (for example measuring Java code with RAPL-based tools); measured numbers from such exercises can become the values
 of backlog items.
+
+### 9.3 Portfolio
+
+The third track looks at a company's application portfolio instead of one system (D26). There is no clock: the
+player decides for a year at a time, and the result is counted for the year, location-based. Each application has
+a hosting path, a yearly cost, a short description and one measure with a one-off cost and an effect in percent of
+its footprint. The player does not see the real footprint – only what the sources of data show, and how good they
+are. Better data cost money from the same budget as the measures.
+
+| # | Title | Setting | Length | New controls | Idea |
+|---|---|---|---|---|---|
+| P1 | Inventory | 18 applications: 6 in the own data center (Stuttgart, 1,000 MWh a year, 400 g/kWh), 6 with a cloud provider (Frankfurt), 6 as SaaS; budget 150,000 € | a year | how the own data center's metered energy is split (by servers in the CMDB, free; by CPU time from the monitoring, 5,000 €; measured power per server, 20,000 €), cloud recalculated from the usage data location-based (8,000 €) instead of the provider's market-based tool, data asked from each SaaS supplier (2,000 € each, one supplier sends none), one measure per application | Each hosting path has its own source of data, and each counts in its own way. The provider's tool counts its certificates: the cloud looks almost clean, and the largest single emitter (an analytics cluster) looks like nothing. Servers as the key make many small servers look big; CPU time hides idle servers that are on around the clock (test environments). Spend-based numbers make the expensive CRM look large and the cheap video conferencing and file sharing small. The plan follows the data; the stars count what really changes. Term: Carbon Accounting. |
+
+**As built (P1).** The first star needs the inventory within ±15 % of the real footprint (so the cloud must be
+recalculated) and the budget kept; ★★ −20 %, ★★★ −25 % next year. With the free data a careful plan (the
+measures with the most expected saving per euro) reaches −12.5 % and no star; with the cloud recalculated −24.6 %
+(★★); CPU time instead of servers −22.7 % (★★); measured power and the cloud recalculated −25.6 % to −26 % (★★★);
+the best plan with perfect knowledge and no data bought −30 %. Buying every source of data is not needed – the
+suppliers' data change one or two decisions. The spend-based factor (120 g CO₂e per €) and the provider's
+remaining share (3 %) are game values; spend-based factors per industry come from environmentally extended
+input-output tables [S39], the dual reporting of Scope 2 from the GHG Protocol [S40].
+
+**Further portfolio scenarios (planned).** P2 *Where to start*: a list of measures with cost and effect, the most
+CO₂ per euro first (marginal abatement cost curve), and the measure everybody wants that saves little. P3 *Tidy up
+with TIME*: three years in quarters; the applications in the four TIME quadrants (tolerate, invest, migrate,
+eliminate) with measures for each; a replaced application saves only once it is switched off. P4 *Out of the cloud?*
+– an application moves into the own data center for data sovereignty; utilization, PUE and the grid decide. P5
+*Cost as a proxy?* – steering by cost alone, and where it leads astray. P6 *Rebound* – savings make an
+application cheaper, its use grows.
+
+### 9.4 Scenarios and the iSAQB module GREEN
+
+For courses along the iSAQB Advanced Level module GREEN [S35] (learning goals LG, blocks 1–9). Labels as shown in
+the app (O = operations, B in German).
+
+| Scenario | Learning goals |
+|---|---|
+| O1 Night shift | LG 1-4 energy efficiency, LG 7-1 power-load relation, LG 7-4 overprovisioning |
+| O2 Wait for the sun | LG 1-4 CO₂ emission efficiency, LG 7-5 time shifting |
+| O3 When the wind drops | LG 7-5 time shifting, LG 3-2 deadlines against green hours |
+| O4 Headroom | LG 7-4 overprovisioning, LG 7-5 autoscaling, LG 3-2 availability against efficiency |
+| O5 Consolidation | LG 1-4 hardware efficiency, LG 7-1, LG 7-2 virtual machines |
+| O6 Heat wave | LG 7-1 PUE |
+| O7 Old iron | LG 1-3, LG 1-4 hardware efficiency, LG 7-1 |
+| O8 Training run | LG 8-1 AI's footprint, LG 7-5 time shifting |
+| O9 Eco mode | LG 6-4 demand shaping, LG 3-2 quality against efficiency, LG 1-3 data traffic |
+| O10 Two sites | LG 7-5 location shifting, LG 7-4 geographical distribution |
+| O11 Green on paper | LG 2-2 GHG Protocol Scope 2, LG 7-1 REF, LG 7-3 greenwashing risks |
+| O12 Dark doldrums | LG 1-4 all three fields of action, LG 7-5, LG 8-1 |
+| E1 Measure first | LG 4-2 narrowing down hotspots, LG 4-3, LG 5-1 sensible starting points |
+| E2 Growing data | LG 5-2 complexity, LG 5-3 data handling |
+| E3 Hit or miss | LG 5-2 caches, LG 3-2 freshness against efficiency |
+| E4 Right-sized AI | LG 8-2, LG 8-3, LG 8-4 |
+| E5 Data diet | LG 6-4 Web Sustainability Guidelines, LG 1-3 data traffic, LG 3-2 |
+| E6 Green pipeline | LG 9-1 to LG 9-4 |
+| E7 Chatty services | LG 6-1 architecture styles, LG 6-2 communication |
+| P1 Inventory | LG 2-2 Scope 2, LG 4-3 providers' carbon tools, LG 4-4 measuring in enterprise environments, LG 7-3 |
 
 Each scenario has:
 
@@ -1049,6 +1107,7 @@ the numbers stay so that saved stars keep their scenario):
 | D23 | Location Shifting (scenario 10) | the player decides per job before the start, not during the game: moving work between sites is a planning decision, and the data must be moved first; the limits come from the jobs themselves (data size, database latency, data residency), so that "everything to Norway" is wrong and the choice needs judgement |
 | D24 | Capstone (scenario 11) | stars by CO₂ reduction, not a hard SCI target; the three kinds of work share one draft in tabs, so the controls stay those of the scenarios that introduced them; the forecast update is the one new twist, because a plan days ahead is where a forecast error costs most |
 | D25 | "What if" and replays | settings in the debrief's "what if" that reach more stars than the player's best so far are shown without their label ("a setting you have not found yet") – the numbers stay, the recipe does not; a "start over" button in the goal bar returns to the scenario's starting rules and choices (a second click confirms) |
+| D26 | Portfolio track | a third track for a company's applications (P1 "Inventory" first); no clock, a year at a time; the data the player buys come from the same budget as the measures; the stars count the real footprint, location-based; opens after O11 "Green on paper", which teaches location-based and market-based |
 
 ---
 
@@ -1094,3 +1153,5 @@ the numbers stay so that saved stars keep their scenario):
 | S36 | Association of Issuing Bodies (AIB): *European Residual Mixes 2024* (residual mixes after the disclosure of guarantees of origin; average 452 g/kWh; Germany's residual mix well above its production mix). https://www.aib-net.org/facts/european-residual-mix/2024 |
 | S37 | GHG Protocol: *Public consultations on Scope 2* (2025): hourly matching and deliverability for market-based reporting, dual reporting kept, final standard expected 2027. https://ghgprotocol.org/blog/release-ghg-protocol-opens-public-consultations-scope-2-and-electricity-sector-consequential |
 | S38 | Google: *24/7 carbon-free energy* (hourly CFE score of its data centers, 66 % in the latest report). https://blog.google/around-the-globe/google-europe/how-carbon-free-energy-around-the-clock-can-work/ |
+| S39 | US EPA: *Supply Chain Greenhouse Gas Emission Factors v1.3 by NAICS-6* (spend-based factors from an environmentally extended input-output model). https://catalog.data.gov/dataset/supply-chain-greenhouse-gas-emission-factors-v1-2-by-naics-6 |
+| S40 | GHG Protocol: *Scope 2 Guidance* (2015): Scope 2 reported both location-based and market-based. https://ghgprotocol.org/scope-2-guidance |

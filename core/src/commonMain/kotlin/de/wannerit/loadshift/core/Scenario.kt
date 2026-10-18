@@ -1,7 +1,7 @@
 package de.wannerit.loadshift.core
 
 /** The two strands of the campaign (docs/CONCEPT.md 9, D17). */
-enum class Track { OPERATIONS, ENGINEERING }
+enum class Track { OPERATIONS, ENGINEERING, PORTFOLIO }
 
 /** A scenario: region, season, length, fleet, load, the controls it unlocks and its goals (docs/CONCEPT.md 8.3 and 9). */
 data class FleetEntry(val kind: ServerKind, val count: Int, val ageYears: Int = 0)
@@ -149,6 +149,8 @@ data class Scenario(
     val services: ServiceModel? = null,
     /** B12: electricity contracts and three ways to count CO₂ (operational counts hourly matched). */
     val contract: ContractModel? = null,
+    /** Portfolio track: the company's applications, a year at a time. */
+    val portfolio: PortfolioModel? = null,
 ) {
     /** Expected interactive work at a tick: the web load or the VMs' profiles (what an operator can plan with). */
     fun expectedDemand(tick: Int): Int = interactive.expected(tick) + vms.sumOf { it.expectedMilli(tick) } / 1_000
@@ -659,6 +661,58 @@ data class Scenario(
             services = ServiceModel(),
         )
 
-        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, OLD_IRON, TRAINING_RUN, ECO_MODE, TWO_SITES, GREEN_ON_PAPER, DARK_DOLDRUMS, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS, RIGHT_SIZED_AI, DATA_DIET, GREEN_PIPELINE, CHATTY_SERVICES)
+        /**
+         * P1, "Inventory": eighteen applications in the own data center, in the cloud and as SaaS. Each hosting path
+         * has its own source of data; better data costs from the same budget as the measures.
+         */
+        val INVENTORY = Scenario(
+            number = 201, label = "P1", track = Track.PORTFOLIO, unlockAfter = 12,
+            title = "Inventory", setting = GridSetting(GridRegion.GERMANY, Season.YEAR), days = 1,
+            seed = 21, fleet = emptyList(), interactive = InteractiveLoad(peak = 0), controls = emptySet(),
+            goals = StarGoals(200, SpecialGoal.Reduction(250)),
+            portfolio = PortfolioModel(
+                budget = 150_000, meterKWh = 1_000_000, gridGrams = 400,
+                apps = listOf(
+                    PortfolioApp("ERP", Hosting.ON_PREM, "8 large database servers, busy around the clock", 900_000, 104_000,
+                        Measure("Move to new, more efficient servers", 120_000, 35), servers = 8, cpuPermille = 300),
+                    PortfolioApp("Data warehouse", Hosting.ON_PREM, "10 servers: loads at night, reports by day", 400_000, 120_000,
+                        Measure("Archive old data, shorten the loads", 60_000, 30), servers = 10, cpuPermille = 450),
+                    PortfolioApp("Intranet and wiki", Hosting.ON_PREM, "24 small servers", 80_000, 24_000,
+                        Measure("Consolidate onto 4 servers", 40_000, 50), servers = 24, cpuPermille = 50),
+                    PortfolioApp("Test environments", Hosting.ON_PREM, "8 older servers, on around the clock, used on weekdays 8–18", 60_000, 88_000,
+                        Measure("Switch off at night and at weekends", 15_000, 60), servers = 8, cpuPermille = 30),
+                    PortfolioApp("Mail", Hosting.ON_PREM, "8 servers", 120_000, 24_000,
+                        Measure("Archive old mailboxes", 20_000, 20), servers = 8, cpuPermille = 70),
+                    PortfolioApp("File server", Hosting.ON_PREM, "12 servers with 400 TB of disks", 70_000, 40_000,
+                        Measure("Delete duplicates and old files", 25_000, 40), servers = 12, cpuPermille = 100),
+                    PortfolioApp("Web shop", Hosting.CLOUD, "Autoscaling, region Frankfurt", 350_000, 70_000,
+                        Measure("Rightsize the instances", 20_000, 30)),
+                    PortfolioApp("Analytics platform", Hosting.CLOUD, "Cluster of 120 VMs around the clock, region Frankfurt", 300_000, 120_000,
+                        Measure("Move to a region with clean power (Stockholm)", 30_000, 80)),
+                    PortfolioApp("Recommendation model", Hosting.CLOUD, "Trained every night on GPUs, region Frankfurt", 250_000, 90_000,
+                        Measure("Smaller model, trained once a week", 40_000, 50)),
+                    PortfolioApp("Customer portal", Hosting.CLOUD, "Region Frankfurt", 90_000, 25_000,
+                        Measure("Add caching", 20_000, 30)),
+                    PortfolioApp("Backup storage", Hosting.CLOUD, "2 PB, region Frankfurt", 60_000, 15_000,
+                        Measure("Shorter retention, cold storage class", 10_000, 50)),
+                    PortfolioApp("Build pipeline", Hosting.CLOUD, "Build agents always on, region Frankfurt", 110_000, 30_000,
+                        Measure("Build agents only on demand", 15_000, 50)),
+                    PortfolioApp("CRM", Hosting.SAAS, "1,500 users", 600_000, 15_000,
+                        Measure("Clean up attachments and old records", 30_000, 30)),
+                    PortfolioApp("Office and collaboration", Hosting.SAAS, "3,000 users", 400_000, 40_000,
+                        Measure("Limit storage quotas", 20_000, 20)),
+                    PortfolioApp("Video conferencing", Hosting.SAAS, "3,000 users, about 9,000 hours of meetings a week", 120_000, 45_000,
+                        Measure("Camera off by default in large meetings, 720p", 10_000, 40)),
+                    PortfolioApp("HR system", Hosting.SAAS, "3,000 employees", 150_000, 4_000,
+                        Measure("Change to another supplier", 60_000, 30), supplierAnswers = false),
+                    PortfolioApp("Cloud file sharing", Hosting.SAAS, "Marketing has stored its videos there for years", 60_000, 35_000,
+                        Measure("Retention rule: delete old videos", 15_000, 60)),
+                    PortfolioApp("Design tool", Hosting.SAAS, "120 licences", 90_000, 6_000,
+                        Measure("Cancel unused licences", 10_000, 20)),
+                ),
+            ),
+        )
+
+        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, OLD_IRON, TRAINING_RUN, ECO_MODE, TWO_SITES, GREEN_ON_PAPER, DARK_DOLDRUMS, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS, RIGHT_SIZED_AI, DATA_DIET, GREEN_PIPELINE, CHATTY_SERVICES, INVENTORY)
     }
 }

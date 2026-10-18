@@ -346,7 +346,11 @@ private fun GoalBar(game: GameController) {
 
 /** Back to the scenario's starting state – rules and choices too; a second click within three seconds confirms. */
 @Composable
-private fun StartOver(game: GameController) {
+private fun StartOver(game: GameController) = StartOverChip { game.startOver() }
+
+/** "Start over" with a confirming second click. */
+@Composable
+fun StartOverChip(onStartOver: () -> Unit) {
     var asking by remember { mutableStateOf(false) }
     LaunchedEffect(asking) {
         if (asking) { delay(3_000); asking = false }
@@ -356,14 +360,14 @@ private fun StartOver(game: GameController) {
         Type.style(13, FontWeight.SemiBold, if (asking) Color.White else Palette.ink),
         Modifier.clip(RoundedCornerShape(50)).background(if (asking) Palette.red else Palette.background)
             .border(1.dp, Palette.divider, RoundedCornerShape(50))
-            .clickable { if (asking) { asking = false; game.startOver() } else asking = true }
+            .clickable { if (asking) { asking = false; onStartOver() } else asking = true }
             .padding(horizontal = 10.dp, vertical = 4.dp),
         maxLines = 1,
     )
 }
 
 @Composable
-private fun GoalItem(ok: Boolean, started: Boolean, text: String) {
+fun GoalItem(ok: Boolean, started: Boolean, text: String) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         if (started) CheckMark(ok, warning = !ok) else CheckMark(false)
         Txt(text, Type.callout, maxLines = 1)
@@ -492,7 +496,7 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
 
 /** A simple table: first column left, the others right. */
 @Composable
-private fun Table(header: List<String>, rows: List<List<String>>, firstWidth: Float = 0.5f) {
+fun Table(header: List<String>, rows: List<List<String>>, firstWidth: Float = 0.5f) {
     Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
         Row {
             header.forEachIndexed { i, h ->

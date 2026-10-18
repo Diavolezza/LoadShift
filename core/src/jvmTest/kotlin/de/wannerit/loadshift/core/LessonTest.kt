@@ -946,4 +946,49 @@ class LessonTest {
         assertEquals(3, stars("hourly, auto 80"))
         assertEquals(0, stars("hourly"))
     }
+
+    @Test fun p1Inventory() {
+        val scenario = Scenario.INVENTORY
+        val model = scenario.portfolio!!
+        val video = model.indexOf("Video conferencing")
+        val sharing = model.indexOf("Cloud file sharing")
+        val saas = model.apps.indices.filter { model.apps[it].hosting == Hosting.SAAS }.toSet()
+        fun inv(key: OnPremKey, cloud: Boolean, asked: Set<Int>) = Inventory(key, setOf(OnPremKey.SERVERS, key), cloud, asked)
+        val inventories = listOf(
+            "servers, provider, spend" to inv(OnPremKey.SERVERS, false, emptySet()),
+            "servers, recalculated, spend" to inv(OnPremKey.SERVERS, true, emptySet()),
+            "cpu time, recalculated, spend" to inv(OnPremKey.CPU_TIME, true, emptySet()),
+            "cpu time, recalculated, video + sharing" to inv(OnPremKey.CPU_TIME, true, setOf(video, sharing)),
+            "power, provider, all suppliers" to inv(OnPremKey.POWER, false, saas),
+            "power, recalculated, spend" to inv(OnPremKey.POWER, true, emptySet()),
+            "power, recalculated, video + sharing" to inv(OnPremKey.POWER, true, setOf(video, sharing)),
+            "power, recalculated, all suppliers" to inv(OnPremKey.POWER, true, saas),
+        )
+        val lines = mutableListOf("P1 Inventory: real footprint ${model.trueKg / 1_000} t", "  inventory                                inventory t  error %  data €  plan €  reduction %  stars")
+        val results = inventories.associate { (name, i) ->
+            val r = model.result(i, model.greedyPlan(i))
+            lines += "  " + name.padEnd(40) + "%11d".format(r.inventoryKg / 1_000) + "%9.1f".format(r.inventoryError / 10.0) +
+                "%8d".format(r.inventoryCost) + "%8d".format(r.planCost) + "%13.1f".format(r.reductionPermille / 10.0) + "  " + "★".repeat(model.stars(r, scenario.goals))
+            name to r
+        }
+        val all = model.apps.indices.toList()
+        var best = 0L
+        for (mask in 0 until (1 shl all.size)) {
+            val plan = all.filter { mask shr it and 1 == 1 }.toSet()
+            if (model.planCost(plan) <= model.budget) best = maxOf(best, model.result(Inventory(), plan).reductionPermille)
+        }
+        lines += "  best plan with perfect knowledge and no data bought: %.1f %%".format(best / 10.0)
+        report(201, lines)
+        fun stars(name: String) = model.stars(results.getValue(name), scenario.goals)
+        // The free data: the provider's market-based numbers make the cloud look clean – the inventory is far off.
+        assertEquals(0, stars("servers, provider, spend"))
+        assertEquals(0, stars("power, provider, all suppliers"))
+        // Recalculating the cloud: one or two stars; CPU time hides the idle test environments.
+        assertEquals(2, stars("servers, recalculated, spend"))
+        assertEquals(2, stars("cpu time, recalculated, video + sharing"))
+        // Measured power and the cloud recalculated: three stars.
+        assertEquals(3, stars("power, recalculated, spend"))
+        assertEquals(3, stars("power, recalculated, video + sharing"))
+        assertEquals(3, stars("power, recalculated, all suppliers"))
+    }
 }

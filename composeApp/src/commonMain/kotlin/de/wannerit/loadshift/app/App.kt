@@ -45,6 +45,7 @@ private sealed interface Screen {
     data object List : Screen
     data class Briefing(val scenario: Scenario) : Screen
     data class Game(val controller: GameController) : Screen
+    data class Portfolio(val controller: PortfolioController) : Screen
 }
 
 @Composable
@@ -55,7 +56,10 @@ fun App(options: LaunchOptions = LaunchOptions()) {
     var screen by remember { mutableStateOf(initialScreen(options)) }
     when (val s = screen) {
         Screen.List -> ScenarioListScreen { screen = Screen.Briefing(it) }
-        is Screen.Briefing -> BriefingScreen(s.scenario, onStart = { screen = Screen.Game(GameController(s.scenario)) }, onBack = { screen = Screen.List })
+        is Screen.Briefing -> BriefingScreen(s.scenario, onStart = {
+            screen = if (s.scenario.portfolio != null) Screen.Portfolio(PortfolioController(s.scenario)) else Screen.Game(GameController(s.scenario))
+        }, onBack = { screen = Screen.List })
+        is Screen.Portfolio -> PortfolioScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List })
         is Screen.Game -> GameScreen(s.controller, onExit = { s.controller.saveDraft(); screen = Screen.Briefing(s.controller.scenario) },
             onNext = { s.controller.saveDraft(); screen = Screen.Briefing(it) },
             onOverview = { s.controller.saveDraft(); screen = Screen.List })
@@ -66,6 +70,20 @@ private fun initialScreen(options: LaunchOptions): Screen {
     val scenario = Scenario.ALL.firstOrNull { it.number == options.scenario } ?: if (options.play) Scenario.NIGHT_SHIFT else null
     scenario ?: return Screen.List
     if (!options.play) return Screen.Briefing(scenario)
+    if (scenario.portfolio != null) {
+        val p = PortfolioController(scenario)
+        if (options.careful) {
+            // Like a careful manager: measured power, the cloud recalculated, the two suppliers with much data asked,
+            // then the measures with the most expected saving per euro.
+            p.chooseKey(de.wannerit.loadshift.core.OnPremKey.POWER)
+            p.recalculate()
+            p.ask(p.model.indexOf("Video conferencing"))
+            p.ask(p.model.indexOf("Cloud file sharing"))
+            for (i in p.model.greedyPlan(p.inventory)) p.toggle(i)
+            if (options.ticks > 0) p.finish()
+        }
+        return Screen.Portfolio(p)
+    }
     val game = GameController(scenario)
     if (options.careful && game.scenario.contract != null) {
         // Like a careful player: 24/7 carbon-free, autoscaling at 80 %, jobs in the greenest hours.

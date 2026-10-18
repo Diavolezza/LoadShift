@@ -23,6 +23,21 @@ class ScenarioTexts(
 ) {
     companion object {
         fun of(scenario: Scenario): ScenarioTexts = when (scenario.number) {
+            201 -> ScenarioTexts(
+                situation = "The CIO wants to know where the IT's CO₂ comes from – and to cut it by a quarter next year. Eighteen applications: six in the own data center in Stuttgart, six with a cloud provider in Frankfurt, six as SaaS. Free of charge are the data center's meter and the servers in the CMDB, the cloud provider's carbon tool and the invoices. Better data costs money – from the same budget of 150,000 € that must also pay for the measures.",
+                idea = "Before you can cut, you have to know where. Each hosting path has its own source of data, and each source counts in its own way. Decide where better data is worth its money – then put the measures where the footprint is.",
+                screen = listOf(
+                    "At the top: your inventory, the saving your data expect and the budget left; below it your goals.",
+                    "Three columns – own data center, cloud, SaaS – with one application on each card: what it costs, what your data say and where the number comes from.",
+                    "On each card one measure: what it costs once and how much of the application's footprint it removes. Tick it to put it into the plan.",
+                    "The sources of data, and your plan: the budget, what you have spent and the button that carries the plan out.",
+                ),
+                comparedWith = "compared with this year's real footprint, location-based.",
+                rules = "The inventory at most 15 % from the real footprint, within the budget, and less CO₂ next year",
+                remark = "The free data got the footprint wrong in three ways. The cloud provider's tool counted its certificates: the cloud looked almost clean, and the analytics platform – the largest single emitter – looked like nothing; moving it to a clean region removed more CO₂ per euro than any other measure. Splitting the data center's energy by servers made the 24 small intranet servers look big; splitting it by CPU time made the test environments look tiny – but idle servers draw power too, and switching them off at night saved a lot. The invoices made the CRM look large because it is expensive; video conferencing and the old videos in the file sharing are cheap and large. Better data paid off where it changed a decision, and not where it did not. Real portfolios have the same three paths; the GHG Protocol asks for Scope 2 both location-based and market-based.",
+                term = "Carbon Accounting",
+                termText = "Counting an organisation's greenhouse gas emissions and allocating them to their causes – here, to the applications. Every number has a source and a method: metered or allocated, location-based or market-based, from activity data or from spend. The quality of the data decides which decisions the numbers can carry.",
+            )
             12 -> ScenarioTexts(
                 situation = "A week of the web shop in Germany: the shop runs with autoscaling at 50 %, six large batch jobs – backups, reloads, billing – start as soon as they arrive. The board has announced a \"green data center\" and asks for a contract that makes the report green. Three offers are on the table: green certificates, a contract with a wind farm, and 24/7 carbon-free energy.",
                 idea = "Not every green is equally green. Certificates change the report, not the electricity. A wind farm delivers clean energy only while the wind blows – the work done in those hours is clean. 24/7 carbon-free energy covers every hour, but it costs. Count in the hour, not on paper.",
