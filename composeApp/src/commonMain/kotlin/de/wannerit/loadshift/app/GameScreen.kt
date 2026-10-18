@@ -472,7 +472,6 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
                     }
                 }
                 Table(listOf("", t("You"), t("Reference")), rows.map { listOf(it.first, it.second.first, it.second.second) })
-                ResultCodeCard(scenario, game.stars, if (ref.emissions == 0L) 0 else (ref.emissions - you.emissions) * 1_000 / ref.emissions)
                 Txt(t("What you did is called %@. %@", texts.term, t(texts.termText)), Type.style(15, color = Palette.secondary))
                 Txt(t(texts.remark), Type.style(15, color = Palette.secondary))
                 WhatIf(game)

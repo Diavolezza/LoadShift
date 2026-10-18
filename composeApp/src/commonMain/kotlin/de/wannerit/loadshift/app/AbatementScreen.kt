@@ -332,7 +332,6 @@ private fun AbatementEnd(game: AbatementController, onExit: () -> Unit, onOvervi
                     listOf(t("Really saved, location-based"), (if (r.savedKg < 0) "+" else "−") + tonnes(kotlin.math.abs(r.savedKg))),
                     listOf(t("Spent (€)"), Format.number(r.costEuro.toDouble())),
                 ), firstWidth = 0.6f)
-                ResultCodeCard(scenario, game.stars, r.reductionPermille)
                 Txt(t("What you did is called %@. %@", texts.term, t(texts.termText)), Type.style(15, color = Palette.secondary))
                 Txt(t(texts.remark), Type.style(15, color = Palette.secondary))
                 AbatementWhatIf(game)

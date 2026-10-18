@@ -98,7 +98,6 @@ fun AboutContent(modifier: Modifier = Modifier) {
             }
         }
         ResetProgress()
-        CodeCheck()
     }
 }
 

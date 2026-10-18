@@ -426,7 +426,6 @@ private fun PortfolioEnd(game: PortfolioController, onExit: () -> Unit, onOvervi
                     listOf(t("Spent on data (€)"), Format.number(r.inventoryCost.toDouble())),
                     listOf(t("Spent on measures (€)"), Format.number(r.planCost.toDouble())),
                 ), firstWidth = 0.6f)
-                ResultCodeCard(scenario, game.stars, r.reductionPermille)
                 Txt(t("What you did is called %@. %@", texts.term, t(texts.termText)), Type.style(15, color = Palette.secondary))
                 Txt(t(texts.remark), Type.style(15, color = Palette.secondary))
                 PortfolioWhatIf(game)

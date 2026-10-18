@@ -47,8 +47,7 @@ The app speaks English and German (switch on the start page); everything in this
 
 In German the operations scenarios are called B1–B12 ("Betrieb"). A star in one scenario opens the next; teachers can
 open all scenarios or reset the progress in the About dialog. The start page continues with the next open
-scenario and shows one tab per track; a glossary collects every technical term. Each debrief gives a result code
-bound to the player's name, which teachers check in the About dialog. `docs/CONCEPT.md`, section 9.4, maps every scenario to the learning goals of the
+scenario and shows one tab per track; a glossary collects every technical term. `docs/CONCEPT.md`, section 9.4, maps every scenario to the learning goals of the
 iSAQB Advanced Level module GREEN, for courses that follow it. More scenarios are planned (section 9).
 
 ## Running the game

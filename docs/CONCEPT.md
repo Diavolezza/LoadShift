@@ -524,16 +524,13 @@ After each step the game is played by a person before the next step begins (**pl
 | 6 | Embodied emissions, buying/retiring, monthly time scale, SCI | scenario 6; **play test** |
 | 7 | AI training with power cap; streaming eco mode | scenarios 7 and 8; **play test** |
 | 8 | Two sites | scenarios 9 and 10; **play test** |
-| 9 | Free play, scenario codes, result cards, lexicon | **play test in a lecture** – glossary and result codes built (D28), free play open |
+| 9 | Free play, scenario codes, result cards, lexicon | **play test in a lecture** – glossary built (D28); result codes built and removed again (not needed); free play open |
 | 10 | Look and sound, App Store texts and screenshots | release |
 
 **As built in step 9, part 1** (D28): a **glossary** reached from the start page – every scenario's technical term
 with its explanation and the scenarios that teach it (open ones start from there), plus six general terms (carbon
-intensity, CO₂e, idle power, location-based and market-based, Scope 1–3, SCI). A **result code** on every debrief:
-the player types a name (kept on the device), the app shows `LS-<scenario number>-<stars>-<CO₂ change in per mille,
-N for more>-<check>`, the check an FNV-1a hash of the normalized name and the numbers in five characters. Teachers
-check a code with the name in the About dialog. No server; the hash is public with the source, so it keeps honest
-players honest – it stops copying a classmate's code, not a determined forger.
+intensity, CO₂e, idle power, location-based and market-based, Scope 1–3, SCI). Result codes bound to the player's
+name were built and taken out again: the courses do not need them.
 
 **As built in step 1** (simulation core, then in Swift; ported to Kotlin in `:core`, D14):
 
@@ -1123,7 +1120,7 @@ the numbers stay so that saved stars keep their scenario):
 | D25 | "What if" and replays | settings in the debrief's "what if" that reach more stars than the player's best so far are shown without their label ("a setting you have not found yet") – the numbers stay, the recipe does not; a "start over" button in the goal bar returns to the scenario's starting rules and choices (a second click confirms) |
 | D26 | Portfolio track | a third track for a company's applications (P1 "Inventory" first); no clock, a year at a time; the data the player buys come from the same budget as the measures; the stars count the real footprint, location-based; opens after O11 "Green on paper", which teaches location-based and market-based |
 | D27 | Order of the Engineering scenarios | along the blocks of the iSAQB module GREEN: code (E1–E3), the page and the architecture (E4 Data diet, E5 Chatty services), AI (E6 Right-sized AI), the development process (E7 Green pipeline); the scenario numbers in the code stay (104–107), so stars kept on a device stay with their scenario – only the labels and the order of opening changed |
-| D28 | Results in a course | a result code per debrief, bound to the player's name by a check sum, checked in the About dialog – instead of an online ranking (D6) and without a server; a glossary of all technical terms |
+| D28 | Glossary and results in a course | a glossary of all technical terms on the start page; no result codes or ranking – the courses do not need them (revises D6) |
 
 ---
 
