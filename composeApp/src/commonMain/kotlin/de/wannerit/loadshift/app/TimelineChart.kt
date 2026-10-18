@@ -35,10 +35,10 @@ import de.wannerit.loadshift.core.Simulation
  * uncertainty band – and below it the load and capacity, or one row per batch job. The vertical line is now.
  */
 /** What the lower lane shows when a scenario has more than one kind of work (O11: it follows the panel's tab). */
-enum class Lane { LOAD, JOBS, TRAINING }
+enum class Lane { LOAD, JOBS, TRAINING, ALL }
 
 @Composable
-fun TimelineChart(simulation: Simulation, version: Int, modifier: Modifier = Modifier, other: Pair<String, Simulation>? = null, lane: Lane? = null) {
+fun TimelineChart(simulation: Simulation, version: Int, modifier: Modifier = Modifier, other: Pair<String, Simulation>? = null, lane: Lane? = null, siteName: String? = null) {
     val measurer = rememberTextMeasurer()
     // Where the mouse is: the chart shows the values at that time.
     var hover by remember { mutableStateOf<Offset?>(null) }
@@ -53,16 +53,16 @@ fun TimelineChart(simulation: Simulation, version: Int, modifier: Modifier = Mod
         },
     ) {
         // Reading the version redraws the chart after every tick.
-        if (version >= 0) TimelineDrawing(simulation, measurer, this, hover, other, lane).draw()
+        if (version >= 0) TimelineDrawing(simulation, measurer, this, hover, other, lane, siteName).draw()
     }
 }
 
-private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeasurer, val scope: DrawScope, val hover: Offset?, val other: Pair<String, Simulation>? = null, val lane: Lane? = null) {
+private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeasurer, val scope: DrawScope, val hover: Offset?, val other: Pair<String, Simulation>? = null, val lane: Lane? = null, val siteName: String? = null) {
     val scenario = simulation.scenario
     val start = scenario.startTick
     val end = scenario.endTick
     val now = minOf(simulation.tick, end)
-    val batchLane = lane == Lane.JOBS || (lane == null && scenario.interactive.peak == 0 && simulation.jobs.isNotEmpty())
+    val batchLane = lane == Lane.JOBS || lane == Lane.ALL || (lane == null && scenario.interactive.peak == 0 && simulation.jobs.isNotEmpty())
     val density = scope.density
     val left = 44f * density
     val right = scope.size.width - (if (batchLane) 130f else if (scenario.caching != null) 100f else 74f) * density
@@ -79,7 +79,7 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
         val laneGap = 26f * density
         val usable = size.height - labelBand - laneGap
         val topTop = 16f * density
-        val topBottom = topTop + usable * 0.52f - 16f * density
+        val topBottom = topTop + usable * (if (lane == Lane.ALL) 0.34f else 0.52f) - 16f * density
         val lowTop = topBottom + laneGap + 14f * density
         val lowBottom = size.height - labelBand
         val grid = simulation.grid
@@ -153,12 +153,24 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
                     }
                 }
                 axis(topTop, topBottom, scaleTop.toInt().toString())
-                text(if (scenario.streaming != null) t("Carbon intensity of the grid, g CO₂/kWh – dashed: forecast; green: eco mode on") else t("Carbon intensity of the grid, g CO₂/kWh – dashed: forecast"), Offset(left, topTop - 12f * density), Type.style(12, FontWeight.SemiBold))
+                val caption = if (scenario.streaming != null) t("Carbon intensity of the grid, g CO₂/kWh – dashed: forecast; green: eco mode on") else t("Carbon intensity of the grid, g CO₂/kWh – dashed: forecast")
+                text(if (siteName != null) "$siteName · $caption" else caption, Offset(left, topTop - 12f * density), Type.style(12, FontWeight.SemiBold))
             }
         }
 
         // Lower lane
-        if (lane == Lane.TRAINING || (lane == null && scenario.training != null)) {
+        if (lane == Lane.ALL) {
+            // O11: the shop's load, the batch jobs and the training, one under the other.
+            val gap = 24f * density
+            val h = lowBottom - lowTop - 2 * gap
+            val loadBottom = lowTop + h * 0.30f
+            val jobsTop = loadBottom + gap
+            val jobsBottom = jobsTop + h * 0.42f
+            drawLoad(lowTop, loadBottom, future)
+            drawJobs(jobsTop, jobsBottom)
+            text(t("Batch jobs – light: arrival to deadline, outlined: planned, filled: running or done"), Offset(left, jobsTop - 12f * density), Type.style(12, FontWeight.SemiBold))
+            drawTraining(jobsBottom + gap, lowBottom)
+        } else if (lane == Lane.TRAINING || (lane == null && scenario.training != null)) {
             drawTraining(lowTop, lowBottom)
         } else if (batchLane) {
             drawJobs(lowTop, lowBottom)
@@ -169,7 +181,9 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
 
         // Hours and now
         // Hour labels: every 3 hours, every 6 from three days on; from six days on one label per day.
-        val labelHours = when { scenario.days >= 6 -> 24; scenario.days >= 3 -> 6; else -> 3 }
+        var labelHours = when { scenario.days >= 6 -> 24; scenario.days >= 3 -> 6; else -> 3 }
+        // Narrow charts (O10: two side by side): fewer labels, at least about 56 dp apart.
+        while (labelHours < 24 && (right - left) / (scenario.days * 24f / labelHours) < 56f * density) labelHours *= 2
         for (tick in start..end) {
             val time = GameTime(tick)
             if (time.minute == 0 && time.hour % labelHours == 0) {
@@ -340,7 +354,7 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
             for (r in records) {
                 if (r.training) {
                     val progressed = r.trainingDone > last
-                    val color = (if (progressed) Palette.interactiveLoad else Palette.booting).copy(alpha = if (planned) 0.45f else 1f)
+                    val color = (if (progressed) Palette.trainingLoad else Palette.booting).copy(alpha = if (planned) 0.45f else 1f)
                     drawRect(color, Offset(x(r.tick), barTop), Size(maxOf(1f, x(r.tick + 1) - x(r.tick)), bottom - barTop))
                 }
                 last = r.trainingDone
@@ -364,7 +378,7 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
         drawLine(Palette.accent.copy(alpha = 0.3f), Offset(left, top), Offset(right, top), 1f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(3f * density, 3f * density)))
         text("100 %", Offset(right + 6f * density, top))
         drawLine(Color.Gray.copy(alpha = 0.5f), Offset(left, bottom), Offset(right, bottom), 1f)
-        text(t("Training – green: progress, blue: GPUs training, light: loading after a pause; dashed: the plan with the rules now"), Offset(left, top - 12f * density), Type.style(12, FontWeight.SemiBold))
+        text(t("Training – green: progress, violet: GPUs training, light blue: loading after a pause; dashed: the plan with the rules now"), Offset(left, top - 12f * density), Type.style(12, FontWeight.SemiBold))
     }
 
     /** Scenario 6: outside temperature (line, dashed ahead), setpoint (step line), hours the outside air cools (green). */

@@ -31,6 +31,9 @@ import de.wannerit.loadshift.core.plus
 enum class Speed(val ticksPerSecond: Int) {
     PAUSED(0), X1(1), X4(4), X16(16),
 
+    /** Long scenarios (five days and more). */
+    X64(64),
+
     /** O7: a quarter (a game day) in two seconds. */
     QUARTERS(48),
 }
@@ -802,13 +805,21 @@ class GameController(val scenario: Scenario) {
         )
     }
 
-    fun restart() {
-        saveDraft()
+    /** Back to the scenario's starting state: its rules, the panel's settings and (O10) every job in Frankfurt. */
+    fun startOver() {
+        drafts.remove(scenario.number)
+        moved = emptySet()
+        panelTab = 0
+        restart(keepDraft = false)
+    }
+
+    fun restart(keepDraft: Boolean = true) {
+        if (keepDraft) saveDraft()
         speed = Speed.PAUSED
         sims = newSims()
         renewDraft = List(siteCount) { 0 }
         boughtInYear.clear()
-        restoreDraft()
+        if (keepDraft) restoreDraft() else resetDraft()
         startPolicy = null
         team = Team(scenario.backlog, scenario.sprintPoints)
         sprintDraft = emptyList()

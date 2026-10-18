@@ -39,6 +39,8 @@ object Palette {
     val cacheKinds = listOf(Color(0xFF8E6FD8), Color(0xFF1F8F66), Color(0xFFE8A33A), Color(0xFFCC4D40), Color(0xFF295CAD))
     val interactiveLoad = Color(0xFF5C9EF2)
     val batchLoad = amber
+    /** O8, O11: GPU servers training. */
+    val trainingLoad = Color(0xFF9B5DD6)
 
     /** Color of a carbon intensity: green when clean, amber, red when dirty (g/kWh). */
     fun intensity(gramsPerKWh: Int): Color = when {

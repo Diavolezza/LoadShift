@@ -903,6 +903,7 @@ not energy.
 | D22 | Hardware renewal (scenario 7) | quarterly steps (a game day stands for a quarter) instead of monthly steps (revises D5); two sites with a yearly budget, growth, new generations and failures, so that decisions come up over the three years; the question is where new hardware replaces dirty electricity, while the clean site keeps enough capacity |
 | D23 | Location Shifting (scenario 10) | the player decides per job before the start, not during the game: moving work between sites is a planning decision, and the data must be moved first; the limits come from the jobs themselves (data size, database latency, data residency), so that "everything to Norway" is wrong and the choice needs judgement |
 | D24 | Capstone (scenario 11) | stars by CO₂ reduction, not a hard SCI target; the three kinds of work share one draft in tabs, so the controls stay those of the scenarios that introduced them; the forecast update is the one new twist, because a plan days ahead is where a forecast error costs most |
+| D25 | "What if" and replays | settings in the debrief's "what if" that reach more stars than the player's best so far are shown without their label ("a setting you have not found yet") – the numbers stay, the recipe does not; a "start over" button in the goal bar returns to the scenario's starting rules and choices (a second click confirms) |
 
 ---
 

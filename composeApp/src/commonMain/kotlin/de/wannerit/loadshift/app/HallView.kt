@@ -51,7 +51,8 @@ fun HallView(
             }
             LegendSwatch(Palette.off, t("Off"))
             LegendSwatch(Palette.booting, t("Booting"))
-            if (interactive) LegendSwatch(Palette.slab, if (servers.none { it.kind == ServerKind.GPU_CURRENT }) t("Web requests") else if (servers.any { it.kind.servesInteractive }) t("Web requests, training") else t("Training"), Palette.interactiveLoad)
+            if (interactive && servers.any { it.kind.servesInteractive }) LegendSwatch(Palette.slab, t("Web requests"), Palette.interactiveLoad)
+            if (servers.any { it.kind == ServerKind.GPU_CURRENT }) LegendSwatch(Palette.slab, t("Training"), Palette.trainingLoad)
             if (batch) LegendSwatch(Palette.slab, t("Batch job"), Palette.batchLoad)
             if (cacheSlots > 0) LegendSwatch(Palette.cache, t("Cache server"))
             if (servers.any { it.kind == ServerKind.CPU_OLD }) LegendSwatch(Palette.old, t("Old server"))
@@ -135,7 +136,7 @@ private fun DrawScope.drawHall(servers: List<Server>, cacheSlots: Int, cacheOn: 
                     val bz0 = z0 + (z1 - z0) * 0.3; val bz1 = z1 - (z1 - z0) * 0.3
                     drawPath(
                         polygon(p(sx0 + 0.04, y1, bz0), p(sx0 + 0.04 + width, y1, bz0), p(sx0 + 0.04 + width, y1, bz1), p(sx0 + 0.04, y1, bz1)),
-                        if (server.job == null) Palette.interactiveLoad else Palette.batchLoad,
+                        if (server.job != null) Palette.batchLoad else if (server.kind == ServerKind.GPU_CURRENT) Palette.trainingLoad else Palette.interactiveLoad,
                     )
                 }
             }

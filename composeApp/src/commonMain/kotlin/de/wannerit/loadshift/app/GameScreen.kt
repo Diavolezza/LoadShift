@@ -25,6 +25,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.foundation.border
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,16 +51,18 @@ fun GameScreen(game: GameController, onExit: () -> Unit, onNext: ((Scenario) -> 
     LaunchedEffect(game.speed) {
         val speed = game.speed
         if (speed == Speed.PAUSED) return@LaunchedEffect
+        // At most 16 frames a second; faster speeds run several ticks per frame.
+        val perFrame = maxOf(1, speed.ticksPerSecond / 16)
         while (true) {
-            delay(1_000L / speed.ticksPerSecond)
-            game.step()
+            delay(1_000L * perFrame / speed.ticksPerSecond)
+            repeat(perFrame) { if (game.speed == speed) game.step() }
             if (game.speed != speed) break
         }
     }
     @Suppress("UNUSED_VARIABLE") val redraw = game.version
     BoxWithConstraints(Modifier.fillMaxSize().background(Palette.background)) {
         val panelWidth = (maxWidth * 0.32f).coerceIn(300.dp, 380.dp)
-        val timelineHeight = (maxHeight * 0.3f).coerceAtLeast(190.dp)
+        val timelineHeight = (maxHeight * (if (game.isCapstone) 0.46f else 0.3f)).coerceAtLeast(190.dp)
         Column(Modifier.fillMaxSize()) {
             TopBar(game, onExit)
             GoalBar(game)
@@ -86,9 +92,18 @@ fun GameScreen(game: GameController, onExit: () -> Unit, onNext: ((Scenario) -> 
             }
             HDivider()
             if (game.hasRenewal) QuarterChart(game, Modifier.fillMaxWidth().height(timelineHeight).background(Palette.panel))
-            else TimelineChart(game.simulation, game.version, Modifier.fillMaxWidth().height(timelineHeight).background(Palette.panel),
-                other = game.scenario.location?.let { m -> val o = 1 - game.site; t(m.sites[o].title) to game.simulationOf(o) },
-                lane = if (game.isCapstone) Lane.entries[game.panelTab] else null)
+            else if (game.scenario.location != null) {
+                // O10: both sites side by side, each with the other's grid as a thin line.
+                val sites = game.scenario.location!!.sites
+                Row(Modifier.fillMaxWidth().height(timelineHeight).background(Palette.panel)) {
+                    for (i in sites.indices) {
+                        if (i > 0) VDivider()
+                        TimelineChart(game.simulationOf(i), game.version, Modifier.weight(1f).fillMaxHeight(),
+                            other = t(sites[1 - i].title) to game.simulationOf(1 - i), siteName = t(sites[i].title))
+                    }
+                }
+            } else TimelineChart(game.simulation, game.version, Modifier.fillMaxWidth().height(timelineHeight).background(Palette.panel),
+                lane = if (game.isCapstone) Lane.ALL else null)
         }
         if (game.showEnd) EndCard(game, onExit, onNext, onOverview)
     }
@@ -106,6 +121,10 @@ private fun TopBar(game: GameController, onExit: () -> Unit) {
         Row(Modifier.align(Alignment.CenterStart), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(22.dp)) {
             Txt("‹", Type.style(34, FontWeight.SemiBold), Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = onExit).padding(horizontal = 6.dp))
             SpeedControl(game)
+            Column {
+                Txt(t("Scenario %@", game.scenario.shownLabel), Type.caption)
+                Txt(t(game.scenario.title), Type.style(17, FontWeight.SemiBold), maxLines = 1)
+            }
         }
         Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
             val day = minOf(time.day - GameTime.START.day + 1, game.scenario.days)
@@ -145,7 +164,8 @@ private fun TopBar(game: GameController, onExit: () -> Unit) {
 private fun SpeedControl(game: GameController) {
     Row(Modifier.background(Palette.background, RoundedCornerShape(10.dp)).padding(3.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         // O7 runs quarter by quarter: pause and run; the others the four speeds.
-        val speeds = if (game.hasRenewal) listOf(Speed.PAUSED, Speed.QUARTERS) else Speed.entries.filter { it != Speed.QUARTERS }
+        val speeds = if (game.hasRenewal) listOf(Speed.PAUSED, Speed.QUARTERS)
+            else Speed.entries.filter { it != Speed.QUARTERS && (it != Speed.X64 || game.scenario.days >= 5) }
         for (speed in speeds) {
             val selected = game.speed == speed
             val enabled = !game.isFinished || speed == Speed.PAUSED
@@ -209,7 +229,7 @@ private fun GoalBar(game: GameController) {
             GoalItem(minOf(totals.sla, totals.worstSiteSla) >= scenario.slaTarget, change != null,
                 if (game.hasRenewal) t("SLA ≥ %@ at each site", Format.percent(scenario.slaTarget)) else t("SLA ≥ %@", Format.percent(scenario.slaTarget)))
             GoalItem((change ?: 0) < 0, change != null,
-                if (change == null) t("CO₂ vs. reference") else if (game.isCapstone && !game.isFinished) t("CO₂ vs. reference, expected: %@", Format.changePermille(change))
+                if (change == null) t("CO₂ vs. reference") else if (game.isCapstone && !game.isFinished) t("CO₂ expected: %@", Format.changePermille(change))
                 else t("CO₂ vs. reference: %@", Format.changePermille(change)))
         }
         scenario.streaming?.let { model ->
@@ -259,7 +279,26 @@ private fun GoalBar(game: GameController) {
             StarLabel(3, 13.dp)
             Txt(specialShort(scenario.goals.special), Type.callout)
         }
+        StartOver(game)
     }
+}
+
+/** Back to the scenario's starting state – rules and choices too; a second click within three seconds confirms. */
+@Composable
+private fun StartOver(game: GameController) {
+    var asking by remember { mutableStateOf(false) }
+    LaunchedEffect(asking) {
+        if (asking) { delay(3_000); asking = false }
+    }
+    Txt(
+        if (asking) t("Really start over?") else "↺ " + t("Start over"),
+        Type.style(13, FontWeight.SemiBold, if (asking) Color.White else Palette.ink),
+        Modifier.clip(RoundedCornerShape(50)).background(if (asking) Palette.red else Palette.background)
+            .border(1.dp, Palette.divider, RoundedCornerShape(50))
+            .clickable { if (asking) { asking = false; game.startOver() } else asking = true }
+            .padding(horizontal = 10.dp, vertical = 4.dp),
+        maxLines = 1,
+    )
 }
 
 @Composable
@@ -399,9 +438,14 @@ private fun WhatIf(game: GameController) {
             Txt(if (game.hasBatch) t("Missed") else t("SLA"), Type.caption.copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.14f))
             Spacer(Modifier.weight(0.16f))
         }
+        // Settings with more stars than the player has reached stay hidden: the second run should not be a recipe.
+        val best = maxOf(Progress.stars(game.scenario.number), game.stars)
+        val hidden = alternatives.count { game.scenario.stars(it.second, ref) > best }
         for ((label, totals) in alternatives) {
+            val secret = game.scenario.stars(totals, ref) > best
             Row(Modifier.padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
-                Txt(label, Type.callout, Modifier.weight(labelWeight))
+                if (secret) Txt(t("A setting you have not found yet"), Type.style(15, color = Palette.secondary).copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic), Modifier.weight(labelWeight))
+                else Txt(label, Type.callout, Modifier.weight(labelWeight))
                 Txt(Format.change(totals.emissions, you.emissions), Type.callout.copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.18f))
                 if (pue) Txt(Format.number(totals.pue / 1_000.0, 2), Type.callout.copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.12f))
                 if (game.hasBatch) {
@@ -414,5 +458,6 @@ private fun WhatIf(game: GameController) {
                 }
             }
         }
+        if (hidden > 0) Txt(t("Settings with more stars than you have reached stay hidden until you find them."), Type.caption)
     }
 }
