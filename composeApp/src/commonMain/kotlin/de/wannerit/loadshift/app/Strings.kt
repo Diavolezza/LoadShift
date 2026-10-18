@@ -282,8 +282,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Eine Einstellung, die du noch nicht gefunden hast",
     "A shop assistant: up to %lld questions a second" to
         "Ein Shop-Assistent: bis zu %lld Fragen pro Sekunde",
-    "A simulation game for teaching Green IT: run a data center so that it serves its users reliably and emits as little CO₂ as possible – by switching servers, shifting work in time and, later, writing better software." to
-        "Ein Planspiel zu Green IT: Betreibe ein Rechenzentrum so, dass es alle, die es nutzen, zuverlässig bedient und möglichst wenig CO₂ ausstößt – durch Schalten von Servern, Verschieben von Arbeit in der Zeit und später durch bessere Software.",
+    "A simulation game for teaching Green IT, in three tracks:" to
+        "Ein Planspiel zu Green IT in drei Strängen:",
     "A smaller server" to
         "Ein kleinerer Server",
     "A standard SaaS for warehouses" to
@@ -566,6 +566,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Build-Agents nur auf Abruf",
     "Build pipeline" to
         "Build-Pipeline",
+    "Build software that does the same work with less – measure first, cache what repeats, size AI models to the task." to
+        "Baue Software, die dieselbe Arbeit mit weniger erledigt – erst messen, Wiederholtes cachen, KI-Modelle passend wählen.",
     "Built for a project that ended two years ago" to
         "Gebaut für ein Projekt, das vor zwei Jahren endete",
     "Built in-house; one person still maintains the code" to
@@ -1046,6 +1048,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Weniger Hosts, weniger Leerlaufstrom: Packe die VMs dichter. Zwei Dinge entscheiden, ob eine VM passt: ihr RAM und ihre CPU über den Tag. Nach RAM allein würden fünf Hosts reichen – aber dann kollidieren die Spitzen.",
     "File server" to
         "Dateiserver",
+    "Find out where the IT emissions of a whole organisation come from and decide what to change first." to
+        "Finde heraus, woher die IT-Emissionen eines ganzen Unternehmens kommen, und entscheide, was zuerst geändert wird.",
     "First Fit Decreasing, daily profiles up to 100 %" to
         "First Fit Decreasing, Tagesprofile bis 100 %",
     "First Fit Decreasing, daily profiles up to 85 %" to
@@ -1126,8 +1130,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "grüne Zertifikate (Herkunftsnachweise)",
     "Green certificates made the report zero and changed nothing in the grid: the hydro plants behind them run anyway. In the report the grey contract even looked worse than the grid's average – the residual mix is what is left after others have claimed the green part [S36]. The wind farm adds clean energy, but only while the wind blows: moving the batch jobs into the windy hours let the data center use more of it. 24/7 carbon-free energy covers every hour – and it was affordable only once the data center needed less energy. Google reports 66 % carbon-free energy in the hour across its data centers [S38]; the GHG Protocol's revision of Scope 2 moves the market-based report towards matching in the hour [S37]." to
         "Grüne Zertifikate machten den Bericht zu null und änderten nichts im Netz: Die Wasserkraftwerke dahinter laufen ohnehin. Im Bericht sah der Graustrom sogar schlechter aus als der Durchschnitt des Netzes – der Residualmix ist das, was übrig bleibt, nachdem andere den grünen Teil für sich beansprucht haben [S36]. Der Windpark bringt sauberen Strom dazu, aber nur, solange der Wind weht: Die Batch-Jobs in die windigen Stunden zu legen, ließ das Rechenzentrum mehr davon nutzen. 24/7 CO₂-freier Strom deckt jede Stunde – und war erst bezahlbar, als das Rechenzentrum weniger Energie brauchte. Google meldet 66 % CO₂-freien Strom in der Stunde über seine Rechenzentren [S38]; die Überarbeitung von Scope 2 im GHG Protocol führt den marktbasierten Bericht hin zum Abgleich in der Stunde [S37].",
-    "Green IT – from code to data center" to
-        "Green IT – vom Code bis zum Rechenzentrum",
+    "Green IT – from code to portfolio" to
+        "Green IT – vom Code bis zum Portfolio",
     "Green on paper" to
         "Grün auf dem Papier",
     "Green pipeline" to
@@ -1834,6 +1838,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Regeln verletzt: %lld",
     "Run" to
         "Start",
+    "Run a data center so that it serves its users reliably and emits as little CO₂ as possible – switch servers, shift work in time, cool wisely." to
+        "Betreibe ein Rechenzentrum so, dass es alle, die es nutzen, zuverlässig bedient und möglichst wenig CO₂ ausstößt – Server schalten, Arbeit in der Zeit verschieben, klug kühlen.",
     "Running build and test infrastructure only when and as much as it is needed: build agents on demand with a shared cache, test impact analysis, expensive tests at clean times, test environments off when nobody uses them, fewer replicas outside production." to
         "Build- und Testinfrastruktur nur dann und nur so viel betreiben, wie gebraucht wird: Build-Agents auf Abruf mit gemeinsamem Cache, Test Impact Analysis, teure Tests zu sauberen Zeiten, Testumgebungen aus, wenn niemand sie nutzt, weniger Replikas außerhalb der Produktion.",
     "Running now" to

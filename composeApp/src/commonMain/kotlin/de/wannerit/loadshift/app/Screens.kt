@@ -80,7 +80,17 @@ fun AboutContent(modifier: Modifier = Modifier) {
                 Txt(t("Version %@", BuildInfo.VERSION), Type.callout)
             }
         }
-        Txt(t("A simulation game for teaching Green IT: run a data center so that it serves its users reliably and emits as little CO₂ as possible – by switching servers, shifting work in time and, later, writing better software."), Type.body)
+        Txt(t("A simulation game for teaching Green IT, in three tracks:"), Type.body)
+        for ((track, text) in listOf(
+            t("Operations") to t("Run a data center so that it serves its users reliably and emits as little CO₂ as possible – switch servers, shift work in time, cool wisely."),
+            t("Engineering") to t("Build software that does the same work with less – measure first, cache what repeats, size AI models to the task."),
+            t("Portfolio") to t("Find out where the IT emissions of a whole organisation come from and decide what to change first."),
+        )) {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Txt(track, Type.style(15, FontWeight.SemiBold))
+                Txt(text, Type.body)
+            }
+        }
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Txt("© 2026 Gerhard Wanner · " + t("MIT License"), Type.callout)
             Txt(t("Grid data: Electricity Maps, Grid Review 2025 (life-cycle, imports included)"), Type.caption)
@@ -170,7 +180,7 @@ fun ScenarioListScreen(onLexicon: () -> Unit = {}, onSelect: (Scenario) -> Unit)
                 RackIcon(if (narrow) 44.dp else 56.dp)
                 Column(Modifier.weight(1f)) {
                     Txt("Load Shift", Type.style(if (narrow) 32 else 44, FontWeight.Bold))
-                    Txt(t("Green IT – from code to data center"), Type.style(if (narrow) 15 else 19, color = Palette.secondary))
+                    Txt(t("Green IT – from code to portfolio"), Type.style(if (narrow) 15 else 19, color = Palette.secondary))
                 }
                 if (!narrow) buttons()
             }
