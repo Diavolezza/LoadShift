@@ -67,7 +67,12 @@ private fun initialScreen(options: LaunchOptions): Screen {
     scenario ?: return Screen.List
     if (!options.play) return Screen.Briefing(scenario)
     val game = GameController(scenario)
-    if (options.careful && game.hasInference) {
+    if (options.careful && game.hasWeb) {
+        // Like a careful player: AVIF in the right size, lazy below the fold, video on click, short lists, one tag.
+        game.setPolicy(scenario.initialPolicy.copy(pages = de.wannerit.loadshift.core.PageConfig(de.wannerit.loadshift.core.ImageFormat.AVIF, true,
+            de.wannerit.loadshift.core.LazyLoading.BELOW_FOLD, false, false, de.wannerit.loadshift.core.Tracking.ONE_TAG)))
+        game.advance(options.ticks)
+    } else if (options.careful && game.hasInference) {
         // Like a careful player: no AI for the order status and greetings, the small model for product questions,
         // batching 1 s.
         val a = de.wannerit.loadshift.core.Answerer.entries

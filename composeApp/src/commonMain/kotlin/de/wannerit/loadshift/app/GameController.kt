@@ -5,6 +5,10 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import de.wannerit.loadshift.core.BatchMode
+import de.wannerit.loadshift.core.LazyLoading
+import de.wannerit.loadshift.core.ImageFormat
+import de.wannerit.loadshift.core.Tracking
+import de.wannerit.loadshift.core.PageConfig
 import de.wannerit.loadshift.core.InferenceConfig
 import de.wannerit.loadshift.core.Answerer
 import de.wannerit.loadshift.core.CacheConfig
@@ -391,6 +395,11 @@ class GameController(val scenario: Scenario) {
         streamMax = List(n) { if (it == device) quality else streamMax.getOrElse(it) { Quality.UHD } }
     }
 
+    // Pages (E5)
+
+    val hasWeb: Boolean get() = scenario.web != null
+    var pageDraft by mutableStateOf(PageConfig())
+
     // Shop assistant (E4)
 
     val hasInference: Boolean get() = scenario.inference != null
@@ -457,6 +466,7 @@ class GameController(val scenario: Scenario) {
             if (Control.TRAINING in scenario.controls) policy = policy.copy(training = draftTraining)
             if (Control.STREAMING in scenario.controls) policy = policy.copy(streaming = draftStreaming)
             if (Control.INFERENCE in scenario.controls) policy = policy.copy(inference = draftInference)
+            if (Control.PAGES in scenario.controls) policy = policy.copy(pages = pageDraft)
             return policy
         }
 
@@ -489,6 +499,7 @@ class GameController(val scenario: Scenario) {
             streamMax = m.devices.indices.map { c.maxQuality.getOrElse(it) { Quality.UHD } }
             streamEco = c.eco; streamEcoAbove = c.ecoAbove; streamEcoQuality = c.ecoQuality
         }
+        pageDraft = policy.pages
         scenario.inference?.let { m ->
             aiAnswerers = m.kinds.indices.map { policy.inference.answerers.getOrElse(it) { Answerer.LARGE } }
             aiWindow = policy.inference.windowMs
@@ -523,6 +534,7 @@ class GameController(val scenario: Scenario) {
         val training: TrainingConfig,
         val streaming: StreamingConfig,
         val inference: InferenceConfig,
+        val pages: PageConfig,
     )
 
     private companion object {
@@ -532,7 +544,7 @@ class GameController(val scenario: Scenario) {
     /** Keeps the panel's settings for the next run (a new run starts with the scenario's rules, the panel keeps yours). */
     fun saveDraft() {
         drafts[scenario.number] = Draft(draftKind, draftHour, draftThreshold, draftSafety, capKind, capFixed, capTarget,
-            capMinimumOn, capMinimum, capFrom, capTo, startPolicy ?: current.policy.takeIf { current.history.isEmpty() }, draftCache, draftSetpoint, draftTraining, draftStreaming, draftInference)
+            capMinimumOn, capMinimum, capFrom, capTo, startPolicy ?: current.policy.takeIf { current.history.isEmpty() }, draftCache, draftSetpoint, draftTraining, draftStreaming, draftInference, pageDraft)
     }
 
     private fun restoreDraft() {
@@ -549,6 +561,7 @@ class GameController(val scenario: Scenario) {
         streamEco = d.streaming.eco; streamEcoAbove = d.streaming.ecoAbove; streamEcoQuality = d.streaming.ecoQuality
         if (d.inference.answerers.isNotEmpty()) aiAnswerers = d.inference.answerers
         aiWindow = d.inference.windowMs
+        pageDraft = d.pages
         // A new run starts with the rules the last run started with (the panel shows the last run's final ones).
         if (d.startPolicy != null && current.history.isEmpty() && !hasSprints) {
             current.policy = d.startPolicy
@@ -679,6 +692,22 @@ class GameController(val scenario: Scenario) {
                 t("The same, eco mode HD above 650 g/kWh") to run(byDevice.copy(eco = true, ecoAbove = 650)),
                 t("The same, eco mode HD above 550 g/kWh") to run(byDevice.copy(eco = true, ecoAbove = 550)),
                 t("The same, eco mode SD above 650 g/kWh") to run(byDevice.copy(eco = true, ecoAbove = 650, ecoQuality = Quality.SD)),
+            )
+        }
+        scenario.web?.let {
+            val base = PageConfig()
+            fun run(c: PageConfig) = Simulation.replay(scenario, scenario.initialPolicy.copy(pages = c)).totals
+            val light = base.copy(autoplay = false, tracking = Tracking.ONE_TAG, longLists = false)
+            val images = light.copy(format = ImageFormat.AVIF, responsive = true, lazy = LazyLoading.BELOW_FOLD)
+            return listOf(
+                t("Large images, video plays by itself, 100 products, six tags (reference)") to referenceTotals,
+                t("Video only on click") to run(base.copy(autoplay = false)),
+                t("Video on click, one analytics tag") to run(base.copy(autoplay = false, tracking = Tracking.ONE_TAG)),
+                t("The same, 24 products per list") to run(light),
+                t("The same, AVIF in the right size, lazy loading below the fold") to run(images),
+                t("The same, counting on the server") to run(images.copy(tracking = Tracking.SERVER)),
+                t("The same, but AVIF converted on every request") to run(images.copy(format = ImageFormat.AVIF_LIVE)),
+                t("The same, but lazy loading for all images") to run(images.copy(lazy = LazyLoading.ALL)),
             )
         }
         scenario.inference?.let {

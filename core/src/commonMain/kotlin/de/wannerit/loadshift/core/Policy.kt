@@ -78,6 +78,8 @@ data class Policy(
     val streaming: StreamingConfig = StreamingConfig(),
     /** E4: who answers each kind of question, and the batching window. */
     val inference: InferenceConfig = InferenceConfig(),
+    /** E5: how heavy the shop's pages are. */
+    val pages: PageConfig = PageConfig(),
 ) {
     companion object {
         /**

@@ -32,6 +32,9 @@ enum class Control {
     /** E4: who answers each kind of question (no AI, a small or large model), and batching. */
     INFERENCE,
 
+    /** E5: images, video, lists and tracking of the shop's pages. */
+    PAGES,
+
     /** Scenario 6: the inlet temperature setpoint of the cooling. */
     COOLING,
 
@@ -129,6 +132,8 @@ data class Scenario(
     val batchLimit: Int? = null,
     /** E4: a shop assistant with language models. */
     val inference: InferenceModel? = null,
+    /** E5: the network and the visitors' devices count too. */
+    val web: WebModel? = null,
 ) {
     /** Expected interactive work at a tick: the web load or the VMs' profiles (what an operator can plan with). */
     fun expectedDemand(tick: Int): Int = interactive.expected(tick) + vms.sumOf { it.expectedMilli(tick) } / 1_000
@@ -149,6 +154,7 @@ data class Scenario(
             (streaming == null || totals.meanRating >= streaming.ratingTarget) &&
             totals.rulesBroken == 0 && totals.deadlinesMissed == 0 && totals.emissions < reference.emissions &&
             (staleLimit == null || totals.stalePerTenThousand <= staleLimit) &&
+            (web == null || totals.meanLcp <= web.lcpLimit) &&
             (inference == null || (totals.meanAnswerQuality >= inference.qualityTarget && totals.answersOnTime >= inference.onTimeTarget))
         val reduction = rules && totals.emissions * 1_000 <= reference.emissions * (1_000 - goals.reduction)
         val special = rules && when (val goal = goals.special) {
@@ -557,6 +563,23 @@ data class Scenario(
             ),
         )
 
-        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, OLD_IRON, TRAINING_RUN, ECO_MODE, TWO_SITES, DARK_DOLDRUMS, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS, RIGHT_SIZED_AI)
+        /**
+         * E5, "Data diet": the shop's pages weigh 12 MB a visit. Counted with the network and the visitors' devices, the
+         * data center is the small part. Lighter images, no video that plays by itself, shorter lists and less tracking
+         * cut the bytes – and make the page faster; two tempting changes make it slower.
+         */
+        val DATA_DIET = Scenario(
+            number = 105, label = "E5", track = Track.ENGINEERING, unlockAfter = 104,
+            title = "Data diet", setting = GridSetting(GridRegion.GERMANY, Season.AUTUMN), days = 2,
+            seed = 15, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 30)),
+            interactive = InteractiveLoad(peak = 240),
+            controls = setOf(Control.PAGES),
+            initialPolicy = Policy(CapacityMode.Autoscale(700)),
+            referencePolicy = Policy(CapacityMode.Autoscale(700)),
+            goals = StarGoals(550, SpecialGoal.Reduction(760)),
+            web = WebModel(),
+        )
+
+        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, OLD_IRON, TRAINING_RUN, ECO_MODE, TWO_SITES, DARK_DOLDRUMS, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS, RIGHT_SIZED_AI, DATA_DIET)
     }
 }

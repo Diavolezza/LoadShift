@@ -359,6 +359,7 @@ work per request or per job; the effect shows in the SCI per 1,000 requests and 
 | E2 | Growing data | web shop, Germany | 12 months (one game day each) | backlog with algorithmic complexity, carry-over | The data grows every month. A batch job with O(n²) and a lookup in a list instead of a hash map get more expensive month by month; a database index stops a query from scanning everything. Fixing early saves the most; waiting costs energy and, at some point, hardware (G9, G6). Term: Algorithmic Complexity. |
 | E3 | Hit or miss | web shop, Germany | 2 days | cache servers, per kind of data cached or not and its TTL, two more measures | Five kinds of data with different popularity, size, cost and business limits on their age: product images (a day), catalog pages (15 min), exchange rates (1 min), search results (1 h, but most searches are typed only once), the account balance before a transfer (must be current). All cached kinds share the memory of the cache servers (LRU). The team has ordered four cache servers "to be on the safe side". A cache saves work while it hits, but every cache server draws power all day; a TTL longer than allowed brings stale answers (0 stars); search results fill half the memory and hardly hit. Two more measures follow the same idea: counting unique visitors with HyperLogLog instead of keeping every ID, and a materialized view for the sales dashboard (G9, G1). Term: Caching. |
 | E4 | Right-sized AI | web shop, Germany | 2 days | per kind of question who answers it (no AI, small model, large model, large model with reasoning), batching window | The team's prototype sends every question of the shop assistant to the large model, one at a time. A status lookup answers "Where is my order?" better than any model; a small model is good enough where the answer is in the product data; the large model pays off for complaints and advice. Batching shares the GPU's work among questions but every answer waits; reasoning adds a little quality and a long wait. Rules: answer quality at least 92 %, 95 % of the answers within 3 s (G9, G1). Term: Green AI (Right-sizing Models). |
+| E5 | Data diet | web shop, Germany | 2 days | image format and sizes, lazy loading, product video, list length, how visitors are counted | A visit weighs 12 MB. Counted with the network and the visitors' devices (energy per GB after the Sustainable Web Design Model [S28]), the data center is the smallest part. The video that plays by itself is half the weight; modern formats in the right size and lazy loading below the fold do the rest. Two traps make the page slow: converting images on every request, and lazy loading the first image. Rule: LCP at most 2.5 s [S30] (G9, G1). Term: Sustainable Web Design. |
 
 Backlog items (game values, to be tuned in the lesson tests): database index, removing an N+1 query, a cache
 (saves work, but the cache server draws power too), compressing images, pagination instead of loading
@@ -903,6 +904,32 @@ not energy.
 | the same with 1 s, reasoning for complaints | −61.2 % | 93.9 % | 84.9 % | 0 |
 | no AI, no AI, small, large, small, batching 1 s | −80.5 % | 91.2 % | 100 % | 0 |
 
+**As built in step 5, part 8** (E5, "Data diet"):
+
+- Core: `WebModel` and `PageConfig` (image format JPEG / WebP / AVIF converted once / AVIF converted on every
+  request, sizes for the screen, lazy loading off / below the fold / all images, product video plays by itself or on
+  click, 100 or 24 products per list, six tracking tags / one analytics tag / counting on the server). A visit is ten
+  requests; its weight (KB) and its LCP (75th percentile) follow from the settings (game values; the reference page
+  weighs 12.2 MB, four to five times the median page of 2025 [S29], and needs 3.2 s). Network and device energy per GB:
+  59 and 80 Wh (operational part of [S28]), in the same grid; they count in the emissions (`Totals.networkOperational`,
+  `deviceOperational`). The settings change the work per request on the shop's servers too (AVIF on every request
+  +80 %, short lists −15 %).
+- App: pages panel with the settings and "a visit to the pages online now" (weight by part and LCP of the running
+  pages – measured, not predicted); the timeline's lower lane stacks the power of data center, network and devices;
+  page weight and LCP in the top bar; end card with the CO₂ of the three parts.
+- Goals ★★ −55 %, ★★★ −76 %.
+
+| Images, video, lists, counting | CO₂ vs. reference | MB per visit | LCP | Stars |
+|---|---:|---:|---:|---:|
+| JPEG one size, autoplay, 100, six tags (reference) | – | 12.2 | 3.2 s | – |
+| video on click | −42.8 % | 6.5 | 2.9 s | 0 |
+| video on click, one tag | −50.0 % | 5.6 | 2.4 s | ★ |
+| the same, 24 per list | −57.8 % | 4.7 | 2.1 s | ★★ |
+| the same, AVIF in the right size, lazy below the fold | −78.5 % | 1.9 | 1.5 s | ★★★ |
+| AVIF without sizes for the screen | −70.2 % | 3.0 | 1.7 s | ★★ |
+| AVIF converted on every request | −74.5 % | 1.7 | 2.8 s | 0 |
+| lazy loading for all images | −79.8 % | 1.7 | 2.6 s | 0 |
+
 ---
 
 ## 13 Decisions
@@ -968,3 +995,6 @@ not energy.
 | S25 | C. Elsworth, K. Huang, D. Patterson et al.: *Measuring the environmental impact of delivering AI at Google Scale*, arXiv:2508.15734, 2025 (median Gemini text prompt 0.24 Wh including idle machines and overhead; 33 times less within a year through model improvements, quantization, distilled models and better utilization). https://arxiv.org/abs/2508.15734 |
 | S26 | J. You: *How much energy does ChatGPT use?*, Epoch AI, 2025 (about 0.3 Wh for a typical GPT-4o query; reasoning models write about 2.5 times as many tokens). https://epoch.ai/blog/how-much-energy-does-chatgpt-use |
 | S27 | J. Delavande, R. Pierrard, S. Luccioni: *Understanding Efficiency: Quantization, Batching, and Serving Strategies in LLM Energy Use*, arXiv:2601.22362, 2026 (serving with batching cuts the energy per request of an 8B model 12.5 to 100 times; int8 decoding can need more energy than float32). https://arxiv.org/abs/2601.22362 |
+| S28 | Sustainable Web Design Model, version 4 (Wholegrain Digital, Mightybytes, Green Web Foundation and others): energy per GB – data centers 0.055, networks 0.059, user devices 0.080 kWh/GB operational, plus embodied parts; the authors say the model overestimates and that data transfer is a disputed proxy. https://sustainablewebdesign.org/estimating-digital-emissions/ |
+| S29 | HTTP Archive: *Web Almanac 2025, Page Weight* (median home page 2.56 MB on mobile, 2.86 MB on desktop; images about a third). https://almanac.httparchive.org/en/2025/page-weight |
+| S30 | web.dev: *Largest Contentful Paint (LCP)* (good: at most 2.5 s at the 75th percentile; a lazily loaded LCP image delays it). https://web.dev/articles/lcp |

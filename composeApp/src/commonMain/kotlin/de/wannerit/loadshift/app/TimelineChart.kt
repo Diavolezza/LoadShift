@@ -159,7 +159,9 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
         }
 
         // Lower lane
-        if (scenario.inference != null) {
+        if (scenario.web != null) {
+            drawWeb(lowTop, lowBottom)
+        } else if (scenario.inference != null) {
             drawInference(lowTop, lowBottom, future)
         } else if (lane == Lane.ALL) {
             // O11: the shop's load, the batch jobs and the training, one under the other.
@@ -417,6 +419,33 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
         }
         axis(top, bottom, scaleTop.toInt().toString())
         text(t("Outside temperature, °C – dashed: forecast; black: setpoint; green: the outside air cools"), Offset(left, top - 12f * density), Type.style(12, FontWeight.SemiBold))
+    }
+
+    /** E5: the power of a visit's three parts, stacked: data center, network, visitors' devices. */
+    private fun DrawScope.drawWeb(top: Float, bottom: Float) {
+        val records = simulation.history.mapNotNull { r -> r.web?.let { r to it } }
+        val colors = listOf(Palette.demand, Palette.amber, Palette.trainingLoad)
+        fun parts(r: de.wannerit.loadshift.core.TickRecord, w: de.wannerit.loadshift.core.WebRecord) = listOf(r.facilityPower, w.networkWatts, w.deviceWatts)
+        val maxW = maxOf(1_000, records.maxOfOrNull { (r, w) -> parts(r, w).sum() } ?: 1_000)
+        val scaleTop = niceCeiling((maxW + 999) / 1_000).toFloat()
+        fun yW(watts: Int) = bottom - (bottom - top) * (watts / 1_000f / scaleTop)
+        if (records.isNotEmpty()) {
+            for (layer in 2 downTo 0) {
+                val area = Path().apply {
+                    moveTo(x(records[0].first.tick), bottom)
+                    for ((r, w) in records) {
+                        val y = yW(parts(r, w).take(layer + 1).sum())
+                        lineTo(x(r.tick), y); lineTo(x(r.tick + 1), y)
+                    }
+                    lineTo(x(records.last().first.tick + 1), bottom)
+                    close()
+                }
+                drawPath(area, Color.White)
+                drawPath(area, colors[layer].copy(alpha = 0.6f))
+            }
+        }
+        axis(top, bottom, "${scaleTop.toInt()} kW")
+        text(t("Power, kW – blue: data center, amber: network, violet: visitors' devices"), Offset(left, top - 12f * density), Type.style(12, FontWeight.SemiBold))
     }
 
     /** E4: the shop assistant's power, stacked by kind of question; grey the idle rest of the GPU servers. */

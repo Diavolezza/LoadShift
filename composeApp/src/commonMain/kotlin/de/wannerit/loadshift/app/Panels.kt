@@ -64,6 +64,8 @@ fun ControlPanel(game: GameController, modifier: Modifier = Modifier) {
             NowBox(game)
         } else if (Control.PLACEMENT in game.scenario.controls) {
             PlacementPanel(game)
+        } else if (Control.PAGES in game.scenario.controls) {
+            PagesPanel(game)
         } else if (Control.INFERENCE in game.scenario.controls) {
             InferencePanel(game)
         } else if (Control.LOCATION in game.scenario.controls) {

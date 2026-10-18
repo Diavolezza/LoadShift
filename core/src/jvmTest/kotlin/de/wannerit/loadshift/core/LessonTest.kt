@@ -777,4 +777,50 @@ class LessonTest {
         assertEquals(0, stars("N N S R L, 1000 ms"))
         assertEquals(0, stars("N N S L L, 2000 ms"))
     }
+
+    @Test fun e5DataDiet() {
+        val scenario = Scenario.DATA_DIET
+        val reference = Simulation.reference(scenario)
+        // Code: format (J, W, A, L = AVIF live), responsive (r/-), lazy (o, b, a), video (A autoplay, C on click),
+        // lists (L long, S short), tracking (6, 1, s).
+        fun config(code: String): PageConfig {
+            val c = code.split(" ")
+            return PageConfig(
+                format = when (c[0]) { "J" -> ImageFormat.JPEG; "W" -> ImageFormat.WEBP; "A" -> ImageFormat.AVIF; else -> ImageFormat.AVIF_LIVE },
+                responsive = c[1] == "r",
+                lazy = when (c[2]) { "o" -> LazyLoading.OFF; "b" -> LazyLoading.BELOW_FOLD; else -> LazyLoading.ALL },
+                autoplay = c[3] == "A", longLists = c[4] == "L",
+                tracking = when (c[5]) { "6" -> Tracking.SIX_TAGS; "1" -> Tracking.ONE_TAG; else -> Tracking.SERVER },
+            )
+        }
+        fun run(code: String) = Simulation.replay(scenario, scenario.initialPolicy.copy(pages = config(code)))
+        val codes = listOf(
+            "J - o C L 6", "J - o A L 1", "J - o A S 6", "W - o A L 6", "A r b A L 6", "J - o C L 1", "J - o C S 1",
+            "J - o C S s", "A r b C S 1", "A r b C S s", "W r b C S 1", "L r b C S s", "A r a C S s", "A r b C L 1",
+            "A - o C S 1", "J r b C S 1", "A r o C S 1",
+        )
+        val runs = codes.map { it to run(it) }
+        val lines = mutableListOf(title(scenario), HEADER + "  MB/visit  LCP s  DC kg  net kg  dev kg")
+        for ((name, sim) in listOf("reference: J - o A L 6" to reference) + runs) {
+            val t = sim.totals
+            val dc = (t.operational - t.networkOperational - t.deviceOperational + t.embodied) / 1e9
+            lines += line(name, t, reference.totals) + "  " + "%.1f".format(t.meanPageKb / 1_000.0) + "  " + "%.1f".format(t.meanLcp / 10.0) +
+                "  " + "%.0f".format(dc) + "  " + "%.0f".format(t.networkOperational / 1e9) + "  " + "%.0f".format(t.deviceOperational / 1e9) +
+                "  " + "★".repeat(scenario.stars(t, reference.totals))
+        }
+        report(105, lines)
+        val byName = runs.toMap()
+        fun stars(name: String) = scenario.stars(byName.getValue(name).totals, reference.totals)
+        // The video alone halves the bytes, but six tracking tags keep the page too slow.
+        assertEquals(0, stars("J - o C L 6"))
+        assertEquals(1, stars("J - o C L 1"))
+        assertEquals(2, stars("J - o C S 1"))
+        // Lighter images in the right size on top: three stars.
+        assertEquals(3, stars("A r b C S 1"))
+        assertEquals(3, stars("W r b C S 1"))
+        assertEquals(2, stars("A - o C S 1"))
+        // The traps: AVIF converted on every request and lazy loading of the first image make the page slow.
+        assertEquals(0, stars("L r b C S s"))
+        assertEquals(0, stars("A r a C S s"))
+    }
 }

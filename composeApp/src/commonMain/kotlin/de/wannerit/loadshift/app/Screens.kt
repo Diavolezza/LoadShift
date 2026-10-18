@@ -331,7 +331,11 @@ private fun SideCard(scenario: Scenario, texts: ScenarioTexts, onStart: () -> Un
             Fact(t(scenario.setting.season.title))
             Fact(if (scenario.days == 1) t("1 day, from 00:00") else t("%lld days, from 00:00", scenario.days))
             val inference = scenario.inference
-            if (inference != null) {
+            if (scenario.web != null) {
+                Fact(t("%lld servers for the shop", scenario.serverCount))
+                Fact(t("A visit: about 12 MB"))
+                Fact(t("Counted: data center, network and the visitors' devices"))
+            } else if (inference != null) {
                 Fact(t("A shop assistant: up to %lld questions a second", inference.peakRate))
                 Fact(t("%lld GPU servers for the language models", inference.gpuServers))
                 Fact(t("%lld kinds of question", inference.kinds.size))

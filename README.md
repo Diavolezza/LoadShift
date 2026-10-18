@@ -35,6 +35,7 @@ The app speaks English and German (switch on the start page); everything in this
 | E2 | Growing data | Algorithmic complexity |
 | E3 | Hit or miss | Caching |
 | E4 | Right-sized AI | Green AI (Right-sizing Models) |
+| E5 | Data diet | Sustainable Web Design |
 
 In German the operations scenarios are called B1–B9 ("Betrieb"). A star in one scenario opens the next; teachers can
 open all scenarios in the About dialog. More scenarios are planned (`docs/CONCEPT.md`, section 9).

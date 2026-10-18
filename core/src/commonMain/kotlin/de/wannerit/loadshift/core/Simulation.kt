@@ -60,7 +60,21 @@ data class Totals(
     var answers: Long = 0,
     var answerQualitySum: Long = 0,
     var answersInTime: Long = 0,
+    /** E5: visits, their LCP summed (tenths of s each) and bytes (KB); network and device energy (mWh) and emissions (µg, in [operational]). */
+    var visits: Long = 0,
+    var lcpSum: Long = 0,
+    var kilobytes: Long = 0,
+    var networkEnergy: Long = 0,
+    var deviceEnergy: Long = 0,
+    var networkOperational: Long = 0,
+    var deviceOperational: Long = 0,
 ) {
+    /** E5: mean LCP of the visits, tenths of a second. */
+    val meanLcp: Int get() = if (visits == 0L) 0 else (lcpSum / visits).toInt()
+
+    /** E5: mean weight of a visit, KB. */
+    val meanPageKb: Int get() = if (visits == 0L) 0 else (kilobytes / visits).toInt()
+
     /** E4: mean quality of the answers, per mille. */
     val meanAnswerQuality: Int get() = if (answers == 0L) 1_000 else (answerQualitySum / answers).toInt()
 
@@ -135,6 +149,8 @@ data class TickRecord(
     val training: Boolean = false,
     /** E4: what the models drew. */
     val inference: InferenceRecord? = null,
+    /** E5: the network and the visitors' devices. */
+    val web: WebRecord? = null,
 )
 
 /** E3: memory used (tenths of GB), memory of the running cache servers (GB), hits (per mille of the cacheable requests), memory per kind (tenths of GB). */
@@ -184,6 +200,7 @@ class Simulation private constructor(
         val growth = scenario.growth
         val caching = scenario.caching
         return when {
+            scenario.web != null -> scenario.web.work(policy.pages)
             caching != null -> caching.work(policy.cache, scenario.interactive.expected(tick), tick)
             scenario.streaming != null -> scenario.streaming.work(policy.streaming, grid.intensity(tick))
             growth != null -> growth.perRequest((tick - scenario.startTick) / GameTime.TICKS_PER_DAY, scenario.backlog, policy.done)
@@ -400,6 +417,25 @@ class Simulation private constructor(
             totals.answersInTime += answers * model.onTime(config) / 1_000
             inferenceRecord = InferenceRecord(kindWatts, idleWatts.roundToInt(), servers)
         }
+        // E5: every visit's bytes through the network and on the visitor's device, in the same grid.
+        var webRecord: WebRecord? = null
+        scenario.web?.let { web ->
+            val visits = requests * 1_000L / web.requestsPerVisit
+            val kb = web.weight(policy.pages).total
+            val gbMilli = visits * kb / 1_000                       // thousandths of a GB
+            val network = gbMilli * web.networkWhPerGb              // mWh
+            val device = gbMilli * web.deviceWhPerGb
+            val intensityNow = plannedAt?.let { grid.forecastTenths(tick, it) } ?: grid.intensityTenths(tick)
+            totals.visits += visits
+            totals.lcpSum += visits * web.lcp(policy.pages)
+            totals.kilobytes += visits * kb
+            totals.networkEnergy += network
+            totals.deviceEnergy += device
+            totals.networkOperational += Units.emissions(network, intensityNow)
+            totals.deviceOperational += Units.emissions(device, intensityNow)
+            totals.operational += Units.emissions(network + device, intensityNow)
+            webRecord = WebRecord((network / Units.MILLIWATT_HOURS_PER_WATT_TICK).toInt(), (device / Units.MILLIWATT_HOURS_PER_WATT_TICK).toInt())
+        }
         totals.requests += requests
         scenario.streaming?.let { streaming ->
             totals.ratingSum += requests.toLong() * streaming.rating(policy.streaming, grid.intensity(tick))
@@ -445,6 +481,7 @@ class Simulation private constructor(
                 eco = scenario.streaming?.ecoActive(policy.streaming, (intensity + 5) / 10) ?: false,
                 training = training != null && trainedLastTick,
                 inference = inferenceRecord,
+                web = webRecord,
             ),
         )
         tick += 1
