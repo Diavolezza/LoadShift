@@ -483,7 +483,7 @@ private fun SideCard(scenario: Scenario, texts: ScenarioTexts, onStart: () -> Un
                 Fact(t("Electricity: %@ ct/kWh, the budget may rise by %@", Format.number(contract.priceTenthsCent / 10.0, 1), Format.wholePercent(contract.budgetPermille - 1_000)))
             } else if (services != null) {
                 Fact(t("A logistics system: four microservices, two external providers"))
-                Fact(t("Up to %lld tracking requests a second", services.peakRate))
+                Fact(t("Up to %@ tracking requests a second", Format.number(services.peakRate.toDouble())))
                 Fact(t("%lld servers", scenario.serverCount))
             } else if (pipeline != null) {
                 Fact(t("%lld developers, %lld build agents", pipeline.developers, pipeline.agents))
