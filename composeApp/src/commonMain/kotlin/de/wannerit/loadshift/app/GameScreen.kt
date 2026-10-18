@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -64,10 +65,14 @@ fun GameScreen(game: GameController, onExit: () -> Unit, onNext: ((Scenario) -> 
         val panelWidth = (maxWidth * 0.32f).coerceIn(300.dp, 380.dp)
         // Scenarios with tabs show all their kinds of work below, one under the other: more height for the timeline.
         val allLanes = game.isCapstone || game.scenario.contract != null
-        val timelineHeight = (maxHeight * (if (allLanes) 0.46f else 0.3f)).coerceAtLeast(190.dp)
-        Column(Modifier.fillMaxSize()) {
-            TopBar(game, onExit)
-            GoalBar(game)
+        // A low screen (a phone held sideways): the page scrolls and keeps a height the hall, panel and timeline fit into.
+        val low = maxHeight < 640.dp
+        val compact = maxWidth < 1150.dp
+        val height = if (low) (if (allLanes) 860.dp else 720.dp) else maxHeight
+        val timelineHeight = (height * (if (allLanes) 0.46f else 0.3f)).coerceAtLeast(190.dp)
+        Column(if (low) Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).height(height) else Modifier.fillMaxSize()) {
+            TopBar(game, onExit, compact)
+            GoalBar(game, compact)
             HDivider()
             Row(Modifier.fillMaxWidth().weight(1f)) {
                 if (Control.PLACEMENT in game.scenario.controls) {
@@ -116,12 +121,31 @@ fun GameScreen(game: GameController, onExit: () -> Unit, onNext: ((Scenario) -> 
 }
 
 @Composable
-private fun TopBar(game: GameController, onExit: () -> Unit) {
+private fun TopBar(game: GameController, onExit: () -> Unit, compact: Boolean = false) {
     val simulation = game.simulation
     val shown = maxOf(simulation.scenario.startTick, simulation.tick)
     val time = GameTime(shown)
     val intensity = simulation.grid.intensity(minOf(shown, simulation.scenario.endTick - 1))
     val last = simulation.history.lastOrNull()
+    if (compact) {
+        // A small screen (a phone held sideways): one row, the figures scroll sideways, no scenario name.
+        Row(
+            Modifier.fillMaxWidth().background(Palette.panel).padding(horizontal = 12.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Txt("‹", Type.style(30, FontWeight.SemiBold), Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = onExit).padding(horizontal = 4.dp))
+            SpeedControl(game)
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                val day = minOf(time.day - GameTime.START.day + 1, game.scenario.days)
+                Txt(if (game.hasRenewal) t("Quarter %lld, year %lld", (day - 1) % 4 + 1, (day - 1) / 4 + 1) else t("Day %lld", day), Type.caption)
+                Txt(time.clockText, Type.style(22, FontWeight.SemiBold).copy(fontFeatureSettings = "tnum"))
+            }
+            Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp)) {
+                TopMetrics(game)
+            }
+        }
+        return
+    }
     // Left the controls, the clock in the middle, the figures on the right: the buttons stay where they are.
     Box(Modifier.fillMaxWidth().background(Palette.panel).padding(horizontal = 20.dp, vertical = 10.dp)) {
         Row(Modifier.align(Alignment.CenterStart), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(22.dp)) {
@@ -138,55 +162,65 @@ private fun TopBar(game: GameController, onExit: () -> Unit) {
             Txt(time.clockText, Type.style(30, FontWeight.SemiBold).copy(fontFeatureSettings = "tnum"))
         }
         Row(Modifier.align(Alignment.CenterEnd), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(22.dp)) {
-        if (!game.hasRenewal) Metric(t("Grid now"), "$intensity g/kWh", Palette.intensity(intensity))
-        val totals = game.totals
-        Metric(t("CO₂ so far"), if (game.hasRenewal) "${Format.tonnes(totals.emissions)} t" else "${Format.kilograms(totals.emissions)} kg")
-        // E6: the shop's own servers are not the topic; the assistant's goals take their place.
-        simulation.scenario.contract?.let {
-            Metric(t("In the report"), "${Format.kilograms(game.totals.marketOperational)} kg")
-        }
-        simulation.scenario.services?.let { model ->
-            val l = game.totals.meanLatency
-            Metric(t("Response time"), t("%lld ms", l), if (l <= model.latencyLimit) Palette.ink else Palette.red)
-        }
-        simulation.scenario.pipeline?.let { model ->
-            val f = game.totals.meanFeedback
-            Metric(t("Feedback"), t("%@ min", Format.number(f / 10.0, 1)), if (f <= model.feedbackLimit * 10) Palette.ink else Palette.red)
-        }
-        simulation.scenario.web?.let { model ->
-            Metric(t("Page"), t("%@ MB", Format.number(game.totals.meanPageKb / 1_000.0, 1)))
-            val lcp = game.totals.meanLcp
-            Metric(t("LCP"), t("%@ s", Format.number(lcp / 10.0, 1)), if (lcp <= model.lcpLimit) Palette.ink else Palette.red)
-        }
-        if (game.hasInteractive && !game.hasInference && !game.hasWeb) {
-            val sla = minOf(totals.sla, totals.worstSiteSla)
-            Metric(if (game.hasRenewal) t("SLA (lowest site)") else t("SLA"), Format.percent(sla),
-                if (sla >= simulation.scenario.slaTarget) Palette.ink else Palette.red)
-        }
-        if (game.hasBatch) {
-            Metric(t("Jobs done"), "${game.jobsDone} / ${game.jobsTotal}",
-                if (totals.deadlinesMissed == 0) Palette.ink else Palette.red)
-        }
-        simulation.scenario.inference?.let { model ->
-            val q = game.totals.meanAnswerQuality
-            val o = game.totals.answersOnTime
-            Metric(t("Quality"), Format.percent(q), if (q >= model.qualityTarget) Palette.ink else Palette.red)
-            Metric(t("In time"), Format.percent(o), if (o >= model.onTimeTarget) Palette.ink else Palette.red)
-        }
-        simulation.scenario.streaming?.let { model ->
-            val rating = simulation.totals.meanRating
-            Metric(t("Rating"), Format.percent(rating), if (rating >= model.ratingTarget) Palette.ink else Palette.red)
-        }
-        simulation.scenario.training?.let { model ->
-            Metric(t("Training"), Format.wholePercent(minOf(1_000L, simulation.totals.trainingDone * 1_000 / model.work).toInt()),
-                if (simulation.totals.trainingFinishedAt != null) Palette.accent else Palette.ink)
-        }
-        if (simulation.scenario.cooling != null) {
-            Metric(t("PUE now"), if (last == null || last.itPower == 0) "–" else Format.number(last.facilityPower.toDouble() / last.itPower, 2))
-        }
-        if (!game.hasRenewal) Metric(t("Power"), "${Format.kilowatts(last?.facilityPower ?: 0)} kW")
+            TopMetrics(game)
         }
     }
+}
+
+/** The figures of the top bar: grid, CO₂ so far and what the scenario's goals need. */
+@Composable
+private fun TopMetrics(game: GameController) {
+    val simulation = game.simulation
+    val shown = maxOf(simulation.scenario.startTick, simulation.tick)
+    val intensity = simulation.grid.intensity(minOf(shown, simulation.scenario.endTick - 1))
+    val last = simulation.history.lastOrNull()
+    if (!game.hasRenewal) Metric(t("Grid now"), "$intensity g/kWh", Palette.intensity(intensity))
+    val totals = game.totals
+    Metric(t("CO₂ so far"), if (game.hasRenewal) "${Format.tonnes(totals.emissions)} t" else "${Format.kilograms(totals.emissions)} kg")
+    // E6: the shop's own servers are not the topic; the assistant's goals take their place.
+    simulation.scenario.contract?.let {
+        Metric(t("In the report"), "${Format.kilograms(game.totals.marketOperational)} kg")
+    }
+    simulation.scenario.services?.let { model ->
+        val l = game.totals.meanLatency
+        Metric(t("Response time"), t("%lld ms", l), if (l <= model.latencyLimit) Palette.ink else Palette.red)
+    }
+    simulation.scenario.pipeline?.let { model ->
+        val f = game.totals.meanFeedback
+        Metric(t("Feedback"), t("%@ min", Format.number(f / 10.0, 1)), if (f <= model.feedbackLimit * 10) Palette.ink else Palette.red)
+    }
+    simulation.scenario.web?.let { model ->
+        Metric(t("Page"), t("%@ MB", Format.number(game.totals.meanPageKb / 1_000.0, 1)))
+        val lcp = game.totals.meanLcp
+        Metric(t("LCP"), t("%@ s", Format.number(lcp / 10.0, 1)), if (lcp <= model.lcpLimit) Palette.ink else Palette.red)
+    }
+    if (game.hasInteractive && !game.hasInference && !game.hasWeb) {
+        val sla = minOf(totals.sla, totals.worstSiteSla)
+        Metric(if (game.hasRenewal) t("SLA (lowest site)") else t("SLA"), Format.percent(sla),
+            if (sla >= simulation.scenario.slaTarget) Palette.ink else Palette.red)
+    }
+    if (game.hasBatch) {
+        Metric(t("Jobs done"), "${game.jobsDone} / ${game.jobsTotal}",
+            if (totals.deadlinesMissed == 0) Palette.ink else Palette.red)
+    }
+    simulation.scenario.inference?.let { model ->
+        val q = game.totals.meanAnswerQuality
+        val o = game.totals.answersOnTime
+        Metric(t("Quality"), Format.percent(q), if (q >= model.qualityTarget) Palette.ink else Palette.red)
+        Metric(t("In time"), Format.percent(o), if (o >= model.onTimeTarget) Palette.ink else Palette.red)
+    }
+    simulation.scenario.streaming?.let { model ->
+        val rating = simulation.totals.meanRating
+        Metric(t("Rating"), Format.percent(rating), if (rating >= model.ratingTarget) Palette.ink else Palette.red)
+    }
+    simulation.scenario.training?.let { model ->
+        Metric(t("Training"), Format.wholePercent(minOf(1_000L, simulation.totals.trainingDone * 1_000 / model.work).toInt()),
+            if (simulation.totals.trainingFinishedAt != null) Palette.accent else Palette.ink)
+    }
+    if (simulation.scenario.cooling != null) {
+        Metric(t("PUE now"), if (last == null || last.itPower == 0) "–" else Format.number(last.facilityPower.toDouble() / last.itPower, 2))
+    }
+    if (!game.hasRenewal) Metric(t("Power"), "${Format.kilowatts(last?.facilityPower ?: 0)} kW")
 }
 
 @Composable
@@ -245,12 +279,14 @@ fun specialLong(goal: SpecialGoal): String = when (goal) {
 
 /** The goals and where the run stands. */
 @Composable
-private fun GoalBar(game: GameController) {
+private fun GoalBar(game: GameController, compact: Boolean = false) {
     val scenario = game.scenario
     val totals = game.totals
     val change = game.changeSoFar
     Row(
-        Modifier.fillMaxWidth().background(Palette.panel).padding(horizontal = 20.dp, vertical = 6.dp),
+        // On a small screen the goals scroll sideways instead of wrapping letter by letter.
+        Modifier.fillMaxWidth().background(Palette.panel).then(if (compact) Modifier.horizontalScroll(rememberScrollState()) else Modifier)
+            .padding(horizontal = 20.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         Txt(t("Goals"), Type.style(13, FontWeight.SemiBold, Palette.secondary))

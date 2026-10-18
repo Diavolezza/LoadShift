@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -150,14 +151,18 @@ fun hostingTitle(h: Hosting): String = when (h) {
 @Composable
 fun PortfolioScreen(game: PortfolioController, onExit: () -> Unit, onOverview: (() -> Unit)? = null) {
     BoxWithConstraints(Modifier.fillMaxSize().background(Palette.background)) {
-        val panelWidth = (maxWidth * 0.3f).coerceIn(300.dp, 380.dp)
-        Column(Modifier.fillMaxSize()) {
-            PortfolioTopBar(game, onExit)
-            PortfolioGoals(game)
+        val panelWidth = (maxWidth * 0.3f).coerceIn(if (maxWidth < 1000.dp) 270.dp else 300.dp, 380.dp)
+        // A low screen (a phone held sideways): the page scrolls and keeps a height everything fits into.
+        val low = maxHeight < 640.dp
+        val compact = maxWidth < 1150.dp
+        Column(if (low) Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).height(720.dp) else Modifier.fillMaxSize()) {
+            PortfolioTopBar(game, onExit, compact)
+            PortfolioGoals(game, compact)
             HDivider()
             Row(Modifier.fillMaxWidth().weight(1f)) {
-                Row(Modifier.weight(1f).fillMaxHeight().padding(12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    for (h in Hosting.entries) HostingColumn(game, h, Modifier.weight(1f).fillMaxHeight())
+                // On a small screen the three columns keep a readable width and scroll sideways.
+                Row(Modifier.weight(1f).fillMaxHeight().then(if (compact) Modifier.horizontalScroll(rememberScrollState()) else Modifier).padding(12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    for (h in Hosting.entries) HostingColumn(game, h, (if (compact) Modifier.width(250.dp) else Modifier.weight(1f)).fillMaxHeight())
                 }
                 VDivider()
                 PortfolioPanel(game, Modifier.width(panelWidth).fillMaxHeight())
@@ -169,7 +174,26 @@ fun PortfolioScreen(game: PortfolioController, onExit: () -> Unit, onOverview: (
 }
 
 @Composable
-private fun PortfolioTopBar(game: PortfolioController, onExit: () -> Unit) {
+private fun PortfolioTopBar(game: PortfolioController, onExit: () -> Unit, compact: Boolean = false) {
+    if (compact) {
+        // A small screen (a phone held sideways): one row, the figures scroll sideways, no scenario name.
+        Row(
+            Modifier.fillMaxWidth().background(Palette.panel).padding(horizontal = 12.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Txt("‹", Type.style(30, FontWeight.SemiBold), Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = onExit).padding(horizontal = 4.dp))
+            Column {
+                Txt(t("Year 1"), Type.caption)
+                Txt(if (game.finished) t("Plan carried out") else t("Inventory and plan"), Type.style(18, FontWeight.SemiBold))
+            }
+            Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp)) {
+                Metric(t("Your inventory"), t("%@ t CO₂", tonnes(game.inventoryKg)))
+                Metric(t("Expected by your data"), t("−%@ t", tonnes(game.expectedSaving)))
+                Metric(t("Budget left"), euros(game.left), if (game.left < 0) Palette.red else Palette.ink)
+            }
+        }
+        return
+    }
     Box(Modifier.fillMaxWidth().background(Palette.panel).padding(horizontal = 20.dp, vertical = 10.dp)) {
         Row(Modifier.align(Alignment.CenterStart), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(22.dp)) {
             Txt("‹", Type.style(34, FontWeight.SemiBold), Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = onExit).padding(horizontal = 6.dp))
@@ -191,12 +215,14 @@ private fun PortfolioTopBar(game: PortfolioController, onExit: () -> Unit) {
 }
 
 @Composable
-private fun PortfolioGoals(game: PortfolioController) {
+private fun PortfolioGoals(game: PortfolioController, compact: Boolean = false) {
     val scenario = game.scenario
     val r = game.result
     val met = game.model.goalsMet(r, scenario.goals)
     Row(
-        Modifier.fillMaxWidth().background(Palette.panel).padding(horizontal = 20.dp, vertical = 6.dp),
+        // On a small screen the goals scroll sideways instead of wrapping letter by letter.
+        Modifier.fillMaxWidth().background(Palette.panel).then(if (compact) Modifier.horizontalScroll(rememberScrollState()) else Modifier)
+            .padding(horizontal = 20.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         Txt(t("Goals"), Type.style(13, FontWeight.SemiBold, Palette.secondary))
