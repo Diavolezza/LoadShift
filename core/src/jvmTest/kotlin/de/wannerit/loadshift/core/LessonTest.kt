@@ -880,14 +880,14 @@ class LessonTest {
                 cut = if (c[0] == "M") ServiceCut.MICROSERVICES else ServiceCut.MODULITH,
                 protocol = if (c[1] == "J") Protocol.REST_JSON else Protocol.GRPC,
                 masterData = if (c[2] == "S") MasterData.SYNC else MasterData.EVENTS,
-                gpsTtl = c[3].toInt(), mapTtl = c[4].toInt(), serverless = c[5] == "f",
+                gpsTtl = c[3].toInt(), mapTtl = c[4].toInt(), serverless = c[5] == "f", extractOptimizer = c.getOrNull(6) == "x",
             )
         }
         fun run(code: String) = Simulation.replay(scenario, scenario.initialPolicy.copy(services = config(code)))
         val codes = listOf(
             "M J S 10 60 -", "M J S 60 300 -", "M J S 300 3600 -", "M G S 60 300 -", "M J E 60 300 -", "M G E 60 300 -",
             "M G E 60 300 f", "M J S 60 300 f", "L J S 60 300 -", "L G S 60 300 -", "L J S 0 0 -", "M J S 0 300 -",
-            "M G E 10 60 f", "L J S 10 60 -",
+            "M G E 10 60 f", "L J S 10 60 -", "L J S 60 300 - x", "L J S 0 0 - x",
         )
         val runs = codes.map { it to run(it) }
         val lines = mutableListOf(title(scenario), HEADER + "  latency ms  stale h  servers")
@@ -899,14 +899,17 @@ class LessonTest {
         report(107, lines)
         val byName = runs.toMap()
         fun stars(name: String) = scenario.stars(byName.getValue(name).totals, reference.totals)
-        // The cache for the external calls makes the tracking fast enough: one star.
+        // The cache for the external calls makes the tracking fast enough: one star; gRPC on top: still one.
         assertEquals(1, stars("M J S 60 300 -"))
+        assertEquals(1, stars("M G S 60 300 -"))
         // Events instead of synchronous calls: two; with gRPC too: two; plus serverless functions: three.
         assertEquals(2, stars("M J E 60 300 -"))
         assertEquals(2, stars("M G E 60 300 -"))
         assertEquals(3, stars("M G E 60 300 f"))
-        // The modular monolith: three at once.
-        assertEquals(3, stars("L J S 60 300 -"))
+        // The modular monolith keeps capacity for the route optimization all day: two; with the optimization as a
+        // service of its own: three.
+        assertEquals(2, stars("L J S 60 300 -"))
+        assertEquals(3, stars("L J S 60 300 - x"))
         // The traps: positions and traffic too old; serverless functions called on every request; no cache, too slow.
         assertEquals(0, stars("M J S 300 3600 -"))
         assertEquals(0, stars("M J S 60 300 f"))

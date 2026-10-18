@@ -122,6 +122,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "%lld SP",
     "%lld test environments with 3 replicas each" to
         "%lld Testumgebungen mit je 3 Replikas",
+    "+ route optimization" to
+        "+ Routenoptimierung",
     "1 day" to
         "1 Tag",
     "1 day, from 00:00" to
@@ -174,8 +176,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Ein Job startet, sobald der Strom höchstens %lld g/kWh hat – der Wert jetzt, nicht die Prognose.",
     "A job that would otherwise miss its deadline starts when there is just enough time left (with a fixed hour and a threshold)." to
         "Ein Job, der sonst seine Frist verpassen würde, startet, wenn die Zeit gerade noch reicht (bei fester Uhrzeit und Schwellwert).",
-    "A logistics company's system: customers track their deliveries, dispatchers plan the trucks' routes. It was split into four microservices – tracking, routes, customers and trucks – that call each other with REST and JSON. For every tracking request the routes service asks the customer and the truck service, the GPS provider for the truck's position and the map service for the traffic. In the evening up to 15,000 customers a second look where their parcel is – and the tracking takes a third of a second." to
-        "Das System einer Spedition: Kund:innen verfolgen ihre Lieferungen, Disponent:innen planen die Routen der LKWs. Es wurde in vier Microservices geschnitten – Tracking, Routen, Kunden und LKWs –, die sich mit REST und JSON aufrufen. Für jede Tracking-Anfrage fragt der Routen-Service den Kunden- und den LKW-Service, den GPS-Anbieter nach der Position des LKWs und den Kartendienst nach dem Verkehr. Abends schauen bis zu 15.000 Kund:innen pro Sekunde, wo ihr Paket ist – und das Tracking braucht eine Drittelsekunde.",
+    "A logistics company's system: customers track their deliveries, dispatchers plan the trucks' routes. It was split into four microservices – tracking, routes, customers and trucks – that call each other with REST and JSON; the routes service also asks a GPS provider and a map service on every request. In the evening up to 15,000 customers a second look where their parcel is – and the tracking takes a third of a second. Once an hour the dispatchers' route optimization needs 200 cores for ten minutes." to
+        "Das System einer Spedition: Kund:innen verfolgen ihre Lieferungen, Disponent:innen planen die Routen der LKWs. Es wurde in vier Microservices geschnitten – Tracking, Routen, Kunden und LKWs –, die sich mit REST und JSON aufrufen; der Routen-Service fragt außerdem bei jeder Anfrage einen GPS-Anbieter und einen Kartendienst. Abends schauen bis zu 15.000 Kund:innen pro Sekunde, wo ihr Paket ist – und das Tracking braucht eine Drittelsekunde. Einmal pro Stunde braucht die Routenoptimierung der Disponent:innen 200 Kerne für zehn Minuten.",
     "A logistics system: four microservices, two external providers" to
         "Ein Logistiksystem: vier Microservices, zwei externe Anbieter",
     "A phone gets a smaller image than a large monitor (srcset); now every screen gets the 2,000-pixel image." to
@@ -294,8 +296,6 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Mindestens %1\$lld Server, jeden Tag von %2\$@ bis %3\$@ (Scheduled Scaling).",
     "at most %lld hosts running" to
         "höchstens %lld Hosts in Betrieb",
-    "At the evening peak with these settings" to
-        "Zur Abendspitze mit diesen Einstellungen",
     "Autoscale" to
         "Autoscaling",
     "Autoscaling and training" to
@@ -472,8 +472,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "CO₂-Intensität des Stroms, g CO₂/kWh – gestrichelt: Prognose; grün: Eco-Modus an",
     "Carbon intensity of the grid; below it the assistant's power by kind of question (colors as in the panel) and the idle rest of the GPU servers." to
         "CO₂-Intensität des Stroms; darunter die Leistung des Assistenten nach Art der Frage (Farben wie im Panel) und der Leerlauf der GPU-Server.",
-    "Carbon intensity of the grid; below it the CPU: the services' own work and what communication, external calls and idle instances add." to
-        "CO₂-Intensität des Stroms; darunter die CPU: die eigene Arbeit der Services und was Kommunikation, externe Aufrufe und Instanzen im Leerlauf dazulegen.",
+    "Carbon intensity of the grid; below it the CPU: tracking, route optimization, and what communication, external calls and idle instances add; the line shows the servers ready." to
+        "CO₂-Intensität des Stroms; darunter die CPU: Tracking, Routenoptimierung und was Kommunikation, externe Aufrufe und Instanzen im Leerlauf dazulegen; die Linie zeigt die bereitstehenden Server.",
     "Carbon intensity of the grid; below it the power of the three parts: data center, network and the visitors' devices." to
         "CO₂-Intensität des Stroms; darunter die Leistung der drei Teile: Rechenzentrum, Netz und die Geräte der Besucher.",
     "Carbon intensity of the grid; below it the servers on – build agents and test environments – and the UI tests at night." to
@@ -496,6 +496,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Das kleinste Modell wählen, das für eine Aufgabe gut genug ist – oder gar keins – und es effizient betreiben, etwa mit Batching oder einem Cache für häufige Antworten. Immer mehr der Energie von KI geht ins Antworten (Inferenz), nicht ins Training.",
     "Collected commits share one run – and wait for it." to
         "Gesammelte Commits teilen sich einen Lauf – und warten auf ihn.",
+    "Communication is work: every remote call is serialized, sent and deserialized, every instance runs its runtime even without a request. Events with a local copy of the master data saved two calls per request, gRPC with Protobuf halves the bytes of JSON [S33], and serverless functions saved idle instances – but only once nobody called them on every request; called synchronously, they cost more than they saved. The modular monolith needs no calls between its modules, but it scales as a whole: it had to keep the capacity for the route optimization ready all day, while the optimization as a service of its own grew for ten minutes and shrank again. That is what microservices are for: cutting along different needs for scaling [S34]. A monolith with only the optimization as a service of its own combines both. The cache made the tracking fast enough in the first place; reused for too long, it shows the customers a truck that has long driven on." to
+        "Kommunikation ist Arbeit: Jeder entfernte Aufruf wird serialisiert, gesendet und deserialisiert, jede Instanz betreibt ihre Laufzeitumgebung auch ohne Anfrage. Events mit einer lokalen Kopie der Stammdaten sparten zwei Aufrufe pro Anfrage, gRPC mit Protobuf halbiert die Bytes von JSON [S33], und Serverless-Funktionen sparten Instanzen im Leerlauf – aber erst, als niemand sie mehr bei jeder Anfrage aufrief; synchron aufgerufen kosteten sie mehr, als sie sparten. Der modulare Monolith braucht keine Aufrufe zwischen seinen Modulen, aber er skaliert als Ganzes: Er musste die Kapazität für die Routenoptimierung den ganzen Tag bereithalten, während die Optimierung als eigener Service für zehn Minuten wuchs und wieder schrumpfte. Dafür sind Microservices da: entlang unterschiedlicher Anforderungen an die Skalierung schneiden [S34]. Ein Monolith, aus dem nur die Optimierung als eigener Service herausgelöst ist, verbindet beides. Der Cache machte das Tracking überhaupt erst schnell genug; zu lange wiederverwendet, zeigt er den Kund:innen einen LKW, der längst weitergefahren ist.",
     "compared with the reference operator, who buys new servers wherever capacity runs short." to
         "im Vergleich zum Referenzbetreiber, der neue Server kauft, wo die Kapazität knapp wird.",
     "compared with the reference operator, who caches nothing." to
@@ -580,8 +582,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "CPU-Zeit pro Request",
     "CPU work of a day" to
         "CPU-Arbeit eines Tages",
-    "CPU – blue: the services' own work, amber: communication, external calls and idle instances" to
-        "CPU – blau: eigene Arbeit der Services, gelb: Kommunikation, externe Aufrufe und Instanzen im Leerlauf",
+    "CPU – blue: tracking, violet: route optimization, amber: communication, external calls, idle instances; line: servers ready" to
+        "CPU – blau: Tracking, violett: Routenoptimierung, gelb: Kommunikation, externe Aufrufe, Instanzen im Leerlauf; Linie: bereitstehende Server",
     "Customer analytics" to
         "Kundenanalyse",
     "Customer and truck services as serverless functions" to
@@ -592,8 +594,6 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Kundendaten bleiben in Deutschland",
     "Customers" to
         "Kunden",
-    "Customers track their deliveries; for every request the routes service needs the truck, the customer, the truck's GPS position and the traffic. The tracking must answer within %lld ms on average; positions may be at most %lld s old, traffic information %lld min." to
-        "Kund:innen verfolgen ihre Lieferungen; für jede Anfrage braucht der Routen-Service den LKW, den Kunden, die GPS-Position des LKWs und den Verkehr. Das Tracking muss im Mittel innerhalb von %1\$lld ms antworten; Positionen dürfen höchstens %2\$lld s alt sein, Verkehrsinformationen %3\$lld min.",
     "Cut" to
         "Schnitt",
     "Daily report" to
@@ -958,6 +958,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Erst messen, dann optimieren: Die großen Punkte auf der Liste des Teams brachten kaum etwas, eine einzige Zeile beim Log-Level dagegen ein Zehntel der CPU. Der Checkout zeigt Amdahls Gesetz: Wie viel schneller ein Teil auch wird, das Ganze gewinnt höchstens seinen Anteil. Weniger Arbeit pro Request senkt die Energie und – mit Autoscaling – die Zahl der Server; ein Rechenzentrum, das weniger Server braucht, braucht auch weniger Hardware. Die SCI pro 1.000 Requests zeigt den Effekt unabhängig von der Last.",
     "Measure first" to
         "Erst messen",
+    "Measured now, with the settings running" to
+        "Jetzt gemessen, mit den laufenden Einstellungen",
     "Measured today, some parts of the code hardly matter: a lookup in a list, a query without an index, a nightly job that compares every pair of products. But their work grows with the data – in step with it, or even with its square. Constant savings look bigger today; fixing the parts that grow pays off over the year. The complexity of an algorithm tells you how its work grows." to
         "Heute gemessen spielen manche Teile des Codes kaum eine Rolle: eine Suche in einer Liste, eine Abfrage ohne Index, ein nächtlicher Job, der jedes Produktpaar vergleicht. Doch ihre Arbeit wächst mit den Daten – im Gleichschritt oder sogar mit dem Quadrat. Konstante Einsparungen sehen heute größer aus; über das Jahr zahlt es sich aus, die wachsenden Teile zu beheben. Die Komplexität eines Algorithmus sagt, wie seine Arbeit wächst.",
     "measured: −%@" to
@@ -1270,6 +1272,12 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Gerade jetzt",
     "Right-sized AI" to
         "KI nach Maß",
+    "Route optimization" to
+        "Routenoptimierung",
+    "Route optimization as a service of its own" to
+        "Routenoptimierung als eigener Service",
+    "route optimization on its own" to
+        "Routenoptimierung eigenständig",
     "Routes" to
         "Routen",
     "Rule" to
@@ -1426,8 +1434,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Test Impact Analysis",
     "Testers and business analysts work on weekdays from 8 to 18." to
         "Tester:innen und Fachbereich arbeiten werktags von 8 bis 18.",
-    "The architecture: a diagram of the services and their calls as your settings would build them, the cut, the communication between the services and how long the providers' answers are reused. Below it the work and the response time at the evening peak." to
-        "Die Architektur: ein Diagramm der Services und ihrer Aufrufe, wie deine Einstellungen sie bauen würden, der Schnitt, die Kommunikation zwischen den Services und wie lange die Antworten der Anbieter wiederverwendet werden. Darunter Arbeit und Antwortzeit zur Abendspitze.",
+    "The architecture: a diagram of the services and their calls as your settings would build them, the cut, the communication between the services and how long the providers' answers are reused. Below it what the settings running now measure." to
+        "Die Architektur: ein Diagramm der Services und ihrer Aufrufe, wie deine Einstellungen sie bauen würden, der Schnitt, die Kommunikation zwischen den Services und wie lange die Antworten der Anbieter wiederverwendet werden. Darunter, was die laufenden Einstellungen messen.",
     "The batch rule: choose one, set it and apply it. Below it the jobs with their deadlines and what the rule has planned for them." to
         "Die Batch-Regel: wählen, einstellen, übernehmen. Darunter die Jobs mit ihren Fristen und was die Regel für sie geplant hat.",
     "The biggest saving today first" to
@@ -1442,8 +1450,6 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Das Unternehmen betreibt zwei Rechenzentren, in Warschau und in Paris, mit derselben Hardware: je 24 Server, vor vier Jahren gekauft. Der Webshop wächst um 15 % pro Jahr, an beiden Standorten gleich. Jedes Jahr gibt die Finanzabteilung vier neue Server für beide Standorte zusammen frei, und jedes Jahr bringen die Hersteller eine Generation, die weniger Strom braucht. Ab dem dritten Jahr sind die alten Server über ihre sechs Jahre hinaus und fallen aus.",
     "The cooling keeps the air at the server inlets at the setpoint. Outside air cools for free when it is at least 6 °C cooler than the setpoint; otherwise the chiller works – the hotter it is outside, the more power it needs. A warmer setpoint saves chiller power, but above 25 °C the server fans speed up." to
         "Die Kühlung hält die Luft am Servereinlass auf dem Sollwert. Außenluft kühlt kostenlos, wenn sie mindestens 6 °C kühler ist als der Sollwert; sonst arbeitet die Kältemaschine – je heißer es draußen ist, desto mehr Strom braucht sie. Ein wärmerer Sollwert spart Strom für die Kältemaschine, aber über 25 °C drehen die Lüfter der Server hoch.",
-    "The cut changed the most: in a modular monolith the calls between the modules are method calls, and two instances run instead of eight. In a measurement with Kepler from a training for the iSAQB module GREEN, a modular monolith needed 39 % of the energy of the same application as microservices; benchmarks show the microservices' strength in scaling instead [S34]. Microservices can come close: events with a local copy of the master data save two calls per request, gRPC with Protobuf halves the bytes of JSON [S33], and serverless functions save idle instances – but only for services that are rarely called: called on every request, they cost more than they save. The cache for the providers made the tracking fast enough in the first place; reused for too long, it shows the customers a truck that has long driven on." to
-        "Der Schnitt änderte am meisten: In einem modularen Monolithen sind die Aufrufe zwischen den Modulen Methodenaufrufe, und es laufen zwei Instanzen statt acht. In einer Messung mit Kepler aus einer Schulung zum iSAQB-Modul GREEN brauchte ein modularer Monolith 39 % der Energie derselben Anwendung als Microservices; Benchmarks zeigen dafür die Stärke der Microservices beim Skalieren [S34]. Microservices kommen nahe heran: Events mit einer lokalen Kopie der Stammdaten sparen zwei Aufrufe pro Anfrage, gRPC mit Protobuf halbiert die Bytes von JSON [S33], und Serverless-Funktionen sparen Instanzen im Leerlauf – aber nur bei Services, die selten aufgerufen werden: Bei jeder Anfrage aufgerufen, kosten sie mehr, als sie sparen. Der Cache für die Anbieter machte das Tracking überhaupt erst schnell genug; zu lange wiederverwendet, zeigt er den Kund:innen einen LKW, der längst weitergefahren ist.",
     "The day is running: the placement is fixed." to
         "Der Tag läuft: Die Verteilung steht fest.",
     "The emissions of making, shipping and disposing of hardware, as opposed to those of the electricity it uses. The SCI books them over the hardware's life; in a clean grid they can be the larger part. Hardware efficiency means using hardware long and well – and replacing it where the energy saved outweighs them." to
@@ -1516,6 +1522,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Das vorige Team hat die 24 VMs auf alle zehn Hosts verteilt. Packe sie auf weniger Hosts – ein Host ohne VM wird abgeschaltet. Zieh eine VM auf einen anderen Host oder klick sie an und dann den Host. Sobald der Tag läuft, steht die Verteilung fest.",
     "The PUE is a ratio, not a goal. Fewer servers saved the most energy – and raised the PUE, because lighting, UPS and pumps draw the same power for fewer servers. A setpoint of 27 °C gives a better PUE than 25 °C, because the faster fans count as IT power – but it uses more energy. All servers on would have had the best PUE of all. Measure CO₂ or energy per request: the PUE only says how well the building serves the IT, not whether the IT does useful work." to
         "Die PUE ist ein Verhältnis, kein Ziel. Weniger Server sparten am meisten Energie – und erhöhten die PUE, weil Licht, USV und Pumpen für weniger Server gleich viel Strom ziehen. Ein Sollwert von 27 °C ergibt eine bessere PUE als 25 °C, weil die schnelleren Lüfter als IT-Leistung zählen – verbraucht aber mehr Energie. Alle Server an hätte die beste PUE von allen gehabt. Miss CO₂ oder Energie pro Request: Die PUE sagt nur, wie gut das Gebäude der IT dient, nicht, ob die IT nützliche Arbeit tut.",
+    "The rest stays one deployment." to
+        "Der Rest bleibt ein Deployment.",
     "The same job emits less CO₂ when the grid is clean. In Spain's solar grid the cleanest hours are around midday, not at night. Plan every job into clean hours before its deadline – and keep in mind that only ten servers are there." to
         "Derselbe Job stößt weniger CO₂ aus, wenn der Strom sauber ist. Im spanischen Solarnetz sind die saubersten Stunden um die Mittagszeit, nicht nachts. Plane jeden Job vor seiner Frist in saubere Stunden – und denk daran, dass nur zehn Server da sind.",
     "The same plus the product videos" to
@@ -1560,6 +1568,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Dasselbe, grünste Stunden",
     "The same, positions 5 min, traffic 1 h" to
         "Dasselbe, Positionen 5 min, Verkehr 1 h",
+    "The same, route optimization as a service of its own" to
+        "Dasselbe, Routenoptimierung als eigener Service",
     "The same, small model for product questions" to
         "Dasselbe, kleines Modell für Produktfragen",
     "The servers needed for the expected load of the next hour run. A low target leaves headroom for peaks but more servers idle; a high target is efficient but gets slow at peaks." to
@@ -1574,6 +1584,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Der Status einer Bestellung, aus der Bestelldatenbank.",
     "The team changes nothing (reference)" to
         "Das Team ändert nichts (Referenz)",
+    "The tracking must answer within %lld ms on average; positions may be at most %lld s old, traffic information %lld min. From 6 to 20 the dispatchers' route optimization runs once an hour." to
+        "Das Tracking muss im Mittel innerhalb von %1\$lld ms antworten; Positionen dürfen höchstens %2\$lld s alt sein, Verkehrsinformationen %3\$lld min. Von 6 bis 20 Uhr läuft einmal pro Stunde die Routenoptimierung der Disponent:innen.",
     "The VMs" to
         "Die VMs",
     "The web shop again, now in winter and with 30 servers. Autoscaling is on: at 80 % target utilization it keeps just enough servers running. On day 2 marketing sends a newsletter at 19:00 – for three hours twice as many people will shop as usual." to

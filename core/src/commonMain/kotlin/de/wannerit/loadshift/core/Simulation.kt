@@ -628,8 +628,9 @@ class Simulation private constructor(
         val hour = GameTime(tick).hour
         val curve = InteractiveLoad.DAILY_CURVE[hour]
         val rate = m.peakRate * curve / 1_000.0
-        val cpu = m.cpuPerSecond(c, rate)
-        val servers = minOf(serverList.size, m.servers(c, rate))
+        val optimizer = m.optimizerCpu(tick)
+        val cpu = m.cpuPerSecond(c, rate) + optimizer
+        val servers = minOf(serverList.size, m.servers(c, rate, tick))
         val requests = (rate * 3_600 / GameTime.TICKS_PER_HOUR).toLong()
         totals.trackingRequests += requests
         totals.latencySum += requests * m.latency(c, rate)
@@ -642,7 +643,7 @@ class Simulation private constructor(
             util[i] = if (on) minOf(1_000, (cpu / (servers * ServiceModel.SERVER_MS) * 1_000).toInt()) else 0
         }
         val own = rate * 10.0
-        servicesRecord = ServiceRecord(servers, cpu.toInt(), (cpu - own).toInt())
+        servicesRecord = ServiceRecord(servers, cpu.toInt(), (cpu - own - optimizer).toInt(), optimizer.toInt())
         return util
     }
 

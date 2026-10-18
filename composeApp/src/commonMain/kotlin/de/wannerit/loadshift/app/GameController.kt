@@ -734,6 +734,7 @@ class GameController(val scenario: Scenario) {
                 t("Cache, gRPC, events, serverless functions") to run(cached.copy(protocol = Protocol.GRPC, masterData = MasterData.EVENTS, serverless = true)),
                 t("Cache, serverless functions, but synchronous calls") to run(cached.copy(serverless = true)),
                 t("Modular monolith with cache") to run(cached.copy(cut = ServiceCut.MODULITH)),
+                t("The same, route optimization as a service of its own") to run(cached.copy(cut = ServiceCut.MODULITH, extractOptimizer = true)),
                 t("Modular monolith without cache") to run(base.copy(cut = ServiceCut.MODULITH)),
             )
         }

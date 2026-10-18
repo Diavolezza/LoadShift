@@ -28,6 +28,8 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
+import de.wannerit.loadshift.core.GameTime
+import de.wannerit.loadshift.core.InteractiveLoad
 import de.wannerit.loadshift.core.MasterData
 import de.wannerit.loadshift.core.Protocol
 import de.wannerit.loadshift.core.ServiceConfig
@@ -43,7 +45,7 @@ fun ServicesPanel(game: GameController) {
     fun set(c: ServiceConfig) { game.servicesDraft = c }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Txt(t("Architecture"), Type.heading)
-        Txt(t("Customers track their deliveries; for every request the routes service needs the truck, the customer, the truck's GPS position and the traffic. The tracking must answer within %lld ms on average; positions may be at most %lld s old, traffic information %lld min.",
+        Txt(t("The tracking must answer within %lld ms on average; positions may be at most %lld s old, traffic information %lld min. From 6 to 20 the dispatchers' route optimization runs once an hour.",
             model.latencyLimit, model.gpsLimit, model.mapLimit / 60), Type.style(15, color = Palette.secondary))
 
         ArchitectureDiagram(d, Modifier.fillMaxWidth().height(200.dp).clip(RoundedCornerShape(12.dp)).background(Palette.background))
@@ -53,6 +55,11 @@ fun ServicesPanel(game: GameController) {
                 for (cut in ServiceCut.entries) Chip(t(cut.label), d.cut == cut) { set(d.copy(cut = cut)) }
             }
             Txt(t("Microservices: four deployments with two instances each, deployed and scaled on their own. Modular monolith: the same modules in one deployment, calls between them are method calls."), Type.caption)
+            if (d.cut == ServiceCut.MODULITH) {
+                Option(d.extractOptimizer, t("Route optimization as a service of its own"), t("The rest stays one deployment.")) {
+                    set(d.copy(extractOptimizer = !d.extractOptimizer))
+                }
+            }
         }
         if (d.cut == ServiceCut.MICROSERVICES) {
             Section(t("Between the services")) {
@@ -81,19 +88,21 @@ fun ServicesPanel(game: GameController) {
             Txt(t("A cache instance (Redis) keeps the answers; without it every request asks both providers."), Type.caption)
         }
 
-        // The draft: work per request and response time at the evening peak
-        val peak = model.peakRate.toDouble()
+        // Measured: the settings running now, at the load of this hour
+        val running = game.simulation.policy.services
+        val hour = GameTime(minOf(game.simulation.tick, game.scenario.endTick - 1)).hour
+        val load = model.peakRate * InteractiveLoad.DAILY_CURVE[hour] / 1_000.0
         Card(Modifier.fillMaxWidth(), color = Palette.background, padding = 14.dp) {
-            Txt(t("At the evening peak with these settings"), Type.subheading)
+            Txt(t("Measured now, with the settings running"), Type.subheading)
             Row(Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
                 Txt(t("CPU per tracking request"), Type.callout, Modifier.weight(1f))
-                Txt(t("%@ ms", Format.number(model.cpuPerRequest(d, peak), 1)), Type.callout)
+                Txt(t("%@ ms", Format.number(model.cpuPerRequest(running, load), 1)), Type.callout)
             }
             Row(Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
                 Txt(t("Instances always running"), Type.callout, Modifier.weight(1f))
-                Txt("${model.replicas(d)}", Type.callout)
+                Txt("${model.replicas(running)}", Type.callout)
             }
-            val latency = model.latency(d, peak)
+            val latency = model.latency(running, load)
             Row(Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
                 Txt(t("Response time of the tracking"), Type.callout, Modifier.weight(1f))
                 Txt(t("%lld ms", latency), Type.style(15, FontWeight.SemiBold, if (latency <= model.latencyLimit) Palette.ink else Palette.red))
@@ -168,6 +177,11 @@ private fun DrawScope.drawArchitecture(c: ServiceConfig, measurer: TextMeasurer)
         arrow(0.42f, 0.30f, 0.20f, 0.62f, callColor, false, proto)
         arrow(0.50f, 0.30f, 0.49f, 0.62f, callColor, false)
     }
+    if (!modulith || c.extractOptimizer) box(0.66f, 0.66f, 0.99f, 0.84f, t("Route optimization"), service)
+    else {
+        val layout = measurer.measure(t("+ route optimization"), Type.style(10, color = Palette.accent))
+        drawText(layout, topLeft = Offset(0.03f * w, 0.72f * h))
+    }
     val cached = c.gpsTtl > 0 || c.mapTtl > 0
     if (cached) box(0.655f, 0.08f, 0.79f, 0.56f, t("Cache"), Color(0xFFF3E9FB))
     box(0.82f, 0.08f, 0.99f, 0.28f, "GPS", external, dashed = true)
@@ -216,6 +230,7 @@ private fun Chip(text: String, chosen: Boolean, onClick: () -> Unit) {
 /** "microservices, gRPC with Protobuf, events, functions, positions 1 min, traffic 5 min" */
 fun servicesText(c: ServiceConfig): String = listOfNotNull(
     t(c.cut.label),
+    if (c.cut == ServiceCut.MODULITH && c.extractOptimizer) t("route optimization on its own") else null,
     if (c.cut == ServiceCut.MICROSERVICES) t(c.protocol.label) else null,
     if (c.cut == ServiceCut.MICROSERVICES) t(c.masterData.label) else null,
     if (c.cut == ServiceCut.MICROSERVICES && c.serverless) t("serverless functions") else null,

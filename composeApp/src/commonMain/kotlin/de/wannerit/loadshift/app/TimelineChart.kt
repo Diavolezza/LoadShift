@@ -431,26 +431,33 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
     /** E7: CPU in cores, stacked: the services' own work and the rest (communication, external calls, idle instances). */
     private fun DrawScope.drawServices(top: Float, bottom: Float) {
         val records = simulation.history.mapNotNull { r -> r.services?.let { r.tick to it } }
-        val maxCores = maxOf(1, (records.maxOfOrNull { it.second.cpuMs } ?: 1_000) / 1_000)
+        val maxCores = maxOf(1, (records.maxOfOrNull { maxOf(it.second.cpuMs, (it.second.servers * de.wannerit.loadshift.core.ServiceModel.SERVER_MS * 0.7).toInt()) } ?: 1_000) / 1_000)
         val scaleTop = niceCeiling(maxCores).toFloat()
         fun yC(ms: Int) = bottom - (bottom - top) * (ms / 1_000f / scaleTop)
         if (records.isNotEmpty()) {
-            for (layer in 1 downTo 0) {
+            for (layer in 2 downTo 0) {
                 val area = Path().apply {
                     moveTo(x(records[0].first), bottom)
                     for ((tick, r) in records) {
-                        val y = yC(if (layer == 0) r.cpuMs - r.overheadMs else r.cpuMs)
+                        val y = yC(when (layer) { 0 -> r.cpuMs - r.overheadMs - r.optimizerMs; 1 -> r.cpuMs - r.overheadMs; else -> r.cpuMs })
                         lineTo(x(tick), y); lineTo(x(tick + 1), y)
                     }
                     lineTo(x(records.last().first + 1), bottom)
                     close()
                 }
                 drawPath(area, Color.White)
-                drawPath(area, (if (layer == 0) Palette.interactiveLoad else Palette.amber).copy(alpha = 0.65f))
+                drawPath(area, (when (layer) { 0 -> Palette.interactiveLoad; 1 -> Palette.trainingLoad; else -> Palette.amber }).copy(alpha = 0.65f))
             }
+            // Servers ready (capacity at 70 %), as a line.
+            fun ready(r: de.wannerit.loadshift.core.ServiceRecord) = (r.servers * de.wannerit.loadshift.core.ServiceModel.SERVER_MS * 0.7).toInt()
+            val line = Path().apply {
+                moveTo(x(records[0].first), yC(ready(records[0].second)))
+                for ((tick, r) in records) { val y = yC(ready(r)); lineTo(x(tick), y); lineTo(x(tick + 1), y) }
+            }
+            drawPath(line, Palette.ink.copy(alpha = 0.6f), style = Stroke(1.2f * density))
         }
         axis(top, bottom, t("%lld cores", scaleTop.toInt()))
-        text(t("CPU – blue: the services' own work, amber: communication, external calls and idle instances"), Offset(left, top - 12f * density), Type.style(12, FontWeight.SemiBold))
+        text(t("CPU – blue: tracking, violet: route optimization, amber: communication, external calls, idle instances; line: servers ready"), Offset(left, top - 12f * density), Type.style(12, FontWeight.SemiBold))
     }
 
     /** E6: build agents and test environment servers on, stacked; a violet mark for the nightly UI tests. */

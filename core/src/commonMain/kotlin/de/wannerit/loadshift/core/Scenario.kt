@@ -622,7 +622,7 @@ data class Scenario(
             controls = setOf(Control.SERVICES),
             initialPolicy = Policy(CapacityMode.Manual(0)),
             referencePolicy = Policy(CapacityMode.Manual(0)),
-            goals = StarGoals(400, SpecialGoal.Reduction(485)),
+            goals = StarGoals(380, SpecialGoal.Reduction(455)),
             services = ServiceModel(),
         )
 
