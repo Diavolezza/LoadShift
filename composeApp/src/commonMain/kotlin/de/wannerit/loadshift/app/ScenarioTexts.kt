@@ -23,6 +23,36 @@ class ScenarioTexts(
 ) {
     companion object {
         fun of(scenario: Scenario): ScenarioTexts = when (scenario.number) {
+            108 -> ScenarioTexts(
+                situation = "An insurer's customer portal has seven building blocks. After an outage last winter the board decided: 99.99 % for everything – since then every building block runs active-active on two sites, each site big enough for the whole load. The IT management now asks what that costs in CO₂. The architecture team has written down the quality scenarios with the departments: five of them, each with the downtime it may have in a year.",
+                idea = "Every building block fails now and then – here about six times a year. What a failure means depends on the tactic: a single instance is down for hours until it is repaired, a cold standby for about 45 minutes, a warm standby for ten, active-active for one. More redundancy means more servers that run. A quality scenario is available only while every building block it calls synchronously is available.",
+                screen = listOf(
+                    "At the top: CO₂ a year, the change compared with today, the servers on and how many quality scenarios are met; below it your goals.",
+                    "The building blocks and who calls whom, coloured by their tactic. Click a block to select it.",
+                    "The five quality scenarios: the downtime each may have in a year and the downtime to expect with your architecture.",
+                    "The selected building block: the four tactics with what they mean, two ways to decouple, and the button that puts the architecture in place.",
+                ),
+                comparedWith = "compared with today: everything active-active on two sites, location-based.",
+                rules = "Every quality scenario met",
+                remark = "99.99 % for everything was more than any scenario asked for. Each building block needs only what the scenarios that call it need – but shared blocks need more than any single one: reporting a claim waits for the claims intake, the login and the policy database, and their availabilities multiply. Three warm standbys in a row are just enough for 4.4 hours a year; with a cold database they are not. Decoupling changes the sum: with claims in a queue the intake no longer waits for the database, which can then run as a cold standby, and the queue evens out the peaks. With a circuit breaker the contract overview shows the contracts even when the recommendations fail, so these need no redundancy at all. Availability is bought with running servers; the architecture decides where it is needed.",
+                term = "Availability Tactics",
+                termText = "Ways to keep a system available in spite of failures: redundancy (active, passive or as a spare), recovery and degradation, as described by Bass, Clements and Kazman. A quality scenario states which availability is needed and where; a tactic states how it is reached.",
+            )
+            109 -> ScenarioTexts(
+                situation = "A delivery service's app runs on 400,000 phones. It learns about changes the way it did in its first version: it asks the server – every 10 seconds for the delivery status, every 2 seconds on the map and in the chat, every 30 or 60 seconds for the rest, and in the background every 15 minutes. Customers complain that \"The courier is at the door\" comes too late when the app is closed. The team is to fix that – and the app's CO₂ should go down too.",
+                idea = "There are several ways to learn about a change: asking at intervals (polling), asking and waiting for the answer (long polling), a connection that stays open (a stream), or a push from the phone platform. They differ in what they cost on the phone, on the server and in the network, and in how fast a change arrives. On a closed app every wake-up switches the phone's radio on for some seconds.",
+                screen = listOf(
+                    "At the top: CO₂ a year, the change compared with today, the share of the phones and how many kinds of update are fresh enough; below it your goals.",
+                    "The five kinds of update: how each reaches the app while it is open and while it is closed, and how fresh it is then. Click a way to choose it.",
+                    "Where the CO₂ comes from – phones, servers, network and the rest of the app – today and with your plan.",
+                    "The selected kind with its facts and requirements, the ways explained, two switches for all kinds, and the button that carries out the plan.",
+                ),
+                comparedWith = "compared with the app as it is today, location-based; the rest of the app (browsing, ordering) is the same in both.",
+                rules = "Every kind of update as fresh as required",
+                remark = "Most of the CO₂ was not on the servers but on the phones and in the network: every background refresh woke 400,000 phones 96 times a day, and the offers came along each time with 60 KB, changed or not. Conditional requests turn an unchanged answer into a short \"304 Not Modified\". What nobody needs while the app is closed – the offers – needs no refresh at all; they are loaded when the app is opened. Rare changes are a case for push: the delivery status and the badge reach the phone only when something happens, and \"The courier is at the door\" arrives in seconds. Frequent changes are a case for a stream: the courier on the map and the chat. A connection kept open in the background, on the other hand, wakes the phone every few minutes for a sign of life – real time everywhere is the most expensive plan.",
+                term = "Polling, Push, Streaming",
+                termText = "Ways for a client to learn about changes: it asks at intervals (polling) or asks and waits (long polling), the server sends them over a connection that stays open (streaming, for example WebSocket or server-sent events), or a push service delivers them to the device.",
+            )
             204 -> ScenarioTexts(
                 situation = "Six applications run with a cloud provider in Frankfurt. The CFO wants the IT costs at least a fifth lower over the next three years and asks whether some of them should leave the cloud – for a colocation in Stuttgart or the company's own server room, which still has six free servers, three years old. The board asks: and the CO₂? In the sustainability report the cloud stands at zero: it is counted market-based, with the provider's green-power certificates. Counted for the stars is location-based, with the making of the servers.",
                 idea = "Four places, each with its own facts: the cloud in Frankfurt and in Stockholm with a PUE of 1.15, the colocation with 1.35, the server room with 1.7. The grid in Germany has about 380 g CO₂ per kWh, in Sweden about 30. In the cloud the company pays for the server equivalents an application is given; on own hardware an application needs enough servers for its peak, and they run whether busy or not. Making a new server emits about 1.5 t CO₂.",

@@ -28,6 +28,8 @@ private class Entry(val term: String, val text: String, val scenarios: List<Scen
 /** Terms the scenarios use without being about them. */
 private val GENERAL = listOf(
     "Carbon intensity" to "How much CO₂e the generation of one kilowatt-hour of electricity emits, in g CO₂e/kWh. It changes from hour to hour with the share of wind, sun, water, coal and gas in the grid.",
+    "Circuit Breaker" to "A pattern for calls between building blocks: after repeated failures the caller stops calling for a while and answers without the other block – for example with less content – instead of failing too.",
+    "Quality scenario" to "A requirement for a quality attribute, written as a small story: a source, a stimulus, the part of the system it hits, the response and a measure – for example: after a storm many customers report damage (stimulus), the portal takes every report (response), down at most 4.4 hours a year (measure).",
     "Colocation" to "A data center in which many companies rent space, power and cooling; each brings its own servers and runs them itself.",
     "CO₂e (CO₂ equivalent)" to "Greenhouse gases counted together: each gas weighted by how much it warms the climate compared with CO₂.",
     "Idle power" to "What a server draws while it does nothing – often a quarter to a half of its maximum. It is why switching off unused servers saves so much.",

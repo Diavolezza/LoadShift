@@ -50,6 +50,8 @@ private sealed interface Screen {
     data object Lexicon : Screen
     data class Tidy(val controller: TidyController) : Screen
     data class Repatriation(val controller: RepatriationController) : Screen
+    data class Availability(val controller: AvailabilityController) : Screen
+    data class Updates(val controller: UpdatesController) : Screen
 }
 
 @Composable
@@ -65,8 +67,12 @@ fun App(options: LaunchOptions = LaunchOptions()) {
             screen = if (s.scenario.portfolio != null) Screen.Portfolio(PortfolioController(s.scenario))
                 else if (s.scenario.abatement != null) Screen.Abatement(AbatementController(s.scenario))
                 else if (s.scenario.tidy != null) Screen.Tidy(TidyController(s.scenario))
-                else if (s.scenario.repatriation != null) Screen.Repatriation(RepatriationController(s.scenario)) else Screen.Game(GameController(s.scenario))
+                else if (s.scenario.repatriation != null) Screen.Repatriation(RepatriationController(s.scenario))
+                else if (s.scenario.availability != null) Screen.Availability(AvailabilityController(s.scenario))
+                else if (s.scenario.updates != null) Screen.Updates(UpdatesController(s.scenario)) else Screen.Game(GameController(s.scenario))
         }, onBack = { screen = Screen.List })
+        is Screen.Availability -> FitLowScreen { AvailabilityScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }) }
+        is Screen.Updates -> FitLowScreen { UpdatesScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }) }
         is Screen.Repatriation -> FitLowScreen { RepatriationScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }) }
         is Screen.Tidy -> FitLowScreen { TidyScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }) }
         is Screen.Abatement -> FitLowScreen { AbatementScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }) }
@@ -83,6 +89,27 @@ private fun initialScreen(options: LaunchOptions): Screen {
     val scenario = Scenario.ALL.firstOrNull { it.number == options.scenario } ?: if (options.play) Scenario.NIGHT_SHIFT else null
     scenario ?: return Screen.List
     if (!options.play) return Screen.Briefing(scenario)
+    if (scenario.availability != null) {
+        val g = AvailabilityController(scenario)
+        if (options.careful) {
+            for (b in g.model.blocks) g.setTactic(b, g.model.tactic(g.model.example, b.name))
+            for (d in g.model.example.decouplings) g.toggle(d)
+            if (options.ticks > 0) g.finish()
+        }
+        return Screen.Availability(g)
+    }
+    if (scenario.updates != null) {
+        val g = UpdatesController(scenario)
+        if (options.careful) {
+            for (k in g.model.kinds) {
+                g.setOpen(k, g.model.open(g.model.example, k))
+                g.setClosed(k, g.model.closed(g.model.example, k))
+            }
+            g.toggleConditional(); g.toggleBundled()
+            if (options.ticks > 0) g.finish()
+        }
+        return Screen.Updates(g)
+    }
     if (scenario.repatriation != null) {
         val g = RepatriationController(scenario)
         if (options.careful) {

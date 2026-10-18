@@ -1108,4 +1108,78 @@ class LessonTest {
         val b = r.breakdown
         assertTrue(kotlin.math.abs(r.planKg - r.baselineKg - (b.region + b.energy + b.pue + b.embodied)) <= 3)
     }
+
+    @Test fun e8HowManyNines() {
+        val scenario = Scenario.HOW_MANY_NINES
+        val model = scenario.availability!!
+        fun arch(vararg t: Pair<String, Tactic>, d: Set<String> = emptySet()) = Architecture(model.all(Tactic.ACTIVE_ACTIVE).tactics + t, d)
+        val own = arch("Login" to Tactic.SINGLE, "Policy database" to Tactic.SINGLE, "Claims intake" to Tactic.WARM_STANDBY,
+            "Contract overview" to Tactic.COLD_STANDBY, "Tariff calculator" to Tactic.COLD_STANDBY, "Recommendations" to Tactic.SINGLE, "Reporting" to Tactic.SINGLE)
+        val plans = listOf(
+            "everything active-active (reference)" to model.reference,
+            "everything warm standby" to model.all(Tactic.WARM_STANDBY),
+            "everything cold standby" to model.all(Tactic.COLD_STANDBY),
+            "each block by its own scenario" to own,
+            "the same, shared blocks warm" to Architecture(own.tactics + ("Login" to Tactic.WARM_STANDBY) + ("Policy database" to Tactic.WARM_STANDBY)),
+            "the same, shared blocks active-active, circuit breaker" to Architecture(own.tactics + ("Login" to Tactic.ACTIVE_ACTIVE) + ("Policy database" to Tactic.ACTIVE_ACTIVE), setOf("fallback")),
+            "example without decoupling" to Architecture(model.example.tactics + ("Policy database" to Tactic.WARM_STANDBY) + ("Recommendations" to Tactic.COLD_STANDBY), emptySet()),
+            "example, circuit breaker only" to Architecture(model.example.tactics + ("Policy database" to Tactic.WARM_STANDBY) + ("Contract overview" to Tactic.COLD_STANDBY), setOf("fallback")),
+            "example" to model.example,
+        )
+        val lines = mutableListOf("E8 How many nines?: reference ${model.kgPerYear(model.reference).toLong() / 1_000} t a year; " +
+            Tactic.entries.joinToString { "$it %.4f %%".format(model.availability(it) * 100) })
+        val results = plans.associate { (name, plan) ->
+            val r = model.result(plan)
+            lines += "  " + name.padEnd(56) + "%6d t".format(r.planKg / 1_000) + "%7.1f %%".format(-r.reductionPermille / 10.0) +
+                "  servers %5.1f".format(r.serversOn) + "  " + "★".repeat(model.stars(r, scenario.goals)) +
+                "  " + r.downtime.entries.joinToString { "${it.key} %.0f min".format(it.value) } + (if (r.missed.isNotEmpty()) "  missed ${r.missed}" else "")
+            name to r
+        }
+        report(108, lines)
+        fun stars(name: String) = model.stars(results.getValue(name), scenario.goals)
+        assertEquals(1, stars("everything active-active (reference)"))
+        assertEquals(1, stars("everything warm standby"))
+        assertEquals(0, stars("everything cold standby"))
+        assertEquals(0, stars("each block by its own scenario"))
+        assertEquals(0, stars("the same, shared blocks warm"))
+        assertEquals(2, stars("example without decoupling"))
+        assertEquals(3, stars("example"))
+    }
+
+    @Test fun e9ConstantAsking() {
+        val scenario = Scenario.CONSTANT_ASKING
+        val model = scenario.updates!!
+        val ref = model.reference
+        val plans = listOf(
+            "today (reference)" to ref,
+            "today, push for the status" to ref.copy(closed = ref.closed + ("Delivery status" to Closed.PUSH)),
+            "push status, conditional requests" to ref.copy(closed = ref.closed + ("Delivery status" to Closed.PUSH), conditional = true),
+            "push status, conditional, bundled" to ref.copy(closed = ref.closed + ("Delivery status" to Closed.PUSH), conditional = true, bundled = true),
+            "WebSocket everywhere" to UpdatePlan(model.kinds.associate { it.name to Open.Stream },
+                mapOf("Delivery status" to Closed.SOCKET, "Offers" to Closed.SOCKET, "Unread messages" to Closed.SOCKET)),
+            "push everywhere" to UpdatePlan(model.kinds.associate { it.name to Open.Push }, mapOf("Delivery status" to Closed.PUSH, "Offers" to Closed.PUSH, "Unread messages" to Closed.PUSH)),
+            "offers on opening, badge refresh bundled" to UpdatePlan(
+                mapOf("Delivery status" to Open.Poll(60), "Courier on the map" to Open.Poll(5), "Offers" to Open.OnOpen, "Support chat" to Open.LongPoll, "Unread messages" to Open.Poll(60)),
+                mapOf("Delivery status" to Closed.PUSH, "Offers" to Closed.NONE, "Unread messages" to Closed.REFRESH), conditional = true, bundled = true),
+            "example" to model.example,
+        )
+        val r0 = model.result(ref)
+        val lines = mutableListOf("E9 Constant asking: reference ${r0.referenceKg / 1_000} t a year (phones ${r0.phonesKg / 1_000} t, servers ${r0.serversKg / 1_000} t, network ${r0.networkKg / 1_000} t, rest ${r0.otherKg / 1_000} t)")
+        val results = plans.associate { (name, plan) ->
+            val r = model.result(plan)
+            lines += "  " + name.padEnd(44) + "%6d t".format(r.planKg / 1_000) + "%7.1f %%".format(-r.reductionPermille / 10.0) +
+                "  phones %5d  servers %4d  network %5d kg".format(r.phonesKg, r.serversKg, r.networkKg) + "  " + "★".repeat(model.stars(r, scenario.goals)) +
+                (if (r.missed.isNotEmpty()) "  missed ${r.missed}" else "")
+            name to r
+        }
+        report(109, lines)
+        fun stars(name: String) = model.stars(results.getValue(name), scenario.goals)
+        assertEquals(0, stars("today (reference)"))
+        assertEquals(1, stars("today, push for the status"))
+        assertEquals(2, stars("push status, conditional, bundled"))
+        assertEquals(1, stars("WebSocket everywhere"))
+        assertEquals(0, stars("push everywhere"))
+        assertEquals(2, stars("offers on opening, badge refresh bundled"))
+        assertEquals(3, stars("example"))
+    }
 }

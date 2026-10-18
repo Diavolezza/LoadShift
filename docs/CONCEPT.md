@@ -364,6 +364,8 @@ work per request or per job; the effect shows in the SCI per 1,000 requests and 
 | E5 | Chatty services | logistics system, Germany | 2 days | cut (microservices, modular monolith, monolith with the route optimization as a service of its own), protocol (REST with JSON, gRPC with Protobuf), master data (synchronous calls, events with a local copy), serverless functions for the customer and truck services, how long GPS positions and traffic information are reused | Communication is work: every remote call serializes and deserializes, every instance runs its runtime without load. The modular monolith saves the calls but scales as a whole – it keeps the capacity for the hourly route optimization (200 cores for ten minutes) ready from 6 to 20, while a service of its own scales for its ten minutes; microservices reach three stars with events, gRPC and serverless functions, the monolith with the optimization cut out – serverless only pays for services that are rarely called. The cache for the external providers makes the tracking fast enough; reused too long, the data are too old. Rules: tracking within 250 ms on average, positions at most 1 min and traffic at most 5 min old (iSAQB GREEN, LZ 6-1, 6-2, 6-4). Term: Green Software Architecture. |
 | E6 | Right-sized AI | web shop, Germany | 2 days | per kind of question who answers it (no AI, small model, large model, large model with reasoning), batching window | The team's prototype sends every question of the shop assistant to the large model, one at a time. A status lookup answers "Where is my order?" better than any model; a small model is good enough where the answer is in the product data; the large model pays off for complaints and advice. Batching shares the GPU's work among questions but every answer waits; reasoning adds a little quality and a long wait. Rules: answer quality at least 92 %, 95 % of the answers within 3 s (G9, G1). Term: Green AI (Right-sizing Models). |
 | E7 | Green pipeline | a team of 40 developers, Germany | 7 days (Monday to Sunday) | build agents (always on or on demand), remote build cache, test impact analysis, UI and load tests (every commit, nightly in the greenest hours, never), trigger (every commit, every 30 minutes, every 2 hours), test environments (day and night, weekdays 7–19, on demand) and their replicas | Most of a pipeline waits: environments at night and at the weekend, agents without a job. Agents on demand lose their local cache – without a remote cache the feedback gets too slow; batching commits saves runs but makes the team wait; without UI tests the release goes out untested. Rules: feedback within 20 minutes, UI tests in the 24 hours before Friday's release (iSAQB GREEN, LZ 9-1 to 9-4). Term: Green CI/CD. |
+| E8 | How many nines? | an insurer's customer portal: seven building blocks, five quality scenarios with the downtime each may have in a year; today everything active-active on two sites ("99.99 % for everything") | a year, no clock | per building block an availability tactic (single and restarted, cold standby, warm standby, active-active); claims into a queue; a circuit breaker for the recommendations | Quality scenarios instead of one figure for everything (LG 3-1). A scenario waits for every building block it calls synchronously, so their availabilities multiply: the shared login and policy database need more than any single function. Decoupling breaks the chain – the queue frees the claims from the database and evens out the peaks, the circuit breaker frees the contract overview from the recommendations – and redundancy is then needed only where a scenario asks for it (LG 3-2: resilience against energy efficiency). Term: Availability Tactics [S44]. |
+| E9 | Constant asking | a delivery app on 400,000 phones; five kinds of update (delivery status, courier on the map, offers, support chat, unread messages) | a year, no clock | per kind one way while the app is open (polling every n seconds, on opening, long polling, stream, push) and one while it is closed (nothing, refresh every 15 minutes, connection kept open, push); conditional requests; one background refresh for all | Counted with the phones and the network, the servers are the smallest part. Every background wake-up switches the radio on for seconds [S45, S46]; unchanged answers sent in full fill the network. Rare changes suit push, frequent ones a stream while the app is open, and what nobody needs while it is closed needs no refresh. A WebSocket kept open in the background meets every requirement and is the most expensive plan (LG 6-2: call frequency and data volume). The current app fails the requirement for "The courier is at the door". Term: Polling, Push, Streaming. |
 
 Backlog items (game values, to be tuned in the lesson tests): database index, removing an N+1 query, a cache
 (saves work, but the cache server draws power too), compressing images, pagination instead of loading
@@ -455,6 +457,8 @@ the app (O = operations, B in German).
 | E5 Chatty services | LG 6-1 architecture styles, LG 6-2 communication |
 | E6 Right-sized AI | LG 8-2, LG 8-3, LG 8-4 |
 | E7 Green pipeline | LG 9-1 to LG 9-4 |
+| E8 How many nines? | LG 3-1 quality scenarios, LG 3-2 resilience against energy efficiency, LG 6-1 |
+| E9 Constant asking | LG 6-2 communication (call frequency, data volume), LG 1-3 drivers of IT energy (devices and network) |
 | P1 Inventory | LG 2-2 Scope 2, LG 4-3 providers' carbon tools, LG 4-4 measuring in enterprise environments, LG 7-3 |
 | P2 Where to start | LG 2-3 reduction targets and measures in the company, LG 1-4 hardware efficiency, LG 2-2 market-based against location-based |
 | P3 Tidy up with TIME | LG 2-3 energy efficiency as a field of action in the company, LG 7-2 deployment models, LG 7-4 operational antipatterns (systems left running) |
@@ -1051,6 +1055,40 @@ not energy.
 | on demand, cache, TIA, nightly, every 30 minutes | −85.3 % | 22.5 min | 0 |
 | on demand, cache, TIA, UI tests never | −81.6 % | 7.5 min | 0 (release) |
 
+**As built in step 5, part 12** (E8 "How many nines?" and E9 "Constant asking", D30): two scenarios without a clock,
+each with its own screen, like the portfolio track.
+
+- E8: `AvailabilityModel`. Each building block fails six times a year; one failure costs 240 min (single), 45 (cold
+  standby), 10 (warm standby) or 1 (active-active). A scenario's downtime is 1 − the product of the availabilities of
+  the blocks it waits for. Power: single n servers; cold standby + 5 % for copies; warm standby + half the servers at
+  15 %; active-active 2n servers at half the load. The queue removes the policy database from "Report a claim", sizes
+  the intake for the average (3 servers at 50 % instead of 6 at 25 %) and adds a broker of 2 servers; the circuit
+  breaker removes the recommendations from "See contracts". ★ every scenario met; ★★ −20 %, ★★★ −28 %.
+
+| Architecture | CO₂ a year | vs. today | Stars |
+|---|---:|---:|---:|
+| everything active-active (today) | 88 t | – | ★ |
+| everything warm standby | 77 t | −12.8 % | ★ |
+| everything cold standby | 58 t | −33.4 % | 0 |
+| each block only for its own scenario | 58 t | −33.4 % | 0 |
+| shared blocks warm, no decoupling | 67 t | −24.1 % | ★★ |
+| the same with the circuit breaker | 64 t | −26.9 % | ★★ |
+| shared warm, database cold behind the queue, circuit breaker | 61 t | −30.2 % | ★★★ |
+
+- E9: `UpdatesModel`. Phone: 0.5 J a request while open, 6 J a wake-up while closed, 0.01 J a KB; server: 0.4 J a
+  full answer, 0.05 J a short one, 3 J an hour of open connection, PUE 1.4; network 0.06 kWh/GB; push suits at most one
+  change in two minutes. The rest of the app (40 t a year) stays the same. ★ every kind as fresh as required; ★★ −30 %,
+  ★★★ −45 %.
+
+| Plan | CO₂ a year | vs. today | Stars |
+|---|---:|---:|---:|
+| today (the arrival notice too late) | 81 t | – | 0 |
+| push for the delivery status | 81 t | ±0 | ★ |
+| + conditional requests and one background refresh | 50 t | −37.7 % | ★★ |
+| a WebSocket for everything, open and closed | 110 t | +36.5 % | ★ |
+| push for everything | 41 t | −49.3 % | 0 (map, chat) |
+| push for rare changes, streams for frequent ones, no refresh nobody needs | 40 t | −50.1 % | ★★★ |
+
 **As built in step 5, part 11** (scenario 12, "Green on paper", shown as B11 before the capstone, which is now B12;
 the numbers stay so that saved stars keep their scenario):
 
@@ -1144,6 +1182,7 @@ the numbers stay so that saved stars keep their scenario):
 | D27 | Order of the Engineering scenarios | along the blocks of the iSAQB module GREEN: code (E1–E3), the page and the architecture (E4 Data diet, E5 Chatty services), AI (E6 Right-sized AI), the development process (E7 Green pipeline); the scenario numbers in the code stay (104–107), so stars kept on a device stay with their scenario – only the labels and the order of opening changed |
 | D28 | Glossary and results in a course | a glossary of all technical terms on the start page; no result codes or ranking – the courses do not need them (revises D6) |
 | D29 | P4 "Leave the cloud?" | three years, so that new servers are written off over a fair time; the own server room stays, limited to six existing servers (reuse against a poor PUE); no green-power contract as an option – the report next to the location-based figure shows the same lesson as B11, and the debrief names it |
+| D30 | E8 and E9 | two architecture scenarios after E7 (by the GREEN blocks of D27 they would sit before E1 and after E5; kept at the end so that the labels E1–E7 stay); like the portfolio track without a clock, decided for a year |
 
 ---
 
@@ -1194,3 +1233,6 @@ the numbers stay so that saved stars keep their scenario):
 | S41 | McKinsey & Company: *Pathways to a Low-Carbon Economy – Version 2 of the Global Greenhouse Gas Abatement Cost Curve*, 2009 (the first version 2007). https://www.mckinsey.com/capabilities/sustainability/our-insights/pathways-to-a-low-carbon-economy |
 | S42 | AWS: *Customer Carbon Footprint Tool now includes location-based emissions* (June 2025); Scope 3 since October 2025. https://aws.amazon.com/about-aws/whats-new/2025/06/customer-carbon-footprint-tool-location-based-emissions/ |
 | S43 | Uptime Institute: *Global Data Center Survey 2025* – average PUE 1.54. https://intelligence.uptimeinstitute.com/resource/uptime-institute-global-data-center-survey-2025 |
+| S44 | L. Bass, P. Clements, R. Kazman: *Software Architecture in Practice*, 4th ed., Addison-Wesley 2021 – quality attribute scenarios and availability tactics. |
+| S45 | N. Balasubramanian, A. Balasubramanian, A. Venkataramani: *Energy Consumption in Mobile Phones: A Measurement Study and Implications for Network Applications*, IMC 2009 – the tail energy of the radio after each transfer. |
+| S46 | J. Huang et al.: *A Close Examination of Performance and Power Characteristics of 4G LTE Networks*, MobiSys 2012. |

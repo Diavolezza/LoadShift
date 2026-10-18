@@ -157,6 +157,10 @@ data class Scenario(
     val tidy: TidyModel? = null,
     /** P4: six applications, each to a place – cloud, colocation or the company's own server room. */
     val repatriation: RepatriationModel? = null,
+    /** E8: building blocks, availability tactics and quality scenarios. */
+    val availability: AvailabilityModel? = null,
+    /** E9: how an app learns about changes – polling, streams, push. */
+    val updates: UpdatesModel? = null,
 ) {
     /** Expected interactive work at a tick: the web load or the VMs' profiles (what an operator can plan with). */
     fun expectedDemand(tick: Int): Int = interactive.expected(tick) + vms.sumOf { it.expectedMilli(tick) } / 1_000
@@ -846,10 +850,100 @@ data class Scenario(
             ),
         )
 
+        /** E8, "How many nines?": an insurer's portal, seven building blocks, five quality scenarios, a year. */
+        val HOW_MANY_NINES = Scenario(
+            number = 108, label = "E8", track = Track.ENGINEERING, unlockAfter = 106,
+            title = "How many nines?", setting = GridSetting(GridRegion.GERMANY, Season.YEAR), days = 1,
+            seed = 18, fleet = emptyList(), interactive = InteractiveLoad(peak = 0), controls = emptySet(),
+            goals = StarGoals(200, SpecialGoal.Reduction(280)),
+            availability = AvailabilityModel(
+                blocks = listOf(
+                    BuildingBlock("Claims intake", "Takes the reports of damage", 6, 25, 160, 160),
+                    BuildingBlock("Contract overview", "Contracts and documents of the logged-in customer", 6, 30, 500, 160),
+                    BuildingBlock("Tariff calculator", "Prices for new customers, without logging in", 8, 30, 840, 160),
+                    BuildingBlock("Login", "Every logged-in function needs it", 4, 30, 200, 500),
+                    BuildingBlock("Recommendations", "Offers that fit the customer's contracts", 10, 40, 760, 500),
+                    BuildingBlock("Policy database", "All contracts and customers", 12, 50, 500, 840),
+                    BuildingBlock("Reporting", "Nightly figures for the actuaries", 12, 35, 840, 840),
+                ),
+                scenarios = listOf(
+                    QualityScenario("Report a claim", "After a storm thousands of customers report damage at the same time; the portal takes every report.",
+                        263, listOf("Claims intake", "Login", "Policy database")),
+                    QualityScenario("See contracts", "Customers look up their contracts and download documents.",
+                        526, listOf("Contract overview", "Login", "Policy database", "Recommendations")),
+                    QualityScenario("Calculate a tariff", "Prospective customers calculate a price, without logging in.",
+                        526, listOf("Tariff calculator")),
+                    QualityScenario("Get recommendations", "Logged-in customers see offers that fit their contracts.",
+                        5_256, listOf("Recommendations")),
+                    QualityScenario("Reports for actuaries", "Each morning the actuaries need yesterday's figures.",
+                        5_256, listOf("Reporting")),
+                ),
+                decouplings = listOf(
+                    Decoupling("queue", "Claims into a queue",
+                        "A claim is stored in a queue at once and checked against the policy database later; the intake no longer waits for the database. The queue evens out the peaks: 3 servers instead of 6. The message broker runs on 2 servers, active-active.",
+                        "Report a claim", "Policy database", brokerServers = 2, brokerUtilPercent = 20,
+                        resized = "Claims intake", resizedServers = 3, resizedUtilPercent = 50),
+                    Decoupling("fallback", "Contracts without recommendations when these fail",
+                        "A circuit breaker: when the recommendations do not answer, the contract overview shows the contracts without them.",
+                        "See contracts", "Recommendations"),
+                ),
+                example = Architecture(mapOf(
+                    "Login" to Tactic.WARM_STANDBY, "Policy database" to Tactic.COLD_STANDBY, "Claims intake" to Tactic.WARM_STANDBY,
+                    "Contract overview" to Tactic.WARM_STANDBY, "Tariff calculator" to Tactic.COLD_STANDBY,
+                    "Recommendations" to Tactic.SINGLE, "Reporting" to Tactic.SINGLE,
+                ), setOf("queue", "fallback")),
+            ),
+        )
+
+        /** E9, "Constant asking": a delivery app on 400,000 phones, five kinds of updates, a year. */
+        val CONSTANT_ASKING = Scenario(
+            number = 109, label = "E9", track = Track.ENGINEERING, unlockAfter = 108,
+            title = "Constant asking", setting = GridSetting(GridRegion.GERMANY, Season.YEAR), days = 1,
+            seed = 19, fleet = emptyList(), interactive = InteractiveLoad(peak = 0), controls = emptySet(),
+            goals = StarGoals(300, SpecialGoal.Reduction(450)),
+            updates = UpdatesModel(
+                kinds = listOf(
+                    UpdateKind("Delivery status", "Six changes an order; \"The courier is at the door\" must reach the closed app too",
+                        30_000L * 365, 4, 36, 60, 4, 20, openFreshness = 60, closedFreshness = 60,
+                        openOptions = listOf(Open.Poll(10), Open.Poll(30), Open.Poll(60), Open.Stream, Open.Push),
+                        closedOptions = listOf(Closed.NONE, Closed.REFRESH, Closed.SOCKET, Closed.PUSH)),
+                    UpdateKind("Courier on the map", "A new position every 5 seconds while the map is open",
+                        15_000L * 365, 3, 0, 360, 1, 10, openFreshness = 5, closedFreshness = null,
+                        openOptions = listOf(Open.Poll(2), Open.Poll(5), Open.Poll(10), Open.Stream, Open.Push),
+                        closedOptions = listOf(Closed.NONE)),
+                    UpdateKind("Offers", "New offers twice a day; they must be there when the app is opened",
+                        400_000L * 365, 6, 1_434, 20, 60, 15, openFreshness = null, closedFreshness = null,
+                        openOptions = listOf(Open.Poll(60), Open.OnOpen, Open.Stream, Open.Push),
+                        closedOptions = listOf(Closed.NONE, Closed.REFRESH, Closed.SOCKET, Closed.PUSH)),
+                    UpdateKind("Support chat", "Answers must show within 5 seconds while the chat is open",
+                        2_000L * 365, 8, 0, 100, 1, 10, openFreshness = 5, closedFreshness = null,
+                        openOptions = listOf(Open.Poll(2), Open.Poll(5), Open.LongPoll, Open.Stream, Open.Push),
+                        closedOptions = listOf(Closed.NONE)),
+                    UpdateKind("Unread messages", "The number on the app icon: up to date within 15 minutes, within a minute while the app is open",
+                        400_000L * 365, 6, 1_434, 5, 1, 15, openFreshness = 60, closedFreshness = 900,
+                        openOptions = listOf(Open.Poll(30), Open.Poll(60), Open.OnOpen, Open.Stream, Open.Push),
+                        closedOptions = listOf(Closed.NONE, Closed.REFRESH, Closed.SOCKET, Closed.PUSH)),
+                ),
+                phones = 400_000,
+                reference = UpdatePlan(
+                    open = mapOf("Delivery status" to Open.Poll(10), "Courier on the map" to Open.Poll(2), "Offers" to Open.Poll(60),
+                        "Support chat" to Open.Poll(2), "Unread messages" to Open.Poll(30)),
+                    closed = mapOf("Delivery status" to Closed.REFRESH, "Offers" to Closed.REFRESH, "Unread messages" to Closed.REFRESH),
+                ),
+                otherKg = 40_000,
+                example = UpdatePlan(
+                    open = mapOf("Delivery status" to Open.Push, "Courier on the map" to Open.Stream, "Offers" to Open.OnOpen,
+                        "Support chat" to Open.Stream, "Unread messages" to Open.Push),
+                    closed = mapOf("Delivery status" to Closed.PUSH, "Offers" to Closed.NONE, "Unread messages" to Closed.PUSH),
+                    conditional = true, bundled = true,
+                ),
+            ),
+        )
+
         /** A week of load, four values a day (the weekend may differ; one campaign day may reach the peak). */
         private fun week(day: List<Int>, weekend: List<Int> = day, campaign: Int? = null): List<Int> =
             (0 until 7).flatMap { d -> if (d == campaign) listOf(30, 100, 95, 35) else if (d >= 5) weekend else day }
 
-        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, OLD_IRON, TRAINING_RUN, ECO_MODE, TWO_SITES, GREEN_ON_PAPER, DARK_DOLDRUMS, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS, DATA_DIET, CHATTY_SERVICES, RIGHT_SIZED_AI, GREEN_PIPELINE, INVENTORY, WHERE_TO_START, TIDY_UP, LEAVE_THE_CLOUD)
+        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, OLD_IRON, TRAINING_RUN, ECO_MODE, TWO_SITES, GREEN_ON_PAPER, DARK_DOLDRUMS, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS, DATA_DIET, CHATTY_SERVICES, RIGHT_SIZED_AI, GREEN_PIPELINE, HOW_MANY_NINES, CONSTANT_ASKING, INVENTORY, WHERE_TO_START, TIDY_UP, LEAVE_THE_CLOUD)
     }
 }

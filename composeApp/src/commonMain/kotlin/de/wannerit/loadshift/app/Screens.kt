@@ -301,7 +301,9 @@ private fun ContinueCard(scenario: Scenario, narrow: Boolean, onClick: () -> Uni
 }
 
 /** "Germany · autumn · 2 days", or what a portfolio scenario is about. */
-private fun cardFacts(scenario: Scenario): String = scenario.repatriation?.let { t("%lld applications · three years", it.apps.size) }
+private fun cardFacts(scenario: Scenario): String = scenario.availability?.let { t("%lld building blocks · a year", it.blocks.size) }
+    ?: scenario.updates?.let { t("%lld kinds of update · a year", it.kinds.size) }
+    ?: scenario.repatriation?.let { t("%lld applications · three years", it.apps.size) }
     ?: scenario.tidy?.let { t("%lld applications · three years", it.apps.size) }
     ?: scenario.abatement?.let { t("%lld measures · three years", it.measures.size) }
     ?: scenario.portfolio?.let { t("%lld applications · a year", it.apps.size) }
@@ -446,11 +448,15 @@ private fun ScreenPreview(scenario: Scenario, modifier: Modifier) {
     val abatement = remember(scenario) { scenario.abatement?.let { AbatementController(scenario, fresh = true) } }
     val tidy = remember(scenario) { scenario.tidy?.let { TidyController(scenario, fresh = true) } }
     val repatriation = remember(scenario) { scenario.repatriation?.let { RepatriationController(scenario, fresh = true) } }
-    val game = remember(scenario) { if (portfolio == null && abatement == null && tidy == null && repatriation == null) GameController(scenario, fresh = true) else null }
+    val availability = remember(scenario) { scenario.availability?.let { AvailabilityController(scenario, fresh = true) } }
+    val updates = remember(scenario) { scenario.updates?.let { UpdatesController(scenario, fresh = true) } }
+    val game = remember(scenario) { if (portfolio == null && abatement == null && tidy == null && repatriation == null && availability == null && updates == null) GameController(scenario, fresh = true) else null }
     val width = 1366.dp
     val height = 960.dp
     // Marker positions on the full-size screen (GameScreen at 1366 × 960: panel 380 wide, timeline 288 high).
-    val markers = if (repatriation != null) listOf(470.dp to 36.dp, 40.dp to 150.dp, 40.dp to (height - 100.dp), (width - 36.dp) to 136.dp)
+    val markers = if (availability != null) listOf(470.dp to 36.dp, 40.dp to 150.dp, 40.dp to 470.dp, (width - 36.dp) to 136.dp)
+        else if (updates != null) listOf(470.dp to 36.dp, 40.dp to 150.dp, 40.dp to 560.dp, (width - 36.dp) to 136.dp)
+        else if (repatriation != null) listOf(470.dp to 36.dp, 40.dp to 150.dp, 40.dp to (height - 100.dp), (width - 36.dp) to 136.dp)
         else if (tidy != null) listOf(470.dp to 36.dp, 40.dp to 150.dp, 40.dp to (height - 290.dp), (width - 36.dp) to 136.dp)
         else if (abatement != null) listOf(470.dp to 36.dp, 40.dp to 150.dp, 40.dp to 440.dp, (width - 36.dp) to 136.dp)
         else if (portfolio != null) listOf(470.dp to 36.dp, 40.dp to 150.dp, 300.dp to 345.dp, (width - 36.dp) to 136.dp)
@@ -465,7 +471,9 @@ private fun ScreenPreview(scenario: Scenario, modifier: Modifier) {
                 Modifier.wrapContentSize(Alignment.TopStart, unbounded = true).requiredSize(width, height)
                     .graphicsLayer { scaleX = scale; scaleY = scale; transformOrigin = TransformOrigin(0f, 0f) },
             ) {
-                if (repatriation != null) RepatriationScreen(repatriation, onExit = {})
+                if (availability != null) AvailabilityScreen(availability, onExit = {})
+                else if (updates != null) UpdatesScreen(updates, onExit = {})
+                else if (repatriation != null) RepatriationScreen(repatriation, onExit = {})
                 else if (tidy != null) TidyScreen(tidy, onExit = {})
                 else if (abatement != null) AbatementScreen(abatement, onExit = {})
                 else if (portfolio != null) PortfolioScreen(portfolio, onExit = {}) else GameScreen(game!!, onExit = {})
@@ -505,7 +513,17 @@ private fun SideCard(scenario: Scenario, texts: ScenarioTexts, onStart: () -> Un
         val abatement = scenario.abatement
         val tidy = scenario.tidy
         val repatriation = scenario.repatriation
-        if (repatriation != null) Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        val availability = scenario.availability
+        val updates = scenario.updates
+        if (availability != null) Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Fact(t("%lld building blocks, %lld quality scenarios", availability.blocks.size, availability.scenarios.size))
+            Fact(t("Today everything active-active on two sites"))
+            Fact(t("Counted: a year, location-based"))
+        } else if (updates != null) Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Fact(t("A delivery app on %@ phones", Format.number(updates.phones.toDouble())))
+            Fact(t("%lld kinds of update, open and closed", updates.kinds.size))
+            Fact(t("Counted: a year – phones, servers and network, location-based"))
+        } else if (repatriation != null) Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Fact(t("%lld applications in the cloud in Frankfurt", repatriation.apps.size))
             Fact(t("Four places: two cloud regions, a colocation, the own server room"))
             Fact(t("Costs at least %@ lower", Format.wholePercent(repatriation.savingGoalPermille)))

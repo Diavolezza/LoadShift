@@ -42,6 +42,8 @@ The app speaks English and German (switch on the start page); everything in this
 | E5 | Chatty services | Green Software Architecture |
 | E6 | Right-sized AI | Green AI (Right-sizing Models) |
 | E7 | Green pipeline | Green CI/CD |
+| E8 | How many nines? | Availability Tactics |
+| E9 | Constant asking | Polling, Push, Streaming |
 
 | | Portfolio | Term |
 |---|---|---|
