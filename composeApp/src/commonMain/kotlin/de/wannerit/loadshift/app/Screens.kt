@@ -262,7 +262,8 @@ private fun ContinueCard(scenario: Scenario, onClick: () -> Unit) {
 }
 
 /** "Germany · autumn · 2 days", or what a portfolio scenario is about. */
-private fun cardFacts(scenario: Scenario): String = scenario.abatement?.let { t("%lld measures · three years", it.measures.size) }
+private fun cardFacts(scenario: Scenario): String = scenario.tidy?.let { t("%lld applications · three years", it.apps.size) }
+    ?: scenario.abatement?.let { t("%lld measures · three years", it.measures.size) }
     ?: scenario.portfolio?.let { t("%lld applications · a year", it.apps.size) }
     ?: "${t(scenario.setting.region.title)} · ${t(scenario.setting.season.title)} · ${days(scenario.days)}"
 
@@ -403,11 +404,13 @@ private fun ScreenPreview(scenario: Scenario, modifier: Modifier) {
     // Always the scenario's starting state – never the player's last settings, which may be a solution.
     val portfolio = remember(scenario) { scenario.portfolio?.let { PortfolioController(scenario, fresh = true) } }
     val abatement = remember(scenario) { scenario.abatement?.let { AbatementController(scenario, fresh = true) } }
-    val game = remember(scenario) { if (portfolio == null && abatement == null) GameController(scenario, fresh = true) else null }
+    val tidy = remember(scenario) { scenario.tidy?.let { TidyController(scenario, fresh = true) } }
+    val game = remember(scenario) { if (portfolio == null && abatement == null && tidy == null) GameController(scenario, fresh = true) else null }
     val width = 1366.dp
     val height = 960.dp
     // Marker positions on the full-size screen (GameScreen at 1366 × 960: panel 380 wide, timeline 288 high).
-    val markers = if (abatement != null) listOf(470.dp to 36.dp, 40.dp to 150.dp, 40.dp to 440.dp, (width - 36.dp) to 136.dp)
+    val markers = if (tidy != null) listOf(470.dp to 36.dp, 40.dp to 150.dp, 40.dp to (height - 290.dp), (width - 36.dp) to 136.dp)
+        else if (abatement != null) listOf(470.dp to 36.dp, 40.dp to 150.dp, 40.dp to 440.dp, (width - 36.dp) to 136.dp)
         else if (portfolio != null) listOf(470.dp to 36.dp, 40.dp to 150.dp, 300.dp to 345.dp, (width - 36.dp) to 136.dp)
         else listOf(470.dp to 36.dp, 40.dp to 150.dp, (width - 36.dp) to 136.dp, (width - 36.dp) to (height - 258.dp))
     BoxWithConstraints(modifier) {
@@ -420,7 +423,8 @@ private fun ScreenPreview(scenario: Scenario, modifier: Modifier) {
                 Modifier.wrapContentSize(Alignment.TopStart, unbounded = true).requiredSize(width, height)
                     .graphicsLayer { scaleX = scale; scaleY = scale; transformOrigin = TransformOrigin(0f, 0f) },
             ) {
-                if (abatement != null) AbatementScreen(abatement, onExit = {})
+                if (tidy != null) TidyScreen(tidy, onExit = {})
+                else if (abatement != null) AbatementScreen(abatement, onExit = {})
                 else if (portfolio != null) PortfolioScreen(portfolio, onExit = {}) else GameScreen(game!!, onExit = {})
             }
             // On top: takes every click, so the preview is only a picture; the mouse wheel still scrolls the page.
@@ -456,7 +460,12 @@ private fun SideCard(scenario: Scenario, texts: ScenarioTexts, onStart: () -> Un
     Column(modifier.background(Palette.panel, RoundedCornerShape(20.dp)).padding(28.dp), verticalArrangement = Arrangement.spacedBy(22.dp)) {
         val portfolio = scenario.portfolio
         val abatement = scenario.abatement
-        if (abatement != null) Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        val tidy = scenario.tidy
+        if (tidy != null) Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Fact(t("%lld applications", tidy.apps.size))
+            Fact(t("At most %lld projects at a time", tidy.capacity))
+            Fact(t("Counted: three years, location-based"))
+        } else if (abatement != null) Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Fact(t("%lld measures on a consultant's list", abatement.measures.size))
             Fact(t("Footprint: about %@ t CO₂ a year", tonnes(abatement.footprintKgPerYear)))
             Fact(t("Budget for the measures: %@ €", Format.number(abatement.budget.toDouble())))

@@ -153,6 +153,8 @@ data class Scenario(
     val portfolio: PortfolioModel? = null,
     /** P2: a list of measures as a marginal abatement cost curve. */
     val abatement: AbatementModel? = null,
+    /** P3: the portfolio by TIME, three years in quarters. */
+    val tidy: TidyModel? = null,
 ) {
     /** Expected interactive work at a tick: the web load or the VMs' profiles (what an operator can plan with). */
     fun expectedDemand(tick: Int): Int = interactive.expected(tick) + vms.sumOf { it.expectedMilli(tick) } / 1_000
@@ -764,6 +766,49 @@ data class Scenario(
             ),
         )
 
-        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, OLD_IRON, TRAINING_RUN, ECO_MODE, TWO_SITES, GREEN_ON_PAPER, DARK_DOLDRUMS, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS, DATA_DIET, CHATTY_SERVICES, RIGHT_SIZED_AI, GREEN_PIPELINE, INVENTORY, WHERE_TO_START)
+        /** P3, "Tidy up with TIME": thirteen applications, four decisions, three projects at a time, three years. */
+        val TIDY_UP = Scenario(
+            number = 203, label = "P3", track = Track.PORTFOLIO, unlockAfter = 202,
+            title = "Tidy up with TIME", setting = GridSetting(GridRegion.GERMANY, Season.YEAR), days = 1,
+            seed = 23, fleet = emptyList(), interactive = InteractiveLoad(peak = 0), controls = emptySet(),
+            goals = StarGoals(250, SpecialGoal.Reduction(300)),
+            tidy = TidyModel(listOf(
+                TidyApp("ERP", "The core of the company, on an old platform", true, false, 150, 900, 120_000,
+                    Option("Tune the database, consolidate the servers", 4, 80), Option("A new ERP in the cloud", 6, 35), 2),
+                TidyApp("Warehouse management", "Built in-house; one person still maintains the code", true, false, 300, 760, 70_000,
+                    Option("Clean up the slowest batch jobs", 3, 85), Option("A standard SaaS for warehouses", 4, 30), 2),
+                TidyApp("Old customer portal", "Its functions are being rebuilt on the web shop's platform", true, false, 380, 640, 50_000,
+                    Option("Caching and smaller pages", 2, 80), Option("Move onto the web shop's platform", 2, 30), 2),
+                TidyApp("Web shop", "Modern, well maintained", true, true, 820, 880, 90_000,
+                    Option("Rightsizing and caching", 2, 65), Option("Rebuild as a new shop", 5, 60), 2),
+                TidyApp("Data warehouse", "Modern, nightly loads", true, true, 700, 740, 110_000,
+                    Option("Archive old data, shorten the loads", 3, 70), Option("A new analytics platform", 6, 50), 2),
+                TidyApp("CRM", "Standard software, kept up to date", true, true, 880, 620, 30_000,
+                    Option("Clean up old records", 1, 80), Option("Change to another CRM", 3, 50), 2),
+                TidyApp("Old reporting system", "Most of its reports also exist in the data warehouse", false, false, 220, 330, 45_000,
+                    Option("Archive old reports", 2, 80), Option("Rebuild the remaining reports", 3, 40), 2),
+                TidyApp("Old intranet", "Hardly used since the new wiki", false, false, 120, 180, 30_000,
+                    Option("Smaller servers", 2, 80), Option("Move the pages to the wiki", 2, 40), 1),
+                TidyApp("Fax server", "Three faxes a week", false, false, 330, 90, 8_000,
+                    Option("A smaller server", 1, 80), Option("Fax as a cloud service", 1, 40), 1),
+                TidyApp("Old test environments", "Built for a project that ended two years ago", false, false, 80, 400, 60_000,
+                    Option("Switch off at night", 1, 80), Option("Move to the cloud, on demand", 2, 40), 1),
+                TidyApp("Wiki", "Its pages would fit into the office suite's own wiki", false, true, 700, 330, 10_000,
+                    Option("Smaller servers", 1, 80), Option("Move to the office suite", 1, 50), 1),
+                TidyApp("Time recording", "Runs smoothly", false, true, 860, 200, 15_000,
+                    Option("Switch off at night", 1, 70), Option("The HR system's module", 2, 50), 1),
+                TidyApp("Mail archive", "Mails must be kept for ten years by law", false, true, 620, 110, 25_000,
+                    Option("Cold storage for old years", 1, 70), Option("An archive service in the cloud", 2, 40), 1,
+                    mustKeep = "Kept for ten years by law"),
+            ), example = mapOf(
+                "Old test environments" to Choice(Decision.ELIMINATE, 0), "Old reporting system" to Choice(Decision.ELIMINATE, 0),
+                "Old intranet" to Choice(Decision.ELIMINATE, 0), "Web shop" to Choice(Decision.INVEST, 1), "Fax server" to Choice(Decision.ELIMINATE, 2),
+                "Wiki" to Choice(Decision.ELIMINATE, 1), "Data warehouse" to Choice(Decision.INVEST, 2), "Time recording" to Choice(Decision.ELIMINATE, 3),
+                "Warehouse management" to Choice(Decision.MIGRATE, 3, true), "CRM" to Choice(Decision.INVEST, 4),
+                "Old customer portal" to Choice(Decision.MIGRATE, 5, true), "ERP" to Choice(Decision.INVEST, 5),
+            )),
+        )
+
+        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, OLD_IRON, TRAINING_RUN, ECO_MODE, TWO_SITES, GREEN_ON_PAPER, DARK_DOLDRUMS, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS, DATA_DIET, CHATTY_SERVICES, RIGHT_SIZED_AI, GREEN_PIPELINE, INVENTORY, WHERE_TO_START, TIDY_UP)
     }
 }

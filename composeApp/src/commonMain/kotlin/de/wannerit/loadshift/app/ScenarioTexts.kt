@@ -23,6 +23,21 @@ class ScenarioTexts(
 ) {
     companion object {
         fun of(scenario: Scenario): ScenarioTexts = when (scenario.number) {
+            203 -> ScenarioTexts(
+                situation = "Thirteen applications, sorted the way enterprise architects sort them: by business value and by technical condition. The IT management wants less CO₂ over the next three years. The team can run three projects at a time; tuning an application, migrating it to a new platform or switching it off takes one to seven quarters. Today everything simply keeps running.",
+                idea = "Gartner's TIME model gives each quadrant a decision: tolerate what is in good condition but of little value, invest in what is good and valuable, migrate what is valuable but in poor condition, eliminate what is neither. Counted over three years, two things matter as much as the decision: when a project starts – the team can only run three – and when the old system is really off.",
+                screen = listOf(
+                    "At the top: how many projects you plan and the most at a time; below it your goals.",
+                    "The TIME matrix: technical condition to the right, business value up; each bubble an application, its size the CO₂ a year, its colour your decision. Click a bubble to decide.",
+                    "The project plan: each project over twelve quarters, and how many run at a time.",
+                    "The selected application: its facts, the four decisions with what they take and bring, the start quarter – and the button that carries out the plan.",
+                ),
+                comparedWith = "compared with three years in which everything keeps running as it is, location-based.",
+                rules = "At most three projects at a time, nothing eliminated that must stay, and less CO₂ over three years",
+                remark = "Eliminating paid off first: the old test environments, the old reporting system and the old intranet took a quarter or two of the team and then emitted nothing at all. A migration runs the new system next to the old one – during the project the footprint grows, and the saving comes only once the old system is switched off; left running, it saves nothing. The new ERP takes six quarters and a seventh to switch off the old one: within three years its parallel run costs more than it saves, and tuning the old ERP saved more – the migration pays off in the years after. The order counts as much as the decision: with three projects at a time, short projects with a large effect go first. And value is not the only reason to keep something: the mail archive is of little value, but it must be kept by law.",
+                term = "Application Rationalization (TIME)",
+                termText = "Tidying up the application portfolio: each application placed by business value and technical condition, then tolerated, improved, migrated or eliminated – the TIME model made known by Gartner. Projects take time and people; the saving comes when the old system is really off, not when the new one starts.",
+            )
             202 -> ScenarioTexts(
                 situation = "The inventory is done: about 955 t CO₂ a year, the employees' PCs included. A consultancy has listed sixteen measures and drawn them as a curve: each bar a measure, its width the CO₂ it saves in three years, its height what a tonne avoided costs. The board has 200,000 € and wants to know where to start.",
                 idea = "Start where a tonne is cheapest – that is what the curve is for. But the curve was made one measure at a time, from each measure's saving in a year once it works. Check what that leaves out before you follow it.",

@@ -387,6 +387,7 @@ are. Better data cost money from the same budget as the measures.
 |---|---|---|---|---|---|
 | P1 | Inventory | 18 applications: 6 in the own data center (Stuttgart, 1,000 MWh a year, 400 g/kWh), 6 with a cloud provider (Frankfurt), 6 as SaaS; budget 150,000 € | a year | how the own data center's metered energy is split (by servers in the CMDB, free; by CPU time from the monitoring, 5,000 €; measured power per server, 20,000 €), cloud recalculated from the usage data location-based (8,000 €) instead of the provider's market-based tool, data asked from each SaaS supplier (2,000 € each, one supplier sends none), one measure per application | Each hosting path has its own source of data, and each counts in its own way. The provider's tool counts its certificates: the cloud looks almost clean, and the largest single emitter (an analytics cluster) looks like nothing. Servers as the key make many small servers look big; CPU time hides idle servers that are on around the clock (test environments). Spend-based numbers make the expensive CRM look large and the cheap video conferencing and file sharing small. The plan follows the data; the stars count what really changes. Term: Carbon Accounting. |
 | P2 | Where to start | the same company, 955 t a year with the employees' PCs; budget 200,000 € | three years in quarters | sixteen measures from a consultant's list, drawn as a marginal abatement cost curve (€ per tonne over three years from each measure's gross saving a year); a click on a bar or a card puts a measure into the plan | The curve ranks measures one at a time. What it leaves out decides the result: certificates come first on the curve (1,200 t for 40,000 €) and change nothing location-based; two measures on the same servers (test environments off at night and in the cloud on demand; the analytics platform moved and rightsized) do not add up; a project of four quarters saves only after it; 600 laptops instead of desktop PCs emit more in their making than they save in three years. Term: Marginal Abatement Cost Curve (MACC) [S41]. |
+| P3 | Tidy up with TIME | thirteen applications by business value and technical condition | three years in quarters | per application tolerate, invest, migrate (optionally switching off the old system, one quarter more) or eliminate, and a start quarter; three projects at a time | Gartner's TIME model gives each quadrant a decision; over three years the timing decides as much. A migration runs old and new side by side until the old one is switched off – left running, it saves nothing. The new ERP (six quarters plus one to switch off) costs more in its parallel run than it saves within three years; tuning the old one saves more. Quick wins (eliminating unused systems) first. The mail archive is of little value but must be kept by law. Term: Application Rationalization (TIME). |
 
 **As built (P1).** The first star needs the inventory within ±15 % of the real footprint (so the cloud must be
 recalculated) and the budget kept; ★★ −20 %, ★★★ −25 % next year. With the free data a careful plan (the
@@ -402,9 +403,15 @@ then, minus the embodied CO₂ of new hardware, plus energy made on site. ★ wi
 ★★★ −26 % over three years. Along the consultant's curve −22.8 % (★), with or without the certificates; the best plan
 −26.8 % (★★★) – it keeps both measures for the test environments, since the second still adds a little.
 
-**Further portfolio scenarios (planned).** P3 *Tidy up
-with TIME*: three years in quarters; the applications in the four TIME quadrants (tolerate, invest, migrate,
-eliminate) with measures for each; a replaced application saves only once it is switched off. P4 *Out of the cloud?*
+**As built (P3).** Footprint per application and quarter: unchanged while its project runs; an investment cuts it
+afterwards; a migration adds the new system from the start of the project and removes the old one a quarter after
+its end – only if switching off is chosen; an elimination removes it. ★ needs at most three projects in every quarter
+and nothing eliminated that must stay (high business value, or the law); ★★ −25 %, ★★★ −30 % over three years. Each
+quadrant's decision as early as possible: −18.8 % with the old systems switched off, −2.1 % without (★); quick wins
+first and the ERP tuned: −32 % (★★★); the same with the ERP migrated: −27.4 % (★★); without switching off: −25.9 %
+(★★).
+
+**Further portfolio scenarios (planned).** P4 *Out of the cloud?*
 – an application moves into the own data center for data sovereignty; utilization, PUE and the grid decide. P5
 *Cost as a proxy?* – steering by cost alone, and where it leads astray. P6 *Rebound* – savings make an
 application cheaper, its use grows.
@@ -437,6 +444,7 @@ the app (O = operations, B in German).
 | E7 Green pipeline | LG 9-1 to LG 9-4 |
 | P1 Inventory | LG 2-2 Scope 2, LG 4-3 providers' carbon tools, LG 4-4 measuring in enterprise environments, LG 7-3 |
 | P2 Where to start | LG 2-3 reduction targets and measures in the company, LG 1-4 hardware efficiency, LG 2-2 market-based against location-based |
+| P3 Tidy up with TIME | LG 2-3 energy efficiency as a field of action in the company, LG 7-2 deployment models, LG 7-4 operational antipatterns (systems left running) |
 
 Each scenario has:
 

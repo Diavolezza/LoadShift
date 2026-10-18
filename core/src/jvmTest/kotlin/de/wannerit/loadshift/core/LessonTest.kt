@@ -1028,4 +1028,40 @@ class LessonTest {
         assertTrue(model.savedKg(idx("Replace the 600 oldest desktop PCs by laptops")) < 0)
         assertEquals(0L, model.savedKg(idx("Guarantees of origin for the own data center")))
     }
+
+    @Test fun p3TidyUp() {
+        val scenario = Scenario.TIDY_UP
+        val model = scenario.tidy!!
+        fun c(d: Decision, start: Int, off: Boolean = true) = Choice(d, start, off)
+        val careful = mapOf(
+            "Old test environments" to c(Decision.ELIMINATE, 0), "Old reporting system" to c(Decision.ELIMINATE, 0), "Old intranet" to c(Decision.ELIMINATE, 0),
+            "Web shop" to c(Decision.INVEST, 1), "Fax server" to c(Decision.ELIMINATE, 2), "Wiki" to c(Decision.ELIMINATE, 1),
+            "Data warehouse" to c(Decision.INVEST, 2), "Time recording" to c(Decision.ELIMINATE, 3), "Warehouse management" to c(Decision.MIGRATE, 3),
+            "CRM" to c(Decision.INVEST, 4), "Old customer portal" to c(Decision.MIGRATE, 5), "ERP" to c(Decision.INVEST, 5),
+        )
+        val plans = listOf(
+            "by quadrant, old systems switched off" to model.byQuadrant(true),
+            "by quadrant, old systems left running" to model.byQuadrant(false),
+            "careful: quick wins first, ERP tuned" to careful,
+            "careful, ERP migrated late" to careful + ("ERP" to c(Decision.MIGRATE, 5)),
+            "careful, old systems left running" to careful.mapValues { it.value.copy(decommission = false) },
+            "careful, mail archive eliminated" to careful + ("Mail archive" to c(Decision.ELIMINATE, 9)),
+        )
+        val lines = mutableListOf("P3 Tidy up with TIME: baseline ${model.baselineKg / 1_000} t over ${model.quarters / 4} years, ${model.capacity} projects at a time")
+        val results = plans.associate { (name, plan) ->
+            val r = model.result(plan)
+            lines += "  " + name.padEnd(42) + "%7d t".format(r.planKg / 1_000) + "%7.1f %%".format(r.reductionPermille / 10.0) +
+                "  load " + model.load(plan).joinToString("") + "  " + "★".repeat(model.stars(r, scenario.goals)) +
+                (if (r.overloaded.isNotEmpty()) "  overloaded" else "") + (if (r.wronglyEliminated.isNotEmpty()) "  eliminated: ${r.wronglyEliminated}" else "")
+            name to r
+        }
+        report(203, lines)
+        fun stars(name: String) = model.stars(results.getValue(name), scenario.goals)
+        assertEquals(1, stars("by quadrant, old systems switched off"))
+        assertEquals(1, stars("by quadrant, old systems left running"))
+        assertEquals(3, stars("careful: quick wins first, ERP tuned"))
+        assertEquals(2, stars("careful, ERP migrated late"))
+        assertEquals(2, stars("careful, old systems left running"))
+        assertEquals(0, stars("careful, mail archive eliminated"))
+    }
 }

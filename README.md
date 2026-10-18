@@ -44,6 +44,7 @@ The app speaks English and German (switch on the start page); everything in this
 |---|---|---|
 | P1 | Inventory | Carbon Accounting |
 | P2 | Where to start | Marginal Abatement Cost Curve (MACC) |
+| P3 | Tidy up with TIME | Application Rationalization (TIME) |
 
 In German the operations scenarios are called B1–B12 ("Betrieb"). A star in one scenario opens the next; teachers can
 open all scenarios or reset the progress in the About dialog. The start page continues with the next open

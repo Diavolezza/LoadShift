@@ -48,6 +48,7 @@ private sealed interface Screen {
     data class Portfolio(val controller: PortfolioController) : Screen
     data class Abatement(val controller: AbatementController) : Screen
     data object Lexicon : Screen
+    data class Tidy(val controller: TidyController) : Screen
 }
 
 @Composable
@@ -61,8 +62,10 @@ fun App(options: LaunchOptions = LaunchOptions()) {
         Screen.Lexicon -> LexiconScreen(onBack = { screen = Screen.List }) { screen = Screen.Briefing(it) }
         is Screen.Briefing -> BriefingScreen(s.scenario, onStart = {
             screen = if (s.scenario.portfolio != null) Screen.Portfolio(PortfolioController(s.scenario))
-                else if (s.scenario.abatement != null) Screen.Abatement(AbatementController(s.scenario)) else Screen.Game(GameController(s.scenario))
+                else if (s.scenario.abatement != null) Screen.Abatement(AbatementController(s.scenario))
+                else if (s.scenario.tidy != null) Screen.Tidy(TidyController(s.scenario)) else Screen.Game(GameController(s.scenario))
         }, onBack = { screen = Screen.List })
+        is Screen.Tidy -> TidyScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List })
         is Screen.Abatement -> AbatementScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List })
         is Screen.Portfolio -> PortfolioScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List })
         is Screen.Game -> GameScreen(s.controller, onExit = { s.controller.saveDraft(); screen = Screen.Briefing(s.controller.scenario) },
@@ -75,6 +78,22 @@ private fun initialScreen(options: LaunchOptions): Screen {
     val scenario = Scenario.ALL.firstOrNull { it.number == options.scenario } ?: if (options.play) Scenario.NIGHT_SHIFT else null
     scenario ?: return Screen.List
     if (!options.play) return Screen.Briefing(scenario)
+    if (scenario.tidy != null) {
+        val g = TidyController(scenario)
+        if (options.careful) {
+            // Like a careful manager: quick wins first, the ERP tuned.
+            for ((i, app) in g.model.apps.withIndex()) {
+                val c = g.model.example[app.name] ?: continue
+                g.selected = i
+                g.decide(c.decision)
+                g.moveStart(c.start)
+                if (c.decommission) g.toggleDecommission()
+            }
+            g.selected = 0
+            if (options.ticks > 0) g.finish()
+        }
+        return Screen.Tidy(g)
+    }
     if (scenario.abatement != null) {
         val a = AbatementController(scenario)
         if (options.careful) {
