@@ -68,7 +68,13 @@ data class Totals(
     var deviceEnergy: Long = 0,
     var networkOperational: Long = 0,
     var deviceOperational: Long = 0,
+    /** E6: commits, their feedback time summed (tenths of a minute each). */
+    var commits: Long = 0,
+    var feedbackSum: Long = 0,
 ) {
+    /** E6: mean time from a commit to its first result, tenths of a minute. */
+    val meanFeedback: Int get() = if (commits == 0L) 0 else (feedbackSum / commits).toInt()
+
     /** E5: mean LCP of the visits, tenths of a second. */
     val meanLcp: Int get() = if (visits == 0L) 0 else (lcpSum / visits).toInt()
 
@@ -151,6 +157,8 @@ data class TickRecord(
     val inference: InferenceRecord? = null,
     /** E5: the network and the visitors' devices. */
     val web: WebRecord? = null,
+    /** E6: the pipeline's servers. */
+    val pipeline: PipelineRecord? = null,
 )
 
 /** E3: memory used (tenths of GB), memory of the running cache servers (GB), hits (per mille of the cacheable requests), memory per kind (tenths of GB). */
@@ -324,6 +332,7 @@ class Simulation private constructor(
         finishBooting()
         updateJobs()
         applyCapacityPolicy()
+        val pipelineUtil = scenario.pipeline?.let { stepPipeline(it) }
         val training = trainNow()
         startBatchJobs()
 
@@ -366,6 +375,7 @@ class Simulation private constructor(
             val server = serverList[i]
             val job = server.job
             val newUtilization = when {
+                pipelineUtil != null -> pipelineUtil[i]
                 training != null && server.kind == ServerKind.GPU_CURRENT -> if (server.state.isOn) training else 0
                 job != null -> if (jobList[job].state is BatchJobState.Running && server.state.isOn) 1_000 else 0
                 hostUtilization != null -> if (server.state.isOn) hostUtilization[i] else 0
@@ -482,6 +492,7 @@ class Simulation private constructor(
                 training = training != null && trainedLastTick,
                 inference = inferenceRecord,
                 web = webRecord,
+                pipeline = pipelineRecord,
             ),
         )
         tick += 1
@@ -596,6 +607,67 @@ class Simulation private constructor(
             var capacity = serverList.sumOf { it.kind.capacity }
             while (capacity < needed) { install(model); capacity += ServerKind.CPU_CURRENT.capacity }
         }
+    }
+
+    // E6: the pipeline
+
+    private var pendingCommits = 0
+    private var runnerBacklog = 0.0
+    private var nightlyAt = -1
+    private var lastHeavyTick = Int.MIN_VALUE / 2
+    private var pipelineRecord: PipelineRecord? = null
+
+    /**
+     * Switches the build agents (the first servers) and the test environments (the rest) for this tick and returns
+     * each server's utilization; counts the commits' feedback time and a release without UI tests.
+     */
+    private fun stepPipeline(m: PipelineModel): IntArray {
+        val c = policy.pipeline
+        val sinceStart = tick - scenario.startTick
+        val day = sinceStart / GameTime.TICKS_PER_DAY
+        val hour = GameTime(tick).hour
+        val weekday = day % 7 < 5
+        val commits = if (weekday && hour in 8 until 18) m.commitsPerTick else 0
+        pendingCommits += commits
+        val runs = when (c.trigger) {
+            Trigger.EVERY_COMMIT -> pendingCommits
+            Trigger.EVERY_30_MIN -> if (sinceStart % 2 == 0 && pendingCommits > 0) 1 else 0
+            Trigger.EVERY_2_H -> if (sinceStart % 8 == 0 && pendingCommits > 0) 1 else 0
+        }
+        if (runs > 0) pendingCommits = 0
+        if (runs > 0 && c.heavy == HeavyTests.EVERY_COMMIT) lastHeavyTick = tick
+        // The nightly tests: planned at 22:00 into the greenest tick of the night (by the forecast).
+        if (hour == 22 && GameTime(tick).minute == 0) {
+            nightlyAt = (tick until tick + 8 * GameTime.TICKS_PER_HOUR).minByOrNull { grid.forecastTenths(it, tick) } ?: tick
+        }
+        val nightly = c.heavy == HeavyTests.NIGHTLY && tick == nightlyAt
+        if (nightly) lastHeavyTick = tick
+        val queueBefore = runnerBacklog
+        val demand = runs * m.minutesPerRun(c) + (if (nightly) m.nightlyMinutes.toDouble() else 0.0) + runnerBacklog
+        val agents = m.agentsOn(c, demand)
+        val capacity = agents * PipelineModel.MINUTES_PER_TICK
+        val done = minOf(demand, capacity)
+        runnerBacklog = demand - done
+        val queueWait = if (agents == 0) 0.0 else queueBefore / agents
+        val feedback = c.trigger.minutes / 2.0 + m.bootMinutes(c) + m.buildMinutes(c) + m.unitMinutes(c) + queueWait
+        totals.commits += commits
+        totals.feedbackSum += (commits * feedback * 10).toLong()
+        // Friday's release needs the UI tests of the last 24 hours.
+        if (day == PipelineModel.RELEASE_DAY && hour == PipelineModel.RELEASE_HOUR && GameTime(tick).minute == 0 &&
+            tick - lastHeavyTick > GameTime.TICKS_PER_DAY) totals.rulesBroken += 1
+        val environments = m.environmentServers(c, weekday, hour)
+        val util = IntArray(serverList.size)
+        for (i in serverList.indices) {
+            val on = if (i < m.agents) i < agents else i - m.agents < environments
+            serverList[i] = serverList[i].copy(state = if (on) ServerState.On else ServerState.Off)
+            util[i] = when {
+                !on -> 0
+                i < m.agents -> if (capacity == 0.0) 0 else (done / capacity * 1_000).toInt()
+                else -> 50
+            }
+        }
+        pipelineRecord = PipelineRecord(agents, environments, done.toInt(), nightly)
+        return util
     }
 
     /** O8: whether the training runs this tick; the result is the GPUs' draw, or null without a training. */

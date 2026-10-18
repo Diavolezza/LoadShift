@@ -87,6 +87,7 @@ fun GameScreen(game: GameController, onExit: () -> Unit, onNext: ((Scenario) -> 
                         cachePower = game.scenario.caching?.power(game.simulation.policy.cache)
                             ?: game.simulation.history.lastOrNull()?.inference?.let { it.kindWatts.sum() + it.idleWatts } ?: 0,
                         gpuRack = game.hasInference,
+                        workLabel = if (game.hasPipeline) t("Build agent at work") else null,
                     )
                 }
                 VDivider()
@@ -138,6 +139,10 @@ private fun TopBar(game: GameController, onExit: () -> Unit) {
         val totals = game.totals
         Metric(t("CO₂ so far"), if (game.hasRenewal) "${Format.tonnes(totals.emissions)} t" else "${Format.kilograms(totals.emissions)} kg")
         // E4: the shop's own servers are not the topic; the assistant's goals take their place.
+        simulation.scenario.pipeline?.let { model ->
+            val f = game.totals.meanFeedback
+            Metric(t("Feedback"), t("%@ min", Format.number(f / 10.0, 1)), if (f <= model.feedbackLimit * 10) Palette.ink else Palette.red)
+        }
         simulation.scenario.web?.let { model ->
             Metric(t("Page"), t("%@ MB", Format.number(game.totals.meanPageKb / 1_000.0, 1)))
             val lcp = game.totals.meanLcp
@@ -249,6 +254,13 @@ private fun GoalBar(game: GameController) {
             GoalItem((change ?: 0) < 0, change != null,
                 if (change == null) t("CO₂ vs. reference") else if (game.isCapstone && !game.isFinished) t("CO₂ expected: %@", Format.changePermille(change))
                 else t("CO₂ vs. reference: %@", Format.changePermille(change)))
+        }
+        scenario.pipeline?.let { model ->
+            GoalItem(totals.meanFeedback <= model.feedbackLimit * 10, change != null, t("Feedback ≤ %lld min", model.feedbackLimit))
+            GoalItem(totals.rulesBroken == 0, totals.rulesBroken > 0 || game.isFinished,
+                if (totals.rulesBroken == 0) t("Release on Friday with tested UI") else t("Released without UI tests"))
+            GoalItem((change ?: 0) < 0, change != null,
+                if (change == null) t("CO₂ vs. reference") else t("CO₂ vs. reference: %@", Format.changePermille(change)))
         }
         scenario.web?.let { model ->
             GoalItem(totals.meanLcp <= model.lcpLimit, change != null, t("LCP ≤ %@ s", Format.number(model.lcpLimit / 10.0, 1)))
@@ -383,6 +395,11 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
                     if (scenario.staleLimit != null) {
                         add(t("Stale answers (‰)") to (Format.number(you.stale.toDouble() / maxOf(1, you.requests), 2) to Format.number(ref.stale.toDouble() / maxOf(1, ref.requests), 2)))
                     }
+                    if (scenario.pipeline != null) {
+                        add(t("Feedback (min)") to (Format.number(you.meanFeedback / 10.0, 1) to Format.number(ref.meanFeedback / 10.0, 1)))
+                        add(t("Servers on (mean)") to (Format.number(you.meanServersOn / 1_000.0, 1) to Format.number(ref.meanServersOn / 1_000.0, 1)))
+                        add(t("Release with tested UI") to ((if (you.rulesBroken == 0) t("yes") else t("no")) to (if (ref.rulesBroken == 0) t("yes") else t("no"))))
+                    }
                     if (scenario.web != null) {
                         add(t("Page weight per visit (MB)") to (Format.number(you.meanPageKb / 1_000.0, 1) to Format.number(ref.meanPageKb / 1_000.0, 1)))
                         add(t("LCP (s)") to (Format.number(you.meanLcp / 10.0, 1) to Format.number(ref.meanLcp / 10.0, 1)))
@@ -478,7 +495,7 @@ private fun WhatIf(game: GameController) {
             Spacer(Modifier.weight(labelWeight))
             Txt(t("CO₂ vs. you"), Type.caption.copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.18f))
             if (pue) Txt(t("PUE"), Type.caption.copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.12f))
-            Txt(if (game.hasBatch) t("Missed") else if (game.hasInference) t("Quality") else if (game.hasWeb) t("LCP") else t("SLA"), Type.caption.copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.14f))
+            Txt(if (game.hasBatch) t("Missed") else if (game.hasInference) t("Quality") else if (game.hasWeb) t("LCP") else if (game.hasPipeline) t("Feedback") else t("SLA"), Type.caption.copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.14f))
             Spacer(Modifier.weight(0.16f))
         }
         // Settings with more stars than the player has reached stay hidden: the second run should not be a recipe.
@@ -493,7 +510,10 @@ private fun WhatIf(game: GameController) {
                 if (pue) Txt(Format.number(totals.pue / 1_000.0, 2), Type.callout.copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.12f))
                 val inference = game.scenario.inference
                 val web = game.scenario.web
-                if (web != null) {
+ val pipe = game.scenario.pipeline
+                if (pipe != null) {
+                    Txt(t("%@ min", Format.number(totals.meanFeedback / 10.0, 1)), Type.style(15, color = if (totals.meanFeedback <= pipe.feedbackLimit * 10) Palette.ink else Palette.red).copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.14f))
+                } else if (web != null) {
                     Txt(t("%@ s", Format.number(totals.meanLcp / 10.0, 1)), Type.style(15, color = if (totals.meanLcp <= web.lcpLimit) Palette.ink else Palette.red).copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.14f))
                 } else if (inference != null) {
                     Txt(Format.percent(totals.meanAnswerQuality), Type.style(15, color = if (totals.meanAnswerQuality >= inference.qualityTarget) Palette.ink else Palette.red).copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.14f))

@@ -37,6 +37,9 @@ import de.wannerit.loadshift.core.Simulation
 /** What the lower lane shows when a scenario has more than one kind of work (O11: it follows the panel's tab). */
 enum class Lane { LOAD, JOBS, TRAINING, ALL }
 
+/** E6: the week starts on Monday. */
+private val WEEKDAYS = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+
 @Composable
 fun TimelineChart(simulation: Simulation, version: Int, modifier: Modifier = Modifier, other: Pair<String, Simulation>? = null, lane: Lane? = null, siteName: String? = null) {
     val measurer = rememberTextMeasurer()
@@ -159,7 +162,9 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
         }
 
         // Lower lane
-        if (scenario.web != null) {
+        if (scenario.pipeline != null) {
+            drawPipeline(lowTop, lowBottom)
+        } else if (scenario.web != null) {
             drawWeb(lowTop, lowBottom)
         } else if (scenario.inference != null) {
             drawInference(lowTop, lowBottom, future)
@@ -193,7 +198,7 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
             if (time.minute == 0 && time.hour % labelHours == 0) {
                 val anchor = if (tick == start) 0f else if (tick == end) 1f else 0.5f
                 val dayNumber = time.day - GameTime.START.day + 1
-                val label = if (labelHours == 24) (if (tick == end) "" else if (scenario.renewal != null) t("Q%lld/%lld", (dayNumber - 1) % 4 + 1, (dayNumber - 1) / 4 + 1) else t("Day %lld", dayNumber)) else time.clockText
+                val label = if (labelHours == 24) (if (tick == end) "" else if (scenario.pipeline != null) t(WEEKDAYS[(dayNumber - 1) % 7]) else if (scenario.renewal != null) t("Q%lld/%lld", (dayNumber - 1) % 4 + 1, (dayNumber - 1) / 4 + 1) else t("Day %lld", dayNumber)) else time.clockText
                 text(label, Offset(if (labelHours == 24) x(tick) + 3f * density else x(tick), size.height - labelBand / 2), anchorX = if (labelHours == 24) 0f else anchor)
                 drawLine(Color.Gray.copy(alpha = 0.15f), Offset(x(tick), topTop), Offset(x(tick), lowBottom), 1f)
             }
@@ -419,6 +424,33 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
         }
         axis(top, bottom, scaleTop.toInt().toString())
         text(t("Outside temperature, °C – dashed: forecast; black: setpoint; green: the outside air cools"), Offset(left, top - 12f * density), Type.style(12, FontWeight.SemiBold))
+    }
+
+    /** E6: build agents and test environment servers on, stacked; a violet mark for the nightly UI tests. */
+    private fun DrawScope.drawPipeline(top: Float, bottom: Float) {
+        val records = simulation.history.mapNotNull { r -> r.pipeline?.let { r.tick to it } }
+        val scaleTop = niceCeiling(simulation.servers.size).toFloat()
+        fun yS(n: Int) = bottom - (bottom - top) * (n / scaleTop)
+        if (records.isNotEmpty()) {
+            for (layer in 1 downTo 0) {
+                val area = Path().apply {
+                    moveTo(x(records[0].first), bottom)
+                    for ((tick, r) in records) {
+                        val y = yS(if (layer == 0) r.runnersOn else r.runnersOn + r.environmentsOn)
+                        lineTo(x(tick), y); lineTo(x(tick + 1), y)
+                    }
+                    lineTo(x(records.last().first + 1), bottom)
+                    close()
+                }
+                drawPath(area, Color.White)
+                drawPath(area, (if (layer == 0) Palette.interactiveLoad else Palette.capacity).copy(alpha = 0.7f))
+            }
+            for ((tick, r) in records) if (r.nightly) {
+                drawRect(Palette.trainingLoad, Offset(x(tick), top), Size(maxOf(2f, x(tick + 1) - x(tick)), bottom - top))
+            }
+        }
+        axis(top, bottom, t("%lld servers", scaleTop.toInt()))
+        text(t("Servers on – blue: build agents, light blue: test environments; violet: UI tests at night"), Offset(left, top - 12f * density), Type.style(12, FontWeight.SemiBold))
     }
 
     /** E5: the power of a visit's three parts, stacked: data center, network, visitors' devices. */

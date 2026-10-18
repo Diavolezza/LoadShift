@@ -360,6 +360,7 @@ work per request or per job; the effect shows in the SCI per 1,000 requests and 
 | E3 | Hit or miss | web shop, Germany | 2 days | cache servers, per kind of data cached or not and its TTL, two more measures | Five kinds of data with different popularity, size, cost and business limits on their age: product images (a day), catalog pages (15 min), exchange rates (1 min), search results (1 h, but most searches are typed only once), the account balance before a transfer (must be current). All cached kinds share the memory of the cache servers (LRU). The team has ordered four cache servers "to be on the safe side". A cache saves work while it hits, but every cache server draws power all day; a TTL longer than allowed brings stale answers (0 stars); search results fill half the memory and hardly hit. Two more measures follow the same idea: counting unique visitors with HyperLogLog instead of keeping every ID, and a materialized view for the sales dashboard (G9, G1). Term: Caching. |
 | E4 | Right-sized AI | web shop, Germany | 2 days | per kind of question who answers it (no AI, small model, large model, large model with reasoning), batching window | The team's prototype sends every question of the shop assistant to the large model, one at a time. A status lookup answers "Where is my order?" better than any model; a small model is good enough where the answer is in the product data; the large model pays off for complaints and advice. Batching shares the GPU's work among questions but every answer waits; reasoning adds a little quality and a long wait. Rules: answer quality at least 92 %, 95 % of the answers within 3 s (G9, G1). Term: Green AI (Right-sizing Models). |
 | E5 | Data diet | web shop, Germany | 2 days | image format and sizes, lazy loading, product video, list length, how visitors are counted | A visit weighs 12 MB. Counted with the network and the visitors' devices (energy per GB after the Sustainable Web Design Model [S28]), the data center is the smallest part. The video that plays by itself is half the weight; modern formats in the right size and lazy loading below the fold do the rest. Two traps make the page slow: converting images on every request, and lazy loading the first image. Rule: LCP at most 2.5 s [S30] (G9, G1). Term: Sustainable Web Design. |
+| E6 | Green pipeline | a team of 40 developers, Germany | 7 days (Monday to Sunday) | build agents (always on or on demand), remote build cache, test impact analysis, UI and load tests (every commit, nightly in the greenest hours, never), trigger (every commit, every 30 minutes, every 2 hours), test environments (day and night, weekdays 7–19, on demand) and their replicas | Most of a pipeline waits: environments at night and at the weekend, agents without a job. Agents on demand lose their local cache – without a remote cache the feedback gets too slow; batching commits saves runs but makes the team wait; without UI tests the release goes out untested. Rules: feedback within 20 minutes, UI tests in the 24 hours before Friday's release (iSAQB GREEN, LZ 9-1 to 9-4). Term: Green CI/CD. |
 
 Backlog items (game values, to be tuned in the lesson tests): database index, removing an N+1 query, a cache
 (saves work, but the cache server draws power too), compressing images, pagination instead of loading
@@ -930,6 +931,33 @@ not energy.
 | AVIF converted on every request | −74.5 % | 1.7 | 2.8 s | 0 |
 | lazy loading for all images | −79.8 % | 1.7 | 2.6 s | 0 |
 
+**As built in step 5, part 9** (E6, "Green pipeline"):
+
+- Core: `PipelineModel` and `PipelineConfig`. Four commits per tick on weekdays from 8 to 18; a run needs build 3 min
+  (14 without a cache: an agent on demand starts empty unless the cache is remote), unit tests 5 (1.5 with test impact
+  analysis), system tests 12 (4), UI tests 25 per commit or 180 runner minutes once a night in the greenest tick between
+  22:00 and 06:00 (by the forecast). Runner minutes queue on the agents (16 always on, or as many as needed); feedback
+  = half the trigger interval + boot (3 min on demand) + build + unit tests + the wait in the queue. Test environments:
+  6 × replicas servers day and night, on weekdays 7–19, or 3 × replicas on demand from 9 to 17. The first 16 servers
+  of the fleet are the agents, the rest the environments; the simulation switches them directly. Friday's release at
+  14:00 without UI tests in the 24 hours before counts as a broken rule.
+- App: pipeline panel (agents, cache, tests, trigger, environments and replicas; one run with the draft and its
+  feedback without queue), timeline lane with the servers on and the nightly UI tests, weekday labels.
+- Goals ★★ −60 %, ★★★ −78 %.
+
+| Agents, cache, TIA, UI tests, trigger, environments, replicas | CO₂ vs. reference | Feedback | Stars |
+|---|---:|---:|---:|
+| always on, –, –, every commit, every commit, day and night, 3 (reference) | – | 8.0 min | – |
+| environments weekdays 7–19 | −27.1 % | 8.0 min | ★ |
+| UI tests at night | −9.9 % | 8.0 min | ★ |
+| always on, TIA, nightly, weekdays 7–19, 1 replica | −51.0 % | 4.5 min | ★ |
+| on demand, remote cache, TIA, nightly, weekdays 7–19, 1 replica | −80.9 % | 7.5 min | ★★★ |
+| the same without remote cache | −74.7 % | 18.5 min | ★★ |
+| the same with 3 replicas | −71.8 % | 7.5 min | ★★ |
+| on demand without cache, everything else as the reference | −19.0 % | 22.0 min | 0 |
+| on demand, cache, TIA, nightly, every 30 minutes | −85.3 % | 22.5 min | 0 |
+| on demand, cache, TIA, UI tests never | −81.6 % | 7.5 min | 0 (release) |
+
 ---
 
 ## 13 Decisions
@@ -998,3 +1026,5 @@ not energy.
 | S28 | Sustainable Web Design Model, version 4 (Wholegrain Digital, Mightybytes, Green Web Foundation and others): energy per GB – data centers 0.055, networks 0.059, user devices 0.080 kWh/GB operational, plus embodied parts; the authors say the model overestimates and that data transfer is a disputed proxy. https://sustainablewebdesign.org/estimating-digital-emissions/ |
 | S29 | HTTP Archive: *Web Almanac 2025, Page Weight* (median home page 2.56 MB on mobile, 2.86 MB on desktop; images about a third). https://almanac.httparchive.org/en/2025/page-weight |
 | S30 | web.dev: *Largest Contentful Paint (LCP)* (good: at most 2.5 s at the 75th percentile; a lazily loaded LCP image delays it). https://web.dev/articles/lcp |
+| S31 | M. Fowler: *The Rise of Test Impact Analysis*, martinfowler.com, 2017. https://martinfowler.com/articles/rise-test-impact-analysis.html |
+| S32 | Green Coding Solutions: *Eco CI* (energy estimation for GitHub Actions and GitLab pipelines, based on SPECpower). https://www.green-coding.io/projects/eco-ci/ |

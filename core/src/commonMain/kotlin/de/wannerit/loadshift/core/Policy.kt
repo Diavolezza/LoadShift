@@ -80,6 +80,8 @@ data class Policy(
     val inference: InferenceConfig = InferenceConfig(),
     /** E5: how heavy the shop's pages are. */
     val pages: PageConfig = PageConfig(),
+    /** E6: the CI/CD pipeline and the test environments. */
+    val pipeline: PipelineConfig = PipelineConfig(),
 ) {
     companion object {
         /**

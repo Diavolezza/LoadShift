@@ -67,7 +67,13 @@ private fun initialScreen(options: LaunchOptions): Screen {
     scenario ?: return Screen.List
     if (!options.play) return Screen.Briefing(scenario)
     val game = GameController(scenario)
-    if (options.careful && game.hasWeb) {
+    if (options.careful && game.hasPipeline) {
+        // Like a careful player: agents on demand with a remote cache, test impact analysis, UI tests at night,
+        // environments on weekdays 7–19 with one replica.
+        game.setPolicy(scenario.initialPolicy.copy(pipeline = de.wannerit.loadshift.core.PipelineConfig(de.wannerit.loadshift.core.Runners.ON_DEMAND, true, true,
+            de.wannerit.loadshift.core.HeavyTests.NIGHTLY, de.wannerit.loadshift.core.Trigger.EVERY_COMMIT, de.wannerit.loadshift.core.Environments.OFFICE_HOURS, 1)))
+        game.advance(options.ticks)
+    } else if (options.careful && game.hasWeb) {
         // Like a careful player: AVIF in the right size, lazy below the fold, video on click, short lists, one tag.
         game.setPolicy(scenario.initialPolicy.copy(pages = de.wannerit.loadshift.core.PageConfig(de.wannerit.loadshift.core.ImageFormat.AVIF, true,
             de.wannerit.loadshift.core.LazyLoading.BELOW_FOLD, false, false, de.wannerit.loadshift.core.Tracking.ONE_TAG)))

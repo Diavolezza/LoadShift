@@ -5,6 +5,11 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import de.wannerit.loadshift.core.BatchMode
+import de.wannerit.loadshift.core.Trigger
+import de.wannerit.loadshift.core.Runners
+import de.wannerit.loadshift.core.Environments
+import de.wannerit.loadshift.core.HeavyTests
+import de.wannerit.loadshift.core.PipelineConfig
 import de.wannerit.loadshift.core.LazyLoading
 import de.wannerit.loadshift.core.ImageFormat
 import de.wannerit.loadshift.core.Tracking
@@ -395,6 +400,11 @@ class GameController(val scenario: Scenario) {
         streamMax = List(n) { if (it == device) quality else streamMax.getOrElse(it) { Quality.UHD } }
     }
 
+    // Pipeline (E6)
+
+    val hasPipeline: Boolean get() = scenario.pipeline != null
+    var pipelineDraft by mutableStateOf(PipelineConfig())
+
     // Pages (E5)
 
     val hasWeb: Boolean get() = scenario.web != null
@@ -467,6 +477,7 @@ class GameController(val scenario: Scenario) {
             if (Control.STREAMING in scenario.controls) policy = policy.copy(streaming = draftStreaming)
             if (Control.INFERENCE in scenario.controls) policy = policy.copy(inference = draftInference)
             if (Control.PAGES in scenario.controls) policy = policy.copy(pages = pageDraft)
+            if (Control.PIPELINE in scenario.controls) policy = policy.copy(pipeline = pipelineDraft)
             return policy
         }
 
@@ -500,6 +511,7 @@ class GameController(val scenario: Scenario) {
             streamEco = c.eco; streamEcoAbove = c.ecoAbove; streamEcoQuality = c.ecoQuality
         }
         pageDraft = policy.pages
+        pipelineDraft = policy.pipeline
         scenario.inference?.let { m ->
             aiAnswerers = m.kinds.indices.map { policy.inference.answerers.getOrElse(it) { Answerer.LARGE } }
             aiWindow = policy.inference.windowMs
@@ -535,6 +547,7 @@ class GameController(val scenario: Scenario) {
         val streaming: StreamingConfig,
         val inference: InferenceConfig,
         val pages: PageConfig,
+        val pipeline: PipelineConfig,
     )
 
     private companion object {
@@ -544,7 +557,7 @@ class GameController(val scenario: Scenario) {
     /** Keeps the panel's settings for the next run (a new run starts with the scenario's rules, the panel keeps yours). */
     fun saveDraft() {
         drafts[scenario.number] = Draft(draftKind, draftHour, draftThreshold, draftSafety, capKind, capFixed, capTarget,
-            capMinimumOn, capMinimum, capFrom, capTo, startPolicy ?: current.policy.takeIf { current.history.isEmpty() }, draftCache, draftSetpoint, draftTraining, draftStreaming, draftInference, pageDraft)
+            capMinimumOn, capMinimum, capFrom, capTo, startPolicy ?: current.policy.takeIf { current.history.isEmpty() }, draftCache, draftSetpoint, draftTraining, draftStreaming, draftInference, pageDraft, pipelineDraft)
     }
 
     private fun restoreDraft() {
@@ -562,6 +575,7 @@ class GameController(val scenario: Scenario) {
         if (d.inference.answerers.isNotEmpty()) aiAnswerers = d.inference.answerers
         aiWindow = d.inference.windowMs
         pageDraft = d.pages
+        pipelineDraft = d.pipeline
         // A new run starts with the rules the last run started with (the panel shows the last run's final ones).
         if (d.startPolicy != null && current.history.isEmpty() && !hasSprints) {
             current.policy = d.startPolicy
@@ -692,6 +706,21 @@ class GameController(val scenario: Scenario) {
                 t("The same, eco mode HD above 650 g/kWh") to run(byDevice.copy(eco = true, ecoAbove = 650)),
                 t("The same, eco mode HD above 550 g/kWh") to run(byDevice.copy(eco = true, ecoAbove = 550)),
                 t("The same, eco mode SD above 650 g/kWh") to run(byDevice.copy(eco = true, ecoAbove = 650, ecoQuality = Quality.SD)),
+            )
+        }
+        scenario.pipeline?.let {
+            val base = PipelineConfig()
+            fun run(c: PipelineConfig) = Simulation.replay(scenario, scenario.initialPolicy.copy(pipeline = c)).totals
+            val lean = base.copy(heavy = HeavyTests.NIGHTLY, environments = Environments.OFFICE_HOURS, replicas = 1, testImpact = true)
+            return listOf(
+                t("Agents and environments always on, all tests with every commit (reference)") to referenceTotals,
+                t("Environments only on weekdays 7–19") to run(base.copy(environments = Environments.OFFICE_HOURS)),
+                t("UI tests every night instead of with every commit") to run(base.copy(heavy = HeavyTests.NIGHTLY)),
+                t("Both, test impact analysis, one replica") to run(lean),
+                t("The same, agents on demand without a remote cache") to run(lean.copy(runners = Runners.ON_DEMAND)),
+                t("The same, agents on demand with a remote cache") to run(lean.copy(runners = Runners.ON_DEMAND, remoteCache = true)),
+                t("The same, builds every 30 minutes") to run(lean.copy(runners = Runners.ON_DEMAND, remoteCache = true, trigger = Trigger.EVERY_30_MIN)),
+                t("The same with every commit, UI tests never") to run(lean.copy(runners = Runners.ON_DEMAND, remoteCache = true, heavy = HeavyTests.NEVER)),
             )
         }
         scenario.web?.let {

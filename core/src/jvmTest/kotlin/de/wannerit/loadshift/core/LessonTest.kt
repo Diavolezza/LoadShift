@@ -823,4 +823,50 @@ class LessonTest {
         assertEquals(0, stars("L r b C S s"))
         assertEquals(0, stars("A r a C S s"))
     }
+
+    @Test fun e6GreenPipeline() {
+        val scenario = Scenario.GREEN_PIPELINE
+        val reference = Simulation.reference(scenario)
+        // Code: runners (A always on, D on demand), remote cache (c/-), test impact (t/-), heavy (E every commit,
+        // N nightly, X never), trigger (1 every commit, 30, 120), environments (A always, O office hours, D on demand), replicas.
+        fun config(code: String): PipelineConfig {
+            val c = code.split(" ")
+            return PipelineConfig(
+                runners = if (c[0] == "A") Runners.ALWAYS_ON else Runners.ON_DEMAND, remoteCache = c[1] == "c", testImpact = c[2] == "t",
+                heavy = when (c[3]) { "E" -> HeavyTests.EVERY_COMMIT; "N" -> HeavyTests.NIGHTLY; else -> HeavyTests.NEVER },
+                trigger = when (c[4]) { "1" -> Trigger.EVERY_COMMIT; "30" -> Trigger.EVERY_30_MIN; else -> Trigger.EVERY_2_H },
+                environments = when (c[5]) { "A" -> Environments.ALWAYS; "O" -> Environments.OFFICE_HOURS; else -> Environments.ON_DEMAND },
+                replicas = c[6].toInt(),
+            )
+        }
+        fun run(code: String) = Simulation.replay(scenario, scenario.initialPolicy.copy(pipeline = config(code)))
+        val codes = listOf(
+            "A - - N 1 A 3", "A - - E 1 O 3", "A - - E 1 A 1", "A - t E 1 A 3", "D - - E 1 A 3", "D c - E 1 A 3",
+            "A - t N 1 O 1", "D c t N 1 O 1", "D c t N 1 D 1", "D - t N 1 O 1", "D c t X 1 O 1", "D c t N 30 O 1",
+            "A - t N 30 O 1", "D c t N 120 O 1", "D c t E 1 O 1", "D c - N 1 O 1", "D c t N 1 O 3", "A - - N 1 O 3",
+        )
+        val runs = codes.map { it to run(it) }
+        val lines = mutableListOf(title(scenario), HEADER + "  feedback min  releases broken  servers")
+        for ((name, sim) in listOf("reference: A - - E 1 A 3" to reference) + runs) {
+            val t = sim.totals
+            lines += line(name, t, reference.totals) + "  " + "%.1f".format(t.meanFeedback / 10.0) + "  " + t.rulesBroken +
+                "  " + "%.1f".format(t.meanServersOn / 1_000.0) + "  " + "★".repeat(scenario.stars(t, reference.totals))
+        }
+        report(106, lines)
+        val byName = runs.toMap()
+        fun stars(name: String) = scenario.stars(byName.getValue(name).totals, reference.totals)
+        // One lever alone: one star.
+        assertEquals(1, stars("A - - E 1 O 3"))
+        assertEquals(1, stars("A - - N 1 A 3"))
+        // Agents on demand with a remote cache, test impact analysis, the UI tests at night, environments only in
+        // office hours with one replica: three stars; without the remote cache or with three replicas: two.
+        assertEquals(3, stars("D c t N 1 O 1"))
+        assertEquals(2, stars("D - t N 1 O 1"))
+        assertEquals(2, stars("D c t N 1 O 3"))
+        // The traps: agents on demand lose their local cache (feedback too slow); batching commits makes the
+        // feedback too slow; without the UI tests the release goes out untested.
+        assertEquals(0, stars("D - - E 1 A 3"))
+        assertEquals(0, stars("D c t N 30 O 1"))
+        assertEquals(0, stars("D c t X 1 O 1"))
+    }
 }

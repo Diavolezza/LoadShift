@@ -35,6 +35,9 @@ enum class Control {
     /** E5: images, video, lists and tracking of the shop's pages. */
     PAGES,
 
+    /** E6: build agents, caches, tests, triggers and test environments. */
+    PIPELINE,
+
     /** Scenario 6: the inlet temperature setpoint of the cooling. */
     COOLING,
 
@@ -134,6 +137,8 @@ data class Scenario(
     val inference: InferenceModel? = null,
     /** E5: the network and the visitors' devices count too. */
     val web: WebModel? = null,
+    /** E6: a team's CI/CD pipeline and test environments. */
+    val pipeline: PipelineModel? = null,
 ) {
     /** Expected interactive work at a tick: the web load or the VMs' profiles (what an operator can plan with). */
     fun expectedDemand(tick: Int): Int = interactive.expected(tick) + vms.sumOf { it.expectedMilli(tick) } / 1_000
@@ -155,6 +160,7 @@ data class Scenario(
             totals.rulesBroken == 0 && totals.deadlinesMissed == 0 && totals.emissions < reference.emissions &&
             (staleLimit == null || totals.stalePerTenThousand <= staleLimit) &&
             (web == null || totals.meanLcp <= web.lcpLimit) &&
+            (pipeline == null || totals.meanFeedback <= pipeline.feedbackLimit * 10) &&
             (inference == null || (totals.meanAnswerQuality >= inference.qualityTarget && totals.answersOnTime >= inference.onTimeTarget))
         val reduction = rules && totals.emissions * 1_000 <= reference.emissions * (1_000 - goals.reduction)
         val special = rules && when (val goal = goals.special) {
@@ -580,6 +586,23 @@ data class Scenario(
             web = WebModel(),
         )
 
-        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, OLD_IRON, TRAINING_RUN, ECO_MODE, TWO_SITES, DARK_DOLDRUMS, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS, RIGHT_SIZED_AI, DATA_DIET)
+        /**
+         * E6, "Green pipeline": a week of a team of 40 developers. Every commit builds and runs all tests on 16 agents
+         * that run day and night; six test environments with three replicas each never sleep. The team must get its
+         * feedback within 20 minutes, and the UI tests must have run before Friday's release.
+         */
+        val GREEN_PIPELINE = Scenario(
+            number = 106, label = "E6", track = Track.ENGINEERING, unlockAfter = 105,
+            title = "Green pipeline", setting = GridSetting(GridRegion.GERMANY, Season.AUTUMN), days = 7,
+            seed = 16, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 34)),
+            interactive = InteractiveLoad(peak = 0),
+            controls = setOf(Control.PIPELINE),
+            initialPolicy = Policy(CapacityMode.Manual(0)),
+            referencePolicy = Policy(CapacityMode.Manual(0)),
+            goals = StarGoals(600, SpecialGoal.Reduction(780)),
+            pipeline = PipelineModel(),
+        )
+
+        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, OLD_IRON, TRAINING_RUN, ECO_MODE, TWO_SITES, DARK_DOLDRUMS, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS, RIGHT_SIZED_AI, DATA_DIET, GREEN_PIPELINE)
     }
 }

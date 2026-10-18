@@ -31,6 +31,8 @@ fun HallView(
     cacheSlots: Int = 0, cacheOn: Int = 0, cachePower: Int = 0,
     /** E4: the extra rack holds GPU servers for the language models instead of cache servers. */
     gpuRack: Boolean = false,
+    /** E6: what the blue bar stands for, instead of web requests. */
+    workLabel: String? = null,
     /** O7: two halls side by side – a short status line only. */
     compact: Boolean = false,
 ) {
@@ -53,7 +55,7 @@ fun HallView(
             }
             LegendSwatch(Palette.off, t("Off"))
             LegendSwatch(Palette.booting, t("Booting"))
-            if (interactive && servers.any { it.kind.servesInteractive }) LegendSwatch(Palette.slab, t("Web requests"), Palette.interactiveLoad)
+            if ((interactive || workLabel != null) && servers.any { it.kind.servesInteractive }) LegendSwatch(Palette.slab, workLabel ?: t("Web requests"), Palette.interactiveLoad)
             if (servers.any { it.kind == ServerKind.GPU_CURRENT }) LegendSwatch(Palette.slab, t("Training"), Palette.trainingLoad)
             if (batch) LegendSwatch(Palette.slab, t("Batch job"), Palette.batchLoad)
             if (cacheSlots > 0) LegendSwatch(if (gpuRack) Palette.trainingLoad else Palette.cache, if (gpuRack) t("GPU server for the models") else t("Cache server"))
