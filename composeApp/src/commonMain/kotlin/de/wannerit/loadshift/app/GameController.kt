@@ -274,10 +274,10 @@ class GameController(val scenario: Scenario) {
 
     /** Pauses when the forecast is revised (CONCEPT.md 3.3). */
     private fun checkForecast() {
-        if (scenario.forecastMiss?.revisedAt == current.tick) {
+        // O11: no pause and no news – noticing that the forecast changed is part of the task.
+        if (scenario.forecastMiss?.revisedAt == current.tick && !isCapstone) {
             forecastNews = true
             speed = Speed.PAUSED
-            if (isCapstone) panelTab = 1
         }
     }
 

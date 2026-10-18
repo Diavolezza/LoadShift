@@ -650,8 +650,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Rechtzeitig: %@",
     "In Warsaw a new server saves many times its embodied emissions; in Paris it saves little, because the electricity is almost free of CO₂ – there it only has to carry the growth and replace the failed servers, and later generations do that better. The question is not “new or old?” but “where does new hardware replace dirty electricity?”. The earlier the budget goes to the dirty grid, the more it saves – as long as the clean site keeps enough capacity." to
         "In Warschau spart ein neuer Server ein Vielfaches seiner Herstellungsemissionen; in Paris spart er wenig, weil der Strom fast frei von CO₂ ist – dort muss er nur das Wachstum tragen und die ausgefallenen Server ersetzen, und das können spätere Generationen besser. Die Frage ist nicht „neu oder alt?“, sondern „wo ersetzt neue Hardware schmutzigen Strom?“. Je früher das Budget in den schmutzigen Strommix geht, desto mehr spart es – solange der saubere Standort genug Kapazität behält.",
-    "Input: the orders of the last year with the customers' names and addresses – personal data that the contract allows to process only in Germany." to
-        "Eingabe: die Bestellungen des letzten Jahres mit Namen und Adressen der Kunden – personenbezogene Daten, die laut Vertrag nur in Deutschland verarbeitet werden dürfen.",
+    "Input: the orders of the last year with the customers' names and addresses." to
+        "Eingabe: die Bestellungen des letzten Jahres mit Namen und Adressen der Kunden.",
     "Invalidate the catalog pages when the prices change" to
         "Katalogseiten bei Preisänderung invalidieren",
     "invalidation" to
@@ -892,8 +892,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Bewertung jetzt",
     "Read from the core banking system." to
         "Aus dem Kernbankensystem gelesen.",
-    "Reads prices and stock from the live database in Frankfurt while it runs – many thousands of small queries. In Oslo every query crosses the network: about %lld h instead of %lld h." to
-        "Liest während des Laufs Preise und Bestände aus der Live-Datenbank in Frankfurt – viele tausend kleine Abfragen. In Oslo geht jede Abfrage übers Netz: rund %1\$lld h statt %2\$lld h.",
+    "Reads prices and stock from the live database in Frankfurt while it runs – many thousands of small queries." to
+        "Liest während des Laufs Preise und Bestände aus der Live-Datenbank in Frankfurt – viele tausend kleine Abfragen.",
     "Really start over?" to
         "Wirklich von vorn?",
     "Recommendation model training" to

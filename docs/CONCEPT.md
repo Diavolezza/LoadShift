@@ -857,7 +857,8 @@ not energy.
   the ticks the GPUs train (the training lane no longer infers it from the IT power).
 - App: the control panel has three tabs (shop, batch, training) over one draft; the timeline's lower lane follows
   the tab (load, jobs, training). The CO₂ goal compares the expected end with the rules now – CO₂ so far would
-  flatter a training that waits. At the forecast update the game pauses and opens the batch tab.
+  flatter a training that waits. The forecast update comes without a pause or news (unlike scenario 3): noticing that the
+  dashed line has moved, and planning again, is part of the task.
 - Goals ★★ −40 %, ★★★ −50.5 %.
 
 | Shop, batch, training | CO₂ vs. reference | Stars |

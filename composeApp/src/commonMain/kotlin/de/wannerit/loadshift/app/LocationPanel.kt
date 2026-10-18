@@ -58,9 +58,9 @@ fun LocationPanel(game: GameController) {
                 val transferKWh = model.transferEnergy(job) / 1e6
                 Txt(t("Data: %@ TB – to Oslo %@ h of transfer, %@ kWh in the German grid (about %@ kg CO₂)", Format.number(job.dataTenthsTb / 10.0, 1),
                     Format.number(hours, 1), Format.number(transferKWh, 0), kgText(kg(transferKWh, 0))), Type.caption)
-                if (job.stay == StayReason.RESIDENCY) Txt(t("Input: the orders of the last year with the customers' names and addresses – personal data that the contract allows to process only in Germany."), Type.style(12, FontWeight.SemiBold, Palette.old))
-                if (job.remoteDuration > 1_000) Txt(t("Reads prices and stock from the live database in Frankfurt while it runs – many thousands of small queries. In Oslo every query crosses the network: about %lld h instead of %lld h.",
-                    job.spec.duration * job.remoteDuration / 1_000 / GameTime.TICKS_PER_HOUR, job.spec.duration / GameTime.TICKS_PER_HOUR), Type.style(12, FontWeight.SemiBold, Palette.old))
+                // Facts, not verdicts: what follows from them is the player's to work out (the debrief says it).
+                if (job.stay == StayReason.RESIDENCY) Txt(t("Input: the orders of the last year with the customers' names and addresses."), Type.caption)
+                if (job.remoteDuration > 1_000) Txt(t("Reads prices and stock from the live database in Frankfurt while it runs – many thousands of small queries."), Type.caption)
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                     for ((s, site) in model.sites.withIndex()) {
                         Chip(t(site.title), (s == 1) == moved, enabled = game.canMove) { if ((s == 1) != moved) game.toggleMove(i) }
