@@ -70,7 +70,8 @@ fun RackIcon(size: Dp) {
 /** What Load Shift is, who made it, which data and font it uses (About window on the desktop, overlay on the web). */
 @Composable
 fun AboutContent(modifier: Modifier = Modifier) {
-    Column(modifier.padding(28.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    // Scrolls when the window is low (a phone in landscape), so that the part for teachers stays reachable.
+    Column(modifier.verticalScroll(rememberScrollState()).padding(28.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
             RackIcon(48.dp)
             Column {
@@ -213,7 +214,7 @@ fun ScenarioListScreen(onLexicon: () -> Unit = {}, onSelect: (Scenario) -> Unit)
                 contentAlignment = Alignment.Center,
             ) {
                 // A click into the dialog keeps it open; only a click beside it closes it.
-                AboutContent(Modifier.widthIn(max = 520.dp).background(Palette.panel, RoundedCornerShape(20.dp))
+                AboutContent(Modifier.padding(16.dp).widthIn(max = 520.dp).clip(RoundedCornerShape(20.dp)).background(Palette.panel, RoundedCornerShape(20.dp))
                     .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {})
             }
         }
