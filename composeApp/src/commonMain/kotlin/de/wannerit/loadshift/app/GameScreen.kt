@@ -207,7 +207,7 @@ private fun SpeedControl(game: GameController) {
 
 /** "−70 %" for whole percents, "−50,5 %" otherwise – the goal bar is short of room. */
 private fun shortChange(permille: Long): String =
-    Format.changePermille(permille).let { if (permille % 10 == 0L) it.replace(",0 %", " %").replace(".0 %", " %") else it }
+    Format.changePermille(permille).let { if (permille % 10 == 0L) it.replace(Regex("[,.]0(?=[^0-9]*%)"), "") else it }
 
 private fun specialShort(goal: SpecialGoal): String = when (goal) {
     is SpecialGoal.MeanUtilization -> t("utilization ≥ %@", Format.wholePercent(goal.permille))
