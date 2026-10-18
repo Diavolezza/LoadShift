@@ -115,7 +115,7 @@ class ScenarioTexts(
             )
             105 -> ScenarioTexts(
                 situation = "The shop's product pages have grown heavy: photos of 2,000 pixels for every screen, a product video that starts by itself, 100 products per list and six tracking tags from marketing. A visit transfers about 12 MB – more than four times the median web page [S29]. And the page is slow: its largest image appears only after 3.2 s.",
-                idea = "Every byte costs energy three times: in the data center, in the network and on the visitor's device. This scenario counts all three, and the data center is the smallest part. Make the pages lighter – and faster, because the page must show its largest image within 2.5 s.",
+                idea = "Every byte costs energy three times: in the data center, in the network and on the visitor's device. This scenario counts all three, and the data center is the smallest part. Make the pages lighter – and keep them fast. Speed is measured as LCP (Largest Contentful Paint): the time until the largest image or text block of the page is visible. Up to 2.5 s counts as good, measured at the 75th percentile – three of four visits must be at least that fast.",
                 screen = listOf(
                     "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals: LCP at most 2.5 s and less CO₂.",
                     "The hall: the shop's servers; the blue bar shows how busy a server is.",
