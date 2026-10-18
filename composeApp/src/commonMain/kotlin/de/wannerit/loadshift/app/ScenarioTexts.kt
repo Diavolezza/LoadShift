@@ -23,6 +23,21 @@ class ScenarioTexts(
 ) {
     companion object {
         fun of(scenario: Scenario): ScenarioTexts = when (scenario.number) {
+            204 -> ScenarioTexts(
+                situation = "Six applications run with a cloud provider in Frankfurt. The CFO wants the IT costs at least a fifth lower over the next three years and asks whether some of them should leave the cloud – for a colocation in Stuttgart or the company's own server room, which still has six free servers, three years old. The board asks: and the CO₂? In the sustainability report the cloud stands at zero: it is counted market-based, with the provider's green-power certificates. Counted for the stars is location-based, with the making of the servers.",
+                idea = "Four places, each with its own facts: the cloud in Frankfurt and in Stockholm with a PUE of 1.15, the colocation with 1.35, the server room with 1.7. The grid in Germany has about 380 g CO₂ per kWh, in Sweden about 30. In the cloud the company pays for the server equivalents an application is given; on own hardware an application needs enough servers for its peak, and they run whether busy or not. Making a new server emits about 1.5 t CO₂.",
+                screen = listOf(
+                    "At the top: CO₂ in the report, CO₂ location-based with the making of the servers, and the costs over three years; below it your goals.",
+                    "The six applications with their load over a week and where each runs. Click a place to move it there, or a row to see its facts.",
+                    "Today and your plan side by side: in the report, location-based, in euros.",
+                    "The selected application: its facts, the four places with theirs, and the button that carries out the plan.",
+                ),
+                comparedWith = "compared with three years in which everything stays in the cloud in Frankfurt, location-based with the making of the servers.",
+                rules = "Costs at least 20 % lower, customer data in Germany and a booking in the plant under one second",
+                remark = "In the report every move out of the cloud looked worse: there the cloud stood at zero, because the provider's certificates count market-based. Location-based it depends on the physics. Steady load such as the ERP database could leave: own servers sized for it are well used, the CO₂ stays about the same and the costs fall to less than half. The web shop could not: for its campaigns it would need 22 servers that idle most of the year – in the cloud it uses only what it needs. The largest saving came neither from leaving nor from staying, but from Stockholm: the same servers on a grid with less than a tenth of the CO₂. For the plant's ERP that is too far: 200 queries one after the other make a booking take almost three seconds. And switching off pays everywhere: test environments that are off at night cost less and emit less, in the cloud as on own servers.",
+                term = "Cloud Repatriation",
+                termText = "Moving applications from a public cloud back onto own hardware or into a colocation – mostly for costs, sometimes for control over data and hardware. The opposite way, into the cloud, is called cloud migration.",
+            )
             203 -> ScenarioTexts(
                 situation = "Thirteen applications, sorted the way enterprise architects sort them: by business value and by technical condition. The IT management wants less CO₂ over the next three years. The team can run three projects at a time; tuning an application, migrating it to a new platform or switching it off takes one to seven quarters. Today everything simply keeps running.",
                 idea = "Gartner's TIME model gives each quadrant a decision: tolerate what is in good condition but of little value, invest in what is good and valuable, migrate what is valuable but in poor condition, eliminate what is neither. Counted over three years, two things matter as much as the decision: when a project starts – the team can only run three – and when the old system is really off.",

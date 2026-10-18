@@ -14,6 +14,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "%@ eliminiert, muss aber bleiben",
     "%@ has no start time and must start by %@, or it misses its deadline." to
         "%1\$@ hat keine Startzeit und muss bis %2\$@ starten, sonst verpasst er seine Frist.",
+    "%@ m€" to
+        "%@ Mio. €",
     "%@ needs %lld GB – host %lld has only %lld GB free." to
         "%1\$@ braucht %2\$lld GB – Host %3\$lld hat nur %4\$lld GB frei.",
     "%@ of the answers within %lld s" to
@@ -22,6 +24,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "%@ der Fragen",
     "%@ of the viewers" to
         "%@ des Publikums",
+    "%@ outside Germany" to
+        "%@ außerhalb Deutschlands",
     "%@ t CO₂" to
         "%@ t CO₂",
     "%@ Wh · %@ s" to
@@ -70,6 +74,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "%lld Anwendungen als SaaS",
     "%lld applications in the cloud" to
         "%lld Anwendungen in der Cloud",
+    "%lld applications in the cloud in Frankfurt" to
+        "%lld Anwendungen in der Cloud in Frankfurt",
     "%lld applications in the own data center" to
         "%lld Anwendungen im eigenen Rechenzentrum",
     "%lld applications · a year" to
@@ -94,6 +100,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "%1\$lld Personen im Team committen etwa %2\$lld-mal pro Arbeitstag. Jeder Commit startet die Pipeline auf den Build-Agents; %3\$lld Testumgebungen dienen Test und Abnahme. Das Team braucht das Ergebnis von Build und Unit-Tests innerhalb von %4\$lld Minuten, und die UI-Tests müssen in den 24 Stunden vor dem Release am Freitag um 14:00 gelaufen sein.",
     "%lld developers, %lld build agents" to
         "Ein Team aus %1\$lld Personen, %2\$lld Build-Agents",
+    "%lld free servers, already made" to
+        "%lld freie Server, schon hergestellt",
     "%lld GB free" to
         "%lld GB frei",
     "%lld GB memory, %lld W all day" to
@@ -232,6 +240,12 @@ internal val GERMAN: Map<String, String> = mapOf(
         "8 Server, genutzt werktags 8–18 Uhr",
     "\"Hello\", \"Thank you\", \"Bye\"." to
         "„Hallo“, „Danke“, „Tschüss“.",
+    "A booking in the plant sends %lld queries to it, one after the other." to
+        "Eine Buchung im Werk schickt %lld Abfragen nacheinander dorthin.",
+    "a booking in the plant takes %@ s" to
+        "eine Buchung im Werk dauert %@ s",
+    "A booking in the plant under %@ s" to
+        "Buchung im Werk unter %@ s",
     "A cache instance (Redis) keeps the answers; without it every request asks both providers." to
         "Eine Cache-Instanz (Redis) hält die Antworten; ohne sie fragt jede Anfrage beide Anbieter.",
     "A cache is a bet on repetition. It wins where many requests ask for the same thing – images, rates, popular pages – and loses where the answer must be current or is asked only once: a cached account balance is an error, a cached search that nobody repeats only fills memory. Size the memory by what it holds, not by what might come: the hot set fits into one server, more servers only draw power. And a cache needs a message when its data change: the TTL bounds the age in normal times, but after a price change only invalidation keeps the answers right – the hard part of caching is not keeping, but forgetting at the right moment. Warming the cache every night sounds diligent, but the pages expire after 15 minutes – long before anyone shops: work for nothing." to
@@ -242,8 +256,12 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Ein Cache hält Antworten vor, damit sie nicht neu berechnet oder geholt werden müssen. Alle Arten, die du ankreuzt, teilen sich den Speicher der Cache-Server; ist er voll, fliegt der am längsten nicht genutzte Eintrag zuerst (LRU). Ein Cache-Server zieht den ganzen Tag Strom. Wie alt eine Antwort sein darf, entscheidet die Fachlichkeit.",
     "A cap does not make the GPUs work less: they stay fully busy, only at a lower clock – and the last watts bring little speed. Below a certain cap, though, the rest of the server runs so much longer that it costs more than it saves." to
         "Ein Cap lässt die GPUs nicht weniger arbeiten: Sie bleiben voll ausgelastet, nur mit niedrigerem Takt – und die letzten Watt bringen wenig Tempo. Unterhalb eines bestimmten Caps läuft aber der Rest des Servers so viel länger, dass es mehr kostet, als es spart.",
+    "A contract keeps its data in Germany." to
+        "Laut Vertrag bleiben die Daten in Deutschland.",
     "A dark doldrums is the hard case of Carbon Awareness: when every hour is dirty, shifting within the day gains nothing. Two things remained. Using less – the autoscaler saves in every hour, wind or not; it is the lever that never depends on the weather. And waiting for days – only work whose deadline is far enough away can do that: the training and three of the batch jobs, about a quarter of the energy. In the forecast the wind came back a day early; a plan made with it put the waiting jobs into a day that was still dirty – plans that look days ahead must be made again when the forecast changes. Germany has a few such weeks every winter; grids with storage, hydropower and links to their neighbours bridge them, and data centers that can wait help them." to
         "Eine Dunkelflaute ist der schwere Fall von Carbon Awareness: Wenn jede Stunde schmutzig ist, bringt Verschieben innerhalb des Tages nichts. Zwei Dinge blieben. Weniger verbrauchen – der Autoscaler spart in jeder Stunde, mit Wind oder ohne; er ist der Hebel, der nie vom Wetter abhängt. Und Tage warten – das kann nur Arbeit, deren Frist weit genug weg ist: das Training und drei der Batch-Jobs, rund ein Viertel der Energie. In der Prognose kam der Wind einen Tag zu früh zurück; ein Plan mit ihr legte die wartenden Jobs in einen Tag, der noch schmutzig war – Pläne, die Tage vorausschauen, müssen neu gemacht werden, wenn sich die Prognose ändert. Deutschland hat jeden Winter einige solche Wochen; Netze mit Speichern, Wasserkraft und Leitungen zu den Nachbarn überbrücken sie, und Rechenzentren, die warten können, helfen ihnen dabei.",
+    "A data center in which many companies rent space, power and cooling; each brings its own servers and runs them itself." to
+        "Ein Rechenzentrum, in dem viele Unternehmen Platz, Strom und Kühlung mieten; jedes bringt eigene Server mit und betreibt sie selbst.",
     "A fixed threshold works while the wind blows. When it drops, the jobs wait in vain: without the deadline safety they miss their deadlines, with it they start at the last moment – often in the dirtiest hours. A rule that compares the hours of the forecast adapts to the weather – as long as the plan is made again when the forecast changes. Real schedulers plan again regularly for this reason." to
         "Ein fester Schwellwert funktioniert, solange der Wind weht. Lässt er nach, warten die Jobs vergeblich: Ohne Fristsicherung verpassen sie ihre Fristen, mit ihr starten sie im letzten Moment – oft in den schmutzigsten Stunden. Eine Regel, die die Stunden der Prognose vergleicht, passt sich dem Wetter an – solange neu geplant wird, wenn sich die Prognose ändert. Echte Scheduler planen deshalb regelmäßig neu.",
     "A job starts as soon as the grid is at or below %lld g/kWh – the value now, not the forecast." to
@@ -390,6 +408,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Antworten rechtzeitig %@ (mindestens %@)",
     "Answers within %lld s" to
         "Antworten innerhalb von %lld s",
+    "Application" to
+        "Anwendung",
     "Apply" to
         "Übernehmen",
     "Architecture" to
@@ -432,6 +452,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Höchstens %lld Projekte gleichzeitig",
     "At most three projects at a time, nothing eliminated that must stay, and less CO₂ over three years" to
         "Höchstens drei Projekte gleichzeitig, nichts eliminiert, was bleiben muss, und weniger CO₂ in drei Jahren",
+    "At the top: CO₂ in the report, CO₂ location-based with the making of the servers, and the costs over three years; below it your goals." to
+        "Oben: CO₂ im Bericht, CO₂ standortbasiert mit der Herstellung der Server und die Kosten über drei Jahre; darunter deine Ziele.",
     "At the top: how many projects you plan and the most at a time; below it your goals." to
         "Oben: wie viele Projekte du planst und die meisten gleichzeitig; darunter deine Ziele.",
     "At the top: what the consultant's list gives for your plan and the budget left; below it your goals." to
@@ -628,6 +650,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Kamera in großen Runden standardmäßig aus, 720p",
     "Campaign" to
         "Kampagne",
+    "Campaigns bring up to five times the load" to
+        "Kampagnen bringen bis zur fünffachen Last",
     "Cancel unused licences" to
         "Ungenutzte Lizenzen kündigen",
     "cap %@" to
@@ -704,14 +728,24 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Klick auf einen Balken der Kurve oder eine Karte, und die Maßnahme ist im Plan. Alle Maßnahmen beginnen jetzt; jede wirkt, sobald ihr Projekt fertig ist.",
     "Cloud file sharing" to
         "Cloud-Dateiablage",
+    "Cloud Frankfurt" to
+        "Cloud Frankfurt",
     "Cloud recalculated, the rest free" to
         "Cloud nachgerechnet, der Rest kostenlos",
+    "Cloud Repatriation" to
+        "Cloud Repatriation",
+    "Cloud Stockholm" to
+        "Cloud Stockholm",
     "Cluster of 120 VMs around the clock, region Frankfurt" to
         "Cluster mit 120 VMs rund um die Uhr, Region Frankfurt",
     "Cold storage for old years" to
         "Kalter Speicher für alte Jahrgänge",
     "Collected commits share one run – and wait for it." to
         "Gesammelte Commits teilen sich einen Lauf – und warten auf ihn.",
+    "Colocation" to
+        "Colocation",
+    "Colocation Stuttgart" to
+        "Colocation Stuttgart",
     "compared with the reference operator, who buys new servers wherever capacity runs short." to
         "verglichen mit dem Referenzbetreiber, der neue Server kauft, wo die Kapazität knapp wird.",
     "compared with the reference operator, who buys the grid mix, runs the shop with autoscaling at 50 % and starts every job at once." to
@@ -748,6 +782,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "verglichen mit dem wahren Fußabdruck dieses Jahres, standortbasiert.",
     "compared with three years in which everything keeps running as it is, location-based." to
         "verglichen mit drei Jahren, in denen alles weiterläuft wie bisher, standortbasiert.",
+    "compared with three years in which everything stays in the cloud in Frankfurt, location-based with the making of the servers." to
+        "verglichen mit drei Jahren, in denen alles in der Cloud in Frankfurt bleibt, standortbasiert mit der Herstellung der Server.",
     "compared with three years without any measure, location-based." to
         "verglichen mit drei Jahren ohne jede Maßnahme, standortbasiert.",
     "Computing: about %@ kWh – in Frankfurt about %@ kg CO₂, in Oslo about %@ kg" to
@@ -764,22 +800,38 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Gekühlt mit",
     "Cooling" to
         "Kühlung",
+    "Cooling (PUE)" to
+        "Kühlung (PUE)",
     "Cooling is the biggest part of the facility's own power. Outside air cools for free when it is at least 6 °C cooler than the setpoint; in a heat wave the chiller does the work, and the hotter it is outside, the more power it needs. Servers tolerate warmer air than most data centers give them – up to 27 °C – but above 25 °C their fans speed up. And the PUE, facility power divided by IT power, does not always point the right way." to
         "Die Kühlung ist der größte Teil des Eigenverbrauchs eines Rechenzentrums. Außenluft kühlt kostenlos, wenn sie mindestens 6 °C kühler ist als der Sollwert; in einer Hitzewelle arbeitet die Kältemaschine, und je heißer es draußen ist, desto mehr Strom braucht sie. Server vertragen wärmere Luft, als die meisten Rechenzentren ihnen geben – bis 27 °C –, aber über 25 °C drehen ihre Lüfter hoch. Und die PUE, die Leistung des Rechenzentrums geteilt durch die IT-Leistung, zeigt nicht immer in die richtige Richtung.",
     "Cooling: the setpoint and what cools right now. Below it the capacity rule and the situation right now." to
         "Kühlung: der Sollwert und womit gerade gekühlt wird. Darunter die Kapazitätsregel und die Lage gerade jetzt.",
+    "Costs" to
+        "Kosten",
+    "Costs at least %@ lower" to
+        "Kosten mindestens %@ niedriger",
+    "Costs at least 20 % lower, customer data in Germany and a booking in the plant under one second" to
+        "Kosten mindestens 20 % niedriger, Kundendaten in Deutschland und eine Buchung im Werk unter einer Sekunde",
+    "Costs in three years" to
+        "Kosten in drei Jahren",
+    "costs only %@ lower" to
+        "Kosten nur %@ niedriger",
     "Count unique visitors with HyperLogLog" to
         "Eindeutige Besuchende mit HyperLogLog zählen",
     "Counted are three years, quarter by quarter, location-based. The stars go by what really changes." to
         "Gezählt werden drei Jahre, Quartal für Quartal, standortbasiert. Für die Sterne zählt, was sich wirklich ändert.",
     "Counted are three years, quarter by quarter, location-based. While a project runs, the application stays as it is." to
         "Gezählt werden drei Jahre, Quartal für Quartal, standortbasiert. Solange ein Projekt läuft, bleibt die Anwendung, wie sie ist.",
+    "Counted are three years. In the cloud the making of the servers is part of each server equivalent; in the colocation new servers are bought; the server room's are already made. A team for own hardware costs %@ € a year." to
+        "Gezählt werden drei Jahre. In der Cloud ist die Herstellung der Server in jedem Server-Äquivalent enthalten; für die Colocation werden neue Server gekauft; die im Serverraum sind schon hergestellt. Ein Team für eigene Hardware kostet %@ € im Jahr.",
     "Counted: a year, location-based" to
         "Gezählt: ein Jahr, standortbasiert",
     "Counted: data center, network and the visitors' devices" to
         "Gezählt: Rechenzentrum, Netz und die Geräte der Besuchenden",
     "Counted: three years, location-based" to
         "Gezählt: drei Jahre, standortbasiert",
+    "Counted: three years, location-based with the making of servers" to
+        "Gezählt: drei Jahre, standortbasiert mit der Herstellung der Server",
     "Counting an organisation's greenhouse gas emissions and allocating them to their causes – here, to the applications. Every number has a source and a method: metered or allocated, location-based or market-based, from activity data or from spend. The quality of the data decides which decisions the numbers can carry." to
         "Die Treibhausgasemissionen einer Organisation erfassen und ihren Verursachern zuordnen – hier den Anwendungen. Jede Zahl hat eine Quelle und eine Methode: gemessen oder verteilt, standortbasiert oder marktbasiert, aus Aktivitätsdaten oder aus Ausgaben. Die Qualität der Daten entscheidet, welche Entscheidungen die Zahlen tragen.",
     "counting on the server" to
@@ -838,10 +890,14 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Kundenanalyse",
     "Customer and truck services as serverless functions" to
         "Kunden- und LKW-Service als Serverless-Funktionen",
+    "Customer data archive" to
+        "Kundendaten-Archiv",
     "Customer data moved abroad" to
         "Kundendaten ins Ausland verschoben",
     "customer data moved abroad" to
         "Kundendaten ins Ausland verschoben",
+    "Customer data stay in Germany" to
+        "Kundendaten bleiben in Deutschland",
     "Customer data stays in Germany" to
         "Kundendaten bleiben in Deutschland",
     "Customer portal" to
@@ -958,6 +1014,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Umgebungen %@",
     "Environments only on weekdays 7–19" to
         "Umgebungen nur werktags 7–19",
+    "ERP database" to
+        "ERP-Datenbank",
     "ERP on new, more efficient servers" to
         "ERP auf neue, effizientere Server",
     "Evening peak about %lld load units" to
@@ -1008,6 +1066,10 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Alle Fachbegriffe des Spiels: was sie bedeuten und wo sie vorkommen. Die Begriffe bleiben englisch, wie sie im Fach verwendet werden.",
     "Everything allowed, search too, 4 cache servers (the team's plan)" to
         "Alles wie erlaubt, auch die Suche, 4 Cache-Server (Plan des Teams)",
+    "Everything stays in the cloud in Frankfurt" to
+        "Alles bleibt in der Cloud in Frankfurt",
+    "Everything to the colocation" to
+        "Alles in die Colocation",
     "Everything you have learned, together. Waiting for clean hours within a day does not help now – every hour is dirty. What helps: use less (size the shop with autoscaling) and move what can wait for days into the wind; the deadlines show which work can wait for days." to
         "Alles, was du gelernt hast, zusammen. Auf saubere Stunden innerhalb eines Tages zu warten hilft jetzt nicht – jede Stunde ist schmutzig. Was hilft: weniger verbrauchen (den Shop mit Autoscaling passend dimensionieren) und das, was Tage warten kann, in den Wind verschieben; welche Arbeit Tage warten kann, zeigen die Fristen.",
     "Exchange rates" to
@@ -1084,10 +1146,16 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Prognose während der Laufzeit: %1\$lld g/kWh · spätestens %2\$@",
     "Forecast: %lld g/kWh, ±%lld %%" to
         "Prognose: %1\$lld g/kWh, ±%2\$lld %%",
+    "Four places, each with its own facts: the cloud in Frankfurt and in Stockholm with a PUE of 1.15, the colocation with 1.35, the server room with 1.7. The grid in Germany has about 380 g CO₂ per kWh, in Sweden about 30. In the cloud the company pays for the server equivalents an application is given; on own hardware an application needs enough servers for its peak, and they run whether busy or not. Making a new server emits about 1.5 t CO₂." to
+        "Vier Orte, jeder mit eigenen Zahlen: die Cloud in Frankfurt und in Stockholm mit einer PUE von 1,15, die Colocation mit 1,35, der Serverraum mit 1,7. Das Netz in Deutschland hat etwa 380 g CO₂ pro kWh, in Schweden etwa 30. In der Cloud zahlt das Unternehmen für die Server-Äquivalente, die einer Anwendung zugeteilt sind; auf eigener Hardware braucht eine Anwendung genug Server für ihre Spitze, und die laufen, ob ausgelastet oder nicht. Die Herstellung eines neuen Servers verursacht etwa 1,5 t CO₂.",
+    "Four places: two cloud regions, a colocation, the own server room" to
+        "Vier Orte: zwei Cloud-Regionen, eine Colocation, der eigene Serverraum",
     "Framework and the rest" to
         "Framework und der Rest",
     "France" to
         "Frankreich",
+    "Frankfurt" to
+        "Frankfurt",
     "Friday" to
         "Fr",
     "from %@" to
@@ -1150,6 +1218,10 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Treibhausgase zusammengezählt: jedes Gas danach gewichtet, wie stark es das Klima im Vergleich zu CO₂ erwärmt.",
     "Greetings and thanks" to
         "Grüße und Dank",
+    "Grid" to
+        "Netz",
+    "grid %lld g/kWh" to
+        "Netz %lld g/kWh",
     "Grid data: Electricity Maps, Grid Review 2025 (life-cycle, imports included)" to
         "Netzdaten: Electricity Maps, Grid Review 2025 (Lebenszyklus, Importe eingerechnet)",
     "Grid mix, autoscaling at 50 %, jobs at once (reference)" to
@@ -1224,10 +1296,18 @@ internal val GERMAN: Map<String, String> = mapOf(
         "In einem verteilten System ist Kommunikation Arbeit: Jeder Aufruf wird serialisiert, gesendet, empfangen und deserialisiert, und jede Instanz betreibt ihre Laufzeitumgebung auch ohne Anfrage. Weniger und schlankere Aufrufe, Daten, die schon da sind, und ein passender Schnitt sparen Energie – solange die Kundschaft noch sieht, wo ihr LKW wirklich ist.",
     "in progress: %lld of %lld story points left" to
         "in Arbeit: noch %1\$lld von %2\$lld Story Points",
+    "In the cloud it already runs only when needed." to
+        "In der Cloud läuft sie ohnehin nur, wenn sie gebraucht wird.",
+    "In the cloud today: %lld server equivalents, on average %@ busy, %@ € a year." to
+        "Heute in der Cloud: %lld Server-Äquivalente, im Mittel zu %@ ausgelastet, %@ € im Jahr.",
     "In the report" to
         "Im Bericht",
     "In the report (market-based)" to
         "Im Bericht (marktbasiert)",
+    "In the report (market-based), t CO₂" to
+        "Im Bericht (marktbasiert), t CO₂",
+    "In the report every move out of the cloud looked worse: there the cloud stood at zero, because the provider's certificates count market-based. Location-based it depends on the physics. Steady load such as the ERP database could leave: own servers sized for it are well used, the CO₂ stays about the same and the costs fall to less than half. The web shop could not: for its campaigns it would need 22 servers that idle most of the year – in the cloud it uses only what it needs. The largest saving came neither from leaving nor from staying, but from Stockholm: the same servers on a grid with less than a tenth of the CO₂. For the plant's ERP that is too far: 200 queries one after the other make a booking take almost three seconds. And switching off pays everywhere: test environments that are off at night cost less and emit less, in the cloud as on own servers." to
+        "Im Bericht sah jeder Umzug aus der Cloud schlechter aus: Dort stand die Cloud bei null, weil marktbasiert die Zertifikate des Anbieters zählen. Standortbasiert entscheidet die Physik. Gleichmäßige Last wie die ERP-Datenbank konnte umziehen: Passend bemessene eigene Server sind gut ausgelastet, das CO₂ bleibt etwa gleich, und die Kosten sinken auf weniger als die Hälfte. Der Webshop nicht: Für seine Kampagnen bräuchte er 22 Server, die fast das ganze Jahr leer laufen – in der Cloud belegt er nur, was er braucht. Am meisten sparte weder Gehen noch Bleiben, sondern Stockholm: dieselben Server an einem Netz mit weniger als einem Zehntel des CO₂. Für das ERP des Werks ist das zu weit: 200 Abfragen nacheinander machen aus einer Buchung fast drei Sekunden. Und Abschalten lohnt sich überall: Testumgebungen, die nachts aus sind, kosten weniger und verursachen weniger CO₂ – in der Cloud wie auf eigenen Servern.",
     "In time" to
         "In der Zeit",
     "In time: %@" to
@@ -1304,6 +1384,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "LCP höchstens 2,5 s und weniger CO₂ als die Referenz",
     "Leave it as it is." to
         "Lassen, wie es ist.",
+    "Leave the cloud?" to
+        "Raus aus der Cloud?",
     "Left" to
         "Übrig",
     "Limit storage quotas" to
@@ -1314,6 +1396,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Last (Linie) und Kapazität der laufenden Server (Fläche) – rot: langsame Requests",
     "Load / capacity" to
         "Last / Kapazität",
+    "Load over a week" to
+        "Last über eine Woche",
     "Location" to
         "Standort",
     "Location saves more than time here: no hour in the German grid comes close to Norway's hydropower. Look at the energy: it rose – the transfers need energy too – and still the CO₂ fell. Location Shifting saves carbon, not energy. The trainings were the best candidates – hours of computing for little data. The videos were the worst: 30 terabytes through the network cost more CO₂ than Oslo saved, and the transfer took most of a working day. The price calculation needs its database in Frankfurt and misses its deadline far from it; customer data may not leave the country by contract. Data have weight. And clean electricity is not unlimited: if everyone moves to Norway, it runs short there. Location Shifting works best with capacity that is there anyway." to
@@ -1322,6 +1406,12 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Location Shifting: Lass die Arbeit dort laufen, wo der Strom sauber ist. Aber Arbeit reist nicht allein – ihre Daten müssen mit. Terabytes zu verschieben dauert Stunden und kostet Energie im Netz; ein Job, der ständig mit einer Datenbank spricht, wird fern von ihr langsam; und manche Daten dürfen das Land gar nicht verlassen. Verschiebe, was viel rechnet und wenig Daten hat.",
     "Location-based (the grid's average)" to
         "Standortbasiert (Durchschnitt des Netzes)",
+    "Location-based with making" to
+        "Standortbasiert mit Herstellung",
+    "Location-based with making – counts for the stars" to
+        "Standortbasiert mit Herstellung – zählt für die Sterne",
+    "Location-based with making, t CO₂" to
+        "Standortbasiert mit Herstellung, t CO₂",
     "Location: for every job its servers, duration, time window and data – and where it runs. Decide before the start; above it the batch rule for both sites." to
         "Standort: für jeden Job seine Server, Dauer, Zeitfenster und Daten – und wo er läuft. Entscheide vor dem Start; darüber die Batch-Regel für beide Standorte.",
     "Log at INFO instead of DEBUG in production" to
@@ -1340,6 +1430,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Mail-Archiv",
     "Mails must be kept for ten years by law" to
         "Mails müssen laut Gesetz zehn Jahre aufbewahrt werden",
+    "Making servers" to
+        "Herstellung der Server",
     "Making the 8 new servers emits about 10 t CO₂e; three quarters" to
         "Die Herstellung der 8 neuen Server verursacht rund 10 t CO₂e; drei Quartale",
     "Marketing has stored its videos there for years" to
@@ -1444,6 +1536,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "In die Cloud, auf Abruf",
     "Move to the office suite" to
         "In die Office-Suite umziehen",
+    "Moving applications from a public cloud back onto own hardware or into a colocation – mostly for costs, sometimes for control over data and hardware. The opposite way, into the cloud, is called cloud migration." to
+        "Anwendungen aus einer Public Cloud zurück auf eigene Hardware oder in eine Colocation holen – meist wegen der Kosten, manchmal für die Kontrolle über Daten und Hardware. Der umgekehrte Weg, in die Cloud, heißt Cloud-Migration.",
     "Moving flexible work into the hours when the grid is cleanest. Together with Location Shifting it is called Demand Shifting – part of the Green Software Foundation principle Carbon Awareness." to
         "Flexible Arbeit in die Stunden verschieben, in denen der Strom am saubersten ist. Zusammen mit Location Shifting heißt das Demand Shifting – ein Teil des Prinzips Carbon Awareness der Green Software Foundation.",
     "Moving flexible work to the place where the electricity is cleanest. Together with Time Shifting it is called Demand Shifting – part of the Green Software Foundation principle Carbon Awareness. Its limits: moving the data, the latency to users and other systems, and where data may be stored." to
@@ -1462,10 +1556,14 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Neue Server",
     "New servers arrive at the start of the next quarter. A new server does the work of two old ones; making it emits about 550 kg CO₂, booked over its six years. Old servers past six years begin to fail. The shop grows by 15 % a year." to
         "Neue Server kommen zu Beginn des nächsten Quartals. Ein neuer Server leistet so viel wie zwei alte; seine Herstellung verursacht etwa 550 kg CO₂, verteilt über seine sechs Jahre. Alte Server über sechs Jahre fallen nach und nach aus. Der Shop wächst um 15 % pro Jahr.",
+    "new servers at %@ € each, %@ t CO₂ each to make" to
+        "neue Server zu je %@ €, Herstellung je %@ t CO₂",
     "Next year, with your measures" to
         "Nächstes Jahr, mit deinen Maßnahmen",
     "Night shift" to
         "Nachtschicht",
+    "Nightly runs" to
+        "Nachtläufe",
     "no" to
         "nein",
     "no AI" to
@@ -1496,6 +1594,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Noch nicht übernommen – aktiv: %@",
     "not done" to
         "nicht fertig",
+    "not enough free servers" to
+        "nicht genug freie Server",
     "Not every green is equally green. Certificates change the report, not the electricity. A wind farm delivers clean energy only while the wind blows – the work done in those hours is clean. 24/7 carbon-free energy covers every hour, but it costs. Count in the hour, not on paper." to
         "Nicht jedes Grün ist gleich grün. Zertifikate ändern den Bericht, nicht den Strom. Ein Windpark liefert sauberen Strom nur, solange der Wind weht – die Arbeit in diesen Stunden ist sauber. 24/7 CO₂-freier Strom deckt jede Stunde, aber er kostet. Zähle in der Stunde, nicht auf dem Papier.",
     "Not every question needs the largest model – some need no model at all. Choose for each kind of question who answers it, and keep the quality of the answers up. A GPU answers several questions almost as fast as one: batching shares the work, but every answer waits a little." to
@@ -1526,6 +1626,10 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Aus",
     "off" to
         "aus",
+    "Off outside its hours of use" to
+        "Außerhalb der Nutzungszeit aus",
+    "Off outside its hours of use (on %@ of the time)" to
+        "Außerhalb der Nutzungszeit aus (dann %@ der Zeit an)",
     "Office and collaboration" to
         "Office und Zusammenarbeit",
     "Old customer portal" to
@@ -1554,6 +1658,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "auf Abruf pro Abnahmetest",
     "On each card one measure: what it costs once and how much of the application's footprint it removes. Tick it to put it into the plan." to
         "Auf jeder Karte eine Maßnahme: was sie einmalig kostet und wie viel Prozent vom Fußabdruck der Anwendung sie wegnimmt. Haken setzen, und sie ist im Plan.",
+    "On own hardware it needs %lld servers for its peak; on average they are %@ busy." to
+        "Auf eigener Hardware braucht sie %lld Server für ihre Spitze; im Mittel sind diese zu %@ ausgelastet.",
     "On the consultant's curve the certificates came first: 1,200 t for 40,000 € – in the market-based report. In the grid they changed nothing. Two measures on the same servers do not add up: switching the test environments off at night and moving them to the cloud on demand work on the same 88 t a year, and the second saves only what the first leaves – and only after four quarters of migration. The same holds for moving the analytics platform and rightsizing it. Replacing 600 desktop PCs by laptops saves electricity every year, but making the laptops emits more than that saves in three years. A curve of single measures is a good start: it shows where a tonne is cheap. It needs a second look for overlaps, lead times and the CO₂ of new hardware." to
         "Auf der Kurve des Beratungshauses standen die Zertifikate ganz vorn: 1.200 t für 40.000 € – im marktbasierten Bericht. Im Netz änderten sie nichts. Zwei Maßnahmen an denselben Servern addieren sich nicht: Testumgebungen nachts abschalten und sie auf Abruf in die Cloud bringen wirken auf dieselben 88 t im Jahr, und die zweite spart nur, was die erste übrig lässt – und erst nach vier Quartalen Migration. Dasselbe gilt für den Umzug der Analyseplattform und ihr Rightsizing. 600 Desktop-PCs durch Laptops zu ersetzen spart jedes Jahr Strom, aber die Herstellung der Laptops verursacht mehr, als das in drei Jahren spart. Eine Kurve aus Einzelmaßnahmen ist ein guter Anfang: Sie zeigt, wo eine Tonne billig ist. Sie braucht einen zweiten Blick auf Überschneidungen, Laufzeiten und das CO₂ neuer Hardware.",
     "On the screen" to
@@ -1608,6 +1714,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Eigenes Rechenzentrum",
     "Own data center: how the meter's energy is split" to
         "Eigenes Rechenzentrum: wie die Energie des Zählers verteilt wird",
+    "Own server room" to
+        "Eigener Serverraum",
     "Page" to
         "Seite",
     "Page weight per visit (MB)" to
@@ -1634,6 +1742,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Platzierung",
     "Plan" to
         "Planen",
+    "plan" to
+        "Plan",
     "Plan again with the latest forecast" to
         "Mit neuester Prognose neu planen",
     "Plan carried out" to
@@ -1708,6 +1818,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Projekte – das Team schafft höchstens %lld gleichzeitig",
     "provider's tool, market-based" to
         "Werkzeug des Anbieters, marktbasiert",
+    "PUE %@" to
+        "PUE %@",
     "PUE now" to
         "PUE jetzt",
     "Q%lld/%lld" to
@@ -1724,6 +1836,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Qualität der Antworten ≥ %@",
     "Quarter %lld, year %lld" to
         "Quartal %lld, Jahr %lld",
+    "Queries during the day" to
+        "Abfragen tagsüber",
     "Questions about a product" to
         "Fragen zu einem Produkt",
     "Quick wins first, the ERP tuned instead of migrated" to
@@ -1824,6 +1938,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Rightsizing und Caching",
     "rough" to
         "grob",
+    "round trip from the plant %@ ms" to
+        "Hin und zurück vom Werk %@ ms",
     "Route optimization" to
         "Routenoptimierung",
     "Route optimization as a service of its own" to
@@ -1840,6 +1956,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Start",
     "Run a data center so that it serves its users reliably and emits as little CO₂ as possible – switch servers, shift work in time, cool wisely." to
         "Betreibe ein Rechenzentrum so, dass es alle, die es nutzen, zuverlässig bedient und möglichst wenig CO₂ ausstößt – Server schalten, Arbeit in der Zeit verschieben, klug kühlen.",
+    "Run around the clock, used on workdays 9–17" to
+        "Laufen rund um die Uhr, genutzt werktags 9–17 Uhr",
     "Running build and test infrastructure only when and as much as it is needed: build agents on demand with a shared cache, test impact analysis, expensive tests at clean times, test environments off when nobody uses them, fewer replicas outside production." to
         "Build- und Testinfrastruktur nur dann und nur so viel betreiben, wie gebraucht wird: Build-Agents auf Abruf mit gemeinsamem Cache, Test Impact Analysis, teure Tests zu sauberen Zeiten, Testumgebungen aus, wenn niemand sie nutzt, weniger Replikas außerhalb der Produktion.",
     "Running now" to
@@ -1850,6 +1968,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Die Arbeit auf so wenigen Maschinen laufen lassen, wie sie braucht, damit die anderen abgeschaltet werden können. Dinge verschiedener Größe in möglichst wenige Behälter zu legen, heißt Bin Packing.",
     "Running: %@" to
         "Läuft: %@",
+    "Runs around the clock; the plant books on it" to
+        "Läuft rund um die Uhr; das Werk bucht darauf",
     "Runs only the unit and system tests a change can affect." to
         "Führt nur die Unit- und Systemtests aus, die eine Änderung betreffen kann.",
     "Runs smoothly" to
@@ -1870,8 +1990,12 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Suchindex, jede Nacht neu gebaut",
     "Search results" to
         "Suchergebnisse",
+    "Server room" to
+        "Serverraum",
     "serverless functions" to
         "Serverless-Funktionen",
+    "Servers and load" to
+        "Server und Auslastung",
     "Servers in use: %lld of %lld" to
         "Server in Benutzung: %1\$lld von %2\$lld",
     "Servers on (mean)" to
@@ -1904,6 +2028,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Ergebnis zeigen",
     "Situation" to
         "Ausgangslage",
+    "Six applications run with a cloud provider in Frankfurt. The CFO wants the IT costs at least a fifth lower over the next three years and asks whether some of them should leave the cloud – for a colocation in Stuttgart or the company's own server room, which still has six free servers, three years old. The board asks: and the CO₂? In the sustainability report the cloud stands at zero: it is counted market-based, with the provider's green-power certificates. Counted for the stars is location-based, with the making of the servers." to
+        "Sechs Anwendungen laufen bei einem Cloud-Anbieter in Frankfurt. Die Finanzleitung will die IT-Kosten in den nächsten drei Jahren um mindestens ein Fünftel senken und fragt, ob einige davon aus der Cloud sollen – in eine Colocation in Stuttgart oder in den eigenen Serverraum, in dem noch sechs freie Server stehen, drei Jahre alt. Der Vorstand fragt: Und das CO₂? Im Nachhaltigkeitsbericht steht die Cloud bei null: Gezählt wird dort marktbasiert, mit den Grünstromzertifikaten des Anbieters. Für die Sterne zählt standortbasiert, mit der Herstellung der Server.",
     "six tracking tags" to
         "sechs Tracking-Tags",
     "Size, material, care – the answer is in the product data." to
@@ -1994,6 +2120,12 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Fang dort an, wo eine Tonne am billigsten ist – dafür ist die Kurve da. Aber die Kurve entstand Maßnahme für Maßnahme, aus der Einsparung eines Jahres, sobald die Maßnahme wirkt. Prüf, was dabei fehlt, bevor du ihr folgst.",
     "Status and greetings without AI, batching 1 s" to
         "Status und Grüße ohne KI, Batching 1 s",
+    "Steady load to the colocation, the rest to Stockholm, tests off at night" to
+        "Gleichmäßige Last in die Colocation, der Rest nach Stockholm, Tests nachts aus",
+    "Stockholm" to
+        "Stockholm",
+    "Storage, grows steadily" to
+        "Speicher, wächst stetig",
     "Stores the result instead of recomputing it every 15 minutes; costs storage." to
         "Speichert das Ergebnis, statt es alle 15 Minuten neu zu berechnen; kostet Speicher.",
     "Stuttgart: the meter shows %@ MWh a year, cooling included; the grid's mean %lld g/kWh." to
@@ -2144,6 +2276,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Die Jobs mit Größe und Frist. Plane für jeden Job mit Plus und Minus eine Startzeit oder starte ihn sofort; ein geplanter Job startet von selbst.",
     "The largest saving needed no AI: a status lookup answers \"Where is my order?\" better than any model, for a five-hundredth of the energy. A small model is good enough where the answer is in the product data; the large one pays off where it adds quality – complaints and advice. Batching is the second lever: the GPU reads the model's weights once per step for the whole batch, and serving systems cut the energy per answer many times this way [S27] – as long as the wait stays below what the customers accept. Reasoning bought three points of quality for complaints, at two and a half times the energy and nine seconds of waiting. The numbers are game values in the range of published measurements [S25, S26]; they differ a lot between models, hardware and the way the models are served – measure your own." to
         "Die größte Einsparung brauchte keine KI: Eine Statusabfrage beantwortet „Wo ist meine Bestellung?“ besser als jedes Modell, für ein Fünfhundertstel der Energie. Ein kleines Modell reicht, wo die Antwort in den Produktdaten steht; das große lohnt sich, wo es Qualität bringt – bei Reklamationen und Beratung. Batching ist der zweite Hebel: Die GPU liest die Gewichte des Modells pro Schritt einmal für den ganzen Batch, und Serving-Systeme senken so die Energie pro Antwort um ein Vielfaches [S27] – solange die Wartezeit unter dem bleibt, was die Kundschaft akzeptiert. Reasoning brachte bei Reklamationen drei Punkte Qualität, für das Zweieinhalbfache an Energie und neun Sekunden Warten. Die Zahlen sind Spielwerte im Bereich veröffentlichter Messungen [S25, S26]; sie unterscheiden sich stark zwischen Modellen, Hardware und der Art, wie die Modelle betrieben werden – miss deine eigenen.",
+    "the making of the servers is in the price" to
+        "die Herstellung der Server steckt im Preis",
     "The measures take effect next year. The stars go by what really changes." to
         "Die Maßnahmen wirken ab dem nächsten Jahr. Für die Sterne zählt, was sich wirklich ändert.",
     "The model needs a fixed amount of GPU work by the end of day %lld. You decide how many GPU servers train together, how much power each may draw, and when they train. A pause is possible at a checkpoint; resuming costs 15 minutes of loading it." to
@@ -2170,6 +2304,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Der Rest bleibt ein Deployment.",
     "The same 8 servers; the migration takes four quarters" to
         "Dieselben 8 Server; die Migration dauert vier Quartale",
+    "The same applications, other places:" to
+        "Dieselben Anwendungen, andere Orte:",
     "The same budget with other data, each time the measures with the most expected saving per euro:" to
         "Dasselbe Budget mit anderen Daten, jedes Mal die Maßnahmen mit der größten erwarteten Einsparung pro Euro:",
     "The same budget, other plans:" to
@@ -2232,6 +2368,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Dasselbe, kleines Modell für Produktfragen",
     "The selected application: its facts, the four decisions with what they take and bring, the start quarter – and the button that carries out the plan." to
         "Die gewählte Anwendung: ihre Fakten, die vier Entscheidungen mit dem, was sie kosten und bringen, das Startquartal – und der Knopf, der den Plan umsetzt.",
+    "The selected application: its facts, the four places with theirs, and the button that carries out the plan." to
+        "Die ausgewählte Anwendung: ihre Daten, die vier Orte mit ihren Daten und der Button, der den Plan umsetzt.",
     "The servers each application has in the CMDB. Free." to
         "Die Server jeder Anwendung laut CMDB. Kostenlos.",
     "The servers needed for the expected load of the next hour run. A low target leaves headroom for peaks but more servers idle; a high target is efficient but gets slow at peaks." to
@@ -2242,12 +2380,16 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Der Shop will ein Sprachmodell für seine Suche, trainiert bis Ende von Tag 3. Acht GPU-Server stehen bereit, jeder bis zu 10 kW. Es ist Frühling in Deutschland: sonnige Mittage, ein windstiller erster Tag, ein windiger zweiter, ein windstiller dritter. Das Data-Science-Team würde sofort starten, mit allen Servern und ohne Grenzen.",
     "The shop's product pages have grown heavy: photos of 2,000 pixels for every screen, a product video that starts by itself, 100 products per list and six tracking tags from marketing. A visit transfers about 12 MB – more than four times the median web page [S29]. And the page is slow: its largest image appears only after 3.2 s." to
         "Die Produktseiten des Shops sind schwer geworden: Fotos mit 2.000 Pixeln für jeden Bildschirm, ein Produktvideo, das von selbst startet, 100 Produkte pro Liste und sechs Tracking-Tags vom Marketing. Ein Besuch überträgt rund 12 MB – mehr als das Vierfache der mittleren Webseite [S29]. Und die Seite ist langsam: Ihr größtes Bild erscheint erst nach 3,2 s.",
+    "The six applications with their load over a week and where each runs. Click a place to move it there, or a row to see its facts." to
+        "Die sechs Anwendungen mit ihrer Last über eine Woche und wo jede läuft. Klick auf einen Ort, um sie dorthin zu verlegen, oder auf eine Zeile, um ihre Daten zu sehen.",
     "The sixteen measures with their facts, numbered like the bars. A click on a card puts it into the plan too." to
         "Die sechzehn Maßnahmen mit ihren Fakten, nummeriert wie die Balken. Auch ein Klick auf eine Karte nimmt sie in den Plan.",
     "The sources of data, and your plan: the budget, what you have spent and the button that carries the plan out." to
         "Die Datenquellen und dein Plan: das Budget, was du ausgegeben hast, und der Knopf, der den Plan umsetzt.",
     "The status of one order, from the order database." to
         "Der Status einer Bestellung, aus der Bestelldatenbank.",
+    "The steady ones to the colocation, the rest stays" to
+        "Die gleichmäßigen in die Colocation, der Rest bleibt",
     "The team changes nothing (reference)" to
         "Das Team ändert nichts (Referenz)",
     "The three scopes of the GHG Protocol: the own combustion (1), bought energy (2) and everything else in the value chain (3) – for IT for example the making of hardware and the services bought." to
@@ -2314,6 +2456,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Aufräumen nach TIME",
     "Tidying up the application portfolio: each application placed by business value and technical condition, then tolerated, improved, migrated or eliminated – the TIME model made known by Gartner. Projects take time and people; the saving comes when the old system is really off, not when the new one starts." to
         "Das Anwendungsportfolio aufräumen: jede Anwendung nach Geschäftswert und technischem Zustand einordnen, dann lassen, verbessern, migrieren oder abschalten – das TIME-Modell, bekannt gemacht von Gartner. Projekte brauchen Zeit und Leute; gespart wird, wenn das alte System wirklich aus ist, nicht, wenn das neue startet.",
+    "Time and place do not matter" to
+        "Zeit und Ort sind egal",
     "Time recording" to
         "Zeiterfassung",
     "Timeline" to
@@ -2326,6 +2470,10 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Zum Briefing",
     "To the overview" to
         "Zur Übersicht",
+    "today" to
+        "heute",
+    "Today and your plan side by side: in the report, location-based, in euros." to
+        "Heute und dein Plan nebeneinander: im Bericht, standortbasiert, in Euro.",
     "today: −%@" to
         "heute: −%@",
     "Together" to
@@ -2492,8 +2640,12 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Wo ist meine Bestellung?",
     "Where it goes is not measured yet." to
         "Wohin sie geht, ist noch nicht gemessen.",
+    "Where the change comes from, t CO₂ in three years" to
+        "Woher die Änderung kommt, t CO₂ in drei Jahren",
     "Where to start" to
         "Wo anfangen?",
+    "Where to?" to
+        "Wohin?",
     "Whole year" to
         "Jahresmittel",
     "Wind farm contract" to
@@ -2540,6 +2692,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Deine Inventur",
     "Your plan" to
         "Dein Plan",
+    "your plan" to
+        "dein Plan",
     "Your plan: the budget, what it costs and the button that carries it out. Counted are three years, quarter by quarter, location-based." to
         "Dein Plan: das Budget, was er kostet, und der Knopf, der ihn umsetzt. Gezählt werden drei Jahre, Quartal für Quartal, standortbasiert.",
     "Your racks: grey servers are off, light blue ones are booting, the blue bar shows how busy a server is." to

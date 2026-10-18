@@ -28,6 +28,7 @@ private class Entry(val term: String, val text: String, val scenarios: List<Scen
 /** Terms the scenarios use without being about them. */
 private val GENERAL = listOf(
     "Carbon intensity" to "How much CO₂e the generation of one kilowatt-hour of electricity emits, in g CO₂e/kWh. It changes from hour to hour with the share of wind, sun, water, coal and gas in the grid.",
+    "Colocation" to "A data center in which many companies rent space, power and cooling; each brings its own servers and runs them itself.",
     "CO₂e (CO₂ equivalent)" to "Greenhouse gases counted together: each gas weighted by how much it warms the climate compared with CO₂.",
     "Idle power" to "What a server draws while it does nothing – often a quarter to a half of its maximum. It is why switching off unused servers saves so much.",
     "Location-based and market-based" to "The two ways the GHG Protocol reports the emissions of bought electricity (Scope 2): location-based with the mean of the grid where the electricity is used, market-based with the contracts and certificates bought.",

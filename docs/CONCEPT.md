@@ -388,6 +388,7 @@ are. Better data cost money from the same budget as the measures.
 | P1 | Inventory | 18 applications: 6 in the own data center (Stuttgart, 1,000 MWh a year, 400 g/kWh), 6 with a cloud provider (Frankfurt), 6 as SaaS; budget 150,000 € | a year | how the own data center's metered energy is split (by servers in the CMDB, free; by CPU time from the monitoring, 5,000 €; measured power per server, 20,000 €), cloud recalculated from the usage data location-based (8,000 €) instead of the provider's market-based tool, data asked from each SaaS supplier (2,000 € each, one supplier sends none), one measure per application | Each hosting path has its own source of data, and each counts in its own way. The provider's tool counts its certificates: the cloud looks almost clean, and the largest single emitter (an analytics cluster) looks like nothing. Servers as the key make many small servers look big; CPU time hides idle servers that are on around the clock (test environments). Spend-based numbers make the expensive CRM look large and the cheap video conferencing and file sharing small. The plan follows the data; the stars count what really changes. Term: Carbon Accounting. |
 | P2 | Where to start | the same company, 955 t a year with the employees' PCs; budget 200,000 € | three years in quarters | sixteen measures from a consultant's list, drawn as a marginal abatement cost curve (€ per tonne over three years from each measure's gross saving a year); a click on a bar or a card puts a measure into the plan | The curve ranks measures one at a time. What it leaves out decides the result: certificates come first on the curve (1,200 t for 40,000 €) and change nothing location-based; two measures on the same servers (test environments off at night and in the cloud on demand; the analytics platform moved and rightsized) do not add up; a project of four quarters saves only after it; 600 laptops instead of desktop PCs emit more in their making than they save in three years. Term: Marginal Abatement Cost Curve (MACC) [S41]. |
 | P3 | Tidy up with TIME | thirteen applications by business value and technical condition | three years in quarters | per application tolerate, invest, migrate (optionally switching off the old system, one quarter more) or eliminate, and a start quarter; three projects at a time | Gartner's TIME model gives each quadrant a decision; over three years the timing decides as much. A migration runs old and new side by side until the old one is switched off – left running, it saves nothing. The new ERP (six quarters plus one to switch off) costs more in its parallel run than it saves within three years; tuning the old one saves more. Quick wins (eliminating unused systems) first. The mail archive is of little value but must be kept by law. Term: Application Rationalization (TIME). |
+| P4 | Leave the cloud? | six applications with a cloud provider in Frankfurt; the CFO wants the costs at least 20 % lower; a colocation in Stuttgart and the own server room with six free servers | three years | per application a place – cloud Frankfurt or Stockholm, colocation, own server room – and, for the nightly runs and the test environments, off outside the hours of use | In the market-based report the cloud stands at zero, so every move out of it looks worse. Location-based it depends on the grid, how busy the servers are, the PUE and the making of new servers. Steady load (ERP database, archive) can move for the costs at about the same CO₂; the web shop, sized for its campaigns on own hardware, would idle most of the year. The largest saving is another cloud region – but the plant's ERP sends 200 queries one after the other per booking, too far for Stockholm, and the customer data must stay in Germany. Term: Cloud Repatriation [S42, S43]. |
 
 **As built (P1).** The first star needs the inventory within ±15 % of the real footprint (so the cloud must be
 recalculated) and the budget kept; ★★ −20 %, ★★★ −25 % next year. With the free data a careful plan (the
@@ -411,8 +412,20 @@ quadrant's decision as early as possible: −18.8 % with the old systems switche
 first and the ERP tuned: −32 % (★★★); the same with the ERP migrated: −27.4 % (★★); without switching off: −25.9 %
 (★★).
 
-**Further portfolio scenarios (planned).** P4 *Out of the cloud?*
-– an application moves into the own data center for data sovereignty; utilization, PUE and the grid decide. P5
+**As built (P4).** Per application and place over three years: servers × hours × (120 W + 240 W × utilization) × PUE
+× grid, plus the making of the servers (1.5 t each, three fifths of a five-year life; none for the server room's
+existing servers). In the cloud an application is counted for the server equivalents it is given today; on own
+hardware for the servers its peak needs. The report counts the cloud at zero (market-based with the provider's
+certificates), own sites with the grid. Costs: 11,000 € a server equivalent a year in the cloud; in the colocation
+8,000 € a server plus 2,600 € a year and the electricity; in the server room 1,200 € a year and the electricity; a
+team for own hardware 55,000 € a year as soon as anything runs there. Rules for ★: costs at least 20 % lower, the
+customer data in Germany, a booking in the plant under one second; ★★ −10 %, ★★★ −20 % CO₂. Everything to the
+colocation: +38.5 % CO₂ and only −15 % costs (no star); the steady ones to the colocation: +8 %, −21 % (★); steady
+load to the colocation, the rest to Stockholm, tests off at night: −25 %, −23 % (★★★); the ERP in Stockholm: a
+booking takes 2.8 s (no star). The end card splits the change into grid, servers and load, cooling (PUE) and making
+of servers (D29).
+
+**Further portfolio scenarios (planned).** P5
 *Cost as a proxy?* – steering by cost alone, and where it leads astray. P6 *Rebound* – savings make an
 application cheaper, its use grows.
 
@@ -445,6 +458,7 @@ the app (O = operations, B in German).
 | P1 Inventory | LG 2-2 Scope 2, LG 4-3 providers' carbon tools, LG 4-4 measuring in enterprise environments, LG 7-3 |
 | P2 Where to start | LG 2-3 reduction targets and measures in the company, LG 1-4 hardware efficiency, LG 2-2 market-based against location-based |
 | P3 Tidy up with TIME | LG 2-3 energy efficiency as a field of action in the company, LG 7-2 deployment models, LG 7-4 operational antipatterns (systems left running) |
+| P4 Leave the cloud? | LG 7-2 deployment models, LG 1-4 hardware efficiency, LG 4-3 providers' carbon tools, LG 2-2 market-based against location-based |
 
 Each scenario has:
 
@@ -1129,6 +1143,7 @@ the numbers stay so that saved stars keep their scenario):
 | D26 | Portfolio track | a third track for a company's applications (P1 "Inventory" first); no clock, a year at a time; the data the player buys come from the same budget as the measures; the stars count the real footprint, location-based; opens after E1 "Measure first" – first measure, then take stock; the P1 briefing explains location-based and market-based itself |
 | D27 | Order of the Engineering scenarios | along the blocks of the iSAQB module GREEN: code (E1–E3), the page and the architecture (E4 Data diet, E5 Chatty services), AI (E6 Right-sized AI), the development process (E7 Green pipeline); the scenario numbers in the code stay (104–107), so stars kept on a device stay with their scenario – only the labels and the order of opening changed |
 | D28 | Glossary and results in a course | a glossary of all technical terms on the start page; no result codes or ranking – the courses do not need them (revises D6) |
+| D29 | P4 "Leave the cloud?" | three years, so that new servers are written off over a fair time; the own server room stays, limited to six existing servers (reuse against a poor PUE); no green-power contract as an option – the report next to the location-based figure shows the same lesson as B11, and the debrief names it |
 
 ---
 
@@ -1177,3 +1192,5 @@ the numbers stay so that saved stars keep their scenario):
 | S39 | US EPA: *Supply Chain Greenhouse Gas Emission Factors v1.3 by NAICS-6* (spend-based factors from an environmentally extended input-output model). https://catalog.data.gov/dataset/supply-chain-greenhouse-gas-emission-factors-v1-2-by-naics-6 |
 | S40 | GHG Protocol: *Scope 2 Guidance* (2015): Scope 2 reported both location-based and market-based. https://ghgprotocol.org/scope-2-guidance |
 | S41 | McKinsey & Company: *Pathways to a Low-Carbon Economy – Version 2 of the Global Greenhouse Gas Abatement Cost Curve*, 2009 (the first version 2007). https://www.mckinsey.com/capabilities/sustainability/our-insights/pathways-to-a-low-carbon-economy |
+| S42 | AWS: *Customer Carbon Footprint Tool now includes location-based emissions* (June 2025); Scope 3 since October 2025. https://aws.amazon.com/about-aws/whats-new/2025/06/customer-carbon-footprint-tool-location-based-emissions/ |
+| S43 | Uptime Institute: *Global Data Center Survey 2025* – average PUE 1.54. https://intelligence.uptimeinstitute.com/resource/uptime-institute-global-data-center-survey-2025 |

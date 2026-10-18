@@ -1064,4 +1064,48 @@ class LessonTest {
         assertEquals(2, stars("careful, old systems left running"))
         assertEquals(0, stars("careful, mail archive eliminated"))
     }
+
+    @Test fun p4LeaveTheCloud() {
+        val scenario = Scenario.LEAVE_THE_CLOUD
+        val model = scenario.repatriation!!
+        val fra = Move(Place.CLOUD_FRANKFURT); val sto = Move(Place.CLOUD_STOCKHOLM)
+        val colo = Move(Place.COLOCATION); val room = Move(Place.SERVER_ROOM)
+        val plans = listOf(
+            "all stays in Frankfurt" to emptyMap(),
+            "all to the colocation" to model.all(Place.COLOCATION),
+            "steady ones to the colocation" to mapOf("ERP database" to colo, "Customer data archive" to colo, "Data warehouse" to colo),
+            "all but the shop to the colocation" to model.all(Place.COLOCATION) + ("Web shop" to fra),
+            "all to Stockholm" to model.all(Place.CLOUD_STOCKHOLM),
+            "Stockholm, data and ERP in Frankfurt" to model.all(Place.CLOUD_STOCKHOLM) + ("Customer data archive" to fra) + ("ERP database" to fra),
+            "ERP to the colocation, tests off at night" to mapOf("ERP database" to colo, "Test environments" to Move(Place.CLOUD_FRANKFURT, true)),
+            "example" to model.example,
+            "example, tests in the server room" to model.example + ("Test environments" to Move(Place.SERVER_ROOM, true)),
+            "example, archive in Frankfurt" to model.example + ("Customer data archive" to fra),
+            "example, ERP to Stockholm" to model.example + ("ERP database" to sto),
+        )
+        val lines = mutableListOf("P4 Leave the cloud?: baseline ${model.result(emptyMap()).baselineKg / 1_000} t, " +
+            "${model.result(emptyMap()).baselineEuro / 1_000} k€ over ${model.years} years")
+        val results = plans.associate { (name, plan) ->
+            val r = model.result(plan)
+            lines += "  " + name.padEnd(42) + "%7d t".format(r.planKg / 1_000) + "%7.1f %%".format(r.reductionPermille / 10.0) +
+                "  cost %6.1f %%".format(-r.savingPermille / 10.0) + "  report %4d t".format(r.reportKg / 1_000) +
+                "  booking %5d ms".format(r.bookingMs) + "  room ${model.roomUsed(plan)}  " + "★".repeat(model.stars(r, scenario.goals)) +
+                "  ${r.breakdown}"
+            name to r
+        }
+        report(204, lines)
+        fun stars(name: String) = model.stars(results.getValue(name), scenario.goals)
+        assertEquals(0, stars("all stays in Frankfurt"))
+        assertEquals(0, stars("all to the colocation"))
+        assertEquals(1, stars("steady ones to the colocation"))
+        assertEquals(1, stars("all but the shop to the colocation"))
+        assertEquals(0, stars("all to Stockholm"))
+        assertEquals(0, stars("Stockholm, data and ERP in Frankfurt"))
+        assertEquals(3, stars("example"))
+        assertEquals(3, stars("example, tests in the server room"))
+        assertEquals(0, stars("example, ERP to Stockholm"))
+        val r = results.getValue("example")
+        val b = r.breakdown
+        assertTrue(kotlin.math.abs(r.planKg - r.baselineKg - (b.region + b.energy + b.pue + b.embodied)) <= 3)
+    }
 }

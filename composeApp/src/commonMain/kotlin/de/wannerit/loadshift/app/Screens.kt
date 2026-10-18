@@ -301,7 +301,8 @@ private fun ContinueCard(scenario: Scenario, narrow: Boolean, onClick: () -> Uni
 }
 
 /** "Germany · autumn · 2 days", or what a portfolio scenario is about. */
-private fun cardFacts(scenario: Scenario): String = scenario.tidy?.let { t("%lld applications · three years", it.apps.size) }
+private fun cardFacts(scenario: Scenario): String = scenario.repatriation?.let { t("%lld applications · three years", it.apps.size) }
+    ?: scenario.tidy?.let { t("%lld applications · three years", it.apps.size) }
     ?: scenario.abatement?.let { t("%lld measures · three years", it.measures.size) }
     ?: scenario.portfolio?.let { t("%lld applications · a year", it.apps.size) }
     ?: "${t(scenario.setting.region.title)} · ${t(scenario.setting.season.title)} · ${days(scenario.days)}"
@@ -444,11 +445,13 @@ private fun ScreenPreview(scenario: Scenario, modifier: Modifier) {
     val portfolio = remember(scenario) { scenario.portfolio?.let { PortfolioController(scenario, fresh = true) } }
     val abatement = remember(scenario) { scenario.abatement?.let { AbatementController(scenario, fresh = true) } }
     val tidy = remember(scenario) { scenario.tidy?.let { TidyController(scenario, fresh = true) } }
-    val game = remember(scenario) { if (portfolio == null && abatement == null && tidy == null) GameController(scenario, fresh = true) else null }
+    val repatriation = remember(scenario) { scenario.repatriation?.let { RepatriationController(scenario, fresh = true) } }
+    val game = remember(scenario) { if (portfolio == null && abatement == null && tidy == null && repatriation == null) GameController(scenario, fresh = true) else null }
     val width = 1366.dp
     val height = 960.dp
     // Marker positions on the full-size screen (GameScreen at 1366 × 960: panel 380 wide, timeline 288 high).
-    val markers = if (tidy != null) listOf(470.dp to 36.dp, 40.dp to 150.dp, 40.dp to (height - 290.dp), (width - 36.dp) to 136.dp)
+    val markers = if (repatriation != null) listOf(470.dp to 36.dp, 40.dp to 150.dp, 40.dp to (height - 100.dp), (width - 36.dp) to 136.dp)
+        else if (tidy != null) listOf(470.dp to 36.dp, 40.dp to 150.dp, 40.dp to (height - 290.dp), (width - 36.dp) to 136.dp)
         else if (abatement != null) listOf(470.dp to 36.dp, 40.dp to 150.dp, 40.dp to 440.dp, (width - 36.dp) to 136.dp)
         else if (portfolio != null) listOf(470.dp to 36.dp, 40.dp to 150.dp, 300.dp to 345.dp, (width - 36.dp) to 136.dp)
         else listOf(470.dp to 36.dp, 40.dp to 150.dp, (width - 36.dp) to 136.dp, (width - 36.dp) to (height - 258.dp))
@@ -462,7 +465,8 @@ private fun ScreenPreview(scenario: Scenario, modifier: Modifier) {
                 Modifier.wrapContentSize(Alignment.TopStart, unbounded = true).requiredSize(width, height)
                     .graphicsLayer { scaleX = scale; scaleY = scale; transformOrigin = TransformOrigin(0f, 0f) },
             ) {
-                if (tidy != null) TidyScreen(tidy, onExit = {})
+                if (repatriation != null) RepatriationScreen(repatriation, onExit = {})
+                else if (tidy != null) TidyScreen(tidy, onExit = {})
                 else if (abatement != null) AbatementScreen(abatement, onExit = {})
                 else if (portfolio != null) PortfolioScreen(portfolio, onExit = {}) else GameScreen(game!!, onExit = {})
             }
@@ -500,7 +504,13 @@ private fun SideCard(scenario: Scenario, texts: ScenarioTexts, onStart: () -> Un
         val portfolio = scenario.portfolio
         val abatement = scenario.abatement
         val tidy = scenario.tidy
-        if (tidy != null) Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        val repatriation = scenario.repatriation
+        if (repatriation != null) Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Fact(t("%lld applications in the cloud in Frankfurt", repatriation.apps.size))
+            Fact(t("Four places: two cloud regions, a colocation, the own server room"))
+            Fact(t("Costs at least %@ lower", Format.wholePercent(repatriation.savingGoalPermille)))
+            Fact(t("Counted: three years, location-based with the making of servers"))
+        } else if (tidy != null) Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Fact(t("%lld applications", tidy.apps.size))
             Fact(t("At most %lld projects at a time", tidy.capacity))
             Fact(t("Counted: three years, location-based"))

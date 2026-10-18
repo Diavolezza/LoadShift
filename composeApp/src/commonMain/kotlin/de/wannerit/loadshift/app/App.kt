@@ -49,6 +49,7 @@ private sealed interface Screen {
     data class Abatement(val controller: AbatementController) : Screen
     data object Lexicon : Screen
     data class Tidy(val controller: TidyController) : Screen
+    data class Repatriation(val controller: RepatriationController) : Screen
 }
 
 @Composable
@@ -63,8 +64,10 @@ fun App(options: LaunchOptions = LaunchOptions()) {
         is Screen.Briefing -> BriefingScreen(s.scenario, onStart = {
             screen = if (s.scenario.portfolio != null) Screen.Portfolio(PortfolioController(s.scenario))
                 else if (s.scenario.abatement != null) Screen.Abatement(AbatementController(s.scenario))
-                else if (s.scenario.tidy != null) Screen.Tidy(TidyController(s.scenario)) else Screen.Game(GameController(s.scenario))
+                else if (s.scenario.tidy != null) Screen.Tidy(TidyController(s.scenario))
+                else if (s.scenario.repatriation != null) Screen.Repatriation(RepatriationController(s.scenario)) else Screen.Game(GameController(s.scenario))
         }, onBack = { screen = Screen.List })
+        is Screen.Repatriation -> FitLowScreen { RepatriationScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }) }
         is Screen.Tidy -> FitLowScreen { TidyScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }) }
         is Screen.Abatement -> FitLowScreen { AbatementScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }) }
         is Screen.Portfolio -> FitLowScreen { PortfolioScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }) }
@@ -80,6 +83,19 @@ private fun initialScreen(options: LaunchOptions): Screen {
     val scenario = Scenario.ALL.firstOrNull { it.number == options.scenario } ?: if (options.play) Scenario.NIGHT_SHIFT else null
     scenario ?: return Screen.List
     if (!options.play) return Screen.Briefing(scenario)
+    if (scenario.repatriation != null) {
+        val g = RepatriationController(scenario)
+        if (options.careful) {
+            // Steady load to the colocation, the rest to Stockholm, the tests off at night.
+            for (app in g.model.apps) {
+                val m = g.model.example[app.name] ?: continue
+                g.place(app, m.place)
+                if (m.offOutsideUse) g.toggleOff(app)
+            }
+            if (options.ticks > 0) g.finish()
+        }
+        return Screen.Repatriation(g)
+    }
     if (scenario.tidy != null) {
         val g = TidyController(scenario)
         if (options.careful) {

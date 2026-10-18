@@ -155,6 +155,8 @@ data class Scenario(
     val abatement: AbatementModel? = null,
     /** P3: the portfolio by TIME, three years in quarters. */
     val tidy: TidyModel? = null,
+    /** P4: six applications, each to a place – cloud, colocation or the company's own server room. */
+    val repatriation: RepatriationModel? = null,
 ) {
     /** Expected interactive work at a tick: the web load or the VMs' profiles (what an operator can plan with). */
     fun expectedDemand(tick: Int): Int = interactive.expected(tick) + vms.sumOf { it.expectedMilli(tick) } / 1_000
@@ -809,6 +811,45 @@ data class Scenario(
             )),
         )
 
-        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, OLD_IRON, TRAINING_RUN, ECO_MODE, TWO_SITES, GREEN_ON_PAPER, DARK_DOLDRUMS, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS, DATA_DIET, CHATTY_SERVICES, RIGHT_SIZED_AI, GREEN_PIPELINE, INVENTORY, WHERE_TO_START, TIDY_UP)
+        /** P4, "Leave the cloud?": six applications, four places, three years; costs down, and CO₂? */
+        val LEAVE_THE_CLOUD = Scenario(
+            number = 204, label = "P4", track = Track.PORTFOLIO, unlockAfter = 203,
+            title = "Leave the cloud?", setting = GridSetting(GridRegion.GERMANY, Season.YEAR), days = 1,
+            seed = 24, fleet = emptyList(), interactive = InteractiveLoad(peak = 0), controls = emptySet(),
+            goals = StarGoals(100, SpecialGoal.Reduction(200)),
+            repatriation = RepatriationModel(
+                listOf(
+                    MoveApp("Web shop", "Campaigns bring up to five times the load", 7, 60, 22, 19,
+                        week(listOf(20, 25, 30, 22), campaign = 2)),
+                    MoveApp("ERP database", "Runs around the clock; the plant books on it", 16, 65, 13, 80,
+                        week(listOf(80, 85, 85, 80)), queriesPerBooking = 200),
+                    MoveApp("Customer data archive", "Storage, grows steadily", 8, 70, 9, 62,
+                        week(listOf(70, 70, 72, 70)), germanyOnly = true),
+                    MoveApp("Nightly runs", "Time and place do not matter", 2, 60, 6, 17,
+                        week(listOf(100, 0, 0, 0)), usePercent = 20, useUtilPercent = 85, onDemandInCloud = true),
+                    MoveApp("Test environments", "Run around the clock, used on workdays 9–17", 6, 12, 6, 12,
+                        week(listOf(0, 0, 60, 10), weekend = listOf(0, 0, 0, 0)), usePercent = 30, useUtilPercent = 40),
+                    MoveApp("Data warehouse", "Queries during the day", 8, 35, 9, 31,
+                        week(listOf(10, 60, 70, 15), weekend = listOf(10, 15, 15, 10))),
+                ),
+                listOf(
+                    PlaceSpec(Place.CLOUD_FRANKFURT, "Cloud Frankfurt", 115, 380, 0, 20, inGermany = true),
+                    PlaceSpec(Place.CLOUD_STOCKHOLM, "Cloud Stockholm", 115, 30, 0, 140, inGermany = false),
+                    PlaceSpec(Place.COLOCATION, "Colocation Stuttgart", 135, 380, 380, 5, inGermany = true),
+                    PlaceSpec(Place.SERVER_ROOM, "Own server room", 170, 380, 380, 5, inGermany = true),
+                ),
+                example = mapOf(
+                    "Web shop" to Move(Place.CLOUD_STOCKHOLM), "ERP database" to Move(Place.COLOCATION),
+                    "Customer data archive" to Move(Place.COLOCATION), "Nightly runs" to Move(Place.CLOUD_STOCKHOLM),
+                    "Test environments" to Move(Place.CLOUD_STOCKHOLM, offOutsideUse = true), "Data warehouse" to Move(Place.CLOUD_STOCKHOLM),
+                ),
+            ),
+        )
+
+        /** A week of load, four values a day (the weekend may differ; one campaign day may reach the peak). */
+        private fun week(day: List<Int>, weekend: List<Int> = day, campaign: Int? = null): List<Int> =
+            (0 until 7).flatMap { d -> if (d == campaign) listOf(30, 100, 95, 35) else if (d >= 5) weekend else day }
+
+        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, OLD_IRON, TRAINING_RUN, ECO_MODE, TWO_SITES, GREEN_ON_PAPER, DARK_DOLDRUMS, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS, DATA_DIET, CHATTY_SERVICES, RIGHT_SIZED_AI, GREEN_PIPELINE, INVENTORY, WHERE_TO_START, TIDY_UP, LEAVE_THE_CLOUD)
     }
 }
