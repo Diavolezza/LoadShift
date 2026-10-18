@@ -23,6 +23,21 @@ class ScenarioTexts(
 ) {
     companion object {
         fun of(scenario: Scenario): ScenarioTexts = when (scenario.number) {
+            12 -> ScenarioTexts(
+                situation = "A week of the web shop in Germany: the shop runs with autoscaling at 50 %, six large batch jobs – backups, reloads, billing – start as soon as they arrive. The board has announced a \"green data center\" and asks for a contract that makes the report green. Three offers are on the table: green certificates, a contract with a wind farm, and 24/7 carbon-free energy.",
+                idea = "Not every green is equally green. Certificates change the report, not the electricity. A wind farm delivers clean energy only while the wind blows – the work done in those hours is clean. 24/7 carbon-free energy covers every hour, but it costs. Count in the hour, not on paper.",
+                screen = listOf(
+                    "The game starts paused. Clock and speed – pause, 1×, 4×, 16×, 64× – and below it your goals: SLA, deadlines, electricity cost and less CO₂, counted in the hour.",
+                    "Your racks: grey servers are off, the blue bar shows web requests, the amber bar batch jobs.",
+                    "Three tabs: the electricity contract with the CO₂ counted three ways, the shop's capacity rule and the batch rule.",
+                    "Carbon intensity of the grid; below it, depending on the tab, the data center's power and the clean energy of the contract in the same hour, the shop's load or the batch jobs.",
+                ),
+                comparedWith = "compared with the reference operator, who buys the grid mix, runs the shop with autoscaling at 50 % and starts every job at once.",
+                rules = "SLA at least 99 %, every job by its deadline, electricity cost at most 10 % above the reference and less CO₂ than the reference, counted in the hour",
+                remark = "Green certificates made the report zero and changed nothing in the grid: the hydro plants behind them run anyway. In the report the grey contract even looked worse than the grid's average – the residual mix is what is left after others have claimed the green part [S36]. The wind farm adds clean energy, but only while the wind blows: moving the batch jobs into the windy hours let the data center use more of it. 24/7 carbon-free energy covers every hour – and it was affordable only once the data center needed less energy. Google reports 66 % carbon-free energy in the hour across its data centers [S38]; the GHG Protocol's revision of Scope 2 moves the market-based report towards matching in the hour [S37].",
+                term = "24/7 Carbon-Free Energy",
+                termText = "Matching electricity consumption with carbon-free generation in the same hour and the same grid, instead of buying certificates for the year. The GHG Protocol knows two ways to report Scope 2: location-based (the grid's average) and market-based (contracts and certificates); only matching in the hour shows what the electricity really was.",
+            )
             11 -> ScenarioTexts(
                 situation = "A week in January. A high-pressure area lies over Germany: hardly any wind, hardly any sun – a dark doldrums. Coal and gas carry the grid, around 500 g CO₂ per kWh. The forecast expects the wind back on day 5. In the data center: the web shop on 40 CPU servers, six batch jobs, and an AI model that must be trained on 4 GPU servers by the end of the week. The previous shift has left everything as it was: all servers on, every job at once, the training at full power.",
                 idea = "Everything you have learned, together. Waiting for clean hours within a day does not help now – every hour is dirty. What helps: use less (size the shop with autoscaling) and move what can wait for days into the wind: the training is due only at the end of the week, three of the batch jobs too. The others cannot wait.",

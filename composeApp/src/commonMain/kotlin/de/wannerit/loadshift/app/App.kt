@@ -67,7 +67,12 @@ private fun initialScreen(options: LaunchOptions): Screen {
     scenario ?: return Screen.List
     if (!options.play) return Screen.Briefing(scenario)
     val game = GameController(scenario)
-    if (options.careful && game.hasServices) {
+    if (options.careful && game.scenario.contract != null) {
+        // Like a careful player: 24/7 carbon-free, autoscaling at 80 %, jobs in the greenest hours.
+        game.setPolicy(scenario.referencePolicy.copy(contract = de.wannerit.loadshift.core.Contract.HOURLY,
+            capacity = de.wannerit.loadshift.core.CapacityMode.Autoscale(800), batch = BatchMode.Greenest))
+        game.advance(options.ticks)
+    } else if (options.careful && game.hasServices) {
         // Like a careful player: cache 1 min / 5 min, gRPC, events, serverless functions.
         game.setPolicy(scenario.initialPolicy.copy(services = de.wannerit.loadshift.core.ServiceConfig(de.wannerit.loadshift.core.ServiceCut.MICROSERVICES,
             de.wannerit.loadshift.core.Protocol.GRPC, de.wannerit.loadshift.core.MasterData.EVENTS, 60, 300, true)))

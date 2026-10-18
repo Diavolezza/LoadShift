@@ -106,7 +106,11 @@ fun GameScreen(game: GameController, onExit: () -> Unit, onNext: ((Scenario) -> 
                     }
                 }
             } else TimelineChart(game.simulation, game.version, Modifier.fillMaxWidth().height(timelineHeight).background(Palette.panel),
-                lane = if (game.isCapstone) Lane.ALL else null)
+                lane = if (game.isCapstone) Lane.ALL else if (game.scenario.contract != null) when (game.tabs.getOrNull(game.panelTab)) {
+                    GameController.PanelTab.SHOP -> Lane.LOAD
+                    GameController.PanelTab.BATCH -> Lane.JOBS
+                    else -> Lane.CONTRACT
+                } else null)
         }
         if (game.showEnd) EndCard(game, onExit, onNext, onOverview)
     }
@@ -139,6 +143,9 @@ private fun TopBar(game: GameController, onExit: () -> Unit) {
         val totals = game.totals
         Metric(t("CO₂ so far"), if (game.hasRenewal) "${Format.tonnes(totals.emissions)} t" else "${Format.kilograms(totals.emissions)} kg")
         // E4: the shop's own servers are not the topic; the assistant's goals take their place.
+        simulation.scenario.contract?.let {
+            Metric(t("In the report"), "${Format.kilograms(game.totals.marketOperational)} kg")
+        }
         simulation.scenario.services?.let { model ->
             val l = game.totals.meanLatency
             Metric(t("Response time"), t("%lld ms", l), if (l <= model.latencyLimit) Palette.ink else Palette.red)
@@ -258,6 +265,11 @@ private fun GoalBar(game: GameController) {
             GoalItem((change ?: 0) < 0, change != null,
                 if (change == null) t("CO₂ vs. reference") else if (game.isCapstone && !game.isFinished) t("CO₂ expected: %@", Format.changePermille(change))
                 else t("CO₂ vs. reference: %@", Format.changePermille(change)))
+        }
+        scenario.contract?.let { model ->
+            val refCost = game.reference.history.getOrNull(game.simulation.history.size - 1)?.contract?.costSoFar ?: 0L
+            val within = totals.energyCost * 1_000 <= refCost * model.budgetPermille
+            GoalItem(within, refCost > 0, t("Electricity cost ≤ +%@", Format.wholePercent(model.budgetPermille - 1_000)))
         }
         scenario.services?.let { model ->
             GoalItem(totals.meanLatency <= model.latencyLimit, change != null, t("Tracking ≤ %lld ms", model.latencyLimit))
@@ -404,6 +416,12 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
                     if (scenario.cooling != null) add(t("PUE") to (Format.number(you.pue / 1_000.0, 2) to Format.number(ref.pue / 1_000.0, 2)))
                     if (scenario.staleLimit != null) {
                         add(t("Stale answers (‰)") to (Format.number(you.stale.toDouble() / maxOf(1, you.requests), 2) to Format.number(ref.stale.toDouble() / maxOf(1, ref.requests), 2)))
+                    }
+                    if (scenario.contract != null) {
+                        add(t("CO₂ location-based (kg)") to (Format.kilograms(you.locationOperational) to Format.kilograms(ref.locationOperational)))
+                        add(t("CO₂ in the report, market-based (kg)") to (Format.kilograms(you.marketOperational) to Format.kilograms(ref.marketOperational)))
+                        add(t("CO₂ hourly matched (kg)") to (Format.kilograms(you.operational) to Format.kilograms(ref.operational)))
+                        add(t("Electricity cost (€)") to (Format.number(you.energyCost / 1_000.0, 0) to Format.number(ref.energyCost / 1_000.0, 0)))
                     }
                     if (scenario.services != null) {
                         add(t("Response time of the tracking (ms)") to ("${you.meanLatency}" to "${ref.meanLatency}"))

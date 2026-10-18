@@ -74,6 +74,10 @@ data class Totals(
     /** E7: tracking requests and their response time summed (ms each). */
     var trackingRequests: Long = 0,
     var latencySum: Long = 0,
+    /** B12: location-based and market-based emissions (µg; [operational] counts hourly matched), electricity cost (tenths of a cent). */
+    var locationOperational: Long = 0,
+    var marketOperational: Long = 0,
+    var energyCost: Long = 0,
 ) {
     /** E7: mean response time of the tracking, ms. */
     val meanLatency: Int get() = if (trackingRequests == 0L) 0 else (latencySum / trackingRequests).toInt()
@@ -167,6 +171,8 @@ data class TickRecord(
     val pipeline: PipelineRecord? = null,
     /** E7: the logistics system's servers. */
     val services: ServiceRecord? = null,
+    /** B12: demand and the clean energy there for it. */
+    val contract: ContractRecord? = null,
 )
 
 /** E3: memory used (tenths of GB), memory of the running cache servers (GB), hits (per mille of the cacheable requests), memory per kind (tenths of GB). */
@@ -481,7 +487,39 @@ class Simulation private constructor(
         totals.inTime += inTime
         totals.itEnergy += scale * itPower * Units.MILLIWATT_HOURS_PER_WATT_TICK
         totals.facilityEnergy += scale * facilityEnergy
-        totals.operational += scale * Units.emissions(facilityEnergy, intensity)
+        val contractModel = scenario.contract
+        var contractRecord: ContractRecord? = null
+        if (contractModel == null) {
+            totals.operational += scale * Units.emissions(facilityEnergy, intensity)
+        } else {
+            // B12: three ways to count, and the cost.
+            val c = policy.contract
+            val clean = when (c) {
+                Contract.PPA -> if (windSum == 0L) 0L else contractModel.ppaEnergy * contractModel.wind(grid.intensityTenths(tick)) / windSum
+                Contract.HOURLY -> facilityEnergy * contractModel.hourlyShare / 1_000
+                else -> 0L
+            }
+            val uncovered = maxOf(0L, facilityEnergy - clean)
+            totals.operational += Units.emissions(uncovered, intensity)
+            totals.locationOperational += Units.emissions(facilityEnergy, intensity)
+            consumedSoFar += facilityEnergy
+            val covered = when (c) {
+                Contract.GREY -> 0L
+                Contract.CERTIFICATES -> facilityEnergy
+                Contract.PPA -> minOf(facilityEnergy, maxOf(0L, contractModel.ppaEnergy - (consumedSoFar - facilityEnergy)))
+                Contract.HOURLY -> facilityEnergy * contractModel.hourlyShare / 1_000
+            }
+            totals.marketOperational += Units.emissions(facilityEnergy - covered, contractModel.residualMixTenths)
+            // Cost: the grid price for every kWh, the contract's surcharge on its volume (the wind farm's whether used or not).
+            val kWhMilli = facilityEnergy                               // mWh = thousandths of a kWh
+            totals.energyCost += kWhMilli * contractModel.priceTenthsCent / 1_000_000
+            totals.energyCost += when (c) {
+                Contract.PPA -> contractModel.ppaEnergy / (scenario.endTick - scenario.startTick) * c.surchargeTenthsCent / 1_000_000
+                else -> kWhMilli * c.surchargeTenthsCent / 1_000_000
+            }
+            contractRecord = ContractRecord((facilityEnergy / Units.MILLIWATT_HOURS_PER_WATT_TICK).toInt(), (clean / Units.MILLIWATT_HOURS_PER_WATT_TICK).toInt(),
+                totals.energyCost, totals.marketOperational)
+        }
         totals.embodied += embodied
         totals.serverTicks += poweredOn
         totals.capacityTicks += capacity
@@ -502,6 +540,7 @@ class Simulation private constructor(
                 web = webRecord,
                 pipeline = pipelineRecord,
                 services = servicesRecord,
+                contract = contractRecord,
             ),
         )
         tick += 1
@@ -617,6 +656,13 @@ class Simulation private constructor(
             while (capacity < needed) { install(model); capacity += ServerKind.CPU_CURRENT.capacity }
         }
     }
+
+    // B12: the wind farm's share of each tick (by the grid's intensity) and the energy used so far
+
+    private val windSum: Long by lazy {
+        scenario.contract?.let { m -> (scenario.startTick until scenario.endTick).sumOf { m.wind(grid.intensityTenths(it)).toLong() } } ?: 0L
+    }
+    private var consumedSoFar = 0L
 
     // E7: the logistics system
 

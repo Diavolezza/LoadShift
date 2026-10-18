@@ -22,6 +22,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "%1\$@ Wh · %2\$@ s",
     "%@ · grid on average %lld g/kWh" to
         "%1\$@ · Strommix im Mittel %2\$lld g/kWh",
+    "%@ € (%@ €)" to
+        "%1\$@ € (%2\$@ €)",
     "%@, batching %@" to
         "%1\$@, Batching %2\$@",
     "%@, eco %@ above %lld g/kWh" to
@@ -44,6 +46,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "%lld Agents immer an oder nur so viele, wie die wartenden Jobs brauchen; ein Agent auf Abruf startet in 3 Minuten.",
     "%lld agents, %lld environment servers" to
         "%1\$lld Agents, %2\$lld Umgebungsserver",
+    "%lld batch jobs that can wait" to
+        "%lld Batch-Jobs, die warten können",
     "%lld cache servers" to
         "%lld Cache-Server",
     "%lld cache servers, %lld kinds cached" to
@@ -140,6 +144,12 @@ internal val GERMAN: Map<String, String> = mapOf(
         "24 und ein „Mehr“-Knopf",
     "24 per list" to
         "24 pro Liste",
+    "24/7 carbon-free" to
+        "24/7 CO₂-frei",
+    "24/7 carbon-free, 90 % in every hour" to
+        "24/7 CO₂-frei, 90 % in jeder Stunde",
+    "24/7 carbon-free, autoscaling at 80 %" to
+        "24/7 CO₂-frei, Autoscaling bei 80 %",
     "4 servers, cap 70 %, at once" to
         "4 Server, Cap 70 %, sofort",
     "4K on every device (reference)" to
@@ -196,6 +206,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Ein Shop-Assistent: bis zu %lld Fragen pro Sekunde",
     "A simulation game for teaching Green IT: run a data center so that it serves its users reliably and emits as little CO₂ as possible – by switching servers, shifting work in time and, later, writing better software." to
         "Ein Planspiel zu Green IT: Betreibe ein Rechenzentrum so, dass es seine Nutzer zuverlässig bedient und möglichst wenig CO₂ ausstößt – durch Schalten von Servern, Verschieben von Arbeit in der Zeit und später durch bessere Software.",
+    "A supplier covers %@ of every hour with wind, sun and storage, +%@ ct/kWh." to
+        "Ein Anbieter deckt %1\$@ jeder Stunde mit Wind, Sonne und Speicher, +%2\$@ ct/kWh.",
     "A team of 40 developers works on the web shop. Every commit starts the full pipeline – build, unit and system tests and the slow UI tests – on 16 build agents that run day and night. Six test environments – integration, acceptance and four for previews – run with three replicas each, at night and at the weekend too. On Friday at 14:00 the week's release goes out." to
         "Ein Team aus 40 Entwickler:innen arbeitet am Webshop. Jeder Commit startet die ganze Pipeline – Build, Unit- und Systemtests und die langsamen UI-Tests – auf 16 Build-Agents, die Tag und Nacht laufen. Sechs Testumgebungen – Integration, Abnahme und vier für Previews – laufen mit je drei Replikas, auch nachts und am Wochenende. Am Freitag um 14:00 geht das Release der Woche raus.",
     "A video streaming service with its servers in Poland. It is summer: the sun makes the middays cleaner, but in the evening – when most people watch – coal carries the grid. The viewers watch on phones (40 %), laptops (25 %) and TVs (35 %). Today every device gets 4K." to
@@ -206,6 +218,10 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Ein Besuch: rund 12 MB",
     "A week in January. A high-pressure area lies over Germany: hardly any wind, hardly any sun – a dark doldrums. Coal and gas carry the grid, around 500 g CO₂ per kWh. The forecast expects the wind back on day 5. In the data center: the web shop on 40 CPU servers, six batch jobs, and an AI model that must be trained on 4 GPU servers by the end of the week. The previous shift has left everything as it was: all servers on, every job at once, the training at full power." to
         "Eine Woche im Januar. Ein Hochdruckgebiet liegt über Deutschland: kaum Wind, kaum Sonne – eine Dunkelflaute. Kohle und Gas tragen das Netz, rund 500 g CO₂ pro kWh. Die Prognose erwartet den Wind an Tag 5 zurück. Im Rechenzentrum: der Webshop auf 40 CPU-Servern, sechs Batch-Jobs und ein KI-Modell, das bis Ende der Woche auf 4 GPU-Servern trainiert werden muss. Die vorige Schicht hat alles gelassen, wie es war: alle Server an, jeder Job sofort, das Training mit voller Leistung.",
+    "A week of the web shop in Germany: the shop runs with autoscaling at 50 %, six large batch jobs – backups, reloads, billing – start as soon as they arrive. The board has announced a \"green data center\" and asks for a contract that makes the report green. Three offers are on the table: green certificates, a contract with a wind farm, and 24/7 carbon-free energy." to
+        "Eine Woche des Webshops in Deutschland: Der Shop läuft mit Autoscaling bei 50 %, sechs große Batch-Jobs – Backups, Neuladen, Rechnungslauf – starten, sobald sie ankommen. Der Vorstand hat ein „grünes Rechenzentrum“ angekündigt und will einen Vertrag, der den Bericht grün macht. Drei Angebote liegen auf dem Tisch: grüne Zertifikate, ein Vertrag mit einem Windpark und 24/7 CO₂-freier Strom.",
+    "A wind farm delivers as much energy over the week as the data center uses without changes – when the wind blows; what is not used in that hour goes to the grid. +%@ ct for each of its kWh." to
+        "Ein Windpark liefert über die Woche so viel Strom, wie das Rechenzentrum ohne Änderungen verbraucht – wenn der Wind weht; was in der Stunde nicht gebraucht wird, geht ins Netz. +%@ ct für jede seiner kWh.",
     "About 2 % error, which the marketing team accepts – instead of keeping every visitor ID." to
         "Rund 2 % Fehler, die das Marketing akzeptiert – statt jede Besucher-ID aufzubewahren.",
     "About Load Shift" to
@@ -318,6 +334,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Autoscaling bei 50 %, 27 °C",
     "Autoscaling at 70 % (from scenario O4)" to
         "Autoscaling mit 70 % (ab Szenario B4)",
+    "Autoscaling at 80 %" to
+        "Autoscaling bei 80 %",
     "Autoscaling at 80 %, 20 °C" to
         "Autoscaling bei 80 %, 20 °C",
     "Autoscaling at 80 %, 25 °C" to
@@ -478,6 +496,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "CO₂-Intensität des Stroms; darunter die Leistung der drei Teile: Rechenzentrum, Netz und die Geräte der Besucher.",
     "Carbon intensity of the grid; below it the servers on – build agents and test environments – and the UI tests at night." to
         "CO₂-Intensität des Stroms; darunter die laufenden Server – Build-Agents und Testumgebungen – und die UI-Tests in der Nacht.",
+    "Carbon intensity of the grid; below it, depending on the tab, the data center's power and the clean energy of the contract in the same hour, the shop's load or the batch jobs." to
+        "CO₂-Intensität des Stroms; darunter, je nach Tab, die Leistung des Rechenzentrums und der saubere Strom aus dem Vertrag in derselben Stunde, die Last des Shops oder die Batch-Jobs.",
     "Catalog pages" to
         "Katalogseiten",
     "Chatty services" to
@@ -500,6 +520,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Kommunikation ist Arbeit: Jeder entfernte Aufruf wird serialisiert, gesendet und deserialisiert, jede Instanz betreibt ihre Laufzeitumgebung auch ohne Anfrage. Events mit einer lokalen Kopie der Stammdaten sparten zwei Aufrufe pro Anfrage, gRPC mit Protobuf halbiert die Bytes von JSON [S33], und Serverless-Funktionen sparten Instanzen im Leerlauf – aber erst, als niemand sie mehr bei jeder Anfrage aufrief; synchron aufgerufen kosteten sie mehr, als sie sparten. Der modulare Monolith braucht keine Aufrufe zwischen seinen Modulen, aber er skaliert als Ganzes: Er musste die Kapazität für die Routenoptimierung den ganzen Tag bereithalten, während die Optimierung als eigener Service für zehn Minuten wuchs und wieder schrumpfte. Dafür sind Microservices da: entlang unterschiedlicher Anforderungen an die Skalierung schneiden [S34]. Ein Monolith, aus dem nur die Optimierung als eigener Service herausgelöst ist, verbindet beides. Der Cache machte das Tracking überhaupt erst schnell genug; zu lange wiederverwendet, zeigt er den Kund:innen einen LKW, der längst weitergefahren ist.",
     "compared with the reference operator, who buys new servers wherever capacity runs short." to
         "im Vergleich zum Referenzbetreiber, der neue Server kauft, wo die Kapazität knapp wird.",
+    "compared with the reference operator, who buys the grid mix, runs the shop with autoscaling at 50 % and starts every job at once." to
+        "verglichen mit dem Referenzbetreiber, der den Netzstrom kauft, den Shop mit Autoscaling bei 50 % betreibt und jeden Job sofort startet.",
     "compared with the reference operator, who caches nothing." to
         "im Vergleich zum Referenzbetreiber, der nichts cacht.",
     "compared with the reference operator, who keeps the four microservices with REST, synchronous calls and no cache." to
@@ -558,6 +580,12 @@ internal val GERMAN: Map<String, String> = mapOf(
         "CO₂ erwartet: %@",
     "CO₂ from %@" to
         "CO₂ ab %@",
+    "CO₂ hourly matched (kg)" to
+        "CO₂ in der Stunde abgeglichen (kg)",
+    "CO₂ in the report, market-based (kg)" to
+        "CO₂ im Bericht, marktbasiert (kg)",
+    "CO₂ location-based (kg)" to
+        "CO₂ standortbasiert (kg)",
     "CO₂ network (kg)" to
         "CO₂ Netz (kg)",
     "CO₂ per percent of training: %@ kg (reference %@ kg)" to
@@ -568,6 +596,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "CO₂ je Quartal, t – dunkel: Strom, hell: Hardware; rot: Warschau, grün: Paris; schwarzer Strich: Referenz",
     "CO₂ so far" to
         "CO₂ bisher",
+    "CO₂ so far, counted three ways" to
+        "CO₂ bisher, auf drei Arten gezählt",
     "CO₂ visitors' devices (kg)" to
         "CO₂ Geräte der Besucher (kg)",
     "CO₂ vs. reference" to
@@ -648,6 +678,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Jeder Host: %1\$lld GB RAM, %2\$lld Lasteinheiten.",
     "Each job needs servers for some hours and must be finished by its deadline. When it starts, its servers switch on and boot for 30 minutes first; servers without a job are off." to
         "Jeder Job braucht einige Stunden lang Server und muss bis zu seiner Frist fertig sein. Beim Start schalten sich seine Server ein und starten zuerst 30 Minuten lang; Server ohne Job sind aus.",
+    "Each tab has its rules; Apply applies the changes of all tabs." to
+        "Jeder Tab hat seine Regeln; Anwenden wendet die Änderungen aller Tabs an.",
     "Earn a star in scenario %@ first." to
         "Hol dir zuerst einen Stern in Szenario %@.",
     "eco above %lld" to
@@ -658,6 +690,18 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Eco-Modus bei schmutzigem Strom",
     "Eco quality" to
         "Eco-Qualität",
+    "Electricity" to
+        "Strom",
+    "Electricity contract" to
+        "Stromvertrag",
+    "Electricity cost (€)" to
+        "Stromkosten (€)",
+    "Electricity cost so far (reference)" to
+        "Stromkosten bisher (Referenz)",
+    "Electricity cost ≤ +%@" to
+        "Stromkosten ≤ +%@",
+    "Electricity: %@ ct/kWh, the budget may rise by %@" to
+        "Strom: %1\$@ ct/kWh, das Budget darf um %2\$@ steigen",
     "Energy (kWh)" to
         "Energie (kWh)",
     "Energy (MWh)" to
@@ -794,8 +838,16 @@ internal val GERMAN: Map<String, String> = mapOf(
         "GPU-Server, die jetzt laufen",
     "Great Britain" to
         "Großbritannien",
+    "Green certificates" to
+        "Grüne Zertifikate",
+    "green certificates (guarantees of origin)" to
+        "grüne Zertifikate (Herkunftsnachweise)",
+    "Green certificates made the report zero and changed nothing in the grid: the hydro plants behind them run anyway. In the report the grey contract even looked worse than the grid's average – the residual mix is what is left after others have claimed the green part [S36]. The wind farm adds clean energy, but only while the wind blows: moving the batch jobs into the windy hours let the data center use more of it. 24/7 carbon-free energy covers every hour – and it was affordable only once the data center needed less energy. Google reports 66 % carbon-free energy in the hour across its data centers [S38]; the GHG Protocol's revision of Scope 2 moves the market-based report towards matching in the hour [S37]." to
+        "Grüne Zertifikate machten den Bericht zu null und änderten nichts im Netz: Die Wasserkraftwerke dahinter laufen ohnehin. Im Bericht sah der Graustrom sogar schlechter aus als der Durchschnitt des Netzes – der Residualmix ist das, was übrig bleibt, nachdem andere den grünen Teil für sich beansprucht haben [S36]. Der Windpark bringt sauberen Strom dazu, aber nur, solange der Wind weht: Die Batch-Jobs in die windigen Stunden zu legen, ließ das Rechenzentrum mehr davon nutzen. 24/7 CO₂-freier Strom deckt jede Stunde – und war erst bezahlbar, als das Rechenzentrum weniger Energie brauchte. Google meldet 66 % CO₂-freien Strom in der Stunde über seine Rechenzentren [S38]; die Überarbeitung von Scope 2 im GHG Protocol führt den marktbasierten Bericht hin zum Abgleich in der Stunde [S37].",
     "Green IT – from code to data center" to
         "Green IT – vom Code bis zum Rechenzentrum",
+    "Green on paper" to
+        "Grün auf dem Papier",
     "Green pipeline" to
         "Grüne Pipeline",
     "greenest hours" to
@@ -812,6 +864,10 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Grüße und Dank",
     "Grid data: Electricity Maps, Grid Review 2025 (life-cycle, imports included)" to
         "Netzdaten: Electricity Maps, Grid Review 2025 (Lebenszyklus, Importe eingerechnet)",
+    "Grid mix, autoscaling at 50 %, jobs at once (reference)" to
+        "Netzstrom, Autoscaling bei 50 %, Jobs sofort (Referenz)",
+    "grid mix, no contract" to
+        "Netzstrom, kein Vertrag",
     "Grid now" to
         "Netz jetzt",
     "grid on average %lld g/kWh" to
@@ -822,6 +878,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Wachsende Daten",
     "gRPC with Protobuf" to
         "gRPC mit Protobuf",
+    "Guarantees of origin from hydro plants that have run for decades, +%@ ct/kWh." to
+        "Herkunftsnachweise von Wasserkraftwerken, die seit Jahrzehnten laufen, +%@ ct/kWh.",
     "Half of the weight was a video that nobody had asked to watch. Then the images: a modern format, in the size the screen needs, and only when the visitor scrolls to them. Two changes looked green and made the page slow: converting the images on every request instead of once, and lazy loading the first image as well – the LCP waits for exactly that image [S30]. Light pages are fast pages; here the two goals point the same way. The energy per GB is a model value: it spreads the energy of networks and devices over the data they move [S28], and it is disputed – a network does not need much more energy for one more gigabyte. It shows what heavy pages cause on average, not what a single byte costs. Not counted here: phones replaced early because the web has become too heavy for them." to
         "Die Hälfte des Gewichts war ein Video, das niemand sehen wollte. Dann die Bilder: ein modernes Format, in der Größe, die der Bildschirm braucht, und erst, wenn der Besucher zu ihnen scrollt. Zwei Änderungen sahen grün aus und machten die Seite langsam: die Bilder bei jedem Request umzuwandeln statt einmal, und auch das erste Bild lazy zu laden – der LCP wartet genau auf dieses Bild [S30]. Leichte Seiten sind schnelle Seiten; hier zeigen beide Ziele in dieselbe Richtung. Die Energie pro GB ist ein Modellwert: Sie verteilt die Energie von Netzen und Geräten auf die Daten, die sie bewegen [S28], und sie ist umstritten – ein Netz braucht für ein Gigabyte mehr kaum mehr Energie. Sie zeigt, was schwere Seiten im Mittel verursachen, nicht, was ein einzelnes Byte kostet. Nicht gezählt: Smartphones, die früher ersetzt werden, weil das Web für sie zu schwer geworden ist.",
     "Hardware renewal" to
@@ -846,6 +904,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Hosts in Benutzung",
     "Hosts in use, RAM, warnings for hosts that will be too busy, the VM kinds with their daily profiles." to
         "Hosts in Benutzung, RAM, Warnungen für Hosts, die zu voll werden, die VM-Arten mit ihren Tagesprofilen.",
+    "Hourly matched (what the stars count)" to
+        "In der Stunde abgeglichen (zählt für die Sterne)",
     "Hours with data too old" to
         "Stunden mit zu alten Daten",
     "How the work of an algorithm grows with the amount of data n, written in Big O notation: O(1) stays the same, O(n) grows in step with the data, O(n²) with its square. For small data the difference hardly shows; for growing data it decides." to
@@ -866,6 +926,10 @@ internal val GERMAN: Map<String, String> = mapOf(
         "In einem verteilten System ist Kommunikation Arbeit: Jeder Aufruf wird serialisiert, gesendet, empfangen und deserialisiert, und jede Instanz betreibt ihre Laufzeitumgebung auch ohne Anfrage. Weniger und schlankere Aufrufe, Daten, die schon da sind, und ein passender Schnitt sparen Energie – solange die Kund:innen noch sehen, wo ihr LKW wirklich ist.",
     "in progress: %lld of %lld story points left" to
         "in Arbeit: noch %1\$lld von %2\$lld Story Points",
+    "In the report" to
+        "Im Bericht",
+    "In the report (market-based)" to
+        "Im Bericht (marktbasiert)",
     "In time" to
         "In der Zeit",
     "In time: %@" to
@@ -930,6 +994,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Der Ort spart hier mehr als die Zeit: Keine Stunde im deutschen Netz kommt an Norwegens Wasserkraft heran. Schau auf die Energie: Sie stieg – auch die Übertragungen brauchen Energie –, und trotzdem sank das CO₂. Location Shifting spart CO₂, nicht Energie. Die Trainings waren die besten Kandidaten – Stunden Rechnen für wenig Daten. Die Videos waren die schlechtesten: 30 Terabyte durchs Netz kosten mehr CO₂, als Oslo spart, und die Übertragung dauert fast einen Arbeitstag. Die Preisberechnung braucht ihre Datenbank in Frankfurt und verpasst fern von ihr die Frist; Kundendaten dürfen laut Vertrag das Land nicht verlassen. Wie viel Energie ein Terabyte im Netz braucht, ist unsicher – Schätzungen liegen um den Faktor zehn und mehr auseinander [S24] –, aber die Lehre bleibt: Daten haben Gewicht. Und sauberer Strom ist nicht unbegrenzt: Ziehen alle nach Norwegen, wird er dort knapp. Location Shifting wirkt am besten mit Kapazität, die ohnehin da ist.",
     "Location Shifting: let the work run where the electricity is clean. But work does not travel alone – its data must go along. Moving terabytes takes hours and energy in the network; a job that talks to a database all the time becomes slow far away from it; and some data may not leave the country at all. Move what needs much computing and little data." to
         "Location Shifting: Lass die Arbeit dort laufen, wo der Strom sauber ist. Aber Arbeit reist nicht allein – ihre Daten müssen mit. Terabytes zu verschieben dauert Stunden und kostet Energie im Netz; ein Job, der ständig mit einer Datenbank spricht, wird fern von ihr langsam; und manche Daten dürfen das Land gar nicht verlassen. Verschiebe, was viel rechnet und wenig Daten hat.",
+    "Location-based (the grid's average)" to
+        "Standortbasiert (Durchschnitt des Netzes)",
     "Location: for every job its servers, duration, time window and data – and where it runs. Decide before the start; above it the batch rule for both sites." to
         "Standort: für jeden Job seine Server, Dauer, Zeitfenster und Daten – und wo er läuft. Entscheide vor dem Start; darüber die Batch-Regel für beide Standorte.",
     "Log at INFO instead of DEBUG in production" to
@@ -942,6 +1008,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Das Marketing braucht die Besucherzahlen; jeder Weg liefert sie.",
     "Master data (customers, trucks)" to
         "Stammdaten (Kunden, LKWs)",
+    "Matching electricity consumption with carbon-free generation in the same hour and the same grid, instead of buying certificates for the year. The GHG Protocol knows two ways to report Scope 2: location-based (the grid's average) and market-based (contracts and certificates); only matching in the hour shows what the electricity really was." to
+        "Den Stromverbrauch mit CO₂-freier Erzeugung in derselben Stunde und im selben Netz abgleichen, statt Zertifikate für das Jahr zu kaufen. Das GHG Protocol kennt zwei Arten, Scope 2 zu berichten: standortbasiert (der Durchschnitt des Netzes) und marktbasiert (Verträge und Zertifikate); nur der Abgleich in der Stunde zeigt, was der Strom wirklich war.",
     "materialized view" to
         "materialisierte Sicht",
     "Materialized view for the sales dashboard" to
@@ -1042,6 +1110,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Noch nicht übernommen – aktiv: %@",
     "not done" to
         "nicht fertig",
+    "Not every green is equally green. Certificates change the report, not the electricity. A wind farm delivers clean energy only while the wind blows – the work done in those hours is clean. 24/7 carbon-free energy covers every hour, but it costs. Count in the hour, not on paper." to
+        "Nicht jedes Grün ist gleich grün. Zertifikate ändern den Bericht, nicht den Strom. Ein Windpark liefert sauberen Strom nur, solange der Wind weht – die Arbeit in diesen Stunden ist sauber. 24/7 CO₂-freier Strom deckt jede Stunde, aber er kostet. Zähle in der Stunde, nicht auf dem Papier.",
     "Not every question needs the largest model – some need no model at all. Choose for each kind of question who answers it, and keep the quality of the answers up. A GPU answers several questions almost as fast as one: batching shares the work, but every answer waits a little." to
         "Nicht jede Frage braucht das größte Modell – manche gar keins. Wähle für jede Art von Frage, wer sie beantwortet, und halte die Qualität der Antworten hoch. Eine GPU beantwortet mehrere Fragen fast so schnell wie eine: Batching teilt die Arbeit, aber jede Antwort wartet ein wenig.",
     "Not made" to
@@ -1174,6 +1244,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Leistung",
     "Power cap" to
         "Power Cap",
+    "Power of the data center (line) and clean energy from the contract in the same hour (green), kW" to
+        "Leistung des Rechenzentrums (Linie) und sauberer Strom aus dem Vertrag in derselben Stunde (grün), kW",
     "Power, kW – blue: data center, amber: network, violet: visitors' devices" to
         "Leistung, kW – blau: Rechenzentrum, gelb: Netz, violett: Geräte der Besucher",
     "Precompute the shipping costs" to
@@ -1356,6 +1428,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "SLA mindestens 99 % an jedem Standort und weniger CO₂ als die Referenz",
     "SLA at least 99 %, at most 0.5 ‰ stale answers and less CO₂ than the reference" to
         "SLA mindestens 99 %, höchstens 0,5 ‰ veraltete Antworten und weniger CO₂ als die Referenz",
+    "SLA at least 99 %, every job by its deadline, electricity cost at most 10 % above the reference and less CO₂ than the reference, counted in the hour" to
+        "SLA mindestens 99 %, jeder Job bis zu seiner Frist, Stromkosten höchstens 10 % über der Referenz und weniger CO₂ als die Referenz, in der Stunde gezählt",
     "SLA at least 99 %, every job by its deadline, the training done and less CO₂ than the reference" to
         "SLA mindestens 99 %, jeder Job bis zu seiner Frist, das Training fertig und weniger CO₂ als die Referenz",
     "SLA ≥ %@ at each site" to
@@ -1440,6 +1514,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Die Batch-Regel: wählen, einstellen, übernehmen. Darunter die Jobs mit ihren Fristen und was die Regel für sie geplant hat.",
     "The biggest saving today first" to
         "Die größte Einsparung von heute zuerst",
+    "The board wants a green data center. The report counts contracted green energy as zero; the stars count only clean energy that is there in the same hour. The cost of electricity may rise by at most %@." to
+        "Der Vorstand will ein grünes Rechenzentrum. Der Bericht zählt vertraglich grünen Strom als null; die Sterne zählen nur sauberen Strom, der in derselben Stunde da ist. Die Stromkosten dürfen um höchstens %@ steigen.",
     "The capacity rule: all on, a fixed number, or autoscaling with a target utilization and, if you want, a minimum for a time window. Choose, set, apply. Below it the situation right now." to
         "Die Kapazitätsregel: alle an, eine feste Anzahl oder Autoscaling mit Zielauslastung und auf Wunsch einem Minimum für ein Zeitfenster. Wählen, einstellen, übernehmen. Darunter die Lage gerade jetzt.",
     "The carbon intensity with the forecast, and below it one row per job – light: the time between arrival and deadline, outlined: planned, filled: running or done." to
@@ -1482,10 +1558,14 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Das Spiel startet pausiert. Uhr und Geschwindigkeit – Pause, 1×, 4×, 16× – und darunter deine Ziele: die Bewertung der Zuschauer und weniger CO₂.",
     "The game starts paused. Clock and speed – pause, 1×, 4×, 16×, 64× – and below it your goals: feedback within 20 minutes, a tested release and less CO₂." to
         "Das Spiel startet pausiert. Uhr und Tempo – Pause, 1×, 4×, 16×, 64× – und darunter deine Ziele: Rückmeldung innerhalb von 20 Minuten, ein getestetes Release und weniger CO₂.",
+    "The game starts paused. Clock and speed – pause, 1×, 4×, 16×, 64× – and below it your goals: SLA, deadlines, electricity cost and less CO₂, counted in the hour." to
+        "Das Spiel startet pausiert. Uhr und Tempo – Pause, 1×, 4×, 16×, 64× – und darunter deine Ziele: SLA, Fristen, Stromkosten und weniger CO₂, in der Stunde gezählt.",
     "The GPU servers wait up to this long to answer several questions together: the model's weights are read once for all of them, so a fuller batch needs less energy per answer – but every answer waits that long." to
         "Die GPU-Server warten bis zu dieser Zeit, um mehrere Fragen zusammen zu beantworten: Die Gewichte des Modells werden für alle einmal gelesen, ein vollerer Batch braucht also weniger Energie pro Antwort – aber jede Antwort wartet so lange.",
     "The GPU servers: dark ones train, the violet bar shows their power." to
         "Die GPU-Server: dunkle trainieren, der violette Balken zeigt ihre Leistung.",
+    "The grid as it is, %@ ct/kWh." to
+        "Das Netz, wie es ist, %@ ct/kWh.",
     "The hall: 40 CPU servers for the shop and the batch jobs (at most 16 for batch), 4 GPU servers for the training – blue: web requests, amber: batch jobs, violet: training." to
         "Die Halle: 40 CPU-Server für den Shop und die Batch-Jobs (höchstens 16 für Batch), 4 GPU-Server für das Training – blau: Web-Requests, gelb: Batch-Jobs, violett: Training.",
     "The hall: the first racks hold the build agents, the others the test environments; the blue bar shows how busy an agent is." to
@@ -1544,6 +1624,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Dasselbe, Agents auf Abruf mit Remote-Cache",
     "The same, agents on demand without a remote cache" to
         "Dasselbe, Agents auf Abruf ohne Remote-Cache",
+    "The same, autoscaling at 80 %" to
+        "Dasselbe, Autoscaling bei 80 %",
     "The same, AVIF in the right size, lazy loading below the fold" to
         "Dasselbe, AVIF in passender Größe, Lazy Loading unterhalb des ersten Bildschirms",
     "The same, batching 2 s" to
@@ -1620,6 +1702,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Drei Replikas pro Service wie in Produktion, damit sich Ausfallsicherheit testen lässt.",
     "Three tabs – shop, batch, training – each with its rules. Apply applies all of them; an amber note shows changes not applied yet." to
         "Drei Tabs – Shop, Batch, Training – jeder mit seinen Regeln. Anwenden wendet alle an; ein gelber Hinweis zeigt Änderungen, die noch nicht angewendet sind.",
+    "Three tabs: the electricity contract with the CO₂ counted three ways, the shop's capacity rule and the batch rule." to
+        "Drei Tabs: der Stromvertrag mit dem CO₂ auf drei Arten gezählt, die Kapazitätsregel des Shops und die Batch-Regel.",
     "Thursday" to
         "Do",
     "to %@" to
@@ -1764,6 +1848,12 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Wohin sie geht, ist noch nicht gemessen.",
     "Whole year" to
         "Jahresmittel",
+    "Wind farm contract" to
+        "Windpark-Vertrag",
+    "wind farm contract (PPA), annual volume" to
+        "Windpark-Vertrag (PPA), Jahresmenge",
+    "Wind farm contract, jobs in the greenest hours" to
+        "Windpark-Vertrag, Jobs in den grünsten Stunden",
     "With events the routes service keeps its own copy of customers and trucks; a change arrives a few seconds later." to
         "Mit Events hält der Routen-Service eine eigene Kopie von Kunden und LKWs; eine Änderung kommt ein paar Sekunden später an.",
     "with every commit" to
@@ -1792,6 +1882,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Dein Batch-Cluster: graue Server sind aus, hellblaue starten gerade, der orange Balken zeigt einen Server, der an einem Job arbeitet.",
     "Your racks: grey servers are off, light blue ones are booting, the blue bar shows how busy a server is." to
         "Deine Racks: graue Server sind aus, hellblaue starten gerade, der blaue Balken zeigt, wie ausgelastet ein Server ist.",
+    "Your racks: grey servers are off, the blue bar shows web requests, the amber bar batch jobs." to
+        "Deine Racks: Graue Server sind aus, der blaue Balken zeigt Web-Requests, der gelbe Batch-Jobs.",
     "≤ %lld hosts" to
         "≤ %lld Hosts",
 )

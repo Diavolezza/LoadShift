@@ -333,7 +333,12 @@ private fun SideCard(scenario: Scenario, texts: ScenarioTexts, onStart: () -> Un
             val inference = scenario.inference
             val pipeline = scenario.pipeline
             val services = scenario.services
-            if (services != null) {
+            val contract = scenario.contract
+            if (contract != null) {
+                Fact(t("%lld servers, %lld load units each", scenario.serverCount, perServer))
+                Fact(t("%lld batch jobs that can wait", scenario.batchJobs.size))
+                Fact(t("Electricity: %@ ct/kWh, the budget may rise by %@", Format.number(contract.priceTenthsCent / 10.0, 1), Format.wholePercent(contract.budgetPermille - 1_000)))
+            } else if (services != null) {
                 Fact(t("A logistics system: four microservices, two external providers"))
                 Fact(t("Up to %lld tracking requests a second", services.peakRate))
                 Fact(t("%lld servers", scenario.serverCount))

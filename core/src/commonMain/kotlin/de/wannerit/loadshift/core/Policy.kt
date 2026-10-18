@@ -84,6 +84,8 @@ data class Policy(
     val pipeline: PipelineConfig = PipelineConfig(),
     /** E7: how the logistics system's services are cut and talk to each other. */
     val services: ServiceConfig = ServiceConfig(),
+    /** B12: the electricity contract. */
+    val contract: Contract = Contract.GREY,
 ) {
     companion object {
         /**

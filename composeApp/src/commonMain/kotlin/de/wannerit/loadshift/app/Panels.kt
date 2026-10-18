@@ -47,12 +47,13 @@ fun ControlPanel(game: GameController, modifier: Modifier = Modifier) {
         modifier.background(Palette.panel).verticalScroll(rememberScrollState()).padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        if (game.isCapstone) {
+        if (game.isTabbed) {
             CapstoneTabs(game)
-            when (game.panelTab) {
-                0 -> { CapacityRules(game); NowBox(game) }
-                1 -> BatchPanel(game)
-                else -> TrainingPanel(game)
+            when (game.tabs.getOrElse(game.panelTab) { game.tabs.first() }) {
+                GameController.PanelTab.CONTRACT -> ContractPanel(game)
+                GameController.PanelTab.SHOP -> { CapacityRules(game); NowBox(game) }
+                GameController.PanelTab.BATCH -> BatchPanel(game)
+                GameController.PanelTab.TRAINING -> TrainingPanel(game)
             }
         } else if (Control.BATCH_BY_HAND in game.scenario.controls || Control.BATCH_RULES in game.scenario.controls) {
             BatchPanel(game)
@@ -98,12 +99,19 @@ fun ControlPanel(game: GameController, modifier: Modifier = Modifier) {
 /** O11: one tab per kind of work; one draft for all of them, applied together. */
 @Composable
 private fun CapstoneTabs(game: GameController) {
-    Txt(t("Three kinds of work share the data center. Each tab has its rules; Apply applies the changes of all three."), Type.style(14, color = Palette.secondary))
+    Txt(if (game.isCapstone) t("Three kinds of work share the data center. Each tab has its rules; Apply applies the changes of all three.")
+        else t("Each tab has its rules; Apply applies the changes of all tabs."), Type.style(14, color = Palette.secondary))
     Row(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Palette.background).padding(4.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        for ((i, title) in listOf(t("Shop"), t("Batch"), t("Training")).withIndex()) {
+        for ((i, tab) in game.tabs.withIndex()) {
+            val title = when (tab) {
+                GameController.PanelTab.CONTRACT -> t("Electricity")
+                GameController.PanelTab.SHOP -> t("Shop")
+                GameController.PanelTab.BATCH -> t("Batch")
+                GameController.PanelTab.TRAINING -> t("Training")
+            }
             val chosen = game.panelTab == i
             Box(
                 Modifier.weight(1f).clip(RoundedCornerShape(9.dp)).background(if (chosen) Palette.accent else Color.Transparent)

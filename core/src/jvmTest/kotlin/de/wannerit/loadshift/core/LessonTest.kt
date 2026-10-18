@@ -915,4 +915,35 @@ class LessonTest {
         assertEquals(0, stars("M J S 60 300 f"))
         assertEquals(0, stars("L J S 0 0 -"))
     }
+
+    @Test fun scenario12GreenOnPaper() {
+        val scenario = Scenario.GREEN_ON_PAPER
+        val reference = Simulation.reference(scenario)
+        fun run(contract: Contract, auto: Boolean, greenest: Boolean) = Simulation.replay(scenario,
+            Policy(if (auto) CapacityMode.Autoscale(800) else CapacityMode.Autoscale(500), if (greenest) BatchMode.Greenest else BatchMode.Asap, contract = contract))
+        val runs = Contract.entries.flatMap { c -> listOf(false, true).flatMap { a -> listOf(false, true).map { g ->
+            "${c.name.lowercase()}${if (a) ", auto 80" else ""}${if (g) ", greenest" else ""}" to run(c, a, g) } } }
+        val lines = mutableListOf(title(scenario), HEADER + "  location kg  market kg  cost €  budget %")
+        val refCost = reference.totals.energyCost
+        for ((name, sim) in listOf("reference: grey, auto 50, asap" to reference) + runs) {
+            val t = sim.totals
+            lines += line(name, t, reference.totals) + "  " + "%.0f".format(t.locationOperational / 1e9) + "  " + "%.0f".format(t.marketOperational / 1e9) +
+                "  " + "%.0f".format(t.energyCost / 1_000.0) + "  " + "%.0f".format(t.energyCost * 100.0 / refCost) + "  " + "★".repeat(scenario.stars(t, reference.totals))
+        }
+        lines += "  reference facility energy mWh: " + reference.totals.facilityEnergy
+        report(12, lines)
+        val byName = runs.toMap()
+        fun stars(name: String) = scenario.stars(byName.getValue(name).totals, reference.totals)
+        // Certificates: the report shows zero, the CO₂ in the hour does not change – no star.
+        assertEquals(0, stars("certificates"))
+        assertEquals(0L, byName.getValue("certificates").totals.marketOperational)
+        // Efficiency alone, or the wind farm alone: one star; the wind farm with the batch jobs in the windy hours: two.
+        assertEquals(1, stars("grey, auto 80"))
+        assertEquals(1, stars("ppa"))
+        assertEquals(2, stars("ppa, greenest"))
+        assertEquals(2, stars("ppa, auto 80, greenest"))
+        // 24/7 carbon-free energy: three stars – affordable only with less energy; without, over budget.
+        assertEquals(3, stars("hourly, auto 80"))
+        assertEquals(0, stars("hourly"))
+    }
 }

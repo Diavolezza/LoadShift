@@ -41,6 +41,9 @@ enum class Control {
     /** E7: cut, protocol, master data, caches for external calls, serverless. */
     SERVICES,
 
+    /** B12: the electricity contract. */
+    CONTRACT,
+
     /** Scenario 6: the inlet temperature setpoint of the cooling. */
     COOLING,
 
@@ -144,6 +147,8 @@ data class Scenario(
     val pipeline: PipelineModel? = null,
     /** E7: the logistics system's services. */
     val services: ServiceModel? = null,
+    /** B12: electricity contracts and three ways to count CO₂ (operational counts hourly matched). */
+    val contract: ContractModel? = null,
 ) {
     /** Expected interactive work at a tick: the web load or the VMs' profiles (what an operator can plan with). */
     fun expectedDemand(tick: Int): Int = interactive.expected(tick) + vms.sumOf { it.expectedMilli(tick) } / 1_000
@@ -166,6 +171,7 @@ data class Scenario(
             (staleLimit == null || totals.stalePerTenThousand <= staleLimit) &&
             (web == null || totals.meanLcp <= web.lcpLimit) &&
             (services == null || totals.meanLatency <= services.latencyLimit) &&
+            (contract == null || totals.energyCost * 1_000 <= reference.energyCost * contract.budgetPermille) &&
             (pipeline == null || totals.meanFeedback <= pipeline.feedbackLimit * 10) &&
             (inference == null || (totals.meanAnswerQuality >= inference.qualityTarget && totals.answersOnTime >= inference.onTimeTarget))
         val reduction = rules && totals.emissions * 1_000 <= reference.emissions * (1_000 - goals.reduction)
@@ -387,13 +393,40 @@ data class Scenario(
         )
 
         /**
+         * Scenario 12, "Green on paper" (shown as 11, before the capstone): a week of the web shop in Germany, with batch
+         * jobs that can wait. The board wants "green IT"; the electricity contract decides what the report shows, but
+         * only clean energy in the same hour lowers the CO₂ the stars count. The budget for electricity may rise by 10 %.
+         */
+        val GREEN_ON_PAPER = Scenario(
+            number = 12, label = "11", unlockAfter = 10,
+            title = "Green on paper", setting = GridSetting(GridRegion.GERMANY, Season.AUTUMN), days = 7,
+            weather = WeatherMode.Days(listOf(1_150, 650, 1_300, 800, 1_250, 600, 1_000, 1_000)),
+            seed = 120, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 40)),
+            interactive = InteractiveLoad(peak = 240),
+            controls = setOf(Control.CONTRACT, Control.CAPACITY_RULES, Control.BATCH_RULES),
+            initialPolicy = Policy(CapacityMode.Autoscale(500), BatchMode.Asap),
+            referencePolicy = Policy(CapacityMode.Autoscale(500), BatchMode.Asap),
+            goals = StarGoals(600, SpecialGoal.Reduction(750)),
+            batchLimit = 12,
+            batchJobs = listOf(
+                BatchJobSpec.of("Full backup", 8, 14, GameTime.at(0, 1), GameTime.at(2, 23)),
+                BatchJobSpec.of("Data warehouse reload", 10, 12, GameTime.at(1, 2), GameTime.at(3, 20)),
+                BatchJobSpec.of("Recommendations", 8, 16, GameTime.at(2, 6), GameTime.at(4, 22)),
+                BatchJobSpec.of("Billing run", 12, 10, GameTime.at(3, 0), GameTime.at(5, 12)),
+                BatchJobSpec.of("Search index", 8, 10, GameTime.at(4, 6), GameTime.at(6, 18)),
+                BatchJobSpec.of("Full backup", 8, 14, GameTime.at(5, 1), GameTime.at(6, 23)),
+            ),
+            contract = ContractModel(ppaEnergy = 2_038_948_500L),
+        )
+
+        /**
          * Scenario 11, "Dark doldrums": a week in a German winter with hardly any wind or sun – until the wind returns
          * on day 6. Everything together: the web shop the batch jobs (three of them can
          * wait for the wind, three cannot) and an AI training due at the end of the week. Until day 4, 12:00 the
          * forecast expects the wind a day early; a plan made with it puts the waiting jobs into a still dirty day.
          */
         val DARK_DOLDRUMS = Scenario(
-            number = 11, title = "Dark doldrums", setting = GridSetting(GridRegion.GERMANY, Season.WINTER), days = 7,
+            number = 11, label = "12", unlockAfter = 12, title = "Dark doldrums", setting = GridSetting(GridRegion.GERMANY, Season.WINTER), days = 7,
             // Day 8 (after the week) is calm again: the forecast that sees the weather a day early shows it on day 7.
             weather = WeatherMode.Days(listOf(1_300, 1_400, 1_450, 1_400, 1_350, 600, 450, 1_300)),
             forecastMiss = ForecastMiss(shift = -GameTime.TICKS_PER_DAY, revisedAt = GameTime.at(3, 12).tick),
@@ -626,6 +659,6 @@ data class Scenario(
             services = ServiceModel(),
         )
 
-        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, OLD_IRON, TRAINING_RUN, ECO_MODE, TWO_SITES, DARK_DOLDRUMS, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS, RIGHT_SIZED_AI, DATA_DIET, GREEN_PIPELINE, CHATTY_SERVICES)
+        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, OLD_IRON, TRAINING_RUN, ECO_MODE, TWO_SITES, GREEN_ON_PAPER, DARK_DOLDRUMS, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS, RIGHT_SIZED_AI, DATA_DIET, GREEN_PIPELINE, CHATTY_SERVICES)
     }
 }

@@ -337,7 +337,8 @@ Engineering track opens after scenario 1, because it builds on the SCI per reque
 | 8 | Training run | Germany, spring (calm, windy, calm) | 3 days | GPU servers in parallel, power cap, schedule (without a break or greenest hours) | A model needs a fixed amount of GPU work by the end of day 3. The greenest hours move the work into wind and sun; a power cap saves energy for a little time [S7]; fewer servers waste less time waiting for each other. A pause costs a checkpoint load (G3, G6). Term: Carbon-Aware Training (Power Capping). |
 | 9 | Eco mode | Poland, summer | 2 days | highest quality per device (4K, HD, SD), eco mode with threshold and eco quality | A streaming service: phones 40 %, laptops 25 %, TVs 35 %; 4K needs four times the work of HD. HD on phones and laptops costs hardly any rating; an eco mode lowers TVs to HD while the grid is dirty – in the evening, when most watch. The viewers' rating must stay at 93 % (G7). Term: Demand Shaping. |
 | 10 | Two sites | Frankfurt and Oslo, autumn | 3 days | where each job runs (before the start), batch rule for both sites | Ten batch jobs; Oslo's grid emits a tenth of Frankfurt's, but has only 8 servers. A moved job needs its data there first: the transfer takes hours and network energy in the German grid. Move what computes much and has little data (trainings, reports, the search index); the product videos (30 TB) cost more in the network than Oslo saves, the price calculation talks to the live database in Frankfurt and takes three times as long far from it, customer data must stay in Germany. Location saves CO₂, not energy (G8, D23). Term: Location Shifting. |
-| 11 | Dark doldrums | Germany, winter, windless until day 6 | 7 days | all: capacity rule for the shop, batch rule, training (servers, cap, schedule) – in tabs | Every hour is dirty, so shifting within the day gains nothing. What remains: using less (autoscaling, independent of the weather) and waiting for days – the training (due at the end of the week) and three of six batch jobs can wait for the wind, the others cannot. The forecast expects the wind a day early until day 4, 12:00; plans made with it must be made again. Each lever alone gives one star, two give two, all three (with the plan made again and the training capped) three (G1–G4, D24). Term: Carbon Awareness. |
+| 12 (shown as 11) | Green on paper | Germany, autumn, windy and calm days | 7 days | electricity contract (grid mix, green certificates, wind farm PPA with the week's volume, 24/7 carbon-free 90 % in every hour), capacity rule, batch rule | The same data center counted three ways: location-based, market-based as in the report (certificates and contracted volumes count zero, the rest at the residual mix [S36]) and matched in the hour – the stars count the last. Certificates make the report zero and change nothing; the wind farm helps in windy hours, more so with the batch jobs moved there; 24/7 carbon-free energy covers every hour but is affordable only with less energy (budget +10 %) (iSAQB GREEN, LZ 2-1, 2-2, 7-3; GHG Protocol Scope 2 [S37]). Term: 24/7 Carbon-Free Energy. |
+| 11 (shown as 12) | Dark doldrums | Germany, winter, windless until day 6 | 7 days | all: capacity rule for the shop, batch rule, training (servers, cap, schedule) – in tabs | Every hour is dirty, so shifting within the day gains nothing. What remains: using less (autoscaling, independent of the weather) and waiting for days – the training (due at the end of the week) and three of six batch jobs can wait for the wind, the others cannot. The forecast expects the wind a day early until day 4, 12:00; plans made with it must be made again. Each lever alone gives one star, two give two, all three (with the plan made again and the training capped) three (G1–G4, D24). Term: Carbon Awareness. |
 
 **Scenario 5 in more detail.** Ten hosts (current CPU servers with RAM as a second capacity) and about 24 VMs of
 the web shop, each with a RAM size and a daily CPU profile: shop front ends peak in the evening, batch VMs at
@@ -959,6 +960,32 @@ not energy.
 | on demand, cache, TIA, nightly, every 30 minutes | −85.3 % | 22.5 min | 0 |
 | on demand, cache, TIA, UI tests never | −81.6 % | 7.5 min | 0 (release) |
 
+**As built in step 5, part 11** (scenario 12, "Green on paper", shown as B11 before the capstone, which is now B12;
+the numbers stay so that saved stars keep their scenario):
+
+- Core: `ContractModel` and `Policy.contract`. Per tick: location-based emissions (facility energy × grid intensity);
+  the clean energy of the contract in that tick (PPA: the week's volume – the reference's consumption – spread over the
+  ticks by the wind, here `(max(0, 480 g − intensity))²`; 24/7: 90 % of the consumption; certificates: none); the
+  operational emissions count only the energy not covered in the same tick ("hourly matched"); market-based emissions
+  count contracted volumes (certificates: all; PPA: up to its volume; 24/7: 90 %) as zero and the rest at the residual
+  mix of 650 g/kWh (game value; Germany's residual mix is about twice its average [S36]). Cost: 25 ct/kWh plus the
+  contract's surcharge (certificates +0.3 ct per kWh used, PPA +1.5 ct per kWh of its volume, 24/7 +4 ct per kWh
+  used); the first star needs the cost within +10 % of the reference's.
+- App: tabs generalized (electricity, shop, batch); contract panel with the CO₂ counted three ways and the cost so far;
+  the lower lane follows the tab (power and clean energy in the same hour, load, jobs); "in the report" in the top bar.
+- Goals ★★ −60 %, ★★★ −75 %.
+
+| Contract, capacity, batch | CO₂ in the hour | In the report | Cost | Stars |
+|---|---:|---:|---:|---:|
+| grid mix, autoscaling 50 %, at once (reference) | – | 1,325 kg | 100 % | – |
+| certificates | ±0 % | 0 kg | 101 % | 0 |
+| grid mix, autoscaling 80 % | −10.4 % | 1,175 kg | 89 % | ★ |
+| wind farm | −55.2 % | 0 kg | 106 % | ★ |
+| wind farm, greenest hours | −63.9 % | 0 kg | 106 % | ★★ |
+| wind farm, autoscaling 80 %, greenest hours | −70.6 % | 0 kg | 95 % | ★★ |
+| 24/7 carbon-free | −80.8 % | 133 kg | 116 % | 0 (budget) |
+| 24/7 carbon-free, autoscaling 80 % | −81.8 % | 118 kg | 103 % | ★★★ |
+
 **As built in step 5, part 10** (E7, "Chatty services"):
 
 - Core: `ServiceModel` and `ServiceConfig`. Tracking requests follow the daily curve, 15,000 a second at the peak.
@@ -1064,3 +1091,6 @@ not energy.
 | S33 | K. Maeda: *Performance evaluation of object serialization libraries in XML, JSON and binary formats*, Second International Conference on Digital Information and Communication Technology and its Applications, 2012 (Protobuf about half the size of JSON, faster to serialize and deserialize). |
 | S34 | N. Bjørndal, M. Mazzara, A. Bucchiarone, N. Dragoni, S. Dustdar: *Migration from Monolith to Microservices: Benchmarking a Case Study*, Journal of Object Technology 20(3), 2021. https://doi.org/10.5381/jot.2021.20.2.a3 |
 | S35 | iSAQB: *Curriculum for the Advanced Level module GREEN* (learning goals on architecture styles, communication, CI/CD). https://github.com/isaqb-org/curriculum-green |
+| S36 | Association of Issuing Bodies (AIB): *European Residual Mixes 2024* (residual mixes after the disclosure of guarantees of origin; average 452 g/kWh; Germany's residual mix well above its production mix). https://www.aib-net.org/facts/european-residual-mix/2024 |
+| S37 | GHG Protocol: *Public consultations on Scope 2* (2025): hourly matching and deliverability for market-based reporting, dual reporting kept, final standard expected 2027. https://ghgprotocol.org/blog/release-ghg-protocol-opens-public-consultations-scope-2-and-electricity-sector-consequential |
+| S38 | Google: *24/7 carbon-free energy* (hourly CFE score of its data centers, 66 % in the latest report). https://blog.google/around-the-globe/google-europe/how-carbon-free-energy-around-the-clock-can-work/ |

@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import de.wannerit.loadshift.core.BatchMode
+import de.wannerit.loadshift.core.Contract
 import de.wannerit.loadshift.core.MasterData
 import de.wannerit.loadshift.core.Protocol
 import de.wannerit.loadshift.core.ServiceCut
@@ -435,9 +436,23 @@ class GameController(val scenario: Scenario) {
 
     val hasTraining: Boolean get() = scenario.training != null
 
-    /** O11: everything together – the panel has tabs (shop, batch, training), the timeline follows the tab. */
+    /** O11: everything together – the panel has tabs (shop, batch, training), the timeline shows all three. */
     val isCapstone: Boolean get() = scenario.controls.size > 1 && scenario.training != null
     var panelTab by mutableIntStateOf(0)
+
+    /** The panel's tabs when a scenario has more than one kind of control (O11, B12). */
+    enum class PanelTab { CONTRACT, SHOP, BATCH, TRAINING }
+    val tabs: List<PanelTab> get() = listOfNotNull(
+        PanelTab.CONTRACT.takeIf { Control.CONTRACT in scenario.controls },
+        PanelTab.SHOP.takeIf { Control.CAPACITY_RULES in scenario.controls },
+        PanelTab.BATCH.takeIf { Control.BATCH_RULES in scenario.controls },
+        PanelTab.TRAINING.takeIf { Control.TRAINING in scenario.controls },
+    )
+    val isTabbed: Boolean get() = tabs.size > 1
+
+    // Electricity contract (B12)
+
+    var contractDraft by mutableStateOf(Contract.GREY)
 
     /** GPU servers in the fleet. */
     val gpuCount: Int get() = scenario.fleet.filter { it.kind == ServerKind.GPU_CURRENT }.sumOf { it.count }
@@ -488,6 +503,7 @@ class GameController(val scenario: Scenario) {
             if (Control.PAGES in scenario.controls) policy = policy.copy(pages = pageDraft)
             if (Control.PIPELINE in scenario.controls) policy = policy.copy(pipeline = pipelineDraft)
             if (Control.SERVICES in scenario.controls) policy = policy.copy(services = servicesDraft)
+            if (Control.CONTRACT in scenario.controls) policy = policy.copy(contract = contractDraft)
             return policy
         }
 
@@ -523,6 +539,7 @@ class GameController(val scenario: Scenario) {
         pageDraft = policy.pages
         pipelineDraft = policy.pipeline
         servicesDraft = policy.services
+        contractDraft = policy.contract
         scenario.inference?.let { m ->
             aiAnswerers = m.kinds.indices.map { policy.inference.answerers.getOrElse(it) { Answerer.LARGE } }
             aiWindow = policy.inference.windowMs
@@ -560,6 +577,7 @@ class GameController(val scenario: Scenario) {
         val pages: PageConfig,
         val pipeline: PipelineConfig,
         val services: ServiceConfig,
+        val contract: Contract,
     )
 
     private companion object {
@@ -569,7 +587,7 @@ class GameController(val scenario: Scenario) {
     /** Keeps the panel's settings for the next run (a new run starts with the scenario's rules, the panel keeps yours). */
     fun saveDraft() {
         drafts[scenario.number] = Draft(draftKind, draftHour, draftThreshold, draftSafety, capKind, capFixed, capTarget,
-            capMinimumOn, capMinimum, capFrom, capTo, startPolicy ?: current.policy.takeIf { current.history.isEmpty() }, draftCache, draftSetpoint, draftTraining, draftStreaming, draftInference, pageDraft, pipelineDraft, servicesDraft)
+            capMinimumOn, capMinimum, capFrom, capTo, startPolicy ?: current.policy.takeIf { current.history.isEmpty() }, draftCache, draftSetpoint, draftTraining, draftStreaming, draftInference, pageDraft, pipelineDraft, servicesDraft, contractDraft)
     }
 
     private fun restoreDraft() {
@@ -589,6 +607,7 @@ class GameController(val scenario: Scenario) {
         pageDraft = d.pages
         pipelineDraft = d.pipeline
         servicesDraft = d.services
+        contractDraft = d.contract
         // A new run starts with the rules the last run started with (the panel shows the last run's final ones).
         if (d.startPolicy != null && current.history.isEmpty() && !hasSprints) {
             current.policy = d.startPolicy
@@ -719,6 +738,21 @@ class GameController(val scenario: Scenario) {
                 t("The same, eco mode HD above 650 g/kWh") to run(byDevice.copy(eco = true, ecoAbove = 650)),
                 t("The same, eco mode HD above 550 g/kWh") to run(byDevice.copy(eco = true, ecoAbove = 550)),
                 t("The same, eco mode SD above 650 g/kWh") to run(byDevice.copy(eco = true, ecoAbove = 650, ecoQuality = Quality.SD)),
+            )
+        }
+        scenario.contract?.let {
+            fun run(c: Contract, auto: Boolean, greenest: Boolean) = Simulation.replay(scenario, scenario.referencePolicy.copy(contract = c,
+                capacity = if (auto) CapacityMode.Autoscale(800) else scenario.referencePolicy.capacity,
+                batch = if (greenest) BatchMode.Greenest else BatchMode.Asap)).totals
+            return listOf(
+                t("Grid mix, autoscaling at 50 %, jobs at once (reference)") to referenceTotals,
+                t("Green certificates") to run(Contract.CERTIFICATES, false, false),
+                t("Autoscaling at 80 %") to run(Contract.GREY, true, false),
+                t("Wind farm contract") to run(Contract.PPA, false, false),
+                t("Wind farm contract, jobs in the greenest hours") to run(Contract.PPA, false, true),
+                t("The same, autoscaling at 80 %") to run(Contract.PPA, true, true),
+                t("24/7 carbon-free") to run(Contract.HOURLY, false, false),
+                t("24/7 carbon-free, autoscaling at 80 %") to run(Contract.HOURLY, true, false),
             )
         }
         scenario.services?.let {

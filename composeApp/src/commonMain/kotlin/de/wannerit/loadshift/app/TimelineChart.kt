@@ -35,7 +35,7 @@ import de.wannerit.loadshift.core.Simulation
  * uncertainty band – and below it the load and capacity, or one row per batch job. The vertical line is now.
  */
 /** What the lower lane shows when a scenario has more than one kind of work (O11: it follows the panel's tab). */
-enum class Lane { LOAD, JOBS, TRAINING, ALL }
+enum class Lane { LOAD, JOBS, TRAINING, ALL, CONTRACT }
 
 /** E6: the week starts on Monday. */
 private val WEEKDAYS = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
@@ -162,7 +162,9 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
         }
 
         // Lower lane
-        if (scenario.services != null) {
+        if (lane == Lane.CONTRACT) {
+            drawContract(lowTop, lowBottom)
+        } else if (scenario.services != null) {
             drawServices(lowTop, lowBottom)
         } else if (scenario.pipeline != null) {
             drawPipeline(lowTop, lowBottom)
@@ -426,6 +428,30 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
         }
         axis(top, bottom, scaleTop.toInt().toString())
         text(t("Outside temperature, °C – dashed: forecast; black: setpoint; green: the outside air cools"), Offset(left, top - 12f * density), Type.style(12, FontWeight.SemiBold))
+    }
+
+    /** B12: the data center's power (line) and the clean energy there for it in the same hour (green). */
+    private fun DrawScope.drawContract(top: Float, bottom: Float) {
+        val records = simulation.history.mapNotNull { r -> r.contract?.let { r.tick to it } }
+        val maxW = maxOf(1_000, records.maxOfOrNull { maxOf(it.second.demandWatts, it.second.cleanWatts) } ?: 1_000)
+        val scaleTop = niceCeiling((maxW + 999) / 1_000).toFloat()
+        fun yW(w: Int) = bottom - (bottom - top) * (w / 1_000f / scaleTop)
+        if (records.isNotEmpty()) {
+            val clean = Path().apply {
+                moveTo(x(records[0].first), bottom)
+                for ((tick, r) in records) { val y = yW(r.cleanWatts); lineTo(x(tick), y); lineTo(x(tick + 1), y) }
+                lineTo(x(records.last().first + 1), bottom)
+                close()
+            }
+            drawPath(clean, Palette.accent.copy(alpha = 0.35f))
+            val demand = Path().apply {
+                moveTo(x(records[0].first), yW(records[0].second.demandWatts))
+                for ((tick, r) in records) { val y = yW(r.demandWatts); lineTo(x(tick), y); lineTo(x(tick + 1), y) }
+            }
+            drawPath(demand, Palette.ink.copy(alpha = 0.8f), style = Stroke(1.5f * density))
+        }
+        axis(top, bottom, "${scaleTop.toInt()} kW")
+        text(t("Power of the data center (line) and clean energy from the contract in the same hour (green), kW"), Offset(left, top - 12f * density), Type.style(12, FontWeight.SemiBold))
     }
 
     /** E7: CPU in cores, stacked: the services' own work and the rest (communication, external calls, idle instances). */
