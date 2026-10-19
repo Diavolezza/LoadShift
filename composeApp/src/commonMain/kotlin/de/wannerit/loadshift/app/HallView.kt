@@ -29,9 +29,9 @@ import de.wannerit.loadshift.core.ServerState
 fun HallView(
     servers: List<Server>, version: Int, interactive: Boolean, batch: Boolean, modifier: Modifier = Modifier,
     cacheSlots: Int = 0, cacheOn: Int = 0, cachePower: Int = 0,
-    /** E6: the extra rack holds GPU servers for the language models instead of cache servers. */
+    /** E8: the extra rack holds GPU servers for the language models instead of cache servers. */
     gpuRack: Boolean = false,
-    /** E7: what the blue bar stands for, instead of web requests. */
+    /** E9: what the blue bar stands for, instead of web requests. */
     workLabel: String? = null,
     /** O7: two halls side by side – a short status line only. */
     compact: Boolean = false,
@@ -82,7 +82,7 @@ private fun iso(x: Double, y: Double, z: Double) = Offset(((x - y) * 0.866).toFl
 
 private fun DrawScope.drawHall(servers: List<Server>, cacheSlots: Int, cacheOn: Int, extraColor: Color) {
     val serverRacks = maxOf(1, (servers.size + SLOTS_PER_RACK - 1) / SLOTS_PER_RACK)
-    // E3: one more rack for the cache servers.
+    // E4: one more rack for the cache servers.
     val racks = serverRacks + if (cacheSlots > 0) 1 else 0
     val length = racks * RACK_WIDTH + (racks - 1) * RACK_GAP
     val fx0 = -0.6; val fx1 = length + 0.6; val fy0 = -0.6; val fy1 = RACK_DEPTH + 0.9

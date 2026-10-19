@@ -37,7 +37,7 @@ import de.wannerit.loadshift.core.Simulation
 /** What the lower lane shows when a scenario has more than one kind of work (O11: it follows the panel's tab). */
 enum class Lane { LOAD, JOBS, TRAINING, ALL, CONTRACT }
 
-/** E7: the week starts on Monday. */
+/** E9: the week starts on Monday. */
 private val WEEKDAYS = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
 
 @Composable
@@ -88,7 +88,7 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
         val grid = simulation.grid
 
         val future = if (now < end) (now..end).toList() else emptyList()
-        // Upper lane: what matters for the scenario – the cache memory (E3), the outside temperature (6) or the grid.
+        // Upper lane: what matters for the scenario – the cache memory (E4), the outside temperature (6) or the grid.
         when {
             scenario.caching != null -> drawCache(topTop, topBottom, future)
             scenario.cooling != null -> drawTemperature(topTop, topBottom)
@@ -288,7 +288,7 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
     }
 
     /**
-     * E3: the memory used, stacked by kind of data (areas), the memory of the running cache servers (step line),
+     * E4: the memory used, stacked by kind of data (areas), the memory of the running cache servers (step line),
      * the memory expected with the rules now (dotted).
      */
     private fun DrawScope.drawCache(top: Float, bottom: Float, future: List<Int>) {
@@ -465,7 +465,7 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
         text(t("Power of the data center (line) and clean energy from the contract in the same hour (green), kW"), Offset(left, top - 12f * density), Type.style(12, FontWeight.SemiBold))
     }
 
-    /** E5: CPU in cores, stacked: the services' own work and the rest (communication, external calls, idle instances). */
+    /** E6: CPU in cores, stacked: the services' own work and the rest (communication, external calls, idle instances). */
     private fun DrawScope.drawServices(top: Float, bottom: Float) {
         val records = simulation.history.mapNotNull { r -> r.services?.let { r.tick to it } }
         val maxCores = maxOf(1, (records.maxOfOrNull { maxOf(it.second.cpuMs, (it.second.servers * de.wannerit.loadshift.core.ServiceModel.SERVER_MS * 0.7).toInt()) } ?: 1_000) / 1_000)
@@ -497,7 +497,7 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
         text(t("CPU – blue: tracking, violet: route optimization, amber: communication, external calls, idle instances; line: servers ready"), Offset(left, top - 12f * density), Type.style(12, FontWeight.SemiBold))
     }
 
-    /** E7: build agents and test environment servers on, stacked; a violet mark for the nightly UI tests. */
+    /** E9: build agents and test environment servers on, stacked; a violet mark for the nightly UI tests. */
     private fun DrawScope.drawPipeline(top: Float, bottom: Float) {
         val records = simulation.history.mapNotNull { r -> r.pipeline?.let { r.tick to it } }
         val scaleTop = niceCeiling(simulation.servers.size).toFloat()
@@ -524,7 +524,7 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
         text(t("Servers on – blue: build agents, light blue: test environments; violet: UI tests at night"), Offset(left, top - 12f * density), Type.style(12, FontWeight.SemiBold))
     }
 
-    /** E4: the power of a visit's three parts, stacked: data center, network, visitors' devices. */
+    /** E5: the power of a visit's three parts, stacked: data center, network, visitors' devices. */
     private fun DrawScope.drawWeb(top: Float, bottom: Float) {
         val records = simulation.history.mapNotNull { r -> r.web?.let { r to it } }
         val colors = listOf(Palette.demand, Palette.amber, Palette.trainingLoad)
@@ -551,7 +551,7 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
         text(t("Power, kW – blue: data center, amber: network, violet: visitors' devices"), Offset(left, top - 12f * density), Type.style(12, FontWeight.SemiBold))
     }
 
-    /** E6: the shop assistant's power, stacked by kind of question; grey the idle rest of the GPU servers. */
+    /** E8: the shop assistant's power, stacked by kind of question; grey the idle rest of the GPU servers. */
     private fun DrawScope.drawInference(top: Float, bottom: Float, future: List<Int>) {
         val model = scenario.inference ?: return
         val records = simulation.history.mapNotNull { r -> r.inference?.let { r.tick to it } }

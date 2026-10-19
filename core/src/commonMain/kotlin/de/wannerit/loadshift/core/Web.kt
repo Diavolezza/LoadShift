@@ -1,7 +1,7 @@
 package de.wannerit.loadshift.core
 
 /*
- * E4, "Data diet" (docs/CONCEPT.md 9.2): the shop's pages are heavy – large images in one size for every screen, a
+ * E5, "Data diet" (docs/CONCEPT.md 9.2): the shop's pages are heavy – large images in one size for every screen, a
  * product video that plays by itself, 100 products per list, six tracking tags. Every byte travels through the
  * network and is processed on the visitor's device; this scenario counts both, not only the data center. Energy per
  * GB after the Sustainable Web Design Model, version 4 (operational part: networks 0.059 kWh/GB, user devices
@@ -82,5 +82,5 @@ data class WebModel(
     }
 }
 
-/** E4: what the visits drew outside the data center in a tick, W. */
+/** E5: what the visits drew outside the data center in a tick, W. */
 data class WebRecord(val networkWatts: Int, val deviceWatts: Int)

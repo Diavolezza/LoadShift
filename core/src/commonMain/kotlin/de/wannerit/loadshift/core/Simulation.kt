@@ -21,7 +21,7 @@ data class Totals(
     var inTime: Long = 0,
     /** Requests served, in units of 1,000 – the functional unit; with less work per request more than [served]. */
     var requestsServed: Long = 0,
-    /** Requests asked for, units of 1,000; answers older than allowed (E3), single answers. */
+    /** Requests asked for, units of 1,000; answers older than allowed (E4), single answers. */
     var requests: Long = 0,
     var stale: Long = 0,
     /** Energy of the servers and of the facility, mWh. */
@@ -56,11 +56,11 @@ data class Totals(
     /** O10: rules broken by the choice of sites; energy of data transfers (mWh, in [facilityEnergy]). */
     var rulesBroken: Int = 0,
     var transferEnergy: Long = 0,
-    /** E6: answers of the shop assistant, their quality summed (per mille each), and the answers in time. */
+    /** E8: answers of the shop assistant, their quality summed (per mille each), and the answers in time. */
     var answers: Long = 0,
     var answerQualitySum: Long = 0,
     var answersInTime: Long = 0,
-    /** E4: visits, their LCP summed (tenths of s each) and bytes (KB); network and device energy (mWh) and emissions (µg, in [operational]). */
+    /** E5: visits, their LCP summed (tenths of s each) and bytes (KB); network and device energy (mWh) and emissions (µg, in [operational]). */
     var visits: Long = 0,
     var lcpSum: Long = 0,
     var kilobytes: Long = 0,
@@ -68,10 +68,10 @@ data class Totals(
     var deviceEnergy: Long = 0,
     var networkOperational: Long = 0,
     var deviceOperational: Long = 0,
-    /** E7: commits, their feedback time summed (tenths of a minute each). */
+    /** E9: commits, their feedback time summed (tenths of a minute each). */
     var commits: Long = 0,
     var feedbackSum: Long = 0,
-    /** E5: tracking requests and their response time summed (ms each). */
+    /** E6: tracking requests and their response time summed (ms each). */
     var trackingRequests: Long = 0,
     var latencySum: Long = 0,
     /** B12: location-based and market-based emissions (µg; [operational] counts hourly matched), electricity cost (tenths of a cent). */
@@ -79,22 +79,22 @@ data class Totals(
     var marketOperational: Long = 0,
     var energyCost: Long = 0,
 ) {
-    /** E5: mean response time of the tracking, ms. */
+    /** E6: mean response time of the tracking, ms. */
     val meanLatency: Int get() = if (trackingRequests == 0L) 0 else (latencySum / trackingRequests).toInt()
 
-    /** E7: mean time from a commit to its first result, tenths of a minute. */
+    /** E9: mean time from a commit to its first result, tenths of a minute. */
     val meanFeedback: Int get() = if (commits == 0L) 0 else (feedbackSum / commits).toInt()
 
-    /** E4: mean LCP of the visits, tenths of a second. */
+    /** E5: mean LCP of the visits, tenths of a second. */
     val meanLcp: Int get() = if (visits == 0L) 0 else (lcpSum / visits).toInt()
 
-    /** E4: mean weight of a visit, KB. */
+    /** E5: mean weight of a visit, KB. */
     val meanPageKb: Int get() = if (visits == 0L) 0 else (kilobytes / visits).toInt()
 
-    /** E6: mean quality of the answers, per mille. */
+    /** E8: mean quality of the answers, per mille. */
     val meanAnswerQuality: Int get() = if (answers == 0L) 1_000 else (answerQualitySum / answers).toInt()
 
-    /** E6: share of the answers in time, per mille. */
+    /** E8: share of the answers in time, per mille. */
     val answersOnTime: Int get() = if (answers == 0L) 1_000 else (answersInTime * 1_000 / answers).toInt()
 
     /** O9: the viewers' mean rating, per mille. */
@@ -103,10 +103,10 @@ data class Totals(
     /** Share of the demand served in time, per mille. */
     val sla: Int get() = if (demand == 0L) 1_000 else (inTime * 1_000 / demand).toInt()
 
-    /** Stale answers per mille of the requests (E3). */
+    /** Stale answers per mille of the requests (E4). */
     val stalePermille: Int get() = if (requests == 0L) 0 else (stale / requests).toInt()
 
-    /** Stale answers per 10,000 requests (E3). */
+    /** Stale answers per 10,000 requests (E4). */
     val stalePerTenThousand: Int get() = if (requests == 0L) 0 else (stale * 10 / requests).toInt()
 
     /** PUE over the scenario, per mille. */
@@ -152,7 +152,7 @@ data class TickRecord(
     val hostDemandMilli: IntArray? = null,
     /** Scenario 6: the setpoint, °C. */
     val setpoint: Int = 20,
-    /** E3: what the cache held. */
+    /** E4: what the cache held. */
     val cache: CacheRecord? = null,
     /** O7: embodied emissions so far (µg) and the capacity of all servers installed, work units. */
     val embodiedSoFar: Long = 0,
@@ -163,19 +163,19 @@ data class TickRecord(
     val eco: Boolean = false,
     /** O8, O11: the GPUs trained (or loaded the checkpoint) in this tick. */
     val training: Boolean = false,
-    /** E6: what the models drew. */
+    /** E8: what the models drew. */
     val inference: InferenceRecord? = null,
-    /** E4: the network and the visitors' devices. */
+    /** E5: the network and the visitors' devices. */
     val web: WebRecord? = null,
-    /** E7: the pipeline's servers. */
+    /** E9: the pipeline's servers. */
     val pipeline: PipelineRecord? = null,
-    /** E5: the logistics system's servers. */
+    /** E6: the logistics system's servers. */
     val services: ServiceRecord? = null,
     /** B12: demand and the clean energy there for it. */
     val contract: ContractRecord? = null,
 )
 
-/** E3: memory used (tenths of GB), memory of the running cache servers (GB), hits (per mille of the cacheable requests), memory per kind (tenths of GB). */
+/** E4: memory used (tenths of GB), memory of the running cache servers (GB), hits (per mille of the cacheable requests), memory per kind (tenths of GB). */
 data class CacheRecord(
     val usedTenthsGb: Int, val capacityGb: Int, val hits: Int, val kindTenthsGb: List<Int> = emptyList(),
     /** Stale answers in this tick, tenths of ‰ of the requests. */
@@ -231,7 +231,7 @@ class Simulation private constructor(
         }
     }
 
-    /** Work that does not come from requests: the nightly jobs of E2, work units per tick. */
+    /** Work that does not come from requests: the nightly jobs of E3, work units per tick. */
     fun extraWork(tick: Int): Int =
         scenario.growth?.night(tick, scenario.backlog, policy.done) ?: scenario.caching?.extraWork(policy.cache, tick) ?: 0
 
@@ -408,7 +408,7 @@ class Simulation private constructor(
             if (updated.ageAt(tick, scale) < Units.LIFESPAN_DAYS) embodied += updated.kind.embodiedPerTick * scale
             if (updated.state.isPowered) poweredOn += 1
         }
-        // E3: the cache servers run all the time, and they were built too.
+        // E4: the cache servers run all the time, and they were built too.
         var cacheRecord: CacheRecord? = null
         scenario.caching?.let { caching ->
             val state = caching.state(policy.cache, scenario.interactive.expected(tick))
@@ -421,7 +421,7 @@ class Simulation private constructor(
             poweredOn += cacheServers
             totals.stale += (requests * 1_000.0 * caching.staleShare(policy.cache, scenario.interactive.expected(tick), tick)).roundToLong()
         }
-        // E6: the shop assistant's models on their own GPU servers (switched by the load, like the cache servers).
+        // E8: the shop assistant's models on their own GPU servers (switched by the load, like the cache servers).
         var inferenceRecord: InferenceRecord? = null
         scenario.inference?.let { model ->
             val peak = scenario.interactive.peak
@@ -441,7 +441,7 @@ class Simulation private constructor(
             totals.answersInTime += answers * model.onTime(config) / 1_000
             inferenceRecord = InferenceRecord(kindWatts, idleWatts.roundToInt(), servers)
         }
-        // E4: every visit's bytes through the network and on the visitor's device, in the same grid.
+        // E5: every visit's bytes through the network and on the visitor's device, in the same grid.
         var webRecord: WebRecord? = null
         scenario.web?.let { web ->
             val visits = requests * 1_000L / web.requestsPerVisit
@@ -664,7 +664,7 @@ class Simulation private constructor(
     }
     private var consumedSoFar = 0L
 
-    // E5: the logistics system
+    // E6: the logistics system
 
     private var servicesRecord: ServiceRecord? = null
 
@@ -693,7 +693,7 @@ class Simulation private constructor(
         return util
     }
 
-    // E7: the pipeline
+    // E9: the pipeline
 
     private var pendingCommits = 0
     private var runnerBacklog = 0.0

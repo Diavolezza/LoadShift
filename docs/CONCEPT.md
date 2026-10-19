@@ -29,7 +29,7 @@ the yardstick before the first optimisation.
 | G6 | Hardware efficiency | High utilization (consolidation) and a long service life; manufacturing emissions count too. | 5 |
 | G7 | Demand shaping | When the grid is dirty, do less: lower quality, fewer extras. | 9 |
 | G8 | Carbon awareness: location shifting | Where the work runs matters even more than when: Poland emits about 22 times as much per kWh as Norway. It comes last because it needs a second site; scenario 1's debrief already names it as an outlook. | 10 |
-| G9 | Software efficiency | Less work per request and per job: measure first (profiling), then fix the hot spots; algorithms and data structures matter more as the data grows. Less work also means fewer servers. | E1 (Engineering track) |
+| G9 | Software efficiency | Less work per request and per job: measure first (profiling), then fix the hot spots; algorithms and data structures matter more as the data grows. Less work also means fewer servers. | E2 (Engineering track) |
 
 **Audience:** students in a Green IT lecture and people who want to understand why software and operations
 decisions change emissions. No prior knowledge is needed; every term is explained where it appears.
@@ -357,15 +357,15 @@ work per request or per job; the effect shows in the SCI per 1,000 requests and 
 
 | # | Title | Setting | Length | New controls | Idea |
 |---|---|---|---|---|---|
-| E1 | Measure first | web shop, Germany | 4 weeks (weekly sprints) | engineering backlog, team capacity, profiling | The team's estimates of where the energy goes are wrong. One sprint of profiling shows the real hot spots (for example an N+1 database query and JSON serialization, not the image service everybody suspects). Optimizing by guess wastes sprints; less work per request also means fewer servers and less hardware (G9, G1). Term: Profiling. |
-| E2 | Growing data | web shop, Germany | 12 months (one game day each) | backlog with algorithmic complexity, carry-over | The data grows every month. A batch job with O(n²) and a lookup in a list instead of a hash map get more expensive month by month; a database index stops a query from scanning everything. Fixing early saves the most; waiting costs energy and, at some point, hardware (G9, G6). Term: Algorithmic Complexity. |
-| E3 | Hit or miss | web shop, Germany | 2 days | cache servers, per kind of data cached or not and its TTL, two more measures | Five kinds of data with different popularity, size, cost and business limits on their age: product images (a day), catalog pages (15 min), exchange rates (1 min), search results (1 h, but most searches are typed only once), the account balance before a transfer (must be current). All cached kinds share the memory of the cache servers (LRU). The team has ordered four cache servers "to be on the safe side". A cache saves work while it hits, but every cache server draws power all day; a TTL longer than allowed brings stale answers (0 stars); search results fill half the memory and hardly hit. Two more measures follow the same idea: counting unique visitors with HyperLogLog instead of keeping every ID, and a materialized view for the sales dashboard (G9, G1). Term: Caching. |
-| E4 | Data diet | web shop, Germany | 2 days | image format and sizes, lazy loading, product video, list length, how visitors are counted | A visit weighs 12 MB. Counted with the network and the visitors' devices (energy per GB after the Sustainable Web Design Model [S28]), the data center is the smallest part. The video that plays by itself is half the weight; modern formats in the right size and lazy loading below the fold do the rest. Two traps make the page slow: converting images on every request, and lazy loading the first image. Rule: LCP at most 2.5 s [S30] (G9, G1). Term: Sustainable Web Design. |
-| E5 | Chatty services | logistics system, Germany | 2 days | cut (microservices, modular monolith, monolith with the route optimization as a service of its own), protocol (REST with JSON, gRPC with Protobuf), master data (synchronous calls, events with a local copy), serverless functions for the customer and truck services, how long GPS positions and traffic information are reused | Communication is work: every remote call serializes and deserializes, every instance runs its runtime without load. The modular monolith saves the calls but scales as a whole – it keeps the capacity for the hourly route optimization (200 cores for ten minutes) ready from 6 to 20, while a service of its own scales for its ten minutes; microservices reach three stars with events, gRPC and serverless functions, the monolith with the optimization cut out – serverless only pays for services that are rarely called. The cache for the external providers makes the tracking fast enough; reused too long, the data are too old. Rules: tracking within 250 ms on average, positions at most 1 min and traffic at most 5 min old (iSAQB GREEN, LZ 6-1, 6-2, 6-4). Term: Green Software Architecture. |
-| E6 | Right-sized AI | web shop, Germany | 2 days | per kind of question who answers it (no AI, small model, large model, large model with reasoning), batching window | The team's prototype sends every question of the shop assistant to the large model, one at a time. A status lookup answers "Where is my order?" better than any model; a small model is good enough where the answer is in the product data; the large model pays off for complaints and advice. Batching shares the GPU's work among questions but every answer waits; reasoning adds a little quality and a long wait. Rules: answer quality at least 92 %, 95 % of the answers within 3 s (G9, G1). Term: Green AI (Right-sizing Models). |
-| E7 | Green pipeline | a team of 40 developers, Germany | 7 days (Monday to Sunday) | build agents (always on or on demand), remote build cache, test impact analysis, UI and load tests (every commit, nightly in the greenest hours, never), trigger (every commit, every 30 minutes, every 2 hours), test environments (day and night, weekdays 7–19, on demand) and their replicas | Most of a pipeline waits: environments at night and at the weekend, agents without a job. Agents on demand lose their local cache – without a remote cache the feedback gets too slow; batching commits saves runs but makes the team wait; without UI tests the release goes out untested. Rules: feedback within 20 minutes, UI tests in the 24 hours before Friday's release (iSAQB GREEN, LZ 9-1 to 9-4). Term: Green CI/CD. |
-| E8 | How many nines? | an insurer's customer portal: seven building blocks, five quality scenarios with the downtime each may have in a year; today everything active-active on two sites ("99.99 % for everything") | a year, no clock | per building block an availability tactic (single and restarted, cold standby, warm standby, active-active); claims into a queue; a circuit breaker for the recommendations | Quality scenarios instead of one figure for everything (LG 3-1). A scenario waits for every building block it calls synchronously, so their availabilities multiply: the shared login and policy database need more than any single function. Decoupling breaks the chain – the queue frees the claims from the database and evens out the peaks, the circuit breaker frees the contract overview from the recommendations – and redundancy is then needed only where a scenario asks for it (LG 3-2: resilience against energy efficiency). Term: Availability Tactics [S44]. |
-| E9 | Constant asking | a delivery app on 400,000 phones; five kinds of update (delivery status, courier on the map, offers, support chat, unread messages) | a year, no clock | per kind one way while the app is open (polling every n seconds, on opening, long polling, stream, push) and one while it is closed (nothing, refresh every 15 minutes, connection kept open, push); conditional requests; one background refresh for all | Counted with the phones and the network, the servers are the smallest part. Every background wake-up switches the radio on for seconds [S45, S46]; unchanged answers sent in full fill the network. Rare changes suit push, frequent ones a stream while the app is open, and what nobody needs while it is closed needs no refresh. A WebSocket kept open in the background meets every requirement and is the most expensive plan (LG 6-2: call frequency and data volume). The current app fails the requirement for "The courier is at the door". Term: Polling, Push, Streaming. |
+| E1 | How many nines? | an insurer's customer portal: seven building blocks, five quality scenarios with the downtime each may have in a year; today everything active-active on two sites ("99.99 % for everything") | a year, no clock | per building block an availability tactic (single and restarted, cold standby, warm standby, active-active); claims into a queue; a circuit breaker for the recommendations | Quality scenarios instead of one figure for everything (LG 3-1). A scenario waits for every building block it calls synchronously, so their availabilities multiply: the shared login and policy database need more than any single function. Decoupling breaks the chain – the queue frees the claims from the database and evens out the peaks, the circuit breaker frees the contract overview from the recommendations – and redundancy is then needed only where a scenario asks for it (LG 3-2: resilience against energy efficiency). Term: Availability Tactics [S44]. |
+| E2 | Measure first | web shop, Germany | 4 weeks (weekly sprints) | engineering backlog, team capacity, profiling | The team's estimates of where the energy goes are wrong. One sprint of profiling shows the real hot spots (for example an N+1 database query and JSON serialization, not the image service everybody suspects). Optimizing by guess wastes sprints; less work per request also means fewer servers and less hardware (G9, G1). Term: Profiling. |
+| E3 | Growing data | web shop, Germany | 12 months (one game day each) | backlog with algorithmic complexity, carry-over | The data grows every month. A batch job with O(n²) and a lookup in a list instead of a hash map get more expensive month by month; a database index stops a query from scanning everything. Fixing early saves the most; waiting costs energy and, at some point, hardware (G9, G6). Term: Algorithmic Complexity. |
+| E4 | Hit or miss | web shop, Germany | 2 days | cache servers, per kind of data cached or not and its TTL, two more measures | Five kinds of data with different popularity, size, cost and business limits on their age: product images (a day), catalog pages (15 min), exchange rates (1 min), search results (1 h, but most searches are typed only once), the account balance before a transfer (must be current). All cached kinds share the memory of the cache servers (LRU). The team has ordered four cache servers "to be on the safe side". A cache saves work while it hits, but every cache server draws power all day; a TTL longer than allowed brings stale answers (0 stars); search results fill half the memory and hardly hit. Two more measures follow the same idea: counting unique visitors with HyperLogLog instead of keeping every ID, and a materialized view for the sales dashboard (G9, G1). Term: Caching. |
+| E5 | Data diet | web shop, Germany | 2 days | image format and sizes, lazy loading, product video, list length, how visitors are counted | A visit weighs 12 MB. Counted with the network and the visitors' devices (energy per GB after the Sustainable Web Design Model [S28]), the data center is the smallest part. The video that plays by itself is half the weight; modern formats in the right size and lazy loading below the fold do the rest. Two traps make the page slow: converting images on every request, and lazy loading the first image. Rule: LCP at most 2.5 s [S30] (G9, G1). Term: Sustainable Web Design. |
+| E6 | Chatty services | logistics system, Germany | 2 days | cut (microservices, modular monolith, monolith with the route optimization as a service of its own), protocol (REST with JSON, gRPC with Protobuf), master data (synchronous calls, events with a local copy), serverless functions for the customer and truck services, how long GPS positions and traffic information are reused | Communication is work: every remote call serializes and deserializes, every instance runs its runtime without load. The modular monolith saves the calls but scales as a whole – it keeps the capacity for the hourly route optimization (200 cores for ten minutes) ready from 6 to 20, while a service of its own scales for its ten minutes; microservices reach three stars with events, gRPC and serverless functions, the monolith with the optimization cut out – serverless only pays for services that are rarely called. The cache for the external providers makes the tracking fast enough; reused too long, the data are too old. Rules: tracking within 250 ms on average, positions at most 1 min and traffic at most 5 min old (iSAQB GREEN, LZ 6-1, 6-2, 6-4). Term: Green Software Architecture. |
+| E7 | Constant asking | a delivery app on 400,000 phones; five kinds of update (delivery status, courier on the map, offers, support chat, unread messages) | a year, no clock | per kind one way while the app is open (polling every n seconds, on opening, long polling, stream, push) and one while it is closed (nothing, refresh every 15 minutes, connection kept open, push); conditional requests; one background refresh for all | Counted with the phones and the network, the servers are the smallest part. Every background wake-up switches the radio on for seconds [S45, S46]; unchanged answers sent in full fill the network. Rare changes suit push, frequent ones a stream while the app is open, and what nobody needs while it is closed needs no refresh. A WebSocket kept open in the background meets every requirement and is the most expensive plan (LG 6-2: call frequency and data volume). The current app fails the requirement for "The courier is at the door". Term: Polling, Push, Streaming. |
+| E8 | Right-sized AI | web shop, Germany | 2 days | per kind of question who answers it (no AI, small model, large model, large model with reasoning), batching window | The team's prototype sends every question of the shop assistant to the large model, one at a time. A status lookup answers "Where is my order?" better than any model; a small model is good enough where the answer is in the product data; the large model pays off for complaints and advice. Batching shares the GPU's work among questions but every answer waits; reasoning adds a little quality and a long wait. Rules: answer quality at least 92 %, 95 % of the answers within 3 s (G9, G1). Term: Green AI (Right-sizing Models). |
+| E9 | Green pipeline | a team of 40 developers, Germany | 7 days (Monday to Sunday) | build agents (always on or on demand), remote build cache, test impact analysis, UI and load tests (every commit, nightly in the greenest hours, never), trigger (every commit, every 30 minutes, every 2 hours), test environments (day and night, weekdays 7–19, on demand) and their replicas | Most of a pipeline waits: environments at night and at the weekend, agents without a job. Agents on demand lose their local cache – without a remote cache the feedback gets too slow; batching commits saves runs but makes the team wait; without UI tests the release goes out untested. Rules: feedback within 20 minutes, UI tests in the 24 hours before Friday's release (iSAQB GREEN, LZ 9-1 to 9-4). Term: Green CI/CD. |
 
 Backlog items (game values, to be tuned in the lesson tests): database index, removing an N+1 query, a cache
 (saves work, but the cache server draws power too), compressing images, pagination instead of loading
@@ -450,15 +450,15 @@ the app (O = operations, B in German).
 | O10 Two sites | LG 7-5 location shifting, LG 7-4 geographical distribution |
 | O11 Green on paper | LG 2-2 GHG Protocol Scope 2, LG 7-1 REF, LG 7-3 greenwashing risks |
 | O12 Dark doldrums | LG 1-4 all three fields of action, LG 7-5, LG 8-1 |
-| E1 Measure first | LG 4-2 narrowing down hotspots, LG 4-3, LG 5-1 sensible starting points |
-| E2 Growing data | LG 5-2 complexity, LG 5-3 data handling |
-| E3 Hit or miss | LG 5-2 caches, LG 3-2 freshness against efficiency |
-| E4 Data diet | LG 6-4 Web Sustainability Guidelines, LG 1-3 data traffic, LG 3-2 |
-| E5 Chatty services | LG 6-1 architecture styles, LG 6-2 communication |
-| E6 Right-sized AI | LG 8-2, LG 8-3, LG 8-4 |
-| E7 Green pipeline | LG 9-1 to LG 9-4 |
-| E8 How many nines? | LG 3-1 quality scenarios, LG 3-2 resilience against energy efficiency, LG 6-1 |
-| E9 Constant asking | LG 6-2 communication (call frequency, data volume), LG 1-3 drivers of IT energy (devices and network) |
+| E1 How many nines? | LG 3-1 quality scenarios, LG 3-2 resilience against energy efficiency, LG 6-1 |
+| E2 Measure first | LG 4-2 narrowing down hotspots, LG 4-3, LG 5-1 sensible starting points |
+| E3 Growing data | LG 5-2 complexity, LG 5-3 data handling |
+| E4 Hit or miss | LG 5-2 caches, LG 3-2 freshness against efficiency |
+| E5 Data diet | LG 6-4 Web Sustainability Guidelines, LG 1-3 data traffic, LG 3-2 |
+| E6 Chatty services | LG 6-1 architecture styles, LG 6-2 communication |
+| E7 Constant asking | LG 6-2 communication (call frequency, data volume), LG 1-3 drivers of IT energy (devices and network) |
+| E8 Right-sized AI | LG 8-2, LG 8-3, LG 8-4 |
+| E9 Green pipeline | LG 9-1 to LG 9-4 |
 | P1 Inventory | LG 2-2 Scope 2, LG 4-3 providers' carbon tools, LG 4-4 measuring in enterprise environments, LG 7-3 |
 | P2 Where to start | LG 2-3 reduction targets and measures in the company, LG 1-4 hardware efficiency, LG 2-2 market-based against location-based |
 | P3 Tidy up with TIME | LG 2-3 energy efficiency as a field of action in the company, LG 7-2 deployment models, LG 7-4 operational antipatterns (systems left running) |
@@ -723,12 +723,12 @@ name were built and taken out again: the courses do not need them.
   slow line); drag a VM onto a host, or click it and then the host; fixed once the day runs; warnings for hosts whose expected peak is above
   85 %. The placement is kept for the next run. Timeline tooltips with the values at the time under the mouse.
 
-**As built in step 4, part 3** (E1, scenario list):
+**As built in step 4, part 3** (E2, scenario list):
 
 - Core: `Policy.workPermille` (CPU work per request; demand and autoscaler scale with it), `BacklogItem`,
   `HotSpot`, `Engineering` (work after the items done, a greedy team by estimates or by measurements), SCI per
   1,000 requests counts the requests (not the smaller work), `Scenario.track`, `label`, `unlockAfter`.
-- E1 "Measure first": the web shop with autoscaling at 70 %, 4 days, each day the week after a sprint; 8 story
+- E2 "Measure first": the web shop with autoscaling at 70 %, 4 days, each day the week after a sprint; 8 story
   points per sprint; backlog: profiling (3), cache resized images (3, team −30 %, real −7 %), rewrite the checkout
   (8, −40 % / −4 %), framework upgrade (5, −10 % / −3 %), cache catalog responses (8, −10 % / −18 %), fix N+1
   queries (5, −5 % / −24 %), log level INFO (1, −1 % / −10 %). Goals: ★★ −30 %, ★★★ −40 %.
@@ -744,13 +744,13 @@ name were built and taken out again: the courses do not need them.
   sprint"), the game pauses at every sprint; the last run's plans are offered again. Scenario list in two sections
   (Operations, Engineering) with labels; "Open all scenarios" switch (D19).
 
-**As built in step 4, part 4** (play test of E1, E2):
+**As built in step 4, part 4** (play test of E2, E3):
 
 - Sprints: items that do not fit into a sprint carry over; started items are continued first (`Team`). "Start
   sprint" also starts the clock at 16× – a sprint shows its effect over a whole day, 1× would show nothing.
 - Core: `Policy.done` (items finished) instead of a work factor; `GrowthModel` with parts that grow by their
   complexity (`Complexity`: O(1), O(log n), O(n), O(n log n), O(n²)) and nightly jobs.
-- E2 "Growing data": data +15 % a month, 12 game days = 12 months, 2 story points per sprint for performance, 80
+- E3 "Growing data": data +15 % a month, 12 game days = 12 months, 2 story points per sprint for performance, 80
   servers with autoscaling. Growing parts: product lookup in a list O(n) → hash map O(1); order history without
   an index O(n) → O(log n); search index rebuilt every night O(n²) → incremental O(n). Constant cuts: string
   handling, JSON library, image service rewrite (8 SP). Goals: ★★ −15 %, ★★★ −24 %.
@@ -764,7 +764,7 @@ name were built and taken out again: the courses do not need them.
 
 - Timeline: the scale follows the data, server lines every 5, 10 or 20 servers, one label per day from six days on.
 
-**As built in step 4, part 5** (E3, ideas from the Green IT lecture; reworked after the first play test):
+**As built in step 4, part 5** (E4, ideas from the Green IT lecture; reworked after the first play test):
 
 - Core: `CacheModel` with kinds of data (share of the requests, cost per request, number of items, item size,
   allowed age, share asked only once) and work no cache can save (cart, checkout, login). Requests follow a Zipf
@@ -782,7 +782,7 @@ name were built and taken out again: the courses do not need them.
 - HyperLogLog [S22]: the exact count of unique visitors keeps every ID and costs work per request; the estimate
   with about 2 % error costs a fraction. Materialized view: the sales dashboard reads a stored result instead of
   aggregating every 15 minutes.
-- E3 "Hit or miss": 2 days, 30 web servers with autoscaling at 70 %, four cache servers ordered, nothing cached;
+- E4 "Hit or miss": 2 days, 30 web servers with autoscaling at 70 %, four cache servers ordered, nothing cached;
   goals ★★ −32 %, ★★★ −40 %, at most 1 ‰ stale.
 
 | Cache | CO₂ vs. reference | Stars |
@@ -795,25 +795,25 @@ name were built and taken out again: the courses do not need them.
 | as allowed, 4 servers, HyperLogLog and view | −31 % | ★ |
 | as allowed, 1 server, HyperLogLog and view | −41 % | ★★★ |
 
-- E1: twelve backlog items, 50 story points for 32 in four sprints – some items are left at the end (lazy loading,
+- E2: twelve backlog items, 50 story points for 32 in four sprints – some items are left at the end (lazy loading,
   session cache, TLS session reuse, JVM update, precomputed shipping costs). By the estimates −22 % ★, profiling
   first −46 % ★★★.
-- E1 and E2: the last run's sprint plans are not offered again – the plan is the player's.
-- E3: the upper lane of the timeline shows the cache memory (memory of the running cache servers, used, expected)
+- E2 and E3: the last run's sprint plans are not offered again – the plan is the player's.
+- E4: the upper lane of the timeline shows the cache memory (memory of the running cache servers, used, expected)
   instead of the grid's carbon intensity, which the player cannot act on there.
 
-**As built in step 4, part 6** (E3 after the second play test; start page):
+**As built in step 4, part 6** (E4 after the second play test; start page):
 
-- E3: on day 2 at 18:00 the prices change in the catalog. Catalog pages cached before are wrong until they expire:
+- E4: on day 2 at 18:00 the prices change in the catalog. Catalog pages cached before are wrong until they expire:
   τ minutes after the change a share 1 − τ/T of the hits is wrong (T the time an entry stays). "Invalidate the
   catalog pages" removes them at once; the hit rate then climbs back within T. Stale answers are limited to 0.5 ‰:
   without invalidation 0.9 ‰ – no star; catalog pages for 1 min instead: correct, but −33 % (★★).
-- E3: a measure that should not be ticked: "warm the cache every night" (03:00–07:00, all catalog page variants
+- E4: a measure that should not be ticked: "warm the cache every night" (03:00–07:00, all catalog page variants
   in advance) – the pages expire after 15 minutes, long before the first customer: −37 % instead of −40 % (★★).
   ★★★ now from −38 %.
-- E3: red marks under the cache lane where answers were stale; the end card says "Not made" without the first star;
+- E4: red marks under the cache lane where answers were stale; the end card says "Not made" without the first star;
   a draft that is not applied says so in amber.
-- Start page: operations scenarios are labelled B1… in German and O1… in English (E1… in both); a language switch
+- Start page: operations scenarios are labelled B1… in German and O1… in English (E2… in both); a language switch
   (Deutsch | English), kept on the device; "Open all scenarios" moved into the About dialog ("For teachers").
 
 **As built in step 5, part 1** (scenario 6, "Heat wave"):
@@ -867,7 +867,7 @@ name were built and taken out again: the courses do not need them.
 | two and two every year | −14.0 % | ★ |
 | Warsaw first, Paris in year 3 | −26.1 % | ★★ |
 | Warsaw first, Paris only two, in the last quarters | −29.4 % | ★★★ |
-- Debriefs: E1 names Amdahl's law (the checkout), E2 the rebound effect (freed capacity fills up with features).
+- Debriefs: E2 names Amdahl's law (the checkout), E3 the rebound effect (freed capacity fills up with features).
 - Planned from the same lecture: scenario 6 "Heat wave" with the PUE trap (switching servers off raises the PUE,
   but CO₂ falls – the score counts CO₂, not PUE); a note on JVM start time (Native Image, CRaC) in scenario 4,
   where slow starts force a minimum of servers.
@@ -974,7 +974,7 @@ not energy.
 | autoscaling 70 %, the same | −51.0 % | ★★★ |
 | autoscaling 60 %, the same | −49.4 % | ★★ |
 
-**As built in step 5, part 7** (E6, "Right-sized AI"):
+**As built in step 5, part 7** (E8, "Right-sized AI"):
 
 - Core: `InferenceModel` – five kinds of question with a share and an answer quality per answerer (`Answerer`: no
   AI 0.002 Wh / 0.3 s, small model 0.12 Wh / 0.8 s, large model 1.0 Wh / 2.0 s, large model with reasoning 2.5 Wh
@@ -1002,7 +1002,7 @@ not energy.
 | the same with 1 s, reasoning for complaints | −61.2 % | 93.9 % | 84.9 % | 0 |
 | no AI, no AI, small, large, small, batching 1 s | −80.5 % | 91.2 % | 100 % | 0 |
 
-**As built in step 5, part 8** (E4, "Data diet"):
+**As built in step 5, part 8** (E5, "Data diet"):
 
 - Core: `WebModel` and `PageConfig` (image format JPEG / WebP / AVIF converted once / AVIF converted on every
   request, sizes for the screen, lazy loading off / below the fold / all images, product video plays by itself or on
@@ -1028,7 +1028,7 @@ not energy.
 | AVIF converted on every request | −74.5 % | 1.7 | 2.8 s | 0 |
 | lazy loading for all images | −79.8 % | 1.7 | 2.6 s | 0 |
 
-**As built in step 5, part 9** (E7, "Green pipeline"):
+**As built in step 5, part 9** (E9, "Green pipeline"):
 
 - Core: `PipelineModel` and `PipelineConfig`. Four commits per tick on weekdays from 8 to 18; a run needs build 3 min
   (14 without a cache: an agent on demand starts empty unless the cache is remote), unit tests 5 (1.5 with test impact
@@ -1055,10 +1055,10 @@ not energy.
 | on demand, cache, TIA, nightly, every 30 minutes | −85.3 % | 22.5 min | 0 |
 | on demand, cache, TIA, UI tests never | −81.6 % | 7.5 min | 0 (release) |
 
-**As built in step 5, part 12** (E8 "How many nines?" and E9 "Constant asking", D30): two scenarios without a clock,
+**As built in step 5, part 12** (E1 "How many nines?" and E7 "Constant asking", D30): two scenarios without a clock,
 each with its own screen, like the portfolio track.
 
-- E8: `AvailabilityModel`. Each building block fails six times a year; one failure costs 240 min (single), 45 (cold
+- E1: `AvailabilityModel`. Each building block fails six times a year; one failure costs 240 min (single), 45 (cold
   standby), 10 (warm standby) or 1 (active-active). A scenario's downtime is 1 − the product of the availabilities of
   the blocks it waits for. Power: single n servers; cold standby + 5 % for copies; warm standby + half the servers at
   15 %; active-active 2n servers at half the load. The queue removes the policy database from "Report a claim", sizes
@@ -1075,7 +1075,7 @@ each with its own screen, like the portfolio track.
 | the same with the circuit breaker | 64 t | −26.9 % | ★★ |
 | shared warm, database cold behind the queue, circuit breaker | 61 t | −30.2 % | ★★★ |
 
-- E9: `UpdatesModel`. Phone: 0.5 J a request while open, 6 J a wake-up while closed, 0.01 J a KB; server: 0.4 J a
+- E7: `UpdatesModel`. Phone: 0.5 J a request while open, 6 J a wake-up while closed, 0.01 J a KB; server: 0.4 J a
   full answer, 0.05 J a short one, 3 J an hour of open connection, PUE 1.4; network 0.06 kWh/GB; push suits at most one
   change in two minutes. The rest of the app (40 t a year) stays the same. ★ every kind as fresh as required; ★★ −30 %,
   ★★★ −45 %.
@@ -1115,7 +1115,7 @@ the numbers stay so that saved stars keep their scenario):
 | 24/7 carbon-free | −80.8 % | 133 kg | 116 % | 0 (budget) |
 | 24/7 carbon-free, autoscaling 80 % | −81.8 % | 118 kg | 103 % | ★★★ |
 
-**As built in step 5, part 10** (E5, "Chatty services"):
+**As built in step 5, part 10** (E6, "Chatty services"):
 
 - Core: `ServiceModel` and `ServiceConfig`. Tracking requests follow the daily curve, 15,000 a second at the peak.
   CPU per request: 10 ms own work, 4 ms per remote hop with JSON or 1.5 ms with gRPC (half the bytes [S33]), 0.3 ms
@@ -1169,20 +1169,20 @@ the numbers stay so that saved stars keep their scenario):
 | D14 | Technology | Kotlin Multiplatform + Compose Multiplatform instead of Swift: web (Wasm) and desktop first, Android and iOS later; close to Java for lecturer and students |
 | D15 | Lesson of scenario 3 | relative rule (greenest hours of the forecast) beats an absolute threshold; the deadline safety is a switch, so its effect can be seen |
 | D16 | Technical terms | every scenario names the term for what the player does (briefing, scenario card, debrief), in English in both languages |
-| D17 | Engineering | a second track "Engineering" (E1 profiling, E2 growing data, E3 caching) next to the operations scenarios; backlog with team capacity, coarser time steps; no real code in the game |
+| D17 | Engineering | a second track "Engineering" (E2 profiling, E3 growing data, E4 caching) next to the operations scenarios; backlog with team capacity, coarser time steps; no real code in the game |
 | D18 | Bin packing | scenario 5 "Consolidation": VMs on hosts by hand, two dimensions (CPU, RAM), heuristics in "what if"; the operations scenarios after it move up by one |
 | D19 | Order of the scenarios | a star opens the next scenario (the story), but a switch "Open all scenarios" opens everything for courses that take the topics in another order; stars still count |
-| D20 | Caching | its own Engineering scenario E3 instead of a backlog item; the TTL is a business rule per kind of data, breaking it gives stale answers and no stars; all kinds share the memory of whole cache servers (LRU), so the decisions are what to cache and how many servers; HyperLogLog and the materialized view as extra measures |
+| D20 | Caching | its own Engineering scenario E4 instead of a backlog item; the TTL is a business rule per kind of data, breaking it gives stale answers and no stars; all kinds share the memory of whole cache servers (LRU), so the decisions are what to cache and how many servers; HyperLogLog and the materialized view as extra measures |
 | D21 | PUE | shown everywhere in scenario 6, but the stars count CO₂: the scenario is built so that the best PUE and the least CO₂ need different decisions (fewer servers raise the PUE, faster fans lower it) |
 | D22 | Hardware renewal (scenario 7) | quarterly steps (a game day stands for a quarter) instead of monthly steps (revises D5); two sites with a yearly budget, growth, new generations and failures, so that decisions come up over the three years; the question is where new hardware replaces dirty electricity, while the clean site keeps enough capacity |
 | D23 | Location Shifting (scenario 10) | the player decides per job before the start, not during the game: moving work between sites is a planning decision, and the data must be moved first; the limits come from the jobs themselves (data size, database latency, data residency), so that "everything to Norway" is wrong and the choice needs judgement |
 | D24 | Capstone (scenario 11) | stars by CO₂ reduction, not a hard SCI target; the three kinds of work share one draft in tabs, so the controls stay those of the scenarios that introduced them; the forecast update is the one new twist, because a plan days ahead is where a forecast error costs most |
 | D25 | "What if" and replays | settings in the debrief's "what if" that reach more stars than the player's best so far are shown without their label ("a setting you have not found yet") – the numbers stay, the recipe does not; a "start over" button in the goal bar returns to the scenario's starting rules and choices (a second click confirms) |
-| D26 | Portfolio track | a third track for a company's applications (P1 "Inventory" first); no clock, a year at a time; the data the player buys come from the same budget as the measures; the stars count the real footprint, location-based; opens after E1 "Measure first" – first measure, then take stock; the P1 briefing explains location-based and market-based itself |
-| D27 | Order of the Engineering scenarios | along the blocks of the iSAQB module GREEN: code (E1–E3), the page and the architecture (E4 Data diet, E5 Chatty services), AI (E6 Right-sized AI), the development process (E7 Green pipeline); the scenario numbers in the code stay (104–107), so stars kept on a device stay with their scenario – only the labels and the order of opening changed |
+| D26 | Portfolio track | a third track for a company's applications (P1 "Inventory" first); no clock, a year at a time; the data the player buys come from the same budget as the measures; the stars count the real footprint, location-based; opens after E2 "Measure first" – first measure, then take stock; the P1 briefing explains location-based and market-based itself |
+| D27 | Order of the Engineering scenarios | along the blocks of the iSAQB module GREEN: quality goals (E1 How many nines?), code (E2–E4), the page and the architecture (E5 Data diet, E6 Chatty services, E7 Constant asking), AI (E8 Right-sized AI), the development process (E9 Green pipeline); the scenario numbers in the code stay (104–107), so stars kept on a device stay with their scenario – only the labels and the order of opening changed |
 | D28 | Glossary and results in a course | a glossary of all technical terms on the start page; no result codes or ranking – the courses do not need them (revises D6) |
 | D29 | P4 "Leave the cloud?" | three years, so that new servers are written off over a fair time; the own server room stays, limited to six existing servers (reuse against a poor PUE); no green-power contract as an option – the report next to the location-based figure shows the same lesson as B11, and the debrief names it |
-| D30 | E8 and E9 | two architecture scenarios after E7 (by the GREEN blocks of D27 they would sit before E1 and after E5; kept at the end so that the labels E1–E7 stay); like the portfolio track without a clock, decided for a year |
+| D30 | E1 "How many nines?" and E7 "Constant asking" | two architecture scenarios, sorted in along the GREEN blocks of D27: quality goals first (E1, block 3), polling and push after the services (E7, block 6); the others move on (E2 Measure first … E9 Green pipeline). Scenario numbers stay (108, 109; 101–107), so stars kept on a device stay with their scenario. Like the portfolio track without a clock, decided for a year |
 
 ---
 

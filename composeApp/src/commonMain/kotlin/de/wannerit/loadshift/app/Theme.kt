@@ -35,7 +35,7 @@ object Palette {
     val cache = Color(0xFF8E6FD8)
     /** O7: the mark of an old server. */
     val old = Color(0xFFB0741A)
-    /** E3: one color per kind of cached data (images, catalog, rates, search, balance). */
+    /** E4: one color per kind of cached data (images, catalog, rates, search, balance). */
     val cacheKinds = listOf(Color(0xFF8E6FD8), Color(0xFF1F8F66), Color(0xFFE8A33A), Color(0xFFCC4D40), Color(0xFF295CAD))
     val interactiveLoad = Color(0xFF5C9EF2)
     val batchLoad = amber

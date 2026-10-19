@@ -23,7 +23,7 @@ import de.wannerit.loadshift.core.PageConfig
 import de.wannerit.loadshift.core.Tracking
 import de.wannerit.loadshift.core.WebModel
 
-/** E4: images, video, lists and tracking of the shop's pages. */
+/** E5: images, video, lists and tracking of the shop's pages. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun PagesPanel(game: GameController) {

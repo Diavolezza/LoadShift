@@ -22,7 +22,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Box
 
-/** E3: what to cache, for how long, in how much memory – and two more measures. */
+/** E4: what to cache, for how long, in how much memory – and two more measures. */
 @Composable
 fun CachePanel(game: GameController) {
     val model = game.scenario.caching ?: return

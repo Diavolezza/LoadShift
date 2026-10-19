@@ -64,7 +64,7 @@ data class Policy(
     val deadlineSafety: Boolean = true,
     /** Engineering track: the backlog items finished (they change the work per request). */
     val done: Set<Int> = emptySet(),
-    /** E3: what is cached, for how long, and in how much memory. */
+    /** E4: what is cached, for how long, and in how much memory. */
     val cache: CacheConfig = CacheConfig(),
     /** Scenario 6: the inlet temperature the cooling keeps, °C. */
     val setpoint: Int = 20,
@@ -76,13 +76,13 @@ data class Policy(
     val training: TrainingConfig = TrainingConfig(),
     /** O9: qualities and eco mode of the streaming service. */
     val streaming: StreamingConfig = StreamingConfig(),
-    /** E6: who answers each kind of question, and the batching window. */
+    /** E8: who answers each kind of question, and the batching window. */
     val inference: InferenceConfig = InferenceConfig(),
-    /** E4: how heavy the shop's pages are. */
+    /** E5: how heavy the shop's pages are. */
     val pages: PageConfig = PageConfig(),
-    /** E7: the CI/CD pipeline and the test environments. */
+    /** E9: the CI/CD pipeline and the test environments. */
     val pipeline: PipelineConfig = PipelineConfig(),
-    /** E5: how the logistics system's services are cut and talk to each other. */
+    /** E6: how the logistics system's services are cut and talk to each other. */
     val services: ServiceConfig = ServiceConfig(),
     /** B12: the electricity contract. */
     val contract: Contract = Contract.GREY,

@@ -3,7 +3,7 @@ package de.wannerit.loadshift.core
 import kotlin.math.roundToLong
 
 /*
- * Engineering track, E8 "How many nines?" (docs/CONCEPT.md 9.2): an insurer's customer portal of seven building
+ * Engineering track, E1 "How many nines?" (docs/CONCEPT.md 9.2): an insurer's customer portal of seven building
  * blocks and five quality scenarios, each with the downtime it may have in a year. Per building block an availability
  * tactic – a single instance that is restarted, a cold or warm standby, or active-active on two sites – and two ways
  * to decouple: claims taken into a queue, and the contract overview without recommendations when they fail. A

@@ -33,7 +33,7 @@ fun answererShort(a: Answerer): String = when (a) {
     Answerer.REASONING -> t("large + reasoning")
 }
 
-/** E6: who answers each kind of question, and the batching window. */
+/** E8: who answers each kind of question, and the batching window. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun InferencePanel(game: GameController) {

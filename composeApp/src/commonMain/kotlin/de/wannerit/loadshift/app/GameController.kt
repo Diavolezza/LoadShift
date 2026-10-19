@@ -275,7 +275,7 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
         speed = Speed.X16
     }
 
-    /** E2: what an item saves today (per mille of today's work) – "measured" with today's data. */
+    /** E3: what an item saves today (per mille of today's work) – "measured" with today's data. */
     fun savingToday(item: Int): Int {
         val done = sprintDone.keys
         val before = Engineering.dailyWork(scenario, currentDay.coerceAtMost(scenario.days - 1), done)
@@ -406,22 +406,22 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
         streamMax = List(n) { if (it == device) quality else streamMax.getOrElse(it) { Quality.UHD } }
     }
 
-    // Services (E5)
+    // Services (E6)
 
     val hasServices: Boolean get() = scenario.services != null
     var servicesDraft by mutableStateOf(ServiceConfig())
 
-    // Pipeline (E7)
+    // Pipeline (E9)
 
     val hasPipeline: Boolean get() = scenario.pipeline != null
     var pipelineDraft by mutableStateOf(PipelineConfig())
 
-    // Pages (E4)
+    // Pages (E5)
 
     val hasWeb: Boolean get() = scenario.web != null
     var pageDraft by mutableStateOf(PageConfig())
 
-    // Shop assistant (E6)
+    // Shop assistant (E8)
 
     val hasInference: Boolean get() = scenario.inference != null
     var aiAnswerers by mutableStateOf(listOf<Answerer>())
@@ -466,7 +466,7 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
 
     var draftSetpoint by mutableIntStateOf(20)
 
-    // Caching (E3)
+    // Caching (E4)
 
     var cacheServers by mutableIntStateOf(0)
     var cacheTtl by mutableStateOf(listOf<Int>())

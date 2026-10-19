@@ -35,15 +35,15 @@ The app speaks English and German (switch on the start page); everything in this
 
 | | Engineering | Term |
 |---|---|---|
-| E1 | Measure first | Profiling |
-| E2 | Growing data | Algorithmic complexity |
-| E3 | Hit or miss | Caching |
-| E4 | Data diet | Sustainable Web Design |
-| E5 | Chatty services | Green Software Architecture |
-| E6 | Right-sized AI | Green AI (Right-sizing Models) |
-| E7 | Green pipeline | Green CI/CD |
-| E8 | How many nines? | Availability Tactics |
-| E9 | Constant asking | Polling, Push, Streaming |
+| E1 | How many nines? | Availability Tactics |
+| E2 | Measure first | Profiling |
+| E3 | Growing data | Algorithmic complexity |
+| E4 | Hit or miss | Caching |
+| E5 | Data diet | Sustainable Web Design |
+| E6 | Chatty services | Green Software Architecture |
+| E7 | Constant asking | Polling, Push, Streaming |
+| E8 | Right-sized AI | Green AI (Right-sizing Models) |
+| E9 | Green pipeline | Green CI/CD |
 
 | | Portfolio | Term |
 |---|---|---|
@@ -114,7 +114,7 @@ on the first start (right-click → Open), Windows SmartScreen warns once.
 ### Launch options
 
 For screenshots, tests and teaching: desktop `./gradlew :composeApp:run --args="-scenario 7 -play -ticks 40 -careful -lang de"`,
-web `index.html?scenario=7&play&ticks=40&careful&lang=de`. `scenario` opens a scenario's briefing (101–103 are E1–E3),
+web `index.html?scenario=7&play&ticks=40&careful&lang=de`. `scenario` opens a scenario's briefing (101–103 are E2–E4),
 `play` starts it, `ticks` runs that many 15-minute steps, `careful` plays like a careful player, `lang` sets the
 language for this start.
 

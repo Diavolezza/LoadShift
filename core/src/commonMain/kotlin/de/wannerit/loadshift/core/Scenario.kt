@@ -26,19 +26,19 @@ enum class Control {
     /** Engineering track: a sprint plan from the backlog at the start of every day. */
     SPRINTS,
 
-    /** E3: what to cache, for how long, in how much memory. */
+    /** E4: what to cache, for how long, in how much memory. */
     CACHING,
 
-    /** E6: who answers each kind of question (no AI, a small or large model), and batching. */
+    /** E8: who answers each kind of question (no AI, a small or large model), and batching. */
     INFERENCE,
 
-    /** E4: images, video, lists and tracking of the shop's pages. */
+    /** E5: images, video, lists and tracking of the shop's pages. */
     PAGES,
 
-    /** E7: build agents, caches, tests, triggers and test environments. */
+    /** E9: build agents, caches, tests, triggers and test environments. */
     PIPELINE,
 
-    /** E5: cut, protocol, master data, caches for external calls, serverless. */
+    /** E6: cut, protocol, master data, caches for external calls, serverless. */
     SERVICES,
 
     /** B12: the electricity contract. */
@@ -117,11 +117,11 @@ data class Scenario(
     val hotSpots: List<HotSpot> = emptyList(),
     val backlog: List<BacklogItem> = emptyList(),
     val sprintPoints: Int = 0,
-    /** E2: the data grows, and parts of the work with it. */
+    /** E3: the data grows, and parts of the work with it. */
     val growth: GrowthModel? = null,
-    /** E3: kinds of data that can be cached. */
+    /** E4: kinds of data that can be cached. */
     val caching: CacheModel? = null,
-    /** E3: stale answers allowed for the first star, per 10,000 requests. */
+    /** E4: stale answers allowed for the first star, per 10,000 requests. */
     val staleLimit: Int? = null,
     /** Scenario 6: cooling with outside temperature and setpoint instead of a fixed PUE. */
     val cooling: CoolingModel? = null,
@@ -139,13 +139,13 @@ data class Scenario(
     val rulesBroken: Int = 0,
     /** O11: at most this many servers work for batch jobs at a time – the rest belong to the shop (null: all). */
     val batchLimit: Int? = null,
-    /** E6: a shop assistant with language models. */
+    /** E8: a shop assistant with language models. */
     val inference: InferenceModel? = null,
-    /** E4: the network and the visitors' devices count too. */
+    /** E5: the network and the visitors' devices count too. */
     val web: WebModel? = null,
-    /** E7: a team's CI/CD pipeline and test environments. */
+    /** E9: a team's CI/CD pipeline and test environments. */
     val pipeline: PipelineModel? = null,
-    /** E5: the logistics system's services. */
+    /** E6: the logistics system's services. */
     val services: ServiceModel? = null,
     /** B12: electricity contracts and three ways to count CO₂ (operational counts hourly matched). */
     val contract: ContractModel? = null,
@@ -157,9 +157,9 @@ data class Scenario(
     val tidy: TidyModel? = null,
     /** P4: six applications, each to a place – cloud, colocation or the company's own server room. */
     val repatriation: RepatriationModel? = null,
-    /** E8: building blocks, availability tactics and quality scenarios. */
+    /** E1: building blocks, availability tactics and quality scenarios. */
     val availability: AvailabilityModel? = null,
-    /** E9: how an app learns about changes – polling, streams, push. */
+    /** E7: how an app learns about changes – polling, streams, push. */
     val updates: UpdatesModel? = null,
 ) {
     /** Expected interactive work at a tick: the web load or the VMs' profiles (what an operator can plan with). */
@@ -481,12 +481,12 @@ data class Scenario(
         )
 
         /**
-         * E1, "Measure first": the web shop's code. A team with 8 story points per sprint and a backlog of
+         * E2, "Measure first": the web shop's code. A team with 8 story points per sprint and a backlog of
          * improvements; each game day stands for the week after a sprint. The team's estimates of where the CPU
          * time goes are wrong – profiling shows it. Autoscaling turns less work per request into fewer servers.
          */
         val MEASURE_FIRST = Scenario(
-            number = 101, label = "E1", track = Track.ENGINEERING, unlockAfter = 1,
+            number = 101, label = "E2", track = Track.ENGINEERING, unlockAfter = 108,
             title = "Measure first", setting = GridSetting(GridRegion.GERMANY, Season.AUTUMN), days = 4,
             seed = 11, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 20)),
             interactive = InteractiveLoad(peak = 240),
@@ -521,13 +521,13 @@ data class Scenario(
         )
 
         /**
-         * E2, "Growing data": the shop's data grows by 15 % a month; each game day stands for a month, one sprint
+         * E3, "Growing data": the shop's data grows by 15 % a month; each game day stands for a month, one sprint
          * per month with 3 story points for performance (the rest goes into features). Parts of the work grow
          * with the data – a lookup in a list, a query without an index, a nightly job that compares all pairs.
          * Measured today they hardly matter; in a year they dominate.
          */
         val GROWING_DATA = Scenario(
-            number = 102, label = "E2", track = Track.ENGINEERING, unlockAfter = 101,
+            number = 102, label = "E3", track = Track.ENGINEERING, unlockAfter = 101,
             title = "Growing data", setting = GridSetting(GridRegion.GERMANY, Season.AUTUMN), days = 12,
             seed = 12, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 80)),
             interactive = InteractiveLoad(peak = 240),
@@ -555,7 +555,7 @@ data class Scenario(
         )
 
         /**
-         * E3, "Hit or miss": caching in the web shop (Green IT LE06). Five kinds of data – product images, catalog
+         * E4, "Hit or miss": caching in the web shop (Green IT LE06). Five kinds of data – product images, catalog
          * pages, exchange rates, search results, account balances – each with its own cost, popularity, size and
          * allowed age. All cached kinds share the memory of the cache servers. Caching saves work while it hits; a
          * cache server draws power all the time, an answer older than allowed is wrong, an account balance must never
@@ -565,7 +565,7 @@ data class Scenario(
          * sales dashboard.
          */
         val HIT_OR_MISS = Scenario(
-            number = 103, label = "E3", track = Track.ENGINEERING, unlockAfter = 102,
+            number = 103, label = "E4", track = Track.ENGINEERING, unlockAfter = 102,
             title = "Hit or miss", setting = GridSetting(GridRegion.GERMANY, Season.AUTUMN), days = 2,
             seed = 13, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 30)),
             interactive = InteractiveLoad(peak = 240),
@@ -594,13 +594,13 @@ data class Scenario(
         )
 
         /**
-         * E6, "Right-sized AI": the shop assistant. The team's prototype sends every question to the large model, one at
+         * E8, "Right-sized AI": the shop assistant. The team's prototype sends every question to the large model, one at
          * a time. Many questions need no AI at all (the order status is a lookup), some are answered as well by a small
          * model; the large model is worth it where it adds quality. Batching shares the GPU's work among questions but
          * makes them wait; reasoning helps complaints a little and makes them wait long.
          */
         val RIGHT_SIZED_AI = Scenario(
-            number = 104, label = "E6", track = Track.ENGINEERING, unlockAfter = 107,
+            number = 104, label = "E8", track = Track.ENGINEERING, unlockAfter = 109,
             title = "Right-sized AI", setting = GridSetting(GridRegion.GERMANY, Season.AUTUMN), days = 2,
             seed = 14, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 10)),
             interactive = InteractiveLoad(peak = 120),
@@ -621,12 +621,12 @@ data class Scenario(
         )
 
         /**
-         * E4, "Data diet": the shop's pages weigh 12 MB a visit. Counted with the network and the visitors' devices, the
+         * E5, "Data diet": the shop's pages weigh 12 MB a visit. Counted with the network and the visitors' devices, the
          * data center is the small part. Lighter images, no video that plays by itself, shorter lists and less tracking
          * cut the bytes – and make the page faster; two tempting changes make it slower.
          */
         val DATA_DIET = Scenario(
-            number = 105, label = "E4", track = Track.ENGINEERING, unlockAfter = 103,
+            number = 105, label = "E5", track = Track.ENGINEERING, unlockAfter = 103,
             title = "Data diet", setting = GridSetting(GridRegion.GERMANY, Season.AUTUMN), days = 2,
             seed = 15, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 30)),
             interactive = InteractiveLoad(peak = 240),
@@ -638,12 +638,12 @@ data class Scenario(
         )
 
         /**
-         * E7, "Green pipeline": a week of a team of 40 developers. Every commit builds and runs all tests on 16 agents
+         * E9, "Green pipeline": a week of a team of 40 developers. Every commit builds and runs all tests on 16 agents
          * that run day and night; six test environments with three replicas each never sleep. The team must get its
          * feedback within 20 minutes, and the UI tests must have run before Friday's release.
          */
         val GREEN_PIPELINE = Scenario(
-            number = 106, label = "E7", track = Track.ENGINEERING, unlockAfter = 104,
+            number = 106, label = "E9", track = Track.ENGINEERING, unlockAfter = 104,
             title = "Green pipeline", setting = GridSetting(GridRegion.GERMANY, Season.AUTUMN), days = 7,
             seed = 16, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 34)),
             interactive = InteractiveLoad(peak = 0),
@@ -655,12 +655,12 @@ data class Scenario(
         )
 
         /**
-         * E5, "Chatty services": the logistics system. Four microservices talk REST with JSON, the routes service asks the
+         * E6, "Chatty services": the logistics system. Four microservices talk REST with JSON, the routes service asks the
          * truck and customer services and two external providers on every tracking request. The tracking is too slow;
          * the provider's positions may be one minute old, the traffic information five.
          */
         val CHATTY_SERVICES = Scenario(
-            number = 107, label = "E5", track = Track.ENGINEERING, unlockAfter = 105,
+            number = 107, label = "E6", track = Track.ENGINEERING, unlockAfter = 105,
             title = "Chatty services", setting = GridSetting(GridRegion.GERMANY, Season.AUTUMN), days = 2,
             seed = 17, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 30)),
             interactive = InteractiveLoad(peak = 0),
@@ -850,9 +850,9 @@ data class Scenario(
             ),
         )
 
-        /** E8, "How many nines?": an insurer's portal, seven building blocks, five quality scenarios, a year. */
+        /** E1, "How many nines?": an insurer's portal, seven building blocks, five quality scenarios, a year. */
         val HOW_MANY_NINES = Scenario(
-            number = 108, label = "E8", track = Track.ENGINEERING, unlockAfter = 106,
+            number = 108, label = "E1", track = Track.ENGINEERING, unlockAfter = 1,
             title = "How many nines?", setting = GridSetting(GridRegion.GERMANY, Season.YEAR), days = 1,
             seed = 18, fleet = emptyList(), interactive = InteractiveLoad(peak = 0), controls = emptySet(),
             goals = StarGoals(200, SpecialGoal.Reduction(280)),
@@ -895,9 +895,9 @@ data class Scenario(
             ),
         )
 
-        /** E9, "Constant asking": a delivery app on 400,000 phones, five kinds of updates, a year. */
+        /** E7, "Constant asking": a delivery app on 400,000 phones, five kinds of updates, a year. */
         val CONSTANT_ASKING = Scenario(
-            number = 109, label = "E9", track = Track.ENGINEERING, unlockAfter = 108,
+            number = 109, label = "E7", track = Track.ENGINEERING, unlockAfter = 107,
             title = "Constant asking", setting = GridSetting(GridRegion.GERMANY, Season.YEAR), days = 1,
             seed = 19, fleet = emptyList(), interactive = InteractiveLoad(peak = 0), controls = emptySet(),
             goals = StarGoals(300, SpecialGoal.Reduction(450)),
@@ -944,6 +944,6 @@ data class Scenario(
         private fun week(day: List<Int>, weekend: List<Int> = day, campaign: Int? = null): List<Int> =
             (0 until 7).flatMap { d -> if (d == campaign) listOf(30, 100, 95, 35) else if (d >= 5) weekend else day }
 
-        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, OLD_IRON, TRAINING_RUN, ECO_MODE, TWO_SITES, GREEN_ON_PAPER, DARK_DOLDRUMS, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS, DATA_DIET, CHATTY_SERVICES, RIGHT_SIZED_AI, GREEN_PIPELINE, HOW_MANY_NINES, CONSTANT_ASKING, INVENTORY, WHERE_TO_START, TIDY_UP, LEAVE_THE_CLOUD)
+        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, OLD_IRON, TRAINING_RUN, ECO_MODE, TWO_SITES, GREEN_ON_PAPER, DARK_DOLDRUMS, HOW_MANY_NINES, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS, DATA_DIET, CHATTY_SERVICES, CONSTANT_ASKING, RIGHT_SIZED_AI, GREEN_PIPELINE, INVENTORY, WHERE_TO_START, TIDY_UP, LEAVE_THE_CLOUD)
     }
 }

@@ -54,7 +54,7 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 
-/** State of E8: a tactic per building block, the decouplings, the selected block; a replay keeps the architecture. */
+/** State of E1: a tactic per building block, the decouplings, the selected block; a replay keeps the architecture. */
 class AvailabilityController(val scenario: Scenario, fresh: Boolean = false) {
     val model = scenario.availability!!
     var arch by mutableStateOf((if (fresh) null else lastPlans[scenario.number]) ?: model.reference)

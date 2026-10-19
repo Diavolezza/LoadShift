@@ -5,8 +5,8 @@ import kotlin.math.roundToInt
 
 /*
  * The engineering track (docs/CONCEPT.md 9.2): a backlog of improvements and a team with a fixed capacity per sprint.
- * E1: each item takes away a share of the CPU work per request; the team estimates the shares, profiling measures
- * them. E2: the data grows every month, and parts of the work grow with it – by their algorithmic complexity.
+ * E2: each item takes away a share of the CPU work per request; the team estimates the shares, profiling measures
+ * them. E3: the data grows every month, and parts of the work grow with it – by their algorithmic complexity.
  */
 
 /** Where the CPU time per request goes (measured by profiling), per mille. */
@@ -16,15 +16,15 @@ data class BacklogItem(
     val title: String,
     /** Story points. */
     val effort: Int,
-    /** The team's estimate of the work it saves, per mille of the original work per request (E1). */
+    /** The team's estimate of the work it saves, per mille of the original work per request (E2). */
     val estimate: Int = 0,
-    /** What it really saves, per mille: E1 of the work per request, E2 of the constant part. */
+    /** What it really saves, per mille: E2 of the work per request, E3 of the constant part. */
     val effect: Int = 0,
-    /** The hot spot it works on (E1), if any. */
+    /** The hot spot it works on (E2), if any. */
     val hotSpot: Int? = null,
     /** Profiling: saves nothing, but measures where the time goes. */
     val profiling: Boolean = false,
-    /** E2: the growing part it fixes (index into the growth model's parts), if any. */
+    /** E3: the growing part it fixes (index into the growth model's parts), if any. */
     val fixes: Int? = null,
 )
 
@@ -58,7 +58,7 @@ data class GrowthPart(
 )
 
 /**
- * E2: the data grows by [ratePermille] every game day (one day stands for a month). The work per request is a
+ * E3: the data grows by [ratePermille] every game day (one day stands for a month). The work per request is a
  * constant part plus parts that grow; the backlog items fix parts (a better algorithm) or cut the constant part.
  */
 data class GrowthModel(val ratePermille: Int, val constant: Int, val parts: List<GrowthPart>) {
@@ -150,13 +150,13 @@ class Team(private val backlog: List<BacklogItem>, val points: Int) {
 }
 
 object Engineering {
-    /** E1: work per request after the items done, per mille of the original. */
+    /** E2: work per request after the items done, per mille of the original. */
     fun work(backlog: List<BacklogItem>, done: Set<Int>): Int = 1_000 - done.sumOf { backlog[it].effect }
 
     /**
      * A team that picks by [value] per story point the items that fit into the sprint; an item bigger than a
      * sprint is started in an otherwise empty sprint and carries over.
-     * [profileFirst]: profiling goes into the first sprint (E1); after profiling the measured effects count.
+     * [profileFirst]: profiling goes into the first sprint (E2); after profiling the measured effects count.
      */
     fun greedy(
         scenario: Scenario, profileFirst: Boolean = false,
@@ -197,19 +197,19 @@ object Engineering {
         }.toMap()
     }
 
-    /** E1: the team's estimates until profiling has been done, the measured effects after it. */
+    /** E2: the team's estimates until profiling has been done, the measured effects after it. */
     fun byEstimates(scenario: Scenario): (Int, Int, Set<Int>, Boolean) -> Int =
         { i, _, _, measured -> if (measured) scenario.backlog[i].effect else scenario.backlog[i].estimate }
 
-    /** E2: what an item saves on the day of the sprint ("measured today"). */
+    /** E3: what an item saves on the day of the sprint ("measured today"). */
     fun byToday(scenario: Scenario): (Int, Int, Set<Int>, Boolean) -> Int =
         { i, sprint, done, _ -> (dailyWork(scenario, sprint, done) - dailyWork(scenario, sprint, done + i)).toInt() }
 
-    /** E2: what an item will save on the last day (a team that thinks of the growth). */
+    /** E3: what an item will save on the last day (a team that thinks of the growth). */
     fun byLastDay(scenario: Scenario): (Int, Int, Set<Int>, Boolean) -> Int =
         { i, _, done, _ -> (dailyWork(scenario, scenario.days - 1, done) - dailyWork(scenario, scenario.days - 1, done + i)).toInt() }
 
-    /** E2: the day's expected work (units) with the items done – to show what an item saves "today" or later. */
+    /** E3: the day's expected work (units) with the items done – to show what an item saves "today" or later. */
     fun dailyWork(scenario: Scenario, day: Int, done: Set<Int>): Long {
         val growth = scenario.growth ?: return 0
         val start = GameTime.at(day, 0).tick

@@ -5,7 +5,7 @@ import kotlin.math.ln
 import kotlin.math.roundToInt
 
 /*
- * E3, caching (docs/CONCEPT.md 9.2; Green IT LE06): kinds of data the web shop serves, each with a share of the
+ * E4, caching (docs/CONCEPT.md 9.2; Green IT LE06): kinds of data the web shop serves, each with a share of the
  * requests, a cost when it is not in the cache, a number of items of a size, how old an answer may be, and the share
  * of requests that are asked only once. All cached kinds share the memory of the cache servers. An entry stays until
  * its time to live (TTL) ends – or until the cache is full and it is the one used least recently (LRU).

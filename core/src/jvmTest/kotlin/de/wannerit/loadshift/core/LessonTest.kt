@@ -496,7 +496,7 @@ class LessonTest {
         assertEquals(0, stars("smart + customer data"))
     }
 
-    @Test fun e1MeasureFirst() {
+    @Test fun e2MeasureFirst() {
         val scenario = Scenario.MEASURE_FIRST
         val reference = Simulation.reference(scenario)
         val backlog = scenario.backlog
@@ -528,7 +528,7 @@ class LessonTest {
         assertEquals(3, stars("profile first"))
     }
 
-    @Test fun e2GrowingData() {
+    @Test fun e3GrowingData() {
         val scenario = Scenario.GROWING_DATA
         val reference = Simulation.reference(scenario)
         val backlog = scenario.backlog
@@ -569,7 +569,7 @@ class LessonTest {
         assertEquals(3, stars("growth first"))
     }
 
-    @Test fun e3HitOrMiss() {
+    @Test fun e4HitOrMiss() {
         val scenario = Scenario.HIT_OR_MISS
         val reference = Simulation.reference(scenario)
         val model = scenario.caching!!
@@ -741,7 +741,7 @@ class LessonTest {
         assertTrue(byName.getValue("auto 80, green+replan, 4/60/green").totals.trainingFinishedAt != null)
     }
 
-    @Test fun e6RightSizedAi() {
+    @Test fun e8RightSizedAi() {
         val scenario = Scenario.RIGHT_SIZED_AI
         val reference = Simulation.reference(scenario)
         fun config(code: String, window: Int) = InferenceConfig(code.split(" ").map { c ->
@@ -778,7 +778,7 @@ class LessonTest {
         assertEquals(0, stars("N N S L L, 2000 ms"))
     }
 
-    @Test fun e4DataDiet() {
+    @Test fun e5DataDiet() {
         val scenario = Scenario.DATA_DIET
         val reference = Simulation.reference(scenario)
         // Code: format (J, W, A, L = AVIF live), responsive (r/-), lazy (o, b, a), video (A autoplay, C on click),
@@ -824,7 +824,7 @@ class LessonTest {
         assertEquals(0, stars("A r a C S s"))
     }
 
-    @Test fun e7GreenPipeline() {
+    @Test fun e9GreenPipeline() {
         val scenario = Scenario.GREEN_PIPELINE
         val reference = Simulation.reference(scenario)
         // Code: runners (A always on, D on demand), remote cache (c/-), test impact (t/-), heavy (E every commit,
@@ -870,7 +870,7 @@ class LessonTest {
         assertEquals(0, stars("D c t X 1 O 1"))
     }
 
-    @Test fun e5ChattyServices() {
+    @Test fun e6ChattyServices() {
         val scenario = Scenario.CHATTY_SERVICES
         val reference = Simulation.reference(scenario)
         // Code: cut (M, L modulith), protocol (J, G), master data (S, E), GPS TTL s, map TTL s, serverless (f/-).
@@ -1109,7 +1109,7 @@ class LessonTest {
         assertTrue(kotlin.math.abs(r.planKg - r.baselineKg - (b.region + b.energy + b.pue + b.embodied)) <= 3)
     }
 
-    @Test fun e8HowManyNines() {
+    @Test fun e1HowManyNines() {
         val scenario = Scenario.HOW_MANY_NINES
         val model = scenario.availability!!
         fun arch(vararg t: Pair<String, Tactic>, d: Set<String> = emptySet()) = Architecture(model.all(Tactic.ACTIVE_ACTIVE).tactics + t, d)
@@ -1126,7 +1126,7 @@ class LessonTest {
             "example, circuit breaker only" to Architecture(model.example.tactics + ("Policy database" to Tactic.WARM_STANDBY) + ("Contract overview" to Tactic.COLD_STANDBY), setOf("fallback")),
             "example" to model.example,
         )
-        val lines = mutableListOf("E8 How many nines?: reference ${model.kgPerYear(model.reference).toLong() / 1_000} t a year; " +
+        val lines = mutableListOf("E1 How many nines?: reference ${model.kgPerYear(model.reference).toLong() / 1_000} t a year; " +
             Tactic.entries.joinToString { "$it %.4f %%".format(model.availability(it) * 100) })
         val results = plans.associate { (name, plan) ->
             val r = model.result(plan)
@@ -1146,7 +1146,7 @@ class LessonTest {
         assertEquals(3, stars("example"))
     }
 
-    @Test fun e9ConstantAsking() {
+    @Test fun e7ConstantAsking() {
         val scenario = Scenario.CONSTANT_ASKING
         val model = scenario.updates!!
         val ref = model.reference
@@ -1164,7 +1164,7 @@ class LessonTest {
             "example" to model.example,
         )
         val r0 = model.result(ref)
-        val lines = mutableListOf("E9 Constant asking: reference ${r0.referenceKg / 1_000} t a year (phones ${r0.phonesKg / 1_000} t, servers ${r0.serversKg / 1_000} t, network ${r0.networkKg / 1_000} t, rest ${r0.otherKg / 1_000} t)")
+        val lines = mutableListOf("E7 Constant asking: reference ${r0.referenceKg / 1_000} t a year (phones ${r0.phonesKg / 1_000} t, servers ${r0.serversKg / 1_000} t, network ${r0.networkKg / 1_000} t, rest ${r0.otherKg / 1_000} t)")
         val results = plans.associate { (name, plan) ->
             val r = model.result(plan)
             lines += "  " + name.padEnd(44) + "%6d t".format(r.planKg / 1_000) + "%7.1f %%".format(-r.reductionPermille / 10.0) +
