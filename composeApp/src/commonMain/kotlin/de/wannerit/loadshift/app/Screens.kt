@@ -109,16 +109,6 @@ fun AboutContent(modifier: Modifier = Modifier) {
                 Txt(t("For courses that take the topics in another order. Stars still count."), Type.caption)
             }
         }
-        Row(
-            Modifier.clip(RoundedCornerShape(10.dp)).clickable { Progress.changeShowSolutions(!Progress.showSolutions) }.padding(4.dp),
-            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            CheckBox(Progress.showSolutions)
-            Column {
-                Txt(t("Show solutions"), Type.style(15, FontWeight.SemiBold))
-                Txt(t("For the debrief: \"What if\" shows every setting, and the scenarios without a clock can load their model solution. Results then count at most one star."), Type.caption)
-            }
-        }
         ResetProgress()
     }
 }

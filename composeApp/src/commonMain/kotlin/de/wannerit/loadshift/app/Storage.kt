@@ -22,16 +22,6 @@ object Progress {
         Storage.setInt("unlockAll", if (on) 1 else 0)
     }
 
-    /** For teachers: every hidden setting of "What if" shown, model solutions loadable (stars then count at most one). */
-    var showSolutions by mutableStateOf(Storage.getInt("showSolutions") == 1)
-        private set
-
-    fun changeShowSolutions(on: Boolean) {
-        showSolutions = on
-        Storage.setInt("showSolutions", if (on) 1 else 0)
-        version++
-    }
-
     /** The player has uncovered the solution of a scenario on the end card. */
     fun revealed(scenario: Int): Boolean {
         @Suppress("UNUSED_VARIABLE") val v = version
@@ -43,10 +33,8 @@ object Progress {
         version++
     }
 
-    /** Once the solution is seen, a result in that scenario counts at most one star. */
-    fun solutionSeen(scenario: Int): Boolean = showSolutions || revealed(scenario)
-
-    fun counted(stars: Int, scenario: Int): Int = if (solutionSeen(scenario)) minOf(stars, 1) else stars
+    /** The solution of a scenario has been uncovered (the hidden settings of "What if" are shown). */
+    fun solutionSeen(scenario: Int): Boolean = revealed(scenario)
 
     /** Changes with every new best result, so that the screens that show stars are drawn again. */
     var version by mutableStateOf(0)
@@ -58,9 +46,8 @@ object Progress {
     }
 
     fun record(stars: Int, scenario: Int) {
-        val counted = counted(stars, scenario)
-        if (counted > stars(scenario)) {
-            Storage.setInt("stars.$scenario", counted)
+        if (stars > stars(scenario)) {
+            Storage.setInt("stars.$scenario", stars)
             version++
         }
     }

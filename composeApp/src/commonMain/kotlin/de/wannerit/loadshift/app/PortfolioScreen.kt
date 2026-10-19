@@ -435,7 +435,7 @@ private fun PortfolioEnd(game: PortfolioController, onExit: () -> Unit, onOvervi
             Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(30.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Txt(if (!met.rules) t("Not made") else t("Scenario complete"), Type.title, Modifier.weight(1f))
-                    StarRow(Progress.counted(game.stars, game.scenario.number))
+                    StarRow(game.stars)
                 }
                 Txt("${Format.changePermille(-r.reductionPermille)} CO₂", Type.style(40, FontWeight.Bold, if (r.reductionPermille > 0) Palette.accent else Palette.red))
                 Txt(t(texts.comparedWith), Type.style(17, color = Palette.secondary))

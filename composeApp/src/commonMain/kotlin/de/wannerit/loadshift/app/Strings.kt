@@ -56,6 +56,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "%1\$@ € (%2\$@ €)",
     "%@ € in three years" to
         "%@ € in drei Jahren",
+    "%@ → %lld" to
+        "%@ → %lld",
     "%@, batching %@" to
         "%1\$@, Batching %2\$@",
     "%@, eco %@ above %lld g/kWh" to
@@ -324,6 +326,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Ein neues ERP in der Cloud",
     "A new position every 5 seconds while the map is open" to
         "Alle 5 Sekunden eine neue Position, solange die Karte offen ist",
+    "A new run starts with the solution in the panel; press play and watch it." to
+        "Ein neuer Lauf beginnt mit der Lösung im Panel; drück auf Start und sieh zu.",
     "A pattern for calls between building blocks: after repeated failures the caller stops calling for a while and answers without the other block – for example with less content – instead of failing too." to
         "Ein Muster für Aufrufe zwischen Bausteinen: Nach wiederholten Fehlern ruft der Aufrufer eine Weile nicht mehr auf und antwortet ohne den anderen Baustein – etwa mit weniger Inhalt –, statt selbst auszufallen.",
     "A phone gets a smaller image than a large monitor (srcset); now every screen gets the 2,000-pixel image." to
@@ -416,8 +420,6 @@ internal val GERMAN: Map<String, String> = mapOf(
         "nach %@",
     "After a storm thousands of customers report damage at the same time; the portal takes every report." to
         "Nach einem Sturm melden Tausende gleichzeitig Schäden; das Portal nimmt jede Meldung an.",
-    "After that, a result in this scenario counts at most one star." to
-        "Danach zählt ein Ergebnis in diesem Szenario höchstens einen Stern.",
     "agents %@" to
         "Agents %@",
     "Agents and environments always on, all tests with every commit (reference)" to
@@ -602,6 +604,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Batch-Regel",
     "Batch rule at both sites" to
         "Batch-Regel an beiden Standorten",
+    "Batch rule at both sites: the greenest hours." to
+        "Batch-Regel an beiden Standorten: die saubersten Stunden.",
     "batch work at %lld g/kWh or less on average" to
         "Batch-Arbeit im Schnitt bei höchstens %lld g/kWh",
     "Batch work Ø %lld g/kWh (reference %lld)" to
@@ -1074,6 +1078,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Tag %lld",
     "Day %lld, %@" to
         "Tag %1\$lld, %2\$@",
+    "day %lld, %@" to
+        "Tag %lld, %@",
     "day and night" to
         "Tag und Nacht",
     "Day complete" to
@@ -1198,6 +1204,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "jeder Job rechtzeitig und weniger CO₂ als die Referenz",
     "every job by its deadline, customer data in Germany and less CO₂ than the reference" to
         "jeder Job bis zu seiner Frist, Kundendaten in Deutschland und weniger CO₂ als die Referenz",
+    "Every job into the greenest hours of the forecast before its deadline." to
+        "Jeden Job in die saubersten Stunden der Prognose vor seiner Frist.",
     "Every job is planned into the hours with the lowest forecast before its deadline, once, when you apply the rule." to
         "Jeder Job wird in die Stunden mit der niedrigsten Prognose vor seiner Frist geplant – einmal, wenn du die Regel übernimmst.",
     "Every job starts at the next %@ after it arrives." to
@@ -1302,8 +1310,6 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Für Lehrveranstaltungen, die die Themen in anderer Reihenfolge behandeln. Sterne zählen weiter.",
     "For teachers" to
         "Für Lehrende",
-    "For the debrief: \"What if\" shows every setting, and the scenarios without a clock can load their model solution. Results then count at most one star." to
-        "Für die Nachbesprechung: „Was wäre wenn“ zeigt alle Einstellungen, und die Szenarien ohne Uhr können ihre Musterlösung laden. Ergebnisse zählen dann höchstens einen Stern.",
     "For these measures the consultant's list gives %@ t over three years – %@ of the %@ t the company emits in that time." to
         "Für diese Maßnahmen nennt die Liste des Beratungshauses %@ t in drei Jahren – %@ der %@ t, die das Unternehmen in dieser Zeit verursacht.",
     "Forecast update: the wind drops about 12 hours earlier than forecast." to
@@ -1492,6 +1498,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Rechtzeitig: %@",
     "In Warsaw a new server saves many times its embodied emissions; in Paris it saves little, because the electricity is almost free of CO₂ – there it only has to carry the growth and replace the failed servers, and later generations do that better. The question is not “new or old?” but “where does new hardware replace dirty electricity?”. The earlier the budget goes to the dirty grid, the more it saves – as long as the clean site keeps enough capacity." to
         "In Warschau spart ein neuer Server ein Vielfaches seiner Herstellungsemissionen; in Paris spart er wenig, weil der Strom fast frei von CO₂ ist – dort muss er nur das Wachstum tragen und die ausgefallenen Server ersetzen, und das können spätere Generationen besser. Die Frage ist nicht „neu oder alt?“, sondern „wo ersetzt neue Hardware schmutzigen Strom?“. Je früher das Budget in den schmutzigen Strommix geht, desto mehr spart es – solange der saubere Standort genug Kapazität behält.",
+    "In year 1, put the whole budget into new servers for Warsaw – the dirtier grid gains most from efficient servers. Buy nothing more." to
+        "Im ersten Jahr das ganze Budget in neue Server für Warschau stecken – am schmutzigeren Netz bringen effiziente Server am meisten. Danach nichts mehr kaufen.",
     "Input: the orders of the last year with the customers' names and addresses." to
         "Eingabe: die Bestellungen des letzten Jahres mit Namen und Adressen der Kundschaft.",
     "Instances always running" to
@@ -1718,6 +1726,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "In eine Region mit sauberem Strom umziehen (Stockholm)",
     "Move to new, more efficient servers" to
         "Auf neue, effizientere Server umziehen",
+    "Move to Oslo: %@." to
+        "Nach Oslo verlegen: %@.",
     "Move to the cloud, on demand" to
         "In die Cloud, auf Abruf",
     "Move to the office suite" to
@@ -2286,8 +2296,6 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Shop-Frontend",
     "Shorter retention, cold storage class" to
         "Kürzere Aufbewahrung, kalte Speicherklasse",
-    "Show solutions" to
-        "Lösungen zeigen",
     "Show the solution" to
         "Lösung zeigen",
     "Single, restarted" to
@@ -2298,6 +2306,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Sechs Anwendungen laufen bei einem Cloud-Anbieter in Frankfurt. Die Finanzleitung will die IT-Kosten in den nächsten drei Jahren um mindestens ein Fünftel senken und fragt, ob einige davon aus der Cloud sollen – in eine Colocation in Stuttgart oder in den eigenen Serverraum, in dem noch sechs freie Server stehen, drei Jahre alt. Der Vorstand fragt: Und das CO₂? Im Nachhaltigkeitsbericht steht die Cloud bei null: Gezählt wird dort marktbasiert, mit den Grünstromzertifikaten des Anbieters. Für die Sterne zählt standortbasiert, mit der Herstellung der Server.",
     "Six changes an order; \"The courier is at the door\" must reach the closed app too" to
         "Sechs Änderungen je Bestellung; „Der Kurier steht vor der Tür“ muss auch die geschlossene App erreichen",
+    "Six hosts: one batch worker per host, the evening peaks of the web servers spread over different hosts; the other hosts stay empty and off." to
+        "Sechs Hosts: je Host ein Batch-Worker, die Abendspitzen der Webserver auf verschiedene Hosts verteilt; die übrigen Hosts bleiben leer und aus.",
     "six tracking tags" to
         "sechs Tracking-Tags",
     "Size, material, care – the answer is in the product data." to
@@ -2340,8 +2350,6 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Bisher %@ t CO₂",
     "Solar panels on the data center's roof" to
         "Photovoltaik auf dem Dach des Rechenzentrums",
-    "Solution seen: from now on a result here counts at most one star." to
-        "Lösung angesehen: Ab jetzt zählt ein Ergebnis hier höchstens einen Stern.",
     "Sources of data" to
         "Datenquellen",
     "Spain" to
@@ -2364,6 +2372,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Sprint %lld läuft.",
     "Sprint %lld of %lld" to
         "Sprint %1\$lld von %2\$lld",
+    "Sprint %lld: %@" to
+        "Sprint %lld: %@",
     "Sprint %lld: plan it now – the game is paused." to
         "Sprint %lld: Jetzt planen – das Spiel ist pausiert.",
     "Sprint planning: the CPU work of a day by part with its complexity, the backlog with what each item saves today, your story points. Below it the situation right now." to
@@ -2416,6 +2426,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Nachts und am Wochenende abschalten",
     "Switch the test environments off at night and at weekends" to
         "Testumgebungen nachts und am Wochenende abschalten",
+    "Switch to %lld servers at the start." to
+        "Schalte zu Beginn auf %lld Server.",
     "Switching servers off saves energy, not hardware: the embodied emissions stay the same." to
         "Abschalten spart Strom, aber keine Hardware: Die Herstellungsemissionen bleiben gleich.",
     "synchronous calls" to
@@ -2428,6 +2440,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Wirkt sofort. Abgeschaltete Server stoppen sofort, eingeschaltete starten 30 Minuten lang.",
     "Takes the reports of damage" to
         "Nimmt die Schadenmeldungen an",
+    "Taking it over sets every setting in the panel; look at them there before you start." to
+        "Übernehmen stellt alles im Panel ein; sieh es dir dort an, bevor du startest.",
     "Target utilization" to
         "Zielauslastung",
     "Target utilization: %@" to
@@ -2468,12 +2482,6 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Die Batch-Regel: wählen, einstellen, übernehmen. Darunter die Jobs mit ihren Fristen und was die Regel für sie geplant hat.",
     "The best plan within the budget" to
         "Der beste Plan im Budget",
-    "The best setting above goes into the panel and runs from the start; press play and watch it." to
-        "Die beste Einstellung von oben kommt ins Panel und gilt ab dem Start; drück auf Start und sieh zu.",
-    "The best setting above goes into the screen; look at it and carry it out." to
-        "Die beste Einstellung von oben kommt in den Bildschirm; sieh sie dir an und setz sie um.",
-    "The best setting above, in words: set it in the panel and play again." to
-        "Die beste Einstellung steht oben in Worten: Stell sie im Panel ein und spiel noch einmal.",
     "The biggest saving today first" to
         "Die größte Einsparung von heute zuerst",
     "The board wants a green data center. In the report, contracted green energy counts as zero; for the stars, only clean energy that is there in the same hour counts. The cost of electricity may rise by at most %@." to
@@ -2704,6 +2712,10 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Die sechs Anwendungen mit ihrer Last über eine Woche und wo jede läuft. Klick auf einen Ort, um sie dorthin zu verlegen, oder auf eine Zeile, um ihre Daten zu sehen.",
     "The sixteen measures with their facts, numbered like the bars. A click on a card puts it into the plan too." to
         "Die sechzehn Maßnahmen mit ihren Fakten, nummeriert wie die Balken. Auch ein Klick auf eine Karte nimmt sie in den Plan.",
+    "The solution" to
+        "Die Lösung",
+    "The solution goes into the screen; look at it and carry it out." to
+        "Die Lösung kommt in den Bildschirm; sieh sie dir an und setz sie um.",
     "The sources of data, and your plan: the budget, what you have spent and the button that carries the plan out." to
         "Die Datenquellen und dein Plan: das Budget, was du ausgegeben hast, und der Knopf, der den Plan umsetzt.",
     "The status of one order, from the order database." to
@@ -2742,6 +2754,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Der Batch-Cluster des Webshops in Spanien: zehn Server für Reports, Backups, Importe und Konvertierungen. In zwei Tagen kommen sieben Jobs, jeder mit einer Frist. Wann ein Job läuft, ist egal – solange er rechtzeitig fertig ist.",
     "The work in the data center grows with the bitrate: 4K needs four times as much as HD, SD less than half of HD. Viewers notice the difference on a TV, much less on a phone. Their mean rating must stay at %@ or above." to
         "Die Arbeit im Rechenzentrum wächst mit der Bitrate: 4K braucht viermal so viel wie HD, SD weniger als die Hälfte von HD. Auf einem Fernseher merkt man den Unterschied, auf einem Smartphone kaum. Ihre mittlere Bewertung muss bei %@ oder darüber bleiben.",
+    "Then keep just enough servers on for the expected load of the next 90 minutes at about 80 % – a server needs 30 minutes to start, so switch on before the load rises:" to
+        "Halte dann gerade so viele Server an, dass die erwartete Last der nächsten 90 Minuten sie zu etwa 80 % auslastet – ein Server braucht 30 Minuten zum Starten, also vor dem Anstieg einschalten:",
     "Then switch off the old system (one more quarter: archive the data)" to
         "Danach das Altsystem abschalten (ein Quartal mehr: Daten archivieren)",
     "There are several ways to learn about a change: asking at intervals (polling), asking and waiting for the answer (long polling), a connection that stays open (a stream), or a push from the phone platform. They differ in what they cost on the phone, on the server and in the network, and in how fast a change arrives. On a closed app every wake-up switches the phone's radio on for some seconds." to
@@ -2970,6 +2984,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Was heute am meisten spart, spart nicht am meisten in einem Jahr. Ein Job mit O(n²) ist anfangs eine Fußnote und nach einem Jahr ein großer Teil der Nächte; das Neuschreiben in einer anderen Sprache spart nur einen konstanten Anteil und blockiert das Team für Monate. Frag, wie die Arbeit wächst, nicht nur, wie groß sie heute ist. Und achte auf den Rebound-Effekt: Frei gewordene Kapazität füllt sich schnell mit neuen Features.",
     "What you did is called %@. %@" to
         "Was du gemacht hast, heißt %1\$@. %2\$@",
+    "When the forecast changes: plan again with the latest forecast." to
+        "Wenn sich die Prognose ändert: mit neuester Prognose neu planen.",
     "When the pipeline starts" to
         "Wann die Pipeline startet",
     "When the wind drops" to

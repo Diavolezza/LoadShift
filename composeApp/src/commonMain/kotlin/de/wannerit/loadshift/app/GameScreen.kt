@@ -464,7 +464,7 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
             Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(30.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Txt(if (!met.rules) t("Not made") else if (scenario.days == 1) t("Day complete") else t("Scenario complete"), Type.title, Modifier.weight(1f))
-                    StarRow(Progress.counted(game.stars, game.scenario.number))
+                    StarRow(game.stars)
                 }
                 Txt("${Format.change(you.emissions, ref.emissions)} CO₂", Type.style(40, FontWeight.Bold, if (you.emissions < ref.emissions) Palette.accent else Palette.red))
                 Txt(t(texts.comparedWith), Type.style(17, color = Palette.secondary))
@@ -675,9 +675,6 @@ private fun WhatIf(game: GameController) {
             }
         }
         if (hidden > 0) Txt(t("Settings with more stars than you have reached stay hidden until you find them."), Type.caption)
-        // The best run, taken over into the panel when its rules can be set there.
-        val bestRun = alternatives.maxWithOrNull(compareBy({ game.scenario.stars(it.second, ref) }, { -it.second.emissions }))
-        val policy = bestRun?.let { game.whatIfPolicy(it.second) }
-        SolutionBar(game.scenario.number, hidden, policy?.let { p -> { game.loadPolicy(p) } }, clock = true)
+        SolutionBar(game.scenario.number, hidden, { game.loadSolution() }, steps = remember(game.scenario) { game.solutionSteps() }, clock = true)
     }
 }

@@ -199,6 +199,7 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
 
     /** O7, before a tick: at the start of a quarter the bought servers arrive; a new year brings a new budget. */
     private fun beforeTick() {
+        presetServers[current.tick]?.let { setWantedServers(it) }
         if (!hasRenewal || (current.tick - scenario.startTick) % GameTime.TICKS_PER_DAY != 0) return
         for (i in sims.indices) {
             if (renewDraft[i] > sims[i].policy.renewed) {
@@ -287,6 +288,7 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
     private fun checkSprint() {
         if (!hasSprints || (current.tick - scenario.startTick) % GameTime.TICKS_PER_DAY != 0) return
         speed = Speed.PAUSED
+        presetSprints.getOrNull(currentDay)?.let { planSprint(it) }
     }
 
     /** Pauses when the forecast is revised (CONCEPT.md 3.3). */
@@ -716,33 +718,109 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
         return expectedAt.second
     }
 
-    /** The rules behind each "what if" run (runs whose rules change on a later day are left out). */
-    private val whatIfPolicies = mutableListOf<Pair<Totals, Policy>>()
+    // The solution (D31): what a careful player sets, taken over into a new run – the same settings as the launch
+    // option "careful" (App.kt). Sprint plans fill in at the start of each sprint, servers by hand switch by themselves.
 
-    private fun recordReplay(s: Scenario, policy: Policy, replanAt: Set<Int> = emptySet(), changes: Map<Int, Policy> = emptyMap()): Simulation =
-        Simulation.replay(s, policy, replanAt, changes).also {
-            if (s == scenario && changes.isEmpty()) whatIfPolicies += it.totals to policy
+    private var presetSprints: List<List<Int>> = emptyList()
+    private var presetServers: Map<Int, Int> = emptyMap()
+
+    private fun solutionSprints(): List<List<Int>> =
+        if (scenario.growth != null) Engineering.greedy(scenario, value = Engineering.byLastDay(scenario))
+        else Engineering.greedy(scenario, profileFirst = true, value = Engineering.byEstimates(scenario))
+
+    /** Servers by hand: enough for the expected load of the next 90 minutes at 80 % (tick → servers, changes only). */
+    private fun solutionServers(): Map<Int, Int> {
+        val perServer = (scenario.fleet.firstOrNull()?.kind?.capacity ?: 20) * 800
+        val plan = linkedMapOf<Int, Int>()
+        var last = -1
+        for (tick in scenario.startTick until scenario.endTick) {
+            val expected = (tick..tick + ServerKind.BOOT_TICKS + GameTime.TICKS_PER_HOUR).maxOf { scenario.interactive.expected(it) }
+            val n = ((expected * 1_000 + perServer - 1) / perServer).coerceAtMost(scenario.serverCount)
+            if (n != last) { plan[tick] = n; last = n }
         }
-
-    /** Scenarios whose panel holds rules (not servers by hand, not a backlog, not placements). */
-    val hasRules: Boolean get() = scenario.controls.any {
-        it in setOf(Control.BATCH_RULES, Control.CAPACITY_RULES, Control.CACHING, Control.COOLING, Control.TRAINING, Control.STREAMING,
-            Control.INFERENCE, Control.PAGES, Control.PIPELINE, Control.SERVICES, Control.CONTRACT)
+        return plan
     }
 
-    /** The rules of a "what if" run, if the panel can take them over. */
-    fun whatIfPolicy(totals: Totals): Policy? = if (!hasRules) null else whatIfPolicies.firstOrNull { it.first == totals }?.second
+    private fun solutionPolicy(): Policy? {
+        val c = scenario.controls
+        val start = scenario.initialPolicy
+        return when {
+            scenario.contract != null -> scenario.referencePolicy.copy(contract = Contract.HOURLY, capacity = CapacityMode.Autoscale(800), batch = BatchMode.Greenest)
+            hasServices -> start.copy(services = ServiceConfig(ServiceCut.MICROSERVICES, Protocol.GRPC, MasterData.EVENTS, 60, 300, true))
+            hasPipeline -> start.copy(pipeline = PipelineConfig(Runners.ON_DEMAND, true, true, HeavyTests.NIGHTLY, Trigger.EVERY_COMMIT, Environments.OFFICE_HOURS, 1))
+            hasWeb -> start.copy(pages = PageConfig(ImageFormat.AVIF, true, LazyLoading.BELOW_FOLD, false, false, Tracking.ONE_TAG))
+            hasInference -> Answerer.entries.let { a -> start.copy(inference = InferenceConfig(listOf(a[0], a[0], a[1], a[2], a[2]), 1_000)) }
+            isCapstone -> Policy(CapacityMode.Autoscale(800), BatchMode.Greenest, training = TrainingConfig(4, 600, true))
+            hasBatch && scenario.location == null -> Policy(start.capacity, BatchMode.Greenest)
+            Control.STREAMING in c -> start.copy(streaming = StreamingConfig(listOf(Quality.HD, Quality.HD, Quality.UHD), eco = true, ecoAbove = 550))
+            Control.TRAINING in c -> start.copy(training = TrainingConfig(6, 600, true))
+            Control.COOLING in c -> start.copy(capacity = CapacityMode.Autoscale(800), setpoint = 25)
+            Control.CACHING in c -> start.copy(cache = CacheConfig(1, listOf(1_440, 15, 1, 0, 0), approximateCount = true, materializedView = true, invalidate = true))
+            Control.PLACEMENT in c -> Policy(CapacityMode.Placed(listOf(0, 0, 1, 2, 3, 4, 4, 5, 0, 1, 2, 3, 4, 5, 0, 2, 4, 5, 1, 3, 2, 2, 5, 5)))
+            Control.CAPACITY_RULES in c -> Policy(CapacityMode.Autoscale(800, ScheduledMinimum(26, 18, 22)))
+            else -> null
+        }
+    }
 
-    /** A new run with these rules in the panel and in force from the start (the solution taken over). */
-    fun loadPolicy(policy: Policy) {
+    /** The jobs a careful player moves to Oslo (O10). */
+    private val solutionMoved = setOf(0, 1, 5, 6, 7, 8)
+
+    /** A new run with the solution in the panel (and, for sprints and servers by hand, filling in as the run goes). */
+    fun loadSolution() {
         restart(keepDraft = false)
-        setDraftFrom(policy)
-        applyDraft()
+        val c = scenario.controls
+        when {
+            Control.LOCATION in c -> { for (job in solutionMoved) toggleMove(job); setLocationRule(true) }
+            Control.RENEWAL in c -> changeRenewal(0, scenario.renewal?.budgetPerYear ?: 0)
+            Control.SPRINTS in c -> { presetSprints = solutionSprints(); planSprint(presetSprints.firstOrNull() ?: emptyList()) }
+            Control.MANUAL_CAPACITY in c -> { presetServers = solutionServers(); presetServers[current.tick]?.let { setWantedServers(it) } }
+            else -> solutionPolicy()?.let { p -> setDraftFrom(p); setPolicy(p) }
+        }
+    }
+
+    /** The solution in words, step by step. */
+    fun solutionSteps(): List<String> {
+        val c = scenario.controls
+        fun at(tick: Int): String {
+            val time = GameTime(tick)
+            return if (scenario.days > 1) t("day %lld, %@", (time.day - GameTime.START.day + 1).toLong(), time.clockText) else time.clockText
+        }
+        return when {
+            Control.SPRINTS in c -> solutionSprints().mapIndexedNotNull { i, plan ->
+                if (plan.isEmpty()) null else t("Sprint %lld: %@", (i + 1).toLong(), plan.joinToString(", ") { t(scenario.backlog[it].title) })
+            }
+            Control.MANUAL_CAPACITY in c -> {
+                val plan = solutionServers()
+                // On the full hours only, so that the list stays short.
+                val hourly = linkedMapOf<Int, Int>()
+                var last = -1
+                for ((tick, n) in plan) {
+                    val hour = tick / GameTime.TICKS_PER_HOUR * GameTime.TICKS_PER_HOUR
+                    val v = plan.entries.last { it.key <= hour + GameTime.TICKS_PER_HOUR - 1 }.value
+                    if (v != last && hour !in hourly) { hourly[hour] = v; last = v }
+                }
+                val first = plan.entries.first()
+                listOf(
+                    t("Switch to %lld servers at the start.", first.value.toLong()),
+                    t("Then keep just enough servers on for the expected load of the next 90 minutes at about 80 % – a server needs 30 minutes to start, so switch on before the load rises:"),
+                    hourly.entries.drop(1).joinToString(" · ") { t("%@ → %lld", at(it.key), it.value.toLong()) },
+                )
+            }
+            Control.LOCATION in c -> listOf(
+                t("Move to Oslo: %@.", scenario.batchJobs.withIndex().filter { it.index in solutionMoved }.joinToString(", ") { t(it.value.name) }),
+                t("Batch rule at both sites: the greenest hours."),
+            )
+            Control.RENEWAL in c -> listOf(t("In year 1, put the whole budget into new servers for Warsaw – the dirtier grid gains most from efficient servers. Buy nothing more."))
+            Control.PLACEMENT in c -> listOf(t("Six hosts: one batch worker per host, the evening peaks of the web servers spread over different hosts; the other hosts stay empty and off."))
+            hasBatch && scenario.location == null && scenario.contract == null && !isCapstone ->
+                listOf(t("Every job into the greenest hours of the forecast before its deadline."))
+            else -> listOf(t("Taking it over sets every setting in the panel; look at them there before you start."))
+        } + (if (scenario.forecastMiss != null && (isCapstone || Control.BATCH_RULES in c))
+            listOf(t("When the forecast changes: plan again with the latest forecast.")) else emptyList())
     }
 
     /** "What if" for the debrief: the whole scenario replayed with other rules, with the same load and grid mix. */
     fun whatIf(): List<Pair<String, Totals>> {
-        whatIfPolicies.clear()
         if (scenario.location != null) {
             fun run(moved: Set<Int>, greenest: Boolean) = scenario.runLocation(moved,
                 scenario.initialPolicy.copy(batch = if (greenest) BatchMode.Greenest else BatchMode.Asap)).map { it.totals }.reduce { a, b -> a + b }
@@ -757,7 +835,7 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
             )
         }
         if (scenario.streaming != null) {
-            fun run(c: StreamingConfig) = recordReplay(scenario, scenario.initialPolicy.copy(streaming = c)).totals
+            fun run(c: StreamingConfig) = Simulation.replay(scenario, scenario.initialPolicy.copy(streaming = c)).totals
             val byDevice = StreamingConfig(listOf(Quality.HD, Quality.HD, Quality.UHD))
             return listOf(
                 t("4K on every device (reference)") to referenceTotals,
@@ -769,7 +847,7 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
             )
         }
         scenario.contract?.let {
-            fun run(c: Contract, auto: Boolean, greenest: Boolean) = recordReplay(scenario, scenario.referencePolicy.copy(contract = c,
+            fun run(c: Contract, auto: Boolean, greenest: Boolean) = Simulation.replay(scenario, scenario.referencePolicy.copy(contract = c,
                 capacity = if (auto) CapacityMode.Autoscale(800) else scenario.referencePolicy.capacity,
                 batch = if (greenest) BatchMode.Greenest else BatchMode.Asap)).totals
             return listOf(
@@ -785,7 +863,7 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
         }
         scenario.services?.let {
             val base = ServiceConfig()
-            fun run(c: ServiceConfig) = recordReplay(scenario, scenario.initialPolicy.copy(services = c)).totals
+            fun run(c: ServiceConfig) = Simulation.replay(scenario, scenario.initialPolicy.copy(services = c)).totals
             val cached = base.copy(gpsTtl = 60, mapTtl = 300)
             return listOf(
                 t("Microservices, REST, synchronous calls, no cache (reference)") to referenceTotals,
@@ -802,7 +880,7 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
         }
         scenario.pipeline?.let {
             val base = PipelineConfig()
-            fun run(c: PipelineConfig) = recordReplay(scenario, scenario.initialPolicy.copy(pipeline = c)).totals
+            fun run(c: PipelineConfig) = Simulation.replay(scenario, scenario.initialPolicy.copy(pipeline = c)).totals
             val lean = base.copy(heavy = HeavyTests.NIGHTLY, environments = Environments.OFFICE_HOURS, replicas = 1, testImpact = true)
             return listOf(
                 t("Agents and environments always on, all tests with every commit (reference)") to referenceTotals,
@@ -817,7 +895,7 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
         }
         scenario.web?.let {
             val base = PageConfig()
-            fun run(c: PageConfig) = recordReplay(scenario, scenario.initialPolicy.copy(pages = c)).totals
+            fun run(c: PageConfig) = Simulation.replay(scenario, scenario.initialPolicy.copy(pages = c)).totals
             val light = base.copy(autoplay = false, tracking = Tracking.ONE_TAG, longLists = false)
             val images = light.copy(format = ImageFormat.AVIF, responsive = true, lazy = LazyLoading.BELOW_FOLD)
             return listOf(
@@ -835,7 +913,7 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
             fun code(c: String, window: Int) = InferenceConfig(c.map { ch ->
                 when (ch) { 'N' -> Answerer.NONE; 'S' -> Answerer.SMALL; 'L' -> Answerer.LARGE; else -> Answerer.REASONING }
             }, window)
-            fun run(c: String, window: Int) = recordReplay(scenario, scenario.initialPolicy.copy(inference = code(c, window))).totals
+            fun run(c: String, window: Int) = Simulation.replay(scenario, scenario.initialPolicy.copy(inference = code(c, window))).totals
             return listOf(
                 t("Large model for everything, one question at a time (reference)") to referenceTotals,
                 t("Order status without AI") to run("NLLLL", 0),
@@ -853,7 +931,7 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
             val auto = CapacityMode.Autoscale(800)
             val green = TrainingConfig(4, 600, true)
             fun run(capacity: CapacityMode, batch: BatchMode, training: TrainingConfig, replan: Boolean = true) =
-                recordReplay(scenario, Policy(capacity, batch, training = training), if (replan) revised else emptySet()).totals
+                Simulation.replay(scenario, Policy(capacity, batch, training = training), if (replan) revised else emptySet()).totals
             return listOf(
                 t("All on, jobs at once, training at once (reference)") to referenceTotals,
                 t("Only autoscaling at 80 %") to run(auto, BatchMode.Asap, scenario.referencePolicy.training),
@@ -866,7 +944,7 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
             )
         }
         if (hasTraining) {
-            fun run(n: Int, cap: Int, greenest: Boolean) = recordReplay(scenario, scenario.initialPolicy.copy(training = TrainingConfig(n, cap, greenest))).totals
+            fun run(n: Int, cap: Int, greenest: Boolean) = Simulation.replay(scenario, scenario.initialPolicy.copy(training = TrainingConfig(n, cap, greenest))).totals
             return listOf(
                 t("8 servers, no cap, at once (reference)") to referenceTotals,
                 t("8 servers, no cap, greenest hours") to run(8, 1_000, true),
@@ -880,7 +958,7 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
             /** Both sites with plans: day → new servers installed by then. */
             fun run(vararg plans: Map<Int, Int>): Totals = plans.mapIndexed { site, plan ->
                 val s = scenario.forSite(site)
-                recordReplay(s, s.initialPolicy, changes = plan.entries.associate { (day, n) -> GameTime.at(day, 0).tick to s.initialPolicy.copy(renewed = n) }).totals
+                Simulation.replay(s, s.initialPolicy, changes = plan.entries.associate { (day, n) -> GameTime.at(day, 0).tick to s.initialPolicy.copy(renewed = n) }).totals
             }.reduce { a, b -> a + b }
             return listOf(
                 t("Buy when capacity runs short (reference)") to referenceTotals,
@@ -891,7 +969,7 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
             )
         }
         if (scenario.cooling != null) {
-            fun run(capacity: CapacityMode, setpoint: Int) = recordReplay(scenario, Policy(capacity, setpoint = setpoint)).totals
+            fun run(capacity: CapacityMode, setpoint: Int) = Simulation.replay(scenario, Policy(capacity, setpoint = setpoint)).totals
             return listOf(
                 t("Autoscaling at 50 %, 20 °C (reference)") to reference.totals,
                 t("Autoscaling at 50 %, 27 °C") to run(CapacityMode.Autoscale(500), 27),
@@ -902,7 +980,7 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
         }
         if (hasBatch && Control.BATCH_RULES in scenario.controls) {
             val capacity = scenario.referencePolicy.capacity
-            fun replay(mode: BatchMode, safety: Boolean = true) = recordReplay(scenario, Policy(capacity, mode, safety)).totals
+            fun replay(mode: BatchMode, safety: Boolean = true) = Simulation.replay(scenario, Policy(capacity, mode, safety)).totals
             return listOf(
                 t("Every job as soon as it arrives (reference)") to reference.totals,
                 t("Every job at night, at 03:00") to replay(BatchMode.AtHour(3)),
@@ -911,13 +989,13 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
                 t("Greenest hours, planned once") to replay(BatchMode.Greenest),
                 t("Greenest hours, planned again after the forecast update") to
                     scenario.forecastMiss.let { miss ->
-                        recordReplay(scenario, Policy(capacity, BatchMode.Greenest), setOfNotNull(miss?.revisedAt)).totals
+                        Simulation.replay(scenario, Policy(capacity, BatchMode.Greenest), setOfNotNull(miss?.revisedAt)).totals
                     },
             )
         }
         if (hasBatch) {
             val capacity = scenario.referencePolicy.capacity
-            fun replay(mode: BatchMode) = recordReplay(scenario, Policy(capacity, mode)).totals
+            fun replay(mode: BatchMode) = Simulation.replay(scenario, Policy(capacity, mode)).totals
             return listOf(
                 t("Every job as soon as it arrives (reference)") to reference.totals,
                 t("Every job at night, at 01:00") to replay(BatchMode.AtHour(1)),
@@ -926,7 +1004,7 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
             )
         }
         if (scenario.caching != null) {
-            fun run(c: CacheConfig) = recordReplay(scenario, scenario.initialPolicy.copy(cache = c)).totals
+            fun run(c: CacheConfig) = Simulation.replay(scenario, scenario.initialPolicy.copy(cache = c)).totals
             val allowed = CacheConfig(1, listOf(1_440, 15, 1, 0, 0), invalidate = true)
             return listOf(
                 t("No cache (reference)") to reference.totals,
@@ -939,7 +1017,7 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
             )
         }
         if (hasSprints) {
-            fun run(plans: List<List<Int>>) = recordReplay(scenario, scenario.initialPolicy, changes = Engineering.changes(scenario, plans)).totals
+            fun run(plans: List<List<Int>>) = Simulation.replay(scenario, scenario.initialPolicy, changes = Engineering.changes(scenario, plans)).totals
             if (scenario.growth != null) {
                 val backlog = scenario.backlog
                 return listOf(
@@ -960,7 +1038,7 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
             val host = scenario.fleet.first().kind
             val fleet = scenario.serverCount
             val both = { k: VmKind -> k.ramGb * 1_000 / host.ramGb + k.peak * 1_000 / host.capacity }
-            fun replay(p: List<Int>) = recordReplay(scenario, Policy(CapacityMode.Placed(p))).totals
+            fun replay(p: List<Int>) = Simulation.replay(scenario, Policy(CapacityMode.Placed(p))).totals
             return listOf(
                 t("Spread over all hosts (reference)") to reference.totals,
                 t("First Fit Decreasing, RAM only") to replay(Packing.firstFitDecreasing(vms, host, fleet, Packing.Check.RAM_ONLY) { it.ramGb }),
@@ -970,7 +1048,7 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
             )
         }
         if (Control.CAPACITY_RULES in scenario.controls) {
-            fun replay(policy: Policy, changes: Map<Int, Policy> = emptyMap()) = recordReplay(scenario, policy, changes = changes).totals
+            fun replay(policy: Policy, changes: Map<Int, Policy> = emptyMap()) = Simulation.replay(scenario, policy, changes = changes).totals
             val start = scenario.initialPolicy
             val target = (start.capacity as? CapacityMode.Autoscale)?.targetUtilization ?: 800
             val day2 = GameTime.at(1, 12).tick
@@ -985,7 +1063,7 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
         }
         val half = scenario.serverCount / 2
         val most = scenario.serverCount * 7 / 10
-        fun replay(mode: CapacityMode) = recordReplay(scenario, Policy(mode)).totals
+        fun replay(mode: CapacityMode) = Simulation.replay(scenario, Policy(mode)).totals
         return listOf(
             t("All servers on (reference)") to reference.totals,
             t("Fixed: %lld servers all day", half) to replay(CapacityMode.Manual(half)),
@@ -1014,6 +1092,8 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
         sprintDraft = emptyList()
         sprintStartedDay = -1
         sprintPlans.clear()
+        presetSprints = emptyList()
+        presetServers = emptyMap()
         stars = 0
         showEnd = false
         urgentJob = null

@@ -391,7 +391,7 @@ private fun AvailabilityEnd(game: AvailabilityController, onExit: () -> Unit, on
             Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(30.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Txt(if (!met.rules) t("Not made") else t("Scenario complete"), Type.title, Modifier.weight(1f))
-                    StarRow(Progress.counted(game.stars, game.scenario.number))
+                    StarRow(game.stars)
                 }
                 Txt("${Format.changePermille(-r.reductionPermille)} CO₂", Type.style(40, FontWeight.Bold, if (r.reductionPermille > 0) Palette.accent else Palette.red))
                 Txt(t(texts.comparedWith), Type.style(17, color = Palette.secondary))
@@ -455,21 +455,23 @@ fun WhatIfCard(rows: List<Triple<String, Long, Int>>, best: Int, subtitle: Strin
  * When a player does not find the solution: uncover the hidden settings of "What if" – and, where the scenario has no
  * clock, load the model solution into the screen. Afterwards a result in that scenario counts at most one star.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun SolutionBar(scenario: Int, hidden: Int, onLoad: (() -> Unit)?, clock: Boolean = false) {
-    val seen = Progress.solutionSeen(scenario)
+fun SolutionBar(scenario: Int, hidden: Int, onLoad: (() -> Unit)?, steps: List<String> = emptyList(), clock: Boolean = false) {
+    val seen = Progress.revealed(scenario)
     if (!seen && hidden == 0) return
     Spacer(Modifier.height(8.dp))
     if (!seen) {
         SecondaryButton(t("Show the solution")) { Progress.reveal(scenario) }
-        Txt(t("After that, a result in this scenario counts at most one star."), Type.caption)
         return
+    }
+    if (steps.isNotEmpty()) {
+        Txt(t("The solution"), Type.style(15, FontWeight.SemiBold))
+        for (step in steps) Txt("• $step", Type.callout)
+        Spacer(Modifier.height(6.dp))
     }
     if (onLoad != null) {
         PrimaryButton(t("Put the solution into the task"), onClick = onLoad)
-        Txt(if (clock) t("The best setting above goes into the panel and runs from the start; press play and watch it.")
-            else t("The best setting above goes into the screen; look at it and carry it out."), Type.caption)
-    } else Txt(t("The best setting above, in words: set it in the panel and play again."), Type.caption)
-    Txt(t("Solution seen: from now on a result here counts at most one star."), Type.caption)
+        Txt(if (clock) t("A new run starts with the solution in the panel; press play and watch it.")
+            else t("The solution goes into the screen; look at it and carry it out."), Type.caption)
+    }
 }
