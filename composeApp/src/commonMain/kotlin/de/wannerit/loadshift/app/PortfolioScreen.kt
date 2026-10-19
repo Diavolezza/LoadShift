@@ -118,13 +118,28 @@ class PortfolioController(val scenario: Scenario, fresh: Boolean = false) {
         finished = false
     }
 
+    /** The best of the "what if" plans in the screen, to look at and carry out. */
+    fun loadSolution() {
+        val best = candidates().maxWith(compareBy({ model.stars(model.result(it, model.greedyPlan(it)), scenario.goals) },
+            { model.result(it, model.greedyPlan(it)).reductionPermille }))
+        inventory = best
+        plan = model.greedyPlan(best)
+        finished = false
+        replay = true
+    }
+
     private companion object {
         /** The last choices per scenario while the app runs: a replay from the briefing starts with them too. */
         val lastChoices = mutableMapOf<Int, Pair<Inventory, Set<Int>>>()
     }
 
     /** The same budget with other data, each planned the careful way: the measures with the most expected saving per euro. */
-    fun whatIf(): List<Pair<String, PortfolioResult>> {
+    fun whatIf(): List<Pair<String, PortfolioResult>> =
+        labelled().map { (label, i) -> label to model.result(i, model.greedyPlan(i)) }
+
+    private fun candidates(): List<Inventory> = labelled().map { it.second }
+
+    private fun labelled(): List<Pair<String, Inventory>> {
         val all = model.apps.indices.filter { model.apps[it].hosting == Hosting.SAAS }.toSet()
         fun inv(key: OnPremKey, cloud: Boolean, asked: Set<Int>) = Inventory(key, setOf(OnPremKey.SERVERS, key), cloud, asked)
         return listOf(
@@ -134,7 +149,7 @@ class PortfolioController(val scenario: Scenario, fresh: Boolean = false) {
             t("CPU time and cloud recalculated") to inv(OnPremKey.CPU_TIME, true, emptySet()),
             t("Measured power and cloud recalculated") to inv(OnPremKey.POWER, true, emptySet()),
             t("Every source of data bought") to inv(OnPremKey.POWER, true, all),
-        ).map { (label, i) -> label to model.result(i, model.greedyPlan(i)) }
+        )
     }
 }
 
@@ -428,7 +443,7 @@ private fun PortfolioEnd(game: PortfolioController, onExit: () -> Unit, onOvervi
             Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(30.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Txt(if (!met.rules) t("Not made") else t("Scenario complete"), Type.title, Modifier.weight(1f))
-                    StarRow(game.stars)
+                    StarRow(Progress.counted(game.stars, game.scenario.number))
                 }
                 Txt("${Format.changePermille(-r.reductionPermille)} CO₂", Type.style(40, FontWeight.Bold, if (r.reductionPermille > 0) Palette.accent else Palette.red))
                 Txt(t(texts.comparedWith), Type.style(17, color = Palette.secondary))
@@ -488,7 +503,7 @@ private fun PortfolioWhatIf(game: PortfolioController) {
         var hidden = 0
         for ((label, r) in alternatives) {
             val stars = game.model.stars(r, goals)
-            val secret = stars > best
+            val secret = stars > best && !Progress.solutionSeen(game.scenario.number)
             if (secret) hidden++
             Row(Modifier.padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
                 if (secret) Txt(t("A setting you have not found yet"), Type.style(15, color = Palette.secondary).copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic), Modifier.weight(0.5f))
@@ -499,5 +514,6 @@ private fun PortfolioWhatIf(game: PortfolioController) {
             }
         }
         if (hidden > 0) Txt(t("Settings with more stars than you have reached stay hidden until you find them."), Type.caption)
+        SolutionBar(game.scenario.number, hidden) { game.loadSolution() }
     }
 }

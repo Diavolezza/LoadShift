@@ -77,6 +77,12 @@ class UpdatesController(val scenario: Scenario, fresh: Boolean = false) {
         finished = false
     }
 
+    /** The model solution in the screen, to look at and carry out. */
+    fun loadSolution() {
+        plan = model.example
+        finished = false
+    }
+
     fun whatIf(): List<Pair<String, UpdatesResult>> {
         val ref = model.reference
         val pushStatus = ref.copy(closed = ref.closed + ("Delivery status" to Closed.PUSH))
@@ -343,7 +349,7 @@ private fun UpdatesEnd(game: UpdatesController, onExit: () -> Unit, onOverview: 
             Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(30.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Txt(if (!met.rules) t("Not made") else t("Scenario complete"), Type.title, Modifier.weight(1f))
-                    StarRow(game.stars)
+                    StarRow(Progress.counted(game.stars, game.scenario.number))
                 }
                 Txt("${Format.changePermille(-r.reductionPermille)} CO₂", Type.style(40, FontWeight.Bold, if (r.reductionPermille > 0) Palette.accent else Palette.red))
                 Txt(t(texts.comparedWith), Type.style(17, color = Palette.secondary))
@@ -362,7 +368,7 @@ private fun UpdatesEnd(game: UpdatesController, onExit: () -> Unit, onOverview: 
                 Txt(t("What you did is called %@. %@", texts.term, t(texts.termText)), Type.style(15, color = Palette.secondary))
                 Txt(t(texts.remark), Type.style(15, color = Palette.secondary))
                 WhatIfCard(game.whatIf().map { (l, x) -> Triple(l, x.reductionPermille, model.stars(x, scenario.goals)) },
-                    maxOf(Progress.stars(scenario.number), game.stars), t("The same app, other ways to learn about changes:"))
+                    maxOf(Progress.stars(scenario.number), game.stars), t("The same app, other ways to learn about changes:"), scenario.number) { game.loadSolution() }
             }
             FlowRow(
                 Modifier.fillMaxWidth().padding(horizontal = 30.dp, vertical = 16.dp),

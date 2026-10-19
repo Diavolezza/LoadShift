@@ -94,6 +94,12 @@ class AvailabilityController(val scenario: Scenario, fresh: Boolean = false) {
         finished = false
     }
 
+    /** The model solution in the screen, to look at and carry out. */
+    fun loadSolution() {
+        arch = model.example
+        finished = false
+    }
+
     fun whatIf(): List<Pair<String, AvailabilityResult>> {
         val own = Architecture(mapOf(
             "Login" to Tactic.WARM_STANDBY, "Policy database" to Tactic.WARM_STANDBY, "Claims intake" to Tactic.WARM_STANDBY,
@@ -392,7 +398,7 @@ private fun AvailabilityEnd(game: AvailabilityController, onExit: () -> Unit, on
             Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(30.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Txt(if (!met.rules) t("Not made") else t("Scenario complete"), Type.title, Modifier.weight(1f))
-                    StarRow(game.stars)
+                    StarRow(Progress.counted(game.stars, game.scenario.number))
                 }
                 Txt("${Format.changePermille(-r.reductionPermille)} CO₂", Type.style(40, FontWeight.Bold, if (r.reductionPermille > 0) Palette.accent else Palette.red))
                 Txt(t(texts.comparedWith), Type.style(17, color = Palette.secondary))
@@ -415,7 +421,7 @@ private fun AvailabilityEnd(game: AvailabilityController, onExit: () -> Unit, on
                 Txt(t("What you did is called %@. %@", texts.term, t(texts.termText)), Type.style(15, color = Palette.secondary))
                 Txt(t(texts.remark), Type.style(15, color = Palette.secondary))
                 WhatIfCard(game.whatIf().map { (l, x) -> Triple(l, x.reductionPermille, model.stars(x, scenario.goals)) },
-                    maxOf(Progress.stars(scenario.number), game.stars), t("The same portal, other architectures:"))
+                    maxOf(Progress.stars(scenario.number), game.stars), t("The same portal, other architectures:"), scenario.number) { game.loadSolution() }
             }
             FlowRow(
                 Modifier.fillMaxWidth().padding(horizontal = 30.dp, vertical = 16.dp),
@@ -432,14 +438,14 @@ private fun AvailabilityEnd(game: AvailabilityController, onExit: () -> Unit, on
 
 /** "What if": other plans with their CO₂ change and stars; plans with more stars than reached so far stay hidden (D25). */
 @Composable
-fun WhatIfCard(rows: List<Triple<String, Long, Int>>, best: Int, subtitle: String) {
+fun WhatIfCard(rows: List<Triple<String, Long, Int>>, best: Int, subtitle: String, scenario: Int, onLoad: (() -> Unit)? = null) {
     Card(Modifier.fillMaxWidth(), color = Palette.background, padding = 14.dp) {
         Txt(t("What if …"), Type.subheading)
         Txt(subtitle, Type.style(15, color = Palette.secondary))
         Spacer(Modifier.height(8.dp))
         var hidden = 0
         for ((label, reduction, stars) in rows) {
-            val secret = stars > best
+            val secret = stars > best && !Progress.solutionSeen(scenario)
             if (secret) hidden++
             Row(Modifier.padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
                 if (secret) Txt(t("A setting you have not found yet"), Type.style(15, color = Palette.secondary).copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic), Modifier.weight(0.6f))
@@ -449,5 +455,23 @@ fun WhatIfCard(rows: List<Triple<String, Long, Int>>, best: Int, subtitle: Strin
             }
         }
         if (hidden > 0) Txt(t("Settings with more stars than you have reached stay hidden until you find them."), Type.caption)
+        SolutionBar(scenario, hidden, onLoad)
     }
+}
+
+/**
+ * When a player does not find the solution: uncover the hidden settings of "What if" – and, where the scenario has no
+ * clock, load the model solution into the screen. Afterwards a result in that scenario counts at most one star.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun SolutionBar(scenario: Int, hidden: Int, onLoad: (() -> Unit)?) {
+    val seen = Progress.solutionSeen(scenario)
+    if (!seen && hidden == 0) return
+    Spacer(Modifier.height(8.dp))
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        if (!seen) SecondaryButton(t("Show the solution")) { Progress.reveal(scenario) }
+        else if (onLoad != null) SecondaryButton(t("Load the model solution"), onClick = onLoad)
+    }
+    Txt(if (seen) t("Solution seen: from now on a result here counts at most one star.") else t("After that, a result in this scenario counts at most one star."), Type.caption)
 }

@@ -1183,6 +1183,7 @@ the numbers stay so that saved stars keep their scenario):
 | D28 | Glossary and results in a course | a glossary of all technical terms on the start page; no result codes or ranking – the courses do not need them (revises D6) |
 | D29 | P4 "Leave the cloud?" | three years, so that new servers are written off over a fair time; the own server room stays, limited to six existing servers (reuse against a poor PUE); no green-power contract as an option – the report next to the location-based figure shows the same lesson as B11, and the debrief names it |
 | D30 | E1 "How many nines?" and E7 "Constant asking" | two architecture scenarios, sorted in along the GREEN blocks of D27: quality goals first (E1, block 3), polling and push after the services (E7, block 6); the others move on (E2 Measure first … E9 Green pipeline). Scenario numbers stay (108, 109; 101–107), so stars kept on a device stay with their scenario. Like the portfolio track without a clock, decided for a year |
+| D31 | Showing the solution | on the end card "Show the solution" uncovers the hidden settings of "What if" (revises D25 for players who are stuck); scenarios without a clock can then load their model solution into the screen; for teachers "Show solutions" in the About dialog does both for every scenario. Once the solution is seen, a result in that scenario counts at most one star. Graded hints are left for later |
 
 ---
 

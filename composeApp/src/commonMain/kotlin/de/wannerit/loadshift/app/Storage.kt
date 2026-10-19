@@ -22,6 +22,32 @@ object Progress {
         Storage.setInt("unlockAll", if (on) 1 else 0)
     }
 
+    /** For teachers: every hidden setting of "What if" shown, model solutions loadable (stars then count at most one). */
+    var showSolutions by mutableStateOf(Storage.getInt("showSolutions") == 1)
+        private set
+
+    fun changeShowSolutions(on: Boolean) {
+        showSolutions = on
+        Storage.setInt("showSolutions", if (on) 1 else 0)
+        version++
+    }
+
+    /** The player has uncovered the solution of a scenario on the end card. */
+    fun revealed(scenario: Int): Boolean {
+        @Suppress("UNUSED_VARIABLE") val v = version
+        return Storage.getInt("revealed.$scenario") == 1
+    }
+
+    fun reveal(scenario: Int) {
+        Storage.setInt("revealed.$scenario", 1)
+        version++
+    }
+
+    /** Once the solution is seen, a result in that scenario counts at most one star. */
+    fun solutionSeen(scenario: Int): Boolean = showSolutions || revealed(scenario)
+
+    fun counted(stars: Int, scenario: Int): Int = if (solutionSeen(scenario)) minOf(stars, 1) else stars
+
     /** Changes with every new best result, so that the screens that show stars are drawn again. */
     var version by mutableStateOf(0)
         private set
@@ -32,15 +58,19 @@ object Progress {
     }
 
     fun record(stars: Int, scenario: Int) {
-        if (stars > stars(scenario)) {
-            Storage.setInt("stars.$scenario", stars)
+        val counted = counted(stars, scenario)
+        if (counted > stars(scenario)) {
+            Storage.setInt("stars.$scenario", counted)
             version++
         }
     }
 
     /** No stars anywhere: every scenario that needs another closes again. */
     fun resetAll() {
-        for (s in Scenario.ALL) Storage.setInt("stars.${s.number}", 0)
+        for (s in Scenario.ALL) {
+            Storage.setInt("stars.${s.number}", 0)
+            Storage.setInt("revealed.${s.number}", 0)
+        }
         Storage.setInt("lastScenario", 0)
         version++
     }

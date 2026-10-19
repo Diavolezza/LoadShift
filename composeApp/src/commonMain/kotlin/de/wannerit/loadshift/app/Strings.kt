@@ -416,6 +416,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "nach %@",
     "After a storm thousands of customers report damage at the same time; the portal takes every report." to
         "Nach einem Sturm melden Tausende gleichzeitig Schäden; das Portal nimmt jede Meldung an.",
+    "After that, a result in this scenario counts at most one star." to
+        "Danach zählt ein Ergebnis in diesem Szenario höchstens einen Stern.",
     "agents %@" to
         "Agents %@",
     "Agents and environments always on, all tests with every commit (reference)" to
@@ -1300,6 +1302,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Für Lehrveranstaltungen, die die Themen in anderer Reihenfolge behandeln. Sterne zählen weiter.",
     "For teachers" to
         "Für Lehrende",
+    "For the debrief: \"What if\" shows every setting, and the scenarios without a clock can load their model solution. Results then count at most one star." to
+        "Für die Nachbesprechung: „Was wäre wenn“ zeigt alle Einstellungen, und die Szenarien ohne Uhr können ihre Musterlösung laden. Ergebnisse zählen dann höchstens einen Stern.",
     "For these measures the consultant's list gives %@ t over three years – %@ of the %@ t the company emits in that time." to
         "Für diese Maßnahmen nennt die Liste des Beratungshauses %@ t in drei Jahren – %@ der %@ t, die das Unternehmen in dieser Zeit verursacht.",
     "Forecast update: the wind drops about 12 hours earlier than forecast." to
@@ -1574,6 +1578,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Last / Kapazität",
     "Load over a week" to
         "Last über eine Woche",
+    "Load the model solution" to
+        "Musterlösung laden",
     "Location" to
         "Standort",
     "Location saves more than time here: no hour in the German grid comes close to Norway's hydropower. Look at the energy: it rose – the transfers need energy too – and still the CO₂ fell. Location Shifting saves carbon, not energy. The trainings were the best candidates – hours of computing for little data. The videos were the worst: 30 terabytes through the network cost more CO₂ than Oslo saved, and the transfer took most of a working day. The price calculation needs its database in Frankfurt and misses its deadline far from it; customer data may not leave the country by contract. Data have weight. And clean electricity is not unlimited: if everyone moves to Norway, it runs short there. Location Shifting works best with capacity that is there anyway." to
@@ -2286,8 +2292,12 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Shop-Frontend",
     "Shorter retention, cold storage class" to
         "Kürzere Aufbewahrung, kalte Speicherklasse",
+    "Show solutions" to
+        "Lösungen zeigen",
     "Show the result" to
         "Ergebnis zeigen",
+    "Show the solution" to
+        "Lösung zeigen",
     "Single, restarted" to
         "Einzeln, mit Neustart",
     "Situation" to
@@ -2338,6 +2348,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Bisher %@ t CO₂",
     "Solar panels on the data center's roof" to
         "Photovoltaik auf dem Dach des Rechenzentrums",
+    "Solution seen: from now on a result here counts at most one star." to
+        "Lösung angesehen: Ab jetzt zählt ein Ergebnis hier höchstens einen Stern.",
     "Sources of data" to
         "Datenquellen",
     "Spain" to

@@ -464,7 +464,7 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
             Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(30.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Txt(if (!met.rules) t("Not made") else if (scenario.days == 1) t("Day complete") else t("Scenario complete"), Type.title, Modifier.weight(1f))
-                    StarRow(game.stars)
+                    StarRow(Progress.counted(game.stars, game.scenario.number))
                 }
                 Txt("${Format.change(you.emissions, ref.emissions)} CO₂", Type.style(40, FontWeight.Bold, if (you.emissions < ref.emissions) Palette.accent else Palette.red))
                 Txt(t(texts.comparedWith), Type.style(17, color = Palette.secondary))
@@ -643,9 +643,10 @@ private fun WhatIf(game: GameController) {
         }
         // Settings with more stars than the player has reached stay hidden: the second run should not be a recipe.
         val best = maxOf(Progress.stars(game.scenario.number), game.stars)
-        val hidden = alternatives.count { game.scenario.stars(it.second, ref) > best }
+        val seen = Progress.solutionSeen(game.scenario.number)
+        val hidden = if (seen) 0 else alternatives.count { game.scenario.stars(it.second, ref) > best }
         for ((label, totals) in alternatives) {
-            val secret = game.scenario.stars(totals, ref) > best
+            val secret = !seen && game.scenario.stars(totals, ref) > best
             Row(Modifier.padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
                 if (secret) Txt(t("A setting you have not found yet"), Type.style(15, color = Palette.secondary).copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic), Modifier.weight(labelWeight))
                 else Txt(label, Type.callout, Modifier.weight(labelWeight))
@@ -674,5 +675,6 @@ private fun WhatIf(game: GameController) {
             }
         }
         if (hidden > 0) Txt(t("Settings with more stars than you have reached stay hidden until you find them."), Type.caption)
+        SolutionBar(game.scenario.number, hidden, null)
     }
 }
