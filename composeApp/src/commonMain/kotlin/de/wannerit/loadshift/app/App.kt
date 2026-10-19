@@ -29,6 +29,8 @@ data class LaunchOptions(
     val careful: Boolean = false,
     val solution: Boolean = false,
     val language: String? = null,
+    /** Every scenario open for this start, whatever the stars (D19). */
+    val unlock: Boolean = false,
 ) {
     companion object {
         /** From "key=value" or "key" pairs (also "-key value" on the command line). */
@@ -39,6 +41,7 @@ data class LaunchOptions(
             careful = "careful" in pairs,
             solution = "solution" in pairs,
             language = pairs["lang"],
+            unlock = "unlock" in pairs,
         )
     }
 }
@@ -59,6 +62,7 @@ private sealed interface Screen {
 @Composable
 fun App(options: LaunchOptions = LaunchOptions()) {
     options.language?.let { Language.german = it == "de" }
+    if (options.unlock) Progress.unlockAll = true
     val family = interFamily()
     if (Type.family != family) Type.family = family
     var screen by remember { mutableStateOf(initialScreen(options)) }

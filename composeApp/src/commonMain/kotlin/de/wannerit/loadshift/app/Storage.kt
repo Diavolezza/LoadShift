@@ -13,14 +13,8 @@ expect object Storage {
 
 /** Best stars per scenario, kept on the device. */
 object Progress {
-    /** All scenarios open, whatever the stars (for courses that take the topics in another order). */
-    var unlockAll by mutableStateOf(Storage.getInt("unlockAll") == 1)
-        private set
-
-    fun changeUnlockAll(on: Boolean) {
-        unlockAll = on
-        Storage.setInt("unlockAll", if (on) 1 else 0)
-    }
+    /** All scenarios open, whatever the stars – only for this start of the app (launch option "unlock"), not kept. */
+    var unlockAll by mutableStateOf(false)
 
     /** The player has uncovered the solution of a scenario on the end card. */
     fun revealed(scenario: Int): Boolean {
@@ -59,6 +53,7 @@ object Progress {
             Storage.setInt("revealed.${s.number}", 0)
         }
         Storage.setInt("lastScenario", 0)
+        Storage.setInt("unlockAll", 0) // kept by versions before 0.3.72
         version++
     }
 

@@ -322,7 +322,7 @@ account are needed; the lecturer collects the cards. No online ranking at first 
 Three tracks (D17, D26): **Operations** – running the data center –, **Engineering** – the software that runs in
 it – and **Portfolio** – all applications of a company, in its own data center, in the cloud and as SaaS.
 Each scenario introduces one idea. Region and season are chosen so that the idea has a clear effect. The
-Engineering track opens after scenario 1, because it builds on the SCI per request from the first debrief.
+tracks are independent of each other (D32): each can be the first one.
 
 ### 9.1 Operations
 
@@ -742,7 +742,7 @@ name were built and taken out again: the courses do not need them.
 
 - App: sprint panel (CPU profile once measured, backlog with estimates and measurements, story points, "Start
   sprint"), the game pauses at every sprint; the last run's plans are offered again. Scenario list in two sections
-  (Operations, Engineering) with labels; "Open all scenarios" switch (D19).
+  (Operations, Engineering) with labels; "Open all scenarios" switch (D19; since D32 a launch option).
 
 **As built in step 4, part 4** (play test of E2, E3):
 
@@ -814,7 +814,7 @@ name were built and taken out again: the courses do not need them.
 - E4: red marks under the cache lane where answers were stale; the end card says "Not made" without the first star;
   a draft that is not applied says so in amber.
 - Start page: operations scenarios are labelled B1… in German and O1… in English (E2… in both); a language switch
-  (Deutsch | English), kept on the device; "Open all scenarios" moved into the About dialog ("For teachers").
+  (Deutsch | English), kept on the device; "Open all scenarios" moved into the About dialog ("For teachers"; since D32 a launch option).
 
 **As built in step 5, part 1** (scenario 6, "Heat wave"):
 
@@ -1178,12 +1178,13 @@ the numbers stay so that saved stars keep their scenario):
 | D23 | Location Shifting (scenario 10) | the player decides per job before the start, not during the game: moving work between sites is a planning decision, and the data must be moved first; the limits come from the jobs themselves (data size, database latency, data residency), so that "everything to Norway" is wrong and the choice needs judgement |
 | D24 | Capstone (scenario 11) | stars by CO₂ reduction, not a hard SCI target; the three kinds of work share one draft in tabs, so the controls stay those of the scenarios that introduced them; the forecast update is the one new twist, because a plan days ahead is where a forecast error costs most |
 | D25 | "What if" and replays | settings in the debrief's "what if" that reach more stars than the player's best so far are shown without their label ("a setting you have not found yet") – the numbers stay, the recipe does not; a "start over" button in the goal bar returns to the scenario's starting rules and choices (a second click confirms) |
-| D26 | Portfolio track | a third track for a company's applications (P1 "Inventory" first); no clock, a year at a time; the data the player buys come from the same budget as the measures; the stars count the real footprint, location-based; opens after E2 "Measure first" – first measure, then take stock; the P1 briefing explains location-based and market-based itself |
+| D26 | Portfolio track | a third track for a company's applications (P1 "Inventory" first); no clock, a year at a time; the data the player buys come from the same budget as the measures; the stars count the real footprint, location-based; open from the start (D32; before: after E2 "Measure first"); the P1 briefing explains location-based and market-based itself |
 | D27 | Order of the Engineering scenarios | along the blocks of the iSAQB module GREEN: quality goals (E1 How many nines?), code (E2–E4), the page and the architecture (E5 Data diet, E6 Chatty services, E7 Constant asking), AI (E8 Right-sized AI), the development process (E9 Green pipeline); the scenario numbers in the code stay (104–107), so stars kept on a device stay with their scenario – only the labels and the order of opening changed |
 | D28 | Glossary and results in a course | a glossary of all technical terms on the start page; no result codes or ranking – the courses do not need them (revises D6) |
 | D29 | P4 "Leave the cloud?" | three years, so that new servers are written off over a fair time; the own server room stays, limited to six existing servers (reuse against a poor PUE); no green-power contract as an option – the report next to the location-based figure shows the same lesson as B11, and the debrief names it |
 | D30 | E1 "How many nines?" and E7 "Constant asking" | two architecture scenarios, sorted in along the GREEN blocks of D27: quality goals first (E1, block 3), polling and push after the services (E7, block 6); the others move on (E2 Measure first … E9 Green pipeline). Scenario numbers stay (108, 109; 101–107), so stars kept on a device stay with their scenario. Like the portfolio track without a clock, decided for a year |
 | D31 | Showing the solution | on the end card "Show the solution" uncovers the hidden settings of "What if" (revises D25 for players who are stuck) and shows, in scenarios with a clock, what the player's run did differently from the solution (the rules at the end of the run, sprint plans, jobs moved, servers bought, planning again after a forecast change) and the solution step by step; "Put the solution into the task" starts again with it: without a clock the model solution in the screen, with a clock the solution of `Solutions` (core) in the panel – LessonTest checks three stars for each, and the launch option "solution" plays the app's own takeover (all 19 three stars). A solution must be one a player can follow by hand: rules set once at the start where possible (B4: autoscaling at 85 % with at least 22 servers 18:00–22:00, not a change on day 2), servers by hand once an hour on the full hour (B1), and LessonTest checks that it still earns three stars when played a little late (B1 30 minutes, the new plan in the capstone two hours); in the takeover, sprint plans fill in at the start of each sprint and servers by hand switch by themselves. Stars count as usual, also with the solution; no switch for teachers. The comparison lists each aspect with "You:" and "Solution:" on lines of their own. With fewer than three stars, "Play again" comes first on the end card. The end cards without a clock have no "Look at the plan" – "Play again" shows the same plan, open to change. Graded hints are left for later |
+| D32 | Opening by content | the three tracks do not depend on each other; inside a track a star opens a scenario only where it builds on another one: Operations B1 → B2 → B3 → B4 (by hand, batch, rules with a forecast, autoscaling), then B5–B11 after B4, the capstone B12 after B8 (training); Engineering all open, E3 after E2 (the same sprints, now with growth); Portfolio P1, P3, P4 open, P2 after P1 (it starts from the inventory). Opening everything is the launch option "unlock" (desktop `./build.sh desktop unlock`, web `?unlock`), for this start only – no switch in the About dialog (revises D19) |
 
 ---
 

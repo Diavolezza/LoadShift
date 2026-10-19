@@ -97,18 +97,7 @@ fun AboutContent(modifier: Modifier = Modifier) {
             Txt(t("Font: Inter, SIL Open Font License 1.1"), Type.caption)
             Txt(t("Built with Kotlin and Compose Multiplatform"), Type.caption)
         }
-        // For teachers: open every scenario (D19) – here, so that players do not skip the story by accident.
-        Txt(t("For teachers"), Type.style(16, FontWeight.SemiBold))
-        Row(
-            Modifier.clip(RoundedCornerShape(10.dp)).clickable { Progress.changeUnlockAll(!Progress.unlockAll) }.padding(4.dp),
-            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            CheckBox(Progress.unlockAll)
-            Column {
-                Txt(t("Open all scenarios"), Type.style(15, FontWeight.SemiBold))
-                Txt(t("For courses that take the topics in another order. Stars still count."), Type.caption)
-            }
-        }
+        // All scenarios open: launch option "unlock" (D19), not a switch here.
         ResetProgress()
     }
 }
@@ -129,7 +118,7 @@ private fun ResetProgress() {
                 .clickable { if (asking) { asking = false; Progress.resetAll() } else asking = true }
                 .padding(horizontal = 14.dp, vertical = 6.dp),
         )
-        Txt(t("Deletes the stars of all scenarios on this device, for example before a course. The scenarios close again."), Type.caption)
+        Txt(t("Deletes the stars of all scenarios on this device. The scenarios close again."), Type.caption)
     }
 }
 
@@ -343,7 +332,8 @@ private fun ScenarioCard(scenario: Scenario, highlighted: Boolean, modifier: Mod
         }
         Txt(t(scenario.title), Type.style(16, FontWeight.SemiBold), maxLines = 2)
         Spacer(Modifier.weight(1f))
-        Txt(ScenarioTexts.of(scenario).term, Type.style(13, FontWeight.SemiBold, Palette.accent), maxLines = 1)
+        // One line on the small card: the term without its explanation in brackets ("Green AI (Right-sizing Models)").
+        Txt(ScenarioTexts.of(scenario).term.substringBefore(" ("), Type.style(13, FontWeight.SemiBold, Palette.accent), maxLines = 1)
     }
 }
 
@@ -598,7 +588,9 @@ private fun SideCard(scenario: Scenario, texts: ScenarioTexts, onStart: () -> Un
             GoalLine(null, 1, t(texts.rules), Type.style(19))
             GoalLine(null, 2, t("CO₂ %@ or better", Format.changePermille(-scenario.goals.reduction.toLong())), Type.style(19))
             GoalLine(null, 3, specialLong(scenario.goals.special), Type.style(19))
-            Txt(t("One star opens the next scenario."), Type.style(16, color = Palette.secondary))
+            // D32: only the scenarios that build on this one wait for its star.
+            val opens = Scenario.ALL.filter { it.unlockAfter == scenario.number }.joinToString(", ") { it.shownLabel }
+            if (opens.isNotEmpty()) Txt(t("One star opens %@.", opens), Type.style(16, color = Palette.secondary))
         }
         PrimaryButton("▶  " + t("Start"), Modifier.fillMaxWidth(), large = true, onClick = onStart)
     }

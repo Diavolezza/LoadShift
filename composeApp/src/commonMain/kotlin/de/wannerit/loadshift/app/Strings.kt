@@ -1098,8 +1098,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Entkopplung",
     "Delete duplicates and old files" to
         "Duplikate und Altbestände löschen",
-    "Deletes the stars of all scenarios on this device, for example before a course. The scenarios close again." to
-        "Löscht die Sterne aller Szenarien auf diesem Gerät, etwa vor einem Kurs. Die Szenarien sind danach wieder gesperrt.",
+    "Deletes the stars of all scenarios on this device. The scenarios close again." to
+        "Löscht die Sterne aller Szenarien auf diesem Gerät. Die Szenarien sind danach wieder gesperrt.",
     "Delivery status" to
         "Lieferstatus",
     "Dependencies and build results in a shared store (for example S3) instead of on the agent's disk." to
@@ -1310,10 +1310,6 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Fußabdruck: rund %@ t CO₂ im Jahr",
     "For all kinds" to
         "Für alle Arten",
-    "For courses that take the topics in another order. Stars still count." to
-        "Für Lehrveranstaltungen, die die Themen in anderer Reihenfolge behandeln. Sterne zählen weiter.",
-    "For teachers" to
-        "Für Lehrende",
     "For these measures the consultant's list gives %@ t over three years – %@ of the %@ t the company emits in that time." to
         "Für diese Maßnahmen nennt die Liste des Beratungshauses %@ t in drei Jahren – %@ der %@ t, die das Unternehmen in dieser Zeit verursacht.",
     "Forecast update: the wind drops about 12 hours earlier than forecast." to
@@ -1322,8 +1318,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Prognose während der Laufzeit: %1\$lld g/kWh · spätestens %2\$@",
     "Forecast: %lld g/kWh, ±%lld %%" to
         "Prognose: %1\$lld g/kWh, ±%2\$lld %%",
-    "Four places, each with its own facts: the cloud in Frankfurt and in Stockholm with a PUE of 1.15, the colocation with 1.35, the server room with 1.7. The grid in Germany has about 380 g CO₂ per kWh, in Sweden about 30. In the cloud the company pays for the server equivalents an application is given; on own hardware an application needs enough servers for its peak, and they run whether busy or not. Making a new server emits about 1.5 t CO₂." to
-        "Vier Orte, jeder mit eigenen Zahlen: die Cloud in Frankfurt und in Stockholm mit einer PUE von 1,15, die Colocation mit 1,35, der Serverraum mit 1,7. Das Netz in Deutschland hat etwa 380 g CO₂ pro kWh, in Schweden etwa 30. In der Cloud zahlt das Unternehmen für die Server-Äquivalente, die einer Anwendung zugeteilt sind; auf eigener Hardware braucht eine Anwendung genug Server für ihre Spitze, und die laufen, ob ausgelastet oder nicht. Die Herstellung eines neuen Servers verursacht etwa 1,5 t CO₂.",
+    "Four places, each with its own facts: the cloud in Frankfurt and in Stockholm with a PUE of 1.15, the colocation with 1.35, the server room with 1.7 (the PUE is what the whole site draws for every watt the servers draw). The grid in Germany has about 380 g CO₂ per kWh, in Sweden about 30. In the cloud the company pays for the server equivalents an application is given; on own hardware an application needs enough servers for its peak, and they run whether busy or not. Making a new server emits about 1.5 t CO₂." to
+        "Vier Orte, jeder mit eigenen Zahlen: die Cloud in Frankfurt und in Stockholm mit einer PUE von 1,15, die Colocation mit 1,35, der Serverraum mit 1,7 (die PUE ist, was der ganze Standort für jedes Watt der Server zieht). Das Netz in Deutschland hat etwa 380 g CO₂ pro kWh, in Schweden etwa 30. In der Cloud zahlt das Unternehmen für die Server-Äquivalente, die einer Anwendung zugeteilt sind; auf eigener Hardware braucht eine Anwendung genug Server für ihre Spitze, und die laufen, ob ausgelastet oder nicht. Die Herstellung eines neuen Servers verursacht etwa 1,5 t CO₂.",
     "Four places: two cloud regions, a colocation, the own server room" to
         "Vier Orte: zwei Cloud-Regionen, eine Colocation, der eigene Serverraum",
     "Framework and the rest" to
@@ -1908,8 +1904,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Ein Server schafft %1\$lld Lasteinheiten (%2\$lld.000 Requests pro 15 Minuten). Über 85 %% Auslastung werden Requests langsam.",
     "One set of servers; after a failure it is repaired and restarted." to
         "Ein Satz Server; nach einer Störung wird er repariert und neu gestartet.",
-    "One star opens the next scenario." to
-        "Ein Stern schaltet das nächste Szenario frei.",
+    "One star opens %@." to
+        "Ein Stern öffnet %@.",
     "Only autoscaling at 80 %" to
         "Nur Autoscaling bei 80 %",
     "Only the batch jobs in the greenest hours" to
@@ -1920,8 +1916,6 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Nur das Training im Wind (Cap 60 %)",
     "open %@" to
         "offen %@",
-    "Open all scenarios" to
-        "Alle Szenarien freigeben",
     "Operations" to
         "Betrieb",
     "Optimizing by gut feeling is a gamble: the team expects the most from the image resizing and from rewriting the checkout. Whether that is true, only a measurement shows. Profiling costs a few story points and shows where the CPU time really goes – then you fix the hot spots first." to

@@ -52,8 +52,10 @@ The app speaks English and German (switch on the start page); everything in this
 | P3 | Tidy up with TIME | Application Rationalization (TIME) |
 | P4 | Leave the cloud? | Cloud Repatriation |
 
-In German the operations scenarios are called B1–B12 ("Betrieb"). A star in one scenario opens the next; teachers can
-open all scenarios or reset the progress in the About dialog. A player who is stuck can uncover the solution on the
+In German the operations scenarios are called B1–B12 ("Betrieb"). The three tracks are independent of each other. Inside a
+track a scenario opens with a star only where it builds on another one: in Operations B1–B4 one after the other, then
+the rest after B4 and the capstone B12 after B8; in Engineering E3 after E2; in Portfolio P2 after P1. The progress
+can be reset in the About dialog. A player who is stuck can uncover the solution on the
 end card and put it into the task. The start page continues with the next open
 scenario and shows one tab per track; a glossary collects every technical term. `docs/CONCEPT.md`, section 9.4, maps every scenario to the learning goals of the
 iSAQB Advanced Level module GREEN, for courses that follow it. More scenarios are planned (section 9).
@@ -116,8 +118,9 @@ on the first start (right-click → Open), Windows SmartScreen warns once.
 
 For screenshots, tests and teaching: desktop `./gradlew :composeApp:run --args="-scenario 7 -play -ticks 40 -careful -lang de"`,
 web `index.html?scenario=7&play&ticks=40&careful&lang=de`. `scenario` opens a scenario's briefing (101–103 are E2–E4),
-`play` starts it, `ticks` runs that many 15-minute steps, `careful` plays like a careful player, `lang` sets the
-language for this start.
+`play` starts it, `ticks` runs that many 15-minute steps, `careful` plays like a careful player, `solution` plays the
+solution, `lang` sets the language for this start, `unlock` opens every scenario for this start (stars still count) –
+for teachers: `./build.sh desktop unlock`, or `index.html?unlock`.
 
 ## Development
 

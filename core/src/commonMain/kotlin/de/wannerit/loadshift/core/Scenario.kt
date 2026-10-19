@@ -302,7 +302,7 @@ data class Scenario(
          * and faster fans mean more energy but a lower PUE. The stars count CO₂, not the PUE.
          */
         val HEAT_WAVE = Scenario(
-            number = 6, title = "Heat wave", setting = GridSetting(GridRegion.GERMANY, Season.SUMMER), days = 3,
+            number = 6, unlockAfter = 4, title = "Heat wave", setting = GridSetting(GridRegion.GERMANY, Season.SUMMER), days = 3,
             seed = 6, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 40)),
             interactive = InteractiveLoad(peak = 300),
             controls = setOf(Control.COOLING, Control.CAPACITY_RULES),
@@ -321,7 +321,7 @@ data class Scenario(
          * until the capacity is needed.
          */
         val OLD_IRON = Scenario(
-            number = 7, title = "Old iron", setting = GridSetting(GridRegion.POLAND, Season.WINTER), days = 12,
+            number = 7, unlockAfter = 4, title = "Old iron", setting = GridSetting(GridRegion.POLAND, Season.WINTER), days = 12,
             seed = 7, fleet = listOf(FleetEntry(ServerKind.CPU_OLD, 24, ageYears = 4)),
             interactive = InteractiveLoad(peak = 150, growthPerYear = 150, daysPerYear = 4),
             controls = setOf(Control.RENEWAL),
@@ -337,7 +337,7 @@ data class Scenario(
          * of them at once, without a cap, from the first minute.
          */
         val TRAINING_RUN = Scenario(
-            number = 8, title = "Training run", setting = GridSetting(GridRegion.GERMANY, Season.SPRING), days = 3,
+            number = 8, unlockAfter = 4, title = "Training run", setting = GridSetting(GridRegion.GERMANY, Season.SPRING), days = 3,
             // A calm day, a windy day, a calm day.
             weather = WeatherMode.Days(listOf(1_150, 650, 1_100)),
             seed = 8, fleet = listOf(FleetEntry(ServerKind.GPU_CURRENT, 8)),
@@ -354,7 +354,7 @@ data class Scenario(
          * just when the coal-heavy grid is dirtiest. The reference operator streams in 4K to every device.
          */
         val ECO_MODE = Scenario(
-            number = 9, title = "Eco mode", setting = GridSetting(GridRegion.POLAND, Season.SUMMER), days = 2,
+            number = 9, unlockAfter = 4, title = "Eco mode", setting = GridSetting(GridRegion.POLAND, Season.SUMMER), days = 2,
             seed = 9, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 30)),
             interactive = InteractiveLoad(peak = 360),
             controls = setOf(Control.STREAMING),
@@ -378,7 +378,7 @@ data class Scenario(
          * with customer data that must stay in Germany.
          */
         val TWO_SITES = Scenario(
-            number = 10, title = "Two sites", setting = GridSetting(GridRegion.GERMANY, Season.AUTUMN), days = 3,
+            number = 10, unlockAfter = 4, title = "Two sites", setting = GridSetting(GridRegion.GERMANY, Season.AUTUMN), days = 3,
             seed = 10, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 14)),
             interactive = InteractiveLoad(peak = 0),
             controls = setOf(Control.LOCATION),
@@ -410,7 +410,7 @@ data class Scenario(
          * only clean energy in the same hour lowers the CO₂ the stars count. The budget for electricity may rise by 10 %.
          */
         val GREEN_ON_PAPER = Scenario(
-            number = 12, label = "11", unlockAfter = 10,
+            number = 12, label = "11", unlockAfter = 4,
             title = "Green on paper", setting = GridSetting(GridRegion.GERMANY, Season.AUTUMN), days = 7,
             weather = WeatherMode.Days(listOf(1_150, 650, 1_300, 800, 1_250, 600, 1_000, 1_000)),
             seed = 120, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 40)),
@@ -438,7 +438,7 @@ data class Scenario(
          * forecast expects the wind a day early; a plan made with it puts the waiting jobs into a still dirty day.
          */
         val DARK_DOLDRUMS = Scenario(
-            number = 11, label = "12", unlockAfter = 12, title = "Dark doldrums", setting = GridSetting(GridRegion.GERMANY, Season.WINTER), days = 7,
+            number = 11, label = "12", unlockAfter = 8, title = "Dark doldrums", setting = GridSetting(GridRegion.GERMANY, Season.WINTER), days = 7,
             // Day 8 (after the week) is calm again: the forecast that sees the weather a day early shows it on day 7.
             weather = WeatherMode.Days(listOf(1_300, 1_400, 1_450, 1_400, 1_350, 600, 450, 1_300)),
             forecastMiss = ForecastMiss(shift = -GameTime.TICKS_PER_DAY, revisedAt = GameTime.at(3, 12).tick),
@@ -486,7 +486,7 @@ data class Scenario(
          * time goes are wrong – profiling shows it. Autoscaling turns less work per request into fewer servers.
          */
         val MEASURE_FIRST = Scenario(
-            number = 101, label = "E2", track = Track.ENGINEERING, unlockAfter = 108,
+            number = 101, label = "E2", track = Track.ENGINEERING, unlockAfter = null,
             title = "Measure first", setting = GridSetting(GridRegion.GERMANY, Season.AUTUMN), days = 4,
             seed = 11, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 20)),
             interactive = InteractiveLoad(peak = 240),
@@ -565,7 +565,7 @@ data class Scenario(
          * sales dashboard.
          */
         val HIT_OR_MISS = Scenario(
-            number = 103, label = "E4", track = Track.ENGINEERING, unlockAfter = 102,
+            number = 103, label = "E4", track = Track.ENGINEERING, unlockAfter = null,
             title = "Hit or miss", setting = GridSetting(GridRegion.GERMANY, Season.AUTUMN), days = 2,
             seed = 13, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 30)),
             interactive = InteractiveLoad(peak = 240),
@@ -600,7 +600,7 @@ data class Scenario(
          * makes them wait; reasoning helps complaints a little and makes them wait long.
          */
         val RIGHT_SIZED_AI = Scenario(
-            number = 104, label = "E8", track = Track.ENGINEERING, unlockAfter = 109,
+            number = 104, label = "E8", track = Track.ENGINEERING, unlockAfter = null,
             title = "Right-sized AI", setting = GridSetting(GridRegion.GERMANY, Season.AUTUMN), days = 2,
             seed = 14, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 10)),
             interactive = InteractiveLoad(peak = 120),
@@ -626,7 +626,7 @@ data class Scenario(
          * cut the bytes – and make the page faster; two tempting changes make it slower.
          */
         val DATA_DIET = Scenario(
-            number = 105, label = "E5", track = Track.ENGINEERING, unlockAfter = 103,
+            number = 105, label = "E5", track = Track.ENGINEERING, unlockAfter = null,
             title = "Data diet", setting = GridSetting(GridRegion.GERMANY, Season.AUTUMN), days = 2,
             seed = 15, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 30)),
             interactive = InteractiveLoad(peak = 240),
@@ -643,7 +643,7 @@ data class Scenario(
          * feedback within 20 minutes, and the UI tests must have run before Friday's release.
          */
         val GREEN_PIPELINE = Scenario(
-            number = 106, label = "E9", track = Track.ENGINEERING, unlockAfter = 104,
+            number = 106, label = "E9", track = Track.ENGINEERING, unlockAfter = null,
             title = "Green pipeline", setting = GridSetting(GridRegion.GERMANY, Season.AUTUMN), days = 7,
             seed = 16, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 34)),
             interactive = InteractiveLoad(peak = 0),
@@ -660,7 +660,7 @@ data class Scenario(
          * the provider's positions may be one minute old, the traffic information five.
          */
         val CHATTY_SERVICES = Scenario(
-            number = 107, label = "E6", track = Track.ENGINEERING, unlockAfter = 105,
+            number = 107, label = "E6", track = Track.ENGINEERING, unlockAfter = null,
             title = "Chatty services", setting = GridSetting(GridRegion.GERMANY, Season.AUTUMN), days = 2,
             seed = 17, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 30)),
             interactive = InteractiveLoad(peak = 0),
@@ -676,7 +676,7 @@ data class Scenario(
          * has its own source of data; better data costs from the same budget as the measures.
          */
         val INVENTORY = Scenario(
-            number = 201, label = "P1", track = Track.PORTFOLIO, unlockAfter = 101,
+            number = 201, label = "P1", track = Track.PORTFOLIO, unlockAfter = null,
             title = "Inventory", setting = GridSetting(GridRegion.GERMANY, Season.YEAR), days = 1,
             seed = 21, fleet = emptyList(), interactive = InteractiveLoad(peak = 0), controls = emptySet(),
             goals = StarGoals(200, SpecialGoal.Reduction(250)),
@@ -774,7 +774,7 @@ data class Scenario(
 
         /** P3, "Tidy up with TIME": thirteen applications, four decisions, three projects at a time, three years. */
         val TIDY_UP = Scenario(
-            number = 203, label = "P3", track = Track.PORTFOLIO, unlockAfter = 202,
+            number = 203, label = "P3", track = Track.PORTFOLIO, unlockAfter = null,
             title = "Tidy up with TIME", setting = GridSetting(GridRegion.GERMANY, Season.YEAR), days = 1,
             seed = 23, fleet = emptyList(), interactive = InteractiveLoad(peak = 0), controls = emptySet(),
             goals = StarGoals(250, SpecialGoal.Reduction(300)),
@@ -817,7 +817,7 @@ data class Scenario(
 
         /** P4, "Leave the cloud?": six applications, four places, three years; costs down, and CO₂? */
         val LEAVE_THE_CLOUD = Scenario(
-            number = 204, label = "P4", track = Track.PORTFOLIO, unlockAfter = 203,
+            number = 204, label = "P4", track = Track.PORTFOLIO, unlockAfter = null,
             title = "Leave the cloud?", setting = GridSetting(GridRegion.GERMANY, Season.YEAR), days = 1,
             seed = 24, fleet = emptyList(), interactive = InteractiveLoad(peak = 0), controls = emptySet(),
             goals = StarGoals(100, SpecialGoal.Reduction(200)),
@@ -852,7 +852,7 @@ data class Scenario(
 
         /** E1, "How many nines?": an insurer's portal, seven building blocks, five quality scenarios, a year. */
         val HOW_MANY_NINES = Scenario(
-            number = 108, label = "E1", track = Track.ENGINEERING, unlockAfter = 1,
+            number = 108, label = "E1", track = Track.ENGINEERING, unlockAfter = null,
             title = "How many nines?", setting = GridSetting(GridRegion.GERMANY, Season.YEAR), days = 1,
             seed = 18, fleet = emptyList(), interactive = InteractiveLoad(peak = 0), controls = emptySet(),
             goals = StarGoals(200, SpecialGoal.Reduction(280)),
@@ -897,7 +897,7 @@ data class Scenario(
 
         /** E7, "Constant asking": a delivery app on 400,000 phones, five kinds of updates, a year. */
         val CONSTANT_ASKING = Scenario(
-            number = 109, label = "E7", track = Track.ENGINEERING, unlockAfter = 107,
+            number = 109, label = "E7", track = Track.ENGINEERING, unlockAfter = null,
             title = "Constant asking", setting = GridSetting(GridRegion.GERMANY, Season.YEAR), days = 1,
             seed = 19, fleet = emptyList(), interactive = InteractiveLoad(peak = 0), controls = emptySet(),
             goals = StarGoals(300, SpecialGoal.Reduction(450)),
