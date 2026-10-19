@@ -1182,4 +1182,18 @@ class LessonTest {
         assertEquals(2, stars("offers on opening, badge refresh bundled"))
         assertEquals(3, stars("example"))
     }
+
+    /** D31: the solution the debrief shows and puts into the task earns three stars in every scenario with a clock. */
+    @Test fun solutionsEarnThreeStars() {
+        val lines = mutableListOf("Solutions (D31)")
+        val failed = mutableListOf<String>()
+        for (s in Scenario.ALL) {
+            Solutions.of(s) ?: continue
+            val stars = Solutions.stars(s)
+            lines += "  ${s.label.padEnd(4)} ${s.title.padEnd(28)} " + "★".repeat(stars)
+            if (stars < 3) failed += s.label
+        }
+        report(0, lines)
+        assertTrue(failed.isEmpty(), "solutions below three stars: $failed")
+    }
 }

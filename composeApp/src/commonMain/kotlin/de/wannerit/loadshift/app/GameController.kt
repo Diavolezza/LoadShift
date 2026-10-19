@@ -33,6 +33,8 @@ import de.wannerit.loadshift.core.ScheduledMinimum
 import de.wannerit.loadshift.core.Scenario
 import de.wannerit.loadshift.core.ServerKind
 import de.wannerit.loadshift.core.Simulation
+import de.wannerit.loadshift.core.Solution
+import de.wannerit.loadshift.core.Solutions
 import de.wannerit.loadshift.core.Totals
 import de.wannerit.loadshift.core.Quality
 import de.wannerit.loadshift.core.StreamingConfig
@@ -199,7 +201,7 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
 
     /** O7, before a tick: at the start of a quarter the bought servers arrive; a new year brings a new budget. */
     private fun beforeTick() {
-        presetServers[current.tick]?.let { setWantedServers(it) }
+        presetTick()
         if (!hasRenewal || (current.tick - scenario.startTick) % GameTime.TICKS_PER_DAY != 0) return
         for (i in sims.indices) {
             if (renewDraft[i] > sims[i].policy.renewed) {
@@ -722,150 +724,155 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
         return expectedAt.second
     }
 
-    // The solution (D31): what a careful player sets, taken over into a new run – the same settings as the launch
-    // option "careful" (App.kt). Sprint plans fill in at the start of each sprint, servers by hand switch by themselves.
+    // The solution (D31, core Solutions – LessonTest checks three stars for each): taken over into a new run. Rules
+    // apply from the start and change when the solution changes them; sprint plans fill in at the start of each
+    // sprint; servers by hand and servers bought switch by themselves; planning again happens when the forecast changes.
 
+    val solution: Solution? = Solutions.of(scenario)
     private var presetSprints: List<List<Int>> = emptyList()
     private var presetServers: Map<Int, Int> = emptyMap()
+    private var presetChanges: Map<Int, Policy> = emptyMap()
+    private var presetReplan: Set<Int> = emptySet()
+    private var presetRenewal: List<Map<Int, Int>> = emptyList()
 
-    private fun solutionSprints(): List<List<Int>> =
-        if (scenario.growth != null) Engineering.greedy(scenario, value = Engineering.byLastDay(scenario))
-        else Engineering.greedy(scenario, profileFirst = true, value = Engineering.byEstimates(scenario))
-
-    /** Servers by hand: enough for the expected load of the next 90 minutes at 80 % (tick → servers, changes only). */
-    private fun solutionServers(): Map<Int, Int> {
-        val perServer = (scenario.fleet.firstOrNull()?.kind?.capacity ?: 20) * 800
-        val plan = linkedMapOf<Int, Int>()
-        var last = -1
-        for (tick in scenario.startTick until scenario.endTick) {
-            val expected = (tick..tick + ServerKind.BOOT_TICKS + GameTime.TICKS_PER_HOUR).maxOf { scenario.interactive.expected(it) }
-            val n = ((expected * 1_000 + perServer - 1) / perServer).coerceAtMost(scenario.serverCount)
-            if (n != last) { plan[tick] = n; last = n }
-        }
-        return plan
-    }
-
-    private fun solutionPolicy(): Policy? {
-        val c = scenario.controls
-        val start = scenario.initialPolicy
-        return when {
-            scenario.contract != null -> scenario.referencePolicy.copy(contract = Contract.HOURLY, capacity = CapacityMode.Autoscale(800), batch = BatchMode.Greenest)
-            hasServices -> start.copy(services = ServiceConfig(ServiceCut.MICROSERVICES, Protocol.GRPC, MasterData.EVENTS, 60, 300, true))
-            hasPipeline -> start.copy(pipeline = PipelineConfig(Runners.ON_DEMAND, true, true, HeavyTests.NIGHTLY, Trigger.EVERY_COMMIT, Environments.OFFICE_HOURS, 1))
-            hasWeb -> start.copy(pages = PageConfig(ImageFormat.AVIF, true, LazyLoading.BELOW_FOLD, false, false, Tracking.ONE_TAG))
-            hasInference -> Answerer.entries.let { a -> start.copy(inference = InferenceConfig(listOf(a[0], a[0], a[1], a[2], a[2]), 1_000)) }
-            isCapstone -> Policy(CapacityMode.Autoscale(800), BatchMode.Greenest, training = TrainingConfig(4, 600, true))
-            hasBatch && scenario.location == null -> Policy(start.capacity, BatchMode.Greenest)
-            Control.STREAMING in c -> start.copy(streaming = StreamingConfig(listOf(Quality.HD, Quality.HD, Quality.UHD), eco = true, ecoAbove = 550))
-            Control.TRAINING in c -> start.copy(training = TrainingConfig(6, 600, true))
-            Control.COOLING in c -> start.copy(capacity = CapacityMode.Autoscale(800), setpoint = 25)
-            Control.CACHING in c -> start.copy(cache = CacheConfig(1, listOf(1_440, 15, 1, 0, 0), approximateCount = true, materializedView = true, invalidate = true))
-            Control.PLACEMENT in c -> Policy(CapacityMode.Placed(listOf(0, 0, 1, 2, 3, 4, 4, 5, 0, 1, 2, 3, 4, 5, 0, 2, 4, 5, 1, 3, 2, 2, 5, 5)))
-            Control.CAPACITY_RULES in c -> Policy(CapacityMode.Autoscale(800, ScheduledMinimum(26, 18, 22)))
-            else -> null
+    /** Applies what the solution does at this tick (called before each tick). */
+    private fun presetTick() {
+        val tick = current.tick
+        presetServers[tick]?.let { setWantedServers(it) }
+        presetChanges[tick]?.let { setDraftFrom(it); setPolicy(it) }
+        if (tick in presetReplan) replan()
+        if (presetRenewal.isNotEmpty() && (tick - scenario.startTick) % GameTime.TICKS_PER_DAY == 0) {
+            val day = (tick - scenario.startTick) / GameTime.TICKS_PER_DAY
+            for ((i, plan) in presetRenewal.withIndex()) plan[day]?.let { n ->
+                if (n > renewDraft[i]) {
+                    boughtInYear[year] = (boughtInYear[year] ?: 0) + (n - renewDraft[i])
+                    renewDraft = renewDraft.toMutableList().also { it[i] = n }
+                }
+            }
         }
     }
 
-    /** The jobs a careful player moves to Oslo (O10). */
-    private val solutionMoved = setOf(0, 1, 5, 6, 7, 8)
-
-    /** A new run with the solution in the panel (and, for sprints and servers by hand, filling in as the run goes). */
+    /** A new run with the solution in the panel. */
     fun loadSolution() {
+        val sol = solution ?: return
         restart(keepDraft = false)
+        for (job in sol.moved) toggleMove(job)
+        sol.policy?.let { p ->
+            if (scenario.location != null) setLocationRule(p.batch == BatchMode.Greenest) else { setDraftFrom(p); setPolicy(p) }
+        }
+        presetChanges = sol.changes
+        presetReplan = sol.replanAt
+        presetServers = sol.servers
+        presetRenewal = sol.renewal
+        presetSprints = sol.sprints
+        presetSprints.firstOrNull()?.let { planSprint(it) }
+        presetServers[current.tick]?.let { setWantedServers(it) }
+    }
+
+    private fun at(tick: Int): String {
+        val time = GameTime(tick)
+        return if (scenario.days > 1) t("day %lld, %@", (time.day - GameTime.START.day + 1).toLong(), time.clockText) else time.clockText
+    }
+
+    /** The parts of the rules the panel shows, each with its name and a description. */
+    private fun aspects(p: Policy): List<Pair<String, String>> {
         val c = scenario.controls
-        when {
-            Control.LOCATION in c -> { for (job in solutionMoved) toggleMove(job); setLocationRule(true) }
-            Control.RENEWAL in c -> changeRenewal(0, scenario.renewal?.budgetPerYear ?: 0)
-            Control.SPRINTS in c -> { presetSprints = solutionSprints(); planSprint(presetSprints.firstOrNull() ?: emptyList()) }
-            Control.MANUAL_CAPACITY in c -> { presetServers = solutionServers(); presetServers[current.tick]?.let { setWantedServers(it) } }
-            else -> solutionPolicy()?.let { p -> setDraftFrom(p); setPolicy(p) }
+        return buildList {
+            if (Control.CONTRACT in c) add(t("Electricity contract") to t(p.contract.label))
+            if (Control.CAPACITY_RULES in c || Control.PLACEMENT in c) add(t("Capacity") to capacityText(p.capacity))
+            if (Control.COOLING in c) add(t("Setpoint") to t("%lld °C", p.setpoint.toLong()))
+            if (Control.BATCH_RULES in c || Control.BATCH_BY_HAND in c || Control.LOCATION in c) add(t("Batch jobs") to ruleText(p))
+            if (Control.TRAINING in c) add(t("Training") to trainingText(p.training))
+            scenario.streaming?.let { m -> add(t("Video quality") to streamingText(p.streaming, m)) }
+            if (Control.CACHING in c) add(t("Cache") to cacheText(p.cache))
+            scenario.inference?.let { m -> add(t("Shop assistant") to inferenceText(p.inference, m)) }
+            if (Control.PAGES in c) add(t("Pages") to pagesText(p.pages))
+            if (Control.PIPELINE in c) add(t("Pipeline") to pipelineText(p.pipeline))
+            if (Control.SERVICES in c) add(t("Services") to servicesText(p.services))
         }
     }
+
+    private fun items(list: Collection<Int>) = if (list.isEmpty()) t("nothing") else list.joinToString(", ") { t(scenario.backlog[it].title) }
+    private fun jobs(set: Set<Int>) = if (set.isEmpty()) t("nothing") else scenario.batchJobs.withIndex().filter { it.index in set }.joinToString(", ") { t(it.value.name) }
 
     /** The solution in words, step by step. */
     fun solutionSteps(): List<String> {
-        val c = scenario.controls
-        fun at(tick: Int): String {
-            val time = GameTime(tick)
-            return if (scenario.days > 1) t("day %lld, %@", (time.day - GameTime.START.day + 1).toLong(), time.clockText) else time.clockText
-        }
-        return when {
-            Control.SPRINTS in c -> solutionSprints().mapIndexedNotNull { i, plan ->
-                if (plan.isEmpty()) null else t("Sprint %lld: %@", (i + 1).toLong(), plan.joinToString(", ") { t(scenario.backlog[it].title) })
+        val sol = solution ?: return emptyList()
+        val lines = mutableListOf<String>()
+        when {
+            sol.sprints.isNotEmpty() -> sol.sprints.forEachIndexed { i, plan ->
+                if (plan.isNotEmpty()) lines += t("Sprint %lld: %@", (i + 1).toLong(), items(plan))
             }
-            Control.MANUAL_CAPACITY in c -> {
-                val plan = solutionServers()
-                // On the full hours only, so that the list stays short.
+            sol.servers.isNotEmpty() -> {
+                val plan = sol.servers
                 val hourly = linkedMapOf<Int, Int>()
                 var last = -1
-                for ((tick, n) in plan) {
+                for (tick in plan.keys) {
                     val hour = tick / GameTime.TICKS_PER_HOUR * GameTime.TICKS_PER_HOUR
                     val v = plan.entries.last { it.key <= hour + GameTime.TICKS_PER_HOUR - 1 }.value
                     if (v != last && hour !in hourly) { hourly[hour] = v; last = v }
                 }
-                val first = plan.entries.first()
-                listOf(
-                    t("Switch to %lld servers at the start.", first.value.toLong()),
-                    t("Then keep just enough servers on for the expected load of the next 90 minutes at about 80 % – a server needs 30 minutes to start, so switch on before the load rises:"),
-                    hourly.entries.drop(1).joinToString(" · ") { t("%@ → %lld", at(it.key), it.value.toLong()) },
-                )
+                lines += t("Switch to %lld servers at the start.", plan.values.first().toLong())
+                lines += t("Then keep just enough servers on for the expected load of the next 90 minutes at about 80 % – a server needs 30 minutes to start, so switch on before the load rises:")
+                lines += hourly.entries.drop(1).joinToString(" · ") { t("%@ → %lld", at(it.key), it.value.toLong()) }
             }
-            Control.LOCATION in c -> listOf(
-                t("Move to Oslo: %@.", scenario.batchJobs.withIndex().filter { it.index in solutionMoved }.joinToString(", ") { t(it.value.name) }),
-                t("Batch rule at both sites: the greenest hours."),
-            )
-            Control.RENEWAL in c -> listOf(t("In year 1, put the whole budget into new servers for Warsaw – the dirtier grid gains most from efficient servers. Buy nothing more."))
-            Control.PLACEMENT in c -> listOf(t("Six hosts: one batch worker per host, the evening peaks of the web servers spread over different hosts; the other hosts stay empty and off."))
-            hasBatch && scenario.location == null && scenario.contract == null && !isCapstone ->
-                listOf(t("Every job into the greenest hours of the forecast before its deadline."))
-            else -> listOf(t("Taking it over sets every setting in the panel; look at them there before you start."))
-        } + (if (scenario.forecastMiss != null && (isCapstone || Control.BATCH_RULES in c))
-            listOf(t("When the forecast changes: plan again with the latest forecast.")) else emptyList())
+            sol.renewal.isNotEmpty() -> {
+                val sites = scenario.renewal?.sites ?: emptyList()
+                for ((i, plan) in sol.renewal.withIndex()) {
+                    val site = sites.getOrNull(i)?.let { t(it.title) } ?: "${i + 1}"
+                    lines += t("%@: %@", site, plan.entries.joinToString(" · ") { (day, n) ->
+                        t("from year %lld, quarter %lld: %lld new servers", (day / 4 + 1).toLong(), (day % 4 + 1).toLong(), n.toLong())
+                    })
+                }
+            }
+            else -> {
+                if (sol.moved.isNotEmpty()) lines += t("Move to %@: %@.", t(scenario.location?.sites?.getOrNull(1)?.title ?: ""), jobs(sol.moved))
+                sol.policy?.let { p -> for ((name, text) in aspects(p)) lines += t("%@: %@", name, text) }
+                for ((tick, p) in sol.changes) {
+                    val before = sol.policy?.let { aspects(it) } ?: emptyList()
+                    for ((name, text) in aspects(p)) if ((name to text) !in before) lines += t("From %@ – %@: %@", at(tick), name, text)
+                }
+            }
+        }
+        if (sol.replanAt.isNotEmpty()) lines += t("When the forecast changes: plan again with the latest forecast.")
+        return lines
     }
 
     /**
-     * The player's run against the solution: the settings that differ (the rules at the end of the run), and the
-     * steps the solution takes that the run did not – so that the debrief says what to change, not only what is best.
+     * The player's run against the solution: what differs at the start and at the end of the run, and the steps the
+     * solution takes that the run did not – so that the debrief says what to change, not only what is best.
      */
     fun differences(): List<String> {
-        val c = scenario.controls
+        val sol = solution ?: return emptyList()
         val lines = mutableListOf<String>()
         fun diff(aspect: String, mine: String, theirs: String) {
             if (mine != theirs) lines += t("%@ – you: %@; solution: %@", aspect, mine, theirs)
         }
-        fun items(list: Collection<Int>) = if (list.isEmpty()) t("nothing") else list.joinToString(", ") { t(scenario.backlog[it].title) }
         when {
-            Control.SPRINTS in c -> for ((i, plan) in solutionSprints().withIndex()) {
+            sol.sprints.isNotEmpty() -> sol.sprints.forEachIndexed { i, plan ->
                 diff(t("Sprint %lld", (i + 1).toLong()), items(sprintPlans[i] ?: emptyList()), items(plan))
             }
-            Control.LOCATION in c -> {
-                fun jobs(set: Set<Int>) = if (set.isEmpty()) t("nothing") else scenario.batchJobs.withIndex().filter { it.index in set }.joinToString(", ") { t(it.value.name) }
-                diff(t("To Oslo"), jobs(moved), jobs(solutionMoved))
-                diff(t("Batch rule"), ruleText(current.policy), ruleText(current.policy.copy(batch = BatchMode.Greenest)))
-            }
-            Control.RENEWAL in c -> {
+            sol.renewal.isNotEmpty() -> {
                 val sites = scenario.renewal?.sites ?: emptyList()
-                for ((i, s) in sites.withIndex()) diff(t("New servers in %@", t(s.title)), "${renewDraft.getOrElse(i) { 0 }}",
-                    "${if (i == 0) scenario.renewal?.budgetPerYear ?: 0 else 0}")
+                for ((i, plan) in sol.renewal.withIndex()) diff(t("New servers in %@", sites.getOrNull(i)?.let { t(it.title) } ?: ""),
+                    "${renewDraft.getOrElse(i) { 0 }}", "${plan.values.maxOrNull() ?: 0}")
             }
-            Control.MANUAL_CAPACITY in c -> {}
-            else -> solutionPolicy()?.let { sol ->
-                val mine = current.policy
-                if (Control.CONTRACT in c) diff(t("Electricity contract"), t(mine.contract.label), t(sol.contract.label))
-                if (Control.CAPACITY_RULES in c || Control.PLACEMENT in c) diff(t("Capacity"), capacityText(mine.capacity), capacityText(sol.capacity))
-                if (Control.COOLING in c) diff(t("Setpoint"), t("%lld °C", mine.setpoint.toLong()), t("%lld °C", sol.setpoint.toLong()))
-                if (Control.BATCH_RULES in c || Control.BATCH_BY_HAND in c) diff(t("Batch jobs"), ruleText(mine), ruleText(sol))
-                if (Control.TRAINING in c) diff(t("Training"), trainingText(mine.training), trainingText(sol.training))
-                scenario.streaming?.let { m -> diff(t("Video quality"), streamingText(mine.streaming, m), streamingText(sol.streaming, m)) }
-                if (Control.CACHING in c) diff(t("Cache"), cacheText(mine.cache), cacheText(sol.cache))
-                scenario.inference?.let { m -> diff(t("Shop assistant"), inferenceText(mine.inference, m), inferenceText(sol.inference, m)) }
-                if (Control.PAGES in c) diff(t("Pages"), pagesText(mine.pages), pagesText(sol.pages))
-                if (Control.PIPELINE in c) diff(t("Pipeline"), pipelineText(mine.pipeline), pipelineText(sol.pipeline))
-                if (Control.SERVICES in c) diff(t("Services"), servicesText(mine.services), servicesText(sol.services))
-                if (startPolicy != null && startPolicy != mine) lines += t("You changed the rules during the run; the solution has them from the start.")
+            sol.servers.isNotEmpty() -> {}
+            else -> {
+                if (scenario.location != null) diff(t("Moved"), jobs(moved), jobs(sol.moved))
+                val solStart = sol.policy ?: scenario.initialPolicy
+                val myStart = startPolicy ?: current.policy
+                val myEnd = current.policy
+                val laterChange = sol.changes.keys.minOrNull()
+                val startSuffix = if (laterChange != null) " " + t("(at the start)") else ""
+                for ((a, b) in aspects(myStart).zip(aspects(solStart))) diff(a.first + startSuffix, a.second, b.second)
+                if (laterChange != null) {
+                    val solEnd = sol.changes.values.last()
+                    for ((a, b) in aspects(myEnd).zip(aspects(solEnd))) diff(a.first + " " + t("(from %@)", at(laterChange)), a.second, b.second)
+                } else if (myStart != myEnd) lines += t("You changed the rules during the run; the solution has them from the start.")
             }
         }
-        if (scenario.forecastMiss != null && (isCapstone || Control.BATCH_RULES in c) && !replanned)
+        if (sol.replanAt.isNotEmpty() && !replanned)
             lines += t("After the forecast changed – you: did not plan again; solution: planned again with the latest forecast")
         return lines
     }
@@ -1145,6 +1152,9 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
         sprintPlans.clear()
         presetSprints = emptyList()
         presetServers = emptyMap()
+        presetChanges = emptyMap()
+        presetReplan = emptySet()
+        presetRenewal = emptyList()
         replanned = false
         stars = 0
         showEnd = false

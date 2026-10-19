@@ -20,13 +20,14 @@ import de.wannerit.loadshift.core.ServerKind
 /**
  * Options from the command line (desktop) or the address (web), for screenshots and tests:
  * scenario=N opens its briefing, play starts it, ticks=N runs N ticks, careful plays like a careful player while
- * running them, lang=de|en sets the language.
+ * running them, solution takes the solution over and plays it (the stars go to the console), lang=de|en sets the language.
  */
 data class LaunchOptions(
     val scenario: Int? = null,
     val play: Boolean = false,
     val ticks: Int = 0,
     val careful: Boolean = false,
+    val solution: Boolean = false,
     val language: String? = null,
 ) {
     companion object {
@@ -36,6 +37,7 @@ data class LaunchOptions(
             play = "play" in pairs || "ticks" in pairs,
             ticks = pairs["ticks"]?.toIntOrNull() ?: 0,
             careful = "careful" in pairs,
+            solution = "solution" in pairs,
             language = pairs["lang"],
         )
     }
@@ -163,6 +165,18 @@ private fun initialScreen(options: LaunchOptions): Screen {
         return Screen.Portfolio(p)
     }
     val game = GameController(scenario)
+    if (options.solution) {
+        // The solution as the app takes it over, played like a player who starts each sprint.
+        game.loadSolution()
+        repeat(options.ticks) {
+            if (!game.simulation.isFinished) {
+                if (game.canPlanSprint) game.startSprint()
+                game.step()
+            }
+        }
+        println("solution ${scenario.shownLabel}: ${game.stars} stars")
+        return Screen.Game(game)
+    }
     if (options.careful && game.scenario.contract != null) {
         // Like a careful player: 24/7 carbon-free, autoscaling at 80 %, jobs in the greenest hours.
         game.setPolicy(scenario.referencePolicy.copy(contract = de.wannerit.loadshift.core.Contract.HOURLY,

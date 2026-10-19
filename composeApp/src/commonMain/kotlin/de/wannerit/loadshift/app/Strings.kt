@@ -70,6 +70,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "%@, mit Fristsicherung",
     "%@, without deadline safety" to
         "%@, ohne Fristsicherung",
+    "%@: %@" to
+        "%@: %@",
     "%@: %@ GB" to
         "%1\$@: %2\$@ GB",
     "%@: %@ t CO₂ (%@ t hardware), capacity %lld, peak %lld" to
@@ -198,6 +200,10 @@ internal val GERMAN: Map<String, String> = mapOf(
         "%lld SP",
     "%lld test environments with 3 replicas each" to
         "%lld Testumgebungen mit je 3 Replikas",
+    "(at the start)" to
+        "(zu Beginn)",
+    "(from %@)" to
+        "(ab %@)",
     "+ route optimization" to
         "+ Routenoptimierung",
     "1 day" to
@@ -606,10 +612,6 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Batch-Jobs – hell: Ankunft bis Frist, umrandet: geplant, gefüllt: läuft oder fertig",
     "Batch rule" to
         "Batch-Regel",
-    "Batch rule at both sites" to
-        "Batch-Regel an beiden Standorten",
-    "Batch rule at both sites: the greenest hours." to
-        "Batch-Regel an beiden Standorten: die saubersten Stunden.",
     "batch work at %lld g/kWh or less on average" to
         "Batch-Arbeit im Schnitt bei höchstens %lld g/kWh",
     "Batch work Ø %lld g/kWh (reference %lld)" to
@@ -1210,8 +1212,6 @@ internal val GERMAN: Map<String, String> = mapOf(
         "jeder Job rechtzeitig und weniger CO₂ als die Referenz",
     "every job by its deadline, customer data in Germany and less CO₂ than the reference" to
         "jeder Job bis zu seiner Frist, Kundendaten in Deutschland und weniger CO₂ als die Referenz",
-    "Every job into the greenest hours of the forecast before its deadline." to
-        "Jeden Job in die saubersten Stunden der Prognose vor seiner Frist.",
     "Every job is planned into the hours with the lowest forecast before its deadline, once, when you apply the rule." to
         "Jeder Job wird in die Stunden mit der niedrigsten Prognose vor seiner Frist geplant – einmal, wenn du die Regel übernimmst.",
     "Every job starts at the next %@ after it arrives." to
@@ -1346,8 +1346,12 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Fr",
     "from %@" to
         "ab %@",
+    "From %@ – %@: %@" to
+        "Ab %@ – %@: %@",
     "From 03:00 to 07:00 computes all catalog pages in all variants (language, currency, sort order) in advance, so that nothing is missing in the morning." to
         "Berechnet von 03:00 bis 07:00 alle Katalogseiten in allen Varianten (Sprache, Währung, Sortierung) vorab, damit morgens nichts fehlt.",
+    "from year %lld, quarter %lld: %lld new servers" to
+        "ab Jahr %lld, Quartal %lld: %lld neue Server",
     "Full backup" to
         "Vollbackup",
     "Full: entries are pushed out before their TTL ends." to
@@ -1504,8 +1508,6 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Rechtzeitig: %@",
     "In Warsaw a new server saves many times its embodied emissions; in Paris it saves little, because the electricity is almost free of CO₂ – there it only has to carry the growth and replace the failed servers, and later generations do that better. The question is not “new or old?” but “where does new hardware replace dirty electricity?”. The earlier the budget goes to the dirty grid, the more it saves – as long as the clean site keeps enough capacity." to
         "In Warschau spart ein neuer Server ein Vielfaches seiner Herstellungsemissionen; in Paris spart er wenig, weil der Strom fast frei von CO₂ ist – dort muss er nur das Wachstum tragen und die ausgefallenen Server ersetzen, und das können spätere Generationen besser. Die Frage ist nicht „neu oder alt?“, sondern „wo ersetzt neue Hardware schmutzigen Strom?“. Je früher das Budget in den schmutzigen Strommix geht, desto mehr spart es – solange der saubere Standort genug Kapazität behält.",
-    "In year 1, put the whole budget into new servers for Warsaw – the dirtier grid gains most from efficient servers. Buy nothing more." to
-        "Im ersten Jahr das ganze Budget in neue Server für Warschau stecken – am schmutzigeren Netz bringen effiziente Server am meisten. Danach nichts mehr kaufen.",
     "Input: the orders of the last year with the customers' names and addresses." to
         "Eingabe: die Bestellungen des letzten Jahres mit Namen und Adressen der Kundschaft.",
     "Instances always running" to
@@ -1728,16 +1730,18 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Testumgebungen in die Cloud, auf Abruf",
     "Move the users and data elsewhere, then switch it off – %lld quarters." to
         "Nutzende und Daten woandershin umziehen, dann abschalten – %lld Quartale.",
+    "Move to %@: %@." to
+        "Nach %@ verlegen: %@.",
     "Move to a region with clean power (Stockholm)" to
         "In eine Region mit sauberem Strom umziehen (Stockholm)",
     "Move to new, more efficient servers" to
         "Auf neue, effizientere Server umziehen",
-    "Move to Oslo: %@." to
-        "Nach Oslo verlegen: %@.",
     "Move to the cloud, on demand" to
         "In die Cloud, auf Abruf",
     "Move to the office suite" to
         "In die Office-Suite umziehen",
+    "Moved" to
+        "Verlegt",
     "Moving applications from a public cloud back onto own hardware or into a colocation – mostly for costs, sometimes for control over data and hardware. The opposite way, into the cloud, is called cloud migration." to
         "Anwendungen aus einer Public Cloud zurück auf eigene Hardware oder in eine Colocation holen – meist wegen der Kosten, manchmal für die Kontrolle über Daten und Hardware. Der umgekehrte Weg, in die Cloud, heißt Cloud-Migration.",
     "Moving flexible work into the hours when the grid is cleanest. Together with Location Shifting it is called Demand Shifting – part of the Green Software Foundation principle Carbon Awareness." to
@@ -2318,8 +2322,6 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Sechs Anwendungen laufen bei einem Cloud-Anbieter in Frankfurt. Die Finanzleitung will die IT-Kosten in den nächsten drei Jahren um mindestens ein Fünftel senken und fragt, ob einige davon aus der Cloud sollen – in eine Colocation in Stuttgart oder in den eigenen Serverraum, in dem noch sechs freie Server stehen, drei Jahre alt. Der Vorstand fragt: Und das CO₂? Im Nachhaltigkeitsbericht steht die Cloud bei null: Gezählt wird dort marktbasiert, mit den Grünstromzertifikaten des Anbieters. Für die Sterne zählt standortbasiert, mit der Herstellung der Server.",
     "Six changes an order; \"The courier is at the door\" must reach the closed app too" to
         "Sechs Änderungen je Bestellung; „Der Kurier steht vor der Tür“ muss auch die geschlossene App erreichen",
-    "Six hosts: one batch worker per host, the evening peaks of the web servers spread over different hosts; the other hosts stay empty and off." to
-        "Sechs Hosts: je Host ein Batch-Worker, die Abendspitzen der Webserver auf verschiedene Hosts verteilt; die übrigen Hosts bleiben leer und aus.",
     "six tracking tags" to
         "sechs Tracking-Tags",
     "Size, material, care – the answer is in the product data." to
@@ -2454,8 +2456,6 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Wirkt sofort. Abgeschaltete Server stoppen sofort, eingeschaltete starten 30 Minuten lang.",
     "Takes the reports of damage" to
         "Nimmt die Schadenmeldungen an",
-    "Taking it over sets every setting in the panel; look at them there before you start." to
-        "Übernehmen stellt alles im Panel ein; sieh es dir dort an, bevor du startest.",
     "Target utilization" to
         "Zielauslastung",
     "Target utilization: %@" to
@@ -2814,8 +2814,6 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Verlauf",
     "to %@" to
         "bis %@",
-    "To Oslo" to
-        "Nach Oslo",
     "To scenario %@" to
         "Weiter zu Szenario %@",
     "To the briefing" to
