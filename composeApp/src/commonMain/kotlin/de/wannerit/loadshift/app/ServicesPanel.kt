@@ -36,7 +36,7 @@ import de.wannerit.loadshift.core.ServiceConfig
 import de.wannerit.loadshift.core.ServiceCut
 import de.wannerit.loadshift.core.ServiceModel
 
-/** E6: how the logistics system's services are cut and talk to each other. */
+/** E7: how the logistics system's services are cut and talk to each other. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ServicesPanel(game: GameController) {

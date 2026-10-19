@@ -38,6 +38,36 @@ class ScenarioTexts(
                 term = "Availability Tactics",
                 termText = "Ways to keep a system available in spite of failures: redundancy (active, passive or as a spare), recovery and degradation, as described by Bass, Clements and Kazman. A quality scenario states which availability is needed and where; a tactic states how it is reached.",
             )
+            111 -> ScenarioTexts(
+                situation = "An online retailer has been selling for twelve years and has kept every byte of it: orders and invoices, images of old products, customer accounts, logs, monthly backups and every click in the shop. New data stays on the fast SSD storage for a year and then moves to the HDD storage; nothing is ever deleted. The data protection officer has asked about the old customer accounts, and the IT management asks what all this data costs in CO₂.",
+                idea = "Stored data costs CO₂ every year it is kept: the power of the storage with its copies and the making of the media. The three storage tiers differ several times over in what a terabyte costs and in how fast it can be read. Each kind of data has its own requirements – from the law, from privacy, from the departments; some set a minimum, one sets a maximum.",
+                screen = listOf(
+                    "At the top: CO₂ a year, the change compared with today, the data stored and how many requirements are met; below it your goals.",
+                    "The six kinds of data: where data older than 90 days lives, how long it is kept, and what is stored then. Click an option to choose it, a row to see its facts.",
+                    "CO₂ by storage tier, today and with your plan.",
+                    "The selected kind with its requirements, the three storage tiers explained, and the button that carries out the plan.",
+                ),
+                comparedWith = "compared with today's storage, location-based with the making of the storage media; the live data is the same in both.",
+                rules = "Every requirement met",
+                remark = "Most of the CO₂ was in data nobody reads: logs, backups and click events kept for good, the first year of them on SSDs. Deleting helps most – what is not stored costs nothing –, but only down to what the law, the security team and the departments need; for the customer accounts privacy even sets a maximum. Then the tier: the archive costs a fraction of the HDD storage, but reading takes hours – fine for a tax audit, not for a customer's order history. Two kinds need a closer look: after a month only 5 % of the logs matter, and the yearly report needs the monthly figures, not every click. Storage systems and cloud storage classes can move and delete data by age with lifecycle rules, so the plan does not depend on someone remembering it.",
+                term = "Data Lifecycle Management",
+                termText = "Deciding for each kind of data where it is stored at which age and when it is deleted – from its creation through frequent and rare use to the archive and deletion.",
+            )
+            110 -> ScenarioTexts(
+                situation = "A software company offers HR software as a service to 40 companies. Each customer got its own installation when it signed up: its own web front end, application services, payroll run, database, document storage, search and reports – 886 servers in all, most of them idle most of the time. Among the customers are a bank and a health insurer with strict contracts and a retail chain with 30,000 employees.",
+                idea = "Software for many customers can give each customer its own instance, share the database servers but not the databases, or share everything and tell the customers apart by a tenant ID. Shared instances need fewer servers: each instance has a minimum and some overhead, and the peaks of many customers rarely come together. The architecture team has written down three quality scenarios with the customers.",
+                screen = listOf(
+                    "At the top: CO₂ a year, the change compared with today, the servers and how many quality scenarios are met; below it your goals.",
+                    "The seven building blocks and the three groups of customers: the tenancy model of each, and the servers each building block needs. Click a model to choose it, a row to see its facts.",
+                    "The three quality scenarios and whether your plan meets them.",
+                    "The selected building block: the load of each group, the tenancy models explained, and the button that carries out the plan.",
+                ),
+                comparedWith = "compared with today's one instance per customer, location-based.",
+                rules = "Every quality scenario met",
+                remark = "Most of the servers were minimums and overhead: 40 customers, each with seven instances of one or two servers at least, plus load balancer and monitoring. Pooling the small customers saves the most, because their peaks spread out. The quality scenarios decide where not to pool – and only there: the contract asks for the bank's and the insurer's data on their own servers, not their whole stack; the large customer's month-end run hits the payroll run and the database, not the web front end. One database for everyone looks cheapest, but then a single customer can no longer be restored on its own; a database per customer on shared servers keeps that. SaaS providers often mix the models in this way: a silo where a contract or a heavy customer needs it, a pool for the many.",
+                term = "Multi-tenancy (Silo, Bridge, Pool)",
+                termText = "How one software serves several customers (tenants): each with an instance of its own (silo), with shared servers but a database of its own (bridge), or with everything shared and the customers told apart by a tenant ID (pool).",
+            )
             109 -> ScenarioTexts(
                 situation = "A delivery service's app runs on 400,000 phones. It learns about changes the way it did in its first version: it asks the server – every 10 seconds for the delivery status, every 2 seconds on the map and in the chat, every 30 or 60 seconds for the rest, and in the background every 15 minutes. Customers complain that \"The courier is at the door\" comes too late when the app is closed. The team is to fix that – and the app's CO₂ should go down too.",
                 idea = "There are several ways to learn about a change: asking at intervals (polling), asking and waiting for the answer (long polling), a connection that stays open (a stream), or a push from the phone platform. They differ in what they cost on the phone, on the server and in the network, and in how fast a change arrives. On a closed app every wake-up switches the phone's radio on for some seconds.",

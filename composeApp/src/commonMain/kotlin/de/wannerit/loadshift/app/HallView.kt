@@ -29,9 +29,9 @@ import de.wannerit.loadshift.core.ServerState
 fun HallView(
     servers: List<Server>, version: Int, interactive: Boolean, batch: Boolean, modifier: Modifier = Modifier,
     cacheSlots: Int = 0, cacheOn: Int = 0, cachePower: Int = 0,
-    /** E8: the extra rack holds GPU servers for the language models instead of cache servers. */
+    /** E10: the extra rack holds GPU servers for the language models instead of cache servers. */
     gpuRack: Boolean = false,
-    /** E9: what the blue bar stands for, instead of web requests. */
+    /** E11: what the blue bar stands for, instead of web requests. */
     workLabel: String? = null,
     /** O7: two halls side by side – a short status line only. */
     compact: Boolean = false,

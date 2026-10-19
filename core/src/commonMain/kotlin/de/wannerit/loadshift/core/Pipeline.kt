@@ -3,7 +3,7 @@ package de.wannerit.loadshift.core
 import kotlin.math.ceil
 
 /*
- * E9, "Green pipeline" (docs/CONCEPT.md 9.2): a team of 40 developers, a CI/CD pipeline and test environments, for a
+ * E11, "Green pipeline" (docs/CONCEPT.md 9.2): a team of 40 developers, a CI/CD pipeline and test environments, for a
  * week. Every commit starts a build with all tests on build agents that run day and night; six test environments run
  * with three replicas each, also at night and at the weekend. The levers follow the usual strategies for CI/CD:
  * scale-to-zero agents (their local cache is lost – a remote build cache keeps it), test impact analysis (only the
@@ -71,5 +71,5 @@ data class PipelineModel(
     }
 }
 
-/** E9: runners and environment servers on, runner minutes done, and whether the nightly tests ran. */
+/** E11: runners and environment servers on, runner minutes done, and whether the nightly tests ran. */
 data class PipelineRecord(val runnersOn: Int, val environmentsOn: Int, val busyMinutes: Int, val nightly: Boolean)

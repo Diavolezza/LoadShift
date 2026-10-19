@@ -210,7 +210,7 @@ private fun TopMetrics(game: GameController) {
     if (!game.hasRenewal) Metric(t("Grid now"), "$intensity g/kWh", Palette.intensity(intensity))
     val totals = game.totals
     Metric(t("CO₂ so far"), if (game.hasRenewal) "${Format.tonnes(totals.emissions)} t" else "${Format.kilograms(totals.emissions)} kg")
-    // E8: the shop's own servers are not the topic; the assistant's goals take their place.
+    // E10: the shop's own servers are not the topic; the assistant's goals take their place.
     simulation.scenario.contract?.let {
         Metric(t("In the report"), "${Format.kilograms(game.totals.marketOperational)} kg")
     }

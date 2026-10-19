@@ -3,7 +3,7 @@ package de.wannerit.loadshift.core
 import kotlin.math.ceil
 
 /*
- * E6, "Chatty services" (docs/CONCEPT.md 9.2): a logistics system – customers track their deliveries, dispatchers
+ * E7, "Chatty services" (docs/CONCEPT.md 9.2): a logistics system – customers track their deliveries, dispatchers
  * plan the trucks' routes. Four microservices (tracking, routes, customers, trucks) call each other synchronously with
  * REST and JSON, and the routes service asks the GPS provider and the map service (traffic) on every request. The
  * dispatchers' route optimization runs once an hour from 6 to 20 and needs 200 cores for ten minutes. The
@@ -111,5 +111,5 @@ data class ServiceModel(
     }
 }
 
-/** E6: servers on and the CPU work, and the share of the work in communication. */
+/** E7: servers on and the CPU work, and the share of the work in communication. */
 data class ServiceRecord(val servers: Int, val cpuMs: Int, val overheadMs: Int, val optimizerMs: Int = 0)

@@ -3,7 +3,7 @@ package de.wannerit.loadshift.core
 import kotlin.math.roundToLong
 
 /*
- * Engineering track, E7 "Constant asking" (docs/CONCEPT.md 9.2): a delivery app on 400,000 phones fetches five kinds
+ * Engineering track, E8 "Constant asking" (docs/CONCEPT.md 9.2): a delivery app on 400,000 phones fetches five kinds
  * of updates. Per kind one way while the app is open – polling every so many seconds, once on opening, long polling,
  * a stream (WebSocket), push – and one while it is closed: nothing, a background refresh every 15 minutes, a
  * connection kept open, push. Two switches for all: conditional requests (an unchanged answer is a short

@@ -4,7 +4,7 @@ import kotlin.math.ceil
 import kotlin.math.pow
 
 /*
- * E8, "Right-sized AI" (docs/CONCEPT.md 9.2): a shop assistant answers the customers' questions. The team's prototype
+ * E10, "Right-sized AI" (docs/CONCEPT.md 9.2): a shop assistant answers the customers' questions. The team's prototype
  * sends every question to a large language model, one at a time. The player chooses per kind of question who answers
  * it – no AI at all (a status page, a form, a canned reply), a small model, the large model, or the large model with
  * reasoning – and how long the servers may wait to answer several questions together (batching).
@@ -97,5 +97,5 @@ data class InferenceModel(
     }
 }
 
-/** E8: what the models drew in a tick – W per kind of question, the idle rest of the running GPU servers, the servers. */
+/** E10: what the models drew in a tick – W per kind of question, the idle rest of the running GPU servers, the servers. */
 data class InferenceRecord(val kindWatts: List<Int>, val idleWatts: Int, val servers: Int)

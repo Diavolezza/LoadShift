@@ -29,16 +29,16 @@ enum class Control {
     /** E4: what to cache, for how long, in how much memory. */
     CACHING,
 
-    /** E8: who answers each kind of question (no AI, a small or large model), and batching. */
+    /** E10: who answers each kind of question (no AI, a small or large model), and batching. */
     INFERENCE,
 
     /** E5: images, video, lists and tracking of the shop's pages. */
     PAGES,
 
-    /** E9: build agents, caches, tests, triggers and test environments. */
+    /** E11: build agents, caches, tests, triggers and test environments. */
     PIPELINE,
 
-    /** E6: cut, protocol, master data, caches for external calls, serverless. */
+    /** E7: cut, protocol, master data, caches for external calls, serverless. */
     SERVICES,
 
     /** B12: the electricity contract. */
@@ -139,13 +139,13 @@ data class Scenario(
     val rulesBroken: Int = 0,
     /** O11: at most this many servers work for batch jobs at a time – the rest belong to the shop (null: all). */
     val batchLimit: Int? = null,
-    /** E8: a shop assistant with language models. */
+    /** E10: a shop assistant with language models. */
     val inference: InferenceModel? = null,
     /** E5: the network and the visitors' devices count too. */
     val web: WebModel? = null,
-    /** E9: a team's CI/CD pipeline and test environments. */
+    /** E11: a team's CI/CD pipeline and test environments. */
     val pipeline: PipelineModel? = null,
-    /** E6: the logistics system's services. */
+    /** E7: the logistics system's services. */
     val services: ServiceModel? = null,
     /** B12: electricity contracts and three ways to count CO₂ (operational counts hourly matched). */
     val contract: ContractModel? = null,
@@ -159,8 +159,12 @@ data class Scenario(
     val repatriation: RepatriationModel? = null,
     /** E1: building blocks, availability tactics and quality scenarios. */
     val availability: AvailabilityModel? = null,
-    /** E7: how an app learns about changes – polling, streams, push. */
+    /** E8: how an app learns about changes – polling, streams, push. */
     val updates: UpdatesModel? = null,
+    /** The multi-tenancy screen (E9). */
+    val tenancy: TenancyModel? = null,
+    /** The data lifecycle screen (E6). */
+    val lifecycle: DataLifecycleModel? = null,
 ) {
     /** Expected interactive work at a tick: the web load or the VMs' profiles (what an operator can plan with). */
     fun expectedDemand(tick: Int): Int = interactive.expected(tick) + vms.sumOf { it.expectedMilli(tick) } / 1_000
@@ -594,13 +598,13 @@ data class Scenario(
         )
 
         /**
-         * E8, "Right-sized AI": the shop assistant. The team's prototype sends every question to the large model, one at
+         * E10, "Right-sized AI": the shop assistant. The team's prototype sends every question to the large model, one at
          * a time. Many questions need no AI at all (the order status is a lookup), some are answered as well by a small
          * model; the large model is worth it where it adds quality. Batching shares the GPU's work among questions but
          * makes them wait; reasoning helps complaints a little and makes them wait long.
          */
         val RIGHT_SIZED_AI = Scenario(
-            number = 104, label = "E8", track = Track.ENGINEERING, unlockAfter = null,
+            number = 104, label = "E10", track = Track.ENGINEERING, unlockAfter = null,
             title = "Right-sized AI", setting = GridSetting(GridRegion.GERMANY, Season.AUTUMN), days = 2,
             seed = 14, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 10)),
             interactive = InteractiveLoad(peak = 120),
@@ -638,12 +642,12 @@ data class Scenario(
         )
 
         /**
-         * E9, "Green pipeline": a week of a team of 40 developers. Every commit builds and runs all tests on 16 agents
+         * E11, "Green pipeline": a week of a team of 40 developers. Every commit builds and runs all tests on 16 agents
          * that run day and night; six test environments with three replicas each never sleep. The team must get its
          * feedback within 20 minutes, and the UI tests must have run before Friday's release.
          */
         val GREEN_PIPELINE = Scenario(
-            number = 106, label = "E9", track = Track.ENGINEERING, unlockAfter = null,
+            number = 106, label = "E11", track = Track.ENGINEERING, unlockAfter = null,
             title = "Green pipeline", setting = GridSetting(GridRegion.GERMANY, Season.AUTUMN), days = 7,
             seed = 16, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 34)),
             interactive = InteractiveLoad(peak = 0),
@@ -655,12 +659,12 @@ data class Scenario(
         )
 
         /**
-         * E6, "Chatty services": the logistics system. Four microservices talk REST with JSON, the routes service asks the
+         * E7, "Chatty services": the logistics system. Four microservices talk REST with JSON, the routes service asks the
          * truck and customer services and two external providers on every tracking request. The tracking is too slow;
          * the provider's positions may be one minute old, the traffic information five.
          */
         val CHATTY_SERVICES = Scenario(
-            number = 107, label = "E6", track = Track.ENGINEERING, unlockAfter = null,
+            number = 107, label = "E7", track = Track.ENGINEERING, unlockAfter = null,
             title = "Chatty services", setting = GridSetting(GridRegion.GERMANY, Season.AUTUMN), days = 2,
             seed = 17, fleet = listOf(FleetEntry(ServerKind.CPU_CURRENT, 30)),
             interactive = InteractiveLoad(peak = 0),
@@ -895,9 +899,9 @@ data class Scenario(
             ),
         )
 
-        /** E7, "Constant asking": a delivery app on 400,000 phones, five kinds of updates, a year. */
+        /** E8, "Constant asking": a delivery app on 400,000 phones, five kinds of updates, a year. */
         val CONSTANT_ASKING = Scenario(
-            number = 109, label = "E7", track = Track.ENGINEERING, unlockAfter = null,
+            number = 109, label = "E8", track = Track.ENGINEERING, unlockAfter = null,
             title = "Constant asking", setting = GridSetting(GridRegion.GERMANY, Season.YEAR), days = 1,
             seed = 19, fleet = emptyList(), interactive = InteractiveLoad(peak = 0), controls = emptySet(),
             goals = StarGoals(300, SpecialGoal.Reduction(450)),
@@ -940,10 +944,106 @@ data class Scenario(
             ),
         )
 
+        /** E9, "One per customer?": an HR software as a service for 40 customers, seven building blocks, a year. */
+        val ONE_PER_CUSTOMER = Scenario(
+            number = 110, label = "E9", track = Track.ENGINEERING, unlockAfter = null,
+            title = "One per customer?", setting = GridSetting(GridRegion.GERMANY, Season.YEAR), days = 1,
+            seed = 20, fleet = emptyList(), interactive = InteractiveLoad(peak = 0), controls = emptySet(),
+            goals = StarGoals(600, SpecialGoal.Reduction(760)),
+            tenancy = run {
+                fun peaks(small: Double, regulated: Double, large: Double) = mapOf("Other customers" to small, "Regulated customers" to regulated, "Large customer" to large)
+                val compute = listOf(Tenancy.OWN, Tenancy.SHARED)
+                val data = listOf(Tenancy.OWN, Tenancy.BRIDGE, Tenancy.SHARED)
+                val all = { c: Tenancy -> mapOf("Other customers" to c, "Regulated customers" to c, "Large customer" to c) }
+                TenancyModel(
+                    groups = listOf(
+                        TenantGroup("Other customers", "37 companies with 50 to 2,000 employees", 37),
+                        TenantGroup("Regulated customers", "A bank and a health insurer, 3,000 employees each", 2),
+                        TenantGroup("Large customer", "A retail chain with 30,000 employees", 1),
+                    ),
+                    components = listOf(
+                        TenancyComponent("Web front end", "The pages the employees and HR staff work with", peaks(0.3, 1.5, 4.0), 0.25, 2, compute),
+                        TenancyComponent("Application services", "Personnel files, leave, time sheets", peaks(0.5, 2.5, 6.0), 0.25, 2, compute),
+                        TenancyComponent("Payroll run", "Computes the pay of every employee at the end of the month", peaks(0.4, 2.0, 8.0), 0.04, 1, compute, monthEnd = true),
+                        TenancyComponent("Database", "The personnel data", peaks(0.4, 2.0, 5.0), 0.3, 2, data, contract = true, monthEnd = true, restore = true),
+                        TenancyComponent("Documents", "Contracts, certificates and payslips as files", peaks(0.2, 1.2, 3.0), 0.5, 3, compute, contract = true),
+                        TenancyComponent("Search", "Finds employees and documents", peaks(0.2, 1.0, 2.0), 0.25, 2, compute),
+                        TenancyComponent("Reports", "Head count, absences, costs – mostly at the start of the month", peaks(0.2, 1.0, 3.0), 0.1, 2, compute),
+                    ),
+                    regulated = "Regulated customers", large = "Large customer",
+                    example = TenancyPlan(mapOf(
+                        "Web front end" to all(Tenancy.SHARED),
+                        "Application services" to all(Tenancy.SHARED),
+                        "Payroll run" to all(Tenancy.SHARED) + ("Large customer" to Tenancy.OWN),
+                        "Database" to mapOf("Other customers" to Tenancy.BRIDGE, "Regulated customers" to Tenancy.OWN, "Large customer" to Tenancy.OWN),
+                        "Documents" to all(Tenancy.SHARED) + ("Regulated customers" to Tenancy.OWN),
+                        "Search" to all(Tenancy.SHARED),
+                        "Reports" to all(Tenancy.SHARED),
+                    )),
+                )
+            },
+        )
+
+        /** E6, "Keep everything?": an online retailer's data, six kinds, twelve years of history, a year. */
+        val KEEP_EVERYTHING = Scenario(
+            number = 111, label = "E6", track = Track.ENGINEERING, unlockAfter = null,
+            title = "Keep everything?", setting = GridSetting(GridRegion.GERMANY, Season.YEAR), days = 1,
+            seed = 21, fleet = emptyList(), interactive = InteractiveLoad(peak = 0), controls = emptySet(),
+            goals = StarGoals(600, SpecialGoal.Reduction(900)),
+            lifecycle = run {
+                val forever = KeepPlan("forever", "for good", listOf(null to 1.0))
+                fun years(n: Int) = KeepPlan("$n", if (n == 1) "1 year" else "$n years", listOf(n.toDouble() to 1.0))
+                DataLifecycleModel(
+                    tierOptions = listOf(
+                        TierPlan("today", "1 year hot, then warm", listOf(StorageTier.HOT to 1.0, StorageTier.WARM to null)),
+                        TierPlan("warm", "warm", listOf(StorageTier.WARM to null)),
+                        TierPlan("warm-cold", "2 years warm, then cold", listOf(StorageTier.WARM to 2.0, StorageTier.COLD to null)),
+                        TierPlan("cold", "cold", listOf(StorageTier.COLD to null)),
+                    ),
+                    kinds = listOf(
+                        DataKind("Orders and invoices", "Every order with its invoice", 10.0,
+                            listOf(years(2), years(8), years(10), forever),
+                            listOf(DataRequirement("Invoices kept for 8 years (law)", 8.0),
+                                DataRequirement("Customers see their orders of the last 2 years in their account at once", 2.0, fast = true))),
+                        DataKind("Images of old products", "Photos and all their sizes, of products no longer sold", 30.0,
+                            listOf(KeepPlan("0", "delete at once", listOf(0.0 to 1.0)), years(1), years(5), forever),
+                            listOf(DataRequirement("A product that comes back has its images within a day – it happens within a year, if at all", 1.0))),
+                        DataKind("Inactive customer accounts", "Accounts without a login", 2.5,
+                            listOf(years(3), years(8), forever),
+                            listOf(DataRequirement("A customer who comes back can log in at once", 3.0, fast = true)),
+                            maxYears = 3.0, maxText = "Privacy: accounts without a login for 3 years are deleted"),
+                        DataKind("Logs", "Everything the applications write; 5 % of it is relevant for security", 100.0,
+                            listOf(KeepPlan("30d", "30 days", listOf(1.0 / 12 to 1.0)), years(1),
+                                KeepPlan("security", "security entries 1 year, the rest 30 days", listOf(1.0 to 0.05, 1.0 / 12 to 0.95)), forever),
+                            listOf(DataRequirement("The security team searches the security entries of the last 12 months within an hour", 1.0, 0.05, fast = true))),
+                        DataKind("Monthly backups", "A full backup of the databases at the end of each month (the daily ones are kept for 30 days)", 120.0,
+                            listOf(KeepPlan("none", "none", listOf(0.0 to 1.0)), years(1), years(8), forever),
+                            listOf(DataRequirement("Each month-end state of the last 12 months can be restored within two days", 1.0))),
+                        DataKind("Click events", "Every click in the shop, raw", 150.0,
+                            listOf(years(1), years(2), KeepPlan("aggregates", "2 years, then only the monthly figures (1 %)", listOf(2.0 to 1.0, null to 0.01)), forever),
+                            listOf(DataRequirement("Data science works with the raw events of the last 2 years; a day to load them is fine", 2.0),
+                                DataRequirement("The yearly report compares the monthly figures of all years", null, 0.01))),
+                    ),
+                    reference = DataPlan(
+                        tiers = mapOf("Orders and invoices" to "today", "Images of old products" to "today", "Inactive customer accounts" to "today",
+                            "Logs" to "today", "Monthly backups" to "today", "Click events" to "today"),
+                        keep = mapOf("Orders and invoices" to "forever", "Images of old products" to "forever", "Inactive customer accounts" to "forever",
+                            "Logs" to "forever", "Monthly backups" to "forever", "Click events" to "forever"),
+                    ),
+                    example = DataPlan(
+                        tiers = mapOf("Orders and invoices" to "warm-cold", "Images of old products" to "cold", "Inactive customer accounts" to "warm",
+                            "Logs" to "warm", "Monthly backups" to "cold", "Click events" to "cold"),
+                        keep = mapOf("Orders and invoices" to "8", "Images of old products" to "1", "Inactive customer accounts" to "3",
+                            "Logs" to "security", "Monthly backups" to "1", "Click events" to "aggregates"),
+                    ),
+                )
+            },
+        )
+
         /** A week of load, four values a day (the weekend may differ; one campaign day may reach the peak). */
         private fun week(day: List<Int>, weekend: List<Int> = day, campaign: Int? = null): List<Int> =
             (0 until 7).flatMap { d -> if (d == campaign) listOf(30, 100, 95, 35) else if (d >= 5) weekend else day }
 
-        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, OLD_IRON, TRAINING_RUN, ECO_MODE, TWO_SITES, GREEN_ON_PAPER, DARK_DOLDRUMS, HOW_MANY_NINES, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS, DATA_DIET, CHATTY_SERVICES, CONSTANT_ASKING, RIGHT_SIZED_AI, GREEN_PIPELINE, INVENTORY, WHERE_TO_START, TIDY_UP, LEAVE_THE_CLOUD)
+        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, OLD_IRON, TRAINING_RUN, ECO_MODE, TWO_SITES, GREEN_ON_PAPER, DARK_DOLDRUMS, HOW_MANY_NINES, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS, DATA_DIET, KEEP_EVERYTHING, CHATTY_SERVICES, CONSTANT_ASKING, ONE_PER_CUSTOMER, RIGHT_SIZED_AI, GREEN_PIPELINE, INVENTORY, WHERE_TO_START, TIDY_UP, LEAVE_THE_CLOUD)
     }
 }

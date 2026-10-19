@@ -56,7 +56,7 @@ data class Totals(
     /** O10: rules broken by the choice of sites; energy of data transfers (mWh, in [facilityEnergy]). */
     var rulesBroken: Int = 0,
     var transferEnergy: Long = 0,
-    /** E8: answers of the shop assistant, their quality summed (per mille each), and the answers in time. */
+    /** E10: answers of the shop assistant, their quality summed (per mille each), and the answers in time. */
     var answers: Long = 0,
     var answerQualitySum: Long = 0,
     var answersInTime: Long = 0,
@@ -68,10 +68,10 @@ data class Totals(
     var deviceEnergy: Long = 0,
     var networkOperational: Long = 0,
     var deviceOperational: Long = 0,
-    /** E9: commits, their feedback time summed (tenths of a minute each). */
+    /** E11: commits, their feedback time summed (tenths of a minute each). */
     var commits: Long = 0,
     var feedbackSum: Long = 0,
-    /** E6: tracking requests and their response time summed (ms each). */
+    /** E7: tracking requests and their response time summed (ms each). */
     var trackingRequests: Long = 0,
     var latencySum: Long = 0,
     /** B12: location-based and market-based emissions (µg; [operational] counts hourly matched), electricity cost (tenths of a cent). */
@@ -79,10 +79,10 @@ data class Totals(
     var marketOperational: Long = 0,
     var energyCost: Long = 0,
 ) {
-    /** E6: mean response time of the tracking, ms. */
+    /** E7: mean response time of the tracking, ms. */
     val meanLatency: Int get() = if (trackingRequests == 0L) 0 else (latencySum / trackingRequests).toInt()
 
-    /** E9: mean time from a commit to its first result, tenths of a minute. */
+    /** E11: mean time from a commit to its first result, tenths of a minute. */
     val meanFeedback: Int get() = if (commits == 0L) 0 else (feedbackSum / commits).toInt()
 
     /** E5: mean LCP of the visits, tenths of a second. */
@@ -91,10 +91,10 @@ data class Totals(
     /** E5: mean weight of a visit, KB. */
     val meanPageKb: Int get() = if (visits == 0L) 0 else (kilobytes / visits).toInt()
 
-    /** E8: mean quality of the answers, per mille. */
+    /** E10: mean quality of the answers, per mille. */
     val meanAnswerQuality: Int get() = if (answers == 0L) 1_000 else (answerQualitySum / answers).toInt()
 
-    /** E8: share of the answers in time, per mille. */
+    /** E10: share of the answers in time, per mille. */
     val answersOnTime: Int get() = if (answers == 0L) 1_000 else (answersInTime * 1_000 / answers).toInt()
 
     /** O9: the viewers' mean rating, per mille. */
@@ -163,13 +163,13 @@ data class TickRecord(
     val eco: Boolean = false,
     /** O8, O11: the GPUs trained (or loaded the checkpoint) in this tick. */
     val training: Boolean = false,
-    /** E8: what the models drew. */
+    /** E10: what the models drew. */
     val inference: InferenceRecord? = null,
     /** E5: the network and the visitors' devices. */
     val web: WebRecord? = null,
-    /** E9: the pipeline's servers. */
+    /** E11: the pipeline's servers. */
     val pipeline: PipelineRecord? = null,
-    /** E6: the logistics system's servers. */
+    /** E7: the logistics system's servers. */
     val services: ServiceRecord? = null,
     /** B12: demand and the clean energy there for it. */
     val contract: ContractRecord? = null,
@@ -421,7 +421,7 @@ class Simulation private constructor(
             poweredOn += cacheServers
             totals.stale += (requests * 1_000.0 * caching.staleShare(policy.cache, scenario.interactive.expected(tick), tick)).roundToLong()
         }
-        // E8: the shop assistant's models on their own GPU servers (switched by the load, like the cache servers).
+        // E10: the shop assistant's models on their own GPU servers (switched by the load, like the cache servers).
         var inferenceRecord: InferenceRecord? = null
         scenario.inference?.let { model ->
             val peak = scenario.interactive.peak
@@ -664,7 +664,7 @@ class Simulation private constructor(
     }
     private var consumedSoFar = 0L
 
-    // E6: the logistics system
+    // E7: the logistics system
 
     private var servicesRecord: ServiceRecord? = null
 
@@ -693,7 +693,7 @@ class Simulation private constructor(
         return util
     }
 
-    // E9: the pipeline
+    // E11: the pipeline
 
     private var pendingCommits = 0
     private var runnerBacklog = 0.0

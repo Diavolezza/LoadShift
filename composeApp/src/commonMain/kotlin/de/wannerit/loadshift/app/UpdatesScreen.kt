@@ -42,7 +42,7 @@ import de.wannerit.loadshift.core.UpdateKind
 import de.wannerit.loadshift.core.UpdatePlan
 import de.wannerit.loadshift.core.UpdatesResult
 
-/** State of E7: how each kind of update reaches the app, open and closed, and the two switches; a replay keeps the plan. */
+/** State of E8: how each kind of update reaches the app, open and closed, and the two switches; a replay keeps the plan. */
 class UpdatesController(val scenario: Scenario, fresh: Boolean = false) {
     val model = scenario.updates!!
     var plan by mutableStateOf((if (fresh) null else lastPlans[scenario.number]) ?: model.reference)

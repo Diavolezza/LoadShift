@@ -40,10 +40,12 @@ The app speaks English and German (switch on the start page); everything in this
 | E3 | Growing data | Algorithmic complexity |
 | E4 | Hit or miss | Caching |
 | E5 | Data diet | Sustainable Web Design |
-| E6 | Chatty services | Green Software Architecture |
-| E7 | Constant asking | Polling, Push, Streaming |
-| E8 | Right-sized AI | Green AI (Right-sizing Models) |
-| E9 | Green pipeline | Green CI/CD |
+| E6 | Keep everything? | Data Lifecycle Management |
+| E7 | Chatty services | Green Software Architecture |
+| E8 | Constant asking | Polling, Push, Streaming |
+| E9 | One per customer? | Multi-tenancy (Silo, Bridge, Pool) |
+| E10 | Right-sized AI | Green AI (Right-sizing Models) |
+| E11 | Green pipeline | Green CI/CD |
 
 | | Portfolio | Term |
 |---|---|---|

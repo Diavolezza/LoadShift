@@ -33,6 +33,8 @@ private val GENERAL = listOf(
     "Long Polling" to "A client asks, and the server holds the request open until there is something new or a time limit is reached; then the client asks again. Fewer requests than polling, but each waits on the server.",
     "Push notification" to "A message the server hands to the phone platform's push service (for example APNs or Firebase Cloud Messaging); the service delivers it to the device, even when the app is closed. Usually within seconds, but without a guarantee, and throttled when there are many.",
     "WebSocket" to "A connection between client and server that stays open, so that both can send at any time (RFC 6455). Good for frequent changes while an app is open; kept open in the background, it needs signs of life that wake the device.",
+    "Erasure coding" to "A way to store data safely without full copies: the data is cut into pieces and extra pieces are computed from them, so that it survives the loss of some disks – often with half again as much space instead of two or three times.",
+    "Tenant" to "A customer of a software as a service, with its own users and data. A tenant ID tells the customers apart in shared instances and databases.",
     "Colocation" to "A data center in which many companies rent space, power and cooling; each brings its own servers and runs them itself.",
     "CO₂e (CO₂ equivalent)" to "Greenhouse gases counted together: each gas weighted by how much it warms the climate compared with CO₂.",
     "Idle power" to "What a server draws while it does nothing – often a quarter to a half of its maximum. It is why switching off unused servers saves so much.",

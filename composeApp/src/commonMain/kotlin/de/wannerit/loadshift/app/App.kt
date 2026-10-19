@@ -57,6 +57,8 @@ private sealed interface Screen {
     data class Repatriation(val controller: RepatriationController) : Screen
     data class Availability(val controller: AvailabilityController) : Screen
     data class Updates(val controller: UpdatesController) : Screen
+    data class Tenancy(val controller: TenancyController) : Screen
+    data class Lifecycle(val controller: LifecycleController) : Screen
 }
 
 @Composable
@@ -75,10 +77,14 @@ fun App(options: LaunchOptions = LaunchOptions()) {
                 else if (s.scenario.tidy != null) Screen.Tidy(TidyController(s.scenario))
                 else if (s.scenario.repatriation != null) Screen.Repatriation(RepatriationController(s.scenario))
                 else if (s.scenario.availability != null) Screen.Availability(AvailabilityController(s.scenario))
-                else if (s.scenario.updates != null) Screen.Updates(UpdatesController(s.scenario)) else Screen.Game(GameController(s.scenario))
+                else if (s.scenario.updates != null) Screen.Updates(UpdatesController(s.scenario))
+                else if (s.scenario.tenancy != null) Screen.Tenancy(TenancyController(s.scenario))
+                else if (s.scenario.lifecycle != null) Screen.Lifecycle(LifecycleController(s.scenario)) else Screen.Game(GameController(s.scenario))
         }, onBack = { screen = Screen.List })
         is Screen.Availability -> FitLowScreen { AvailabilityScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }) }
         is Screen.Updates -> FitLowScreen { UpdatesScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }) }
+        is Screen.Tenancy -> FitLowScreen { TenancyScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }) }
+        is Screen.Lifecycle -> FitLowScreen { LifecycleScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }) }
         is Screen.Repatriation -> FitLowScreen { RepatriationScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }) }
         is Screen.Tidy -> FitLowScreen { TidyScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }) }
         is Screen.Abatement -> FitLowScreen { AbatementScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }) }
@@ -115,6 +121,22 @@ private fun initialScreen(options: LaunchOptions): Screen {
             if (options.ticks > 0) g.finish()
         }
         return Screen.Updates(g)
+    }
+    if (scenario.tenancy != null) {
+        val g = TenancyController(scenario)
+        if (options.careful) {
+            for (c in g.model.components) for (gr in g.model.groups) g.set(c, gr, g.model.choice(g.model.example, c, gr))
+            if (options.ticks > 0) g.finish()
+        }
+        return Screen.Tenancy(g)
+    }
+    if (scenario.lifecycle != null) {
+        val g = LifecycleController(scenario)
+        if (options.careful) {
+            g.loadSolution()
+            if (options.ticks > 0) g.finish()
+        }
+        return Screen.Lifecycle(g)
     }
     if (scenario.repatriation != null) {
         val g = RepatriationController(scenario)

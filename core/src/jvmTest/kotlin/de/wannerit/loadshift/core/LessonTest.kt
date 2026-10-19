@@ -741,7 +741,7 @@ class LessonTest {
         assertTrue(byName.getValue("auto 80, green+replan, 4/60/green").totals.trainingFinishedAt != null)
     }
 
-    @Test fun e8RightSizedAi() {
+    @Test fun e10RightSizedAi() {
         val scenario = Scenario.RIGHT_SIZED_AI
         val reference = Simulation.reference(scenario)
         fun config(code: String, window: Int) = InferenceConfig(code.split(" ").map { c ->
@@ -824,7 +824,7 @@ class LessonTest {
         assertEquals(0, stars("A r a C S s"))
     }
 
-    @Test fun e9GreenPipeline() {
+    @Test fun e11GreenPipeline() {
         val scenario = Scenario.GREEN_PIPELINE
         val reference = Simulation.reference(scenario)
         // Code: runners (A always on, D on demand), remote cache (c/-), test impact (t/-), heavy (E every commit,
@@ -870,7 +870,7 @@ class LessonTest {
         assertEquals(0, stars("D c t X 1 O 1"))
     }
 
-    @Test fun e6ChattyServices() {
+    @Test fun e7ChattyServices() {
         val scenario = Scenario.CHATTY_SERVICES
         val reference = Simulation.reference(scenario)
         // Code: cut (M, L modulith), protocol (J, G), master data (S, E), GPS TTL s, map TTL s, serverless (f/-).
@@ -1146,7 +1146,7 @@ class LessonTest {
         assertEquals(3, stars("example"))
     }
 
-    @Test fun e7ConstantAsking() {
+    @Test fun e8ConstantAsking() {
         val scenario = Scenario.CONSTANT_ASKING
         val model = scenario.updates!!
         val ref = model.reference
@@ -1164,7 +1164,7 @@ class LessonTest {
             "example" to model.example,
         )
         val r0 = model.result(ref)
-        val lines = mutableListOf("E7 Constant asking: reference ${r0.referenceKg / 1_000} t a year (phones ${r0.phonesKg / 1_000} t, servers ${r0.serversKg / 1_000} t, network ${r0.networkKg / 1_000} t, rest ${r0.otherKg / 1_000} t)")
+        val lines = mutableListOf("E8 Constant asking: reference ${r0.referenceKg / 1_000} t a year (phones ${r0.phonesKg / 1_000} t, servers ${r0.serversKg / 1_000} t, network ${r0.networkKg / 1_000} t, rest ${r0.otherKg / 1_000} t)")
         val results = plans.associate { (name, plan) ->
             val r = model.result(plan)
             lines += "  " + name.padEnd(44) + "%6d t".format(r.planKg / 1_000) + "%7.1f %%".format(-r.reductionPermille / 10.0) +
@@ -1180,6 +1180,96 @@ class LessonTest {
         assertEquals(1, stars("WebSocket everywhere"))
         assertEquals(0, stars("push everywhere"))
         assertEquals(2, stars("offers on opening, badge refresh bundled"))
+        assertEquals(3, stars("example"))
+    }
+
+    @Test fun e6KeepEverything() {
+        val scenario = Scenario.KEEP_EVERYTHING
+        val model = scenario.lifecycle!!
+        val ref = model.reference
+        val ex = model.example
+        fun with(kind: String, tier: String? = null, keep: String? = null) = ex.copy(
+            tiers = if (tier != null) ex.tiers + (kind to tier) else ex.tiers, keep = if (keep != null) ex.keep + (kind to keep) else ex.keep)
+        val plans = listOf(
+            "today (reference)" to ref,
+            "today, accounts deleted after 3 years" to ref.copy(keep = ref.keep + ("Inactive customer accounts" to "3")),
+            "everything warm, kept as today" to ref.copy(tiers = model.kinds.associate { it.name to "warm" }, keep = ref.keep + ("Inactive customer accounts" to "3")),
+            "everything cold, kept as today" to ref.copy(tiers = model.kinds.associate { it.name to "cold" }, keep = ref.keep + ("Inactive customer accounts" to "3")),
+            "only the legal minimum, everything warm" to DataPlan(model.kinds.associate { it.name to "warm" },
+                mapOf("Orders and invoices" to "8", "Images of old products" to "1", "Inactive customer accounts" to "3", "Logs" to "1", "Monthly backups" to "1", "Click events" to "aggregates")),
+            "example, orders warm" to with("Orders and invoices", tier = "warm"),
+            "example, orders cold" to with("Orders and invoices", tier = "cold"),
+            "example, all logs a year" to with("Logs", keep = "1"),
+            "example, logs cold" to with("Logs", tier = "cold"),
+            "example, images for good" to with("Images of old products", keep = "forever"),
+            "example, backups for good" to with("Monthly backups", keep = "forever"),
+            "example, events for good" to with("Click events", keep = "forever"),
+            "example, events 2 years" to with("Click events", keep = "2"),
+            "example" to ex,
+        )
+        val r0 = model.result(ref)
+        val lines = mutableListOf("E6 Keep everything: reference ${r0.referenceKg / 1_000} t a year, ${r0.tb.values.sum().toInt()} TB")
+        val results = plans.associate { (name, plan) ->
+            val r = model.result(plan)
+            lines += "  " + name.padEnd(44) + "%6.1f t".format(r.planKg / 1_000.0) + "%7.1f %%".format(-r.reductionPermille / 10.0) +
+                "  hot %5.0f  warm %5.0f  cold %5.0f TB".format(r.tb[StorageTier.HOT], r.tb[StorageTier.WARM], r.tb[StorageTier.COLD]) + "  " +
+                "★".repeat(model.stars(r, scenario.goals)) + (if (r.missed.isNotEmpty()) "  missed ${r.missed.map { it.kind }}" else "")
+            name to r
+        }
+        report(111, lines)
+        fun stars(name: String) = model.stars(results.getValue(name), scenario.goals)
+        assertEquals(0, stars("today (reference)"))
+        assertEquals(1, stars("today, accounts deleted after 3 years"))
+        assertEquals(1, stars("everything warm, kept as today"))
+        assertEquals(0, stars("everything cold, kept as today"))
+        assertEquals(2, stars("only the legal minimum, everything warm"))
+        assertEquals(0, stars("example, orders cold"))
+        assertEquals(0, stars("example, logs cold"))
+        assertEquals(0, stars("example, events 2 years"))
+        assertEquals(2, stars("example, events for good"))
+        assertEquals(2, stars("example, backups for good"))
+        assertEquals(3, stars("example"))
+    }
+
+    @Test fun e9OnePerCustomer() {
+        val scenario = Scenario.ONE_PER_CUSTOMER
+        val model = scenario.tenancy!!
+        val ex = model.example
+        fun all(t: Tenancy) = model.groups.associate { it.name to t }
+        fun with(component: String, group: String, t: Tenancy) =
+            TenancyPlan(ex.choices + (component to (ex.choices.getValue(component) + (group to t))))
+        val regOwn = TenancyPlan(ex.choices.mapValues { (_, m) -> m + ("Regulated customers" to Tenancy.OWN) })
+        val bigOwn = TenancyPlan(ex.choices.mapValues { (_, m) -> m + ("Large customer" to Tenancy.OWN) })
+        val plans = listOf(
+            "today (reference)" to model.reference,
+            "everything shared" to TenancyPlan(model.components.associate { it.name to all(Tenancy.SHARED) }),
+            "shared, databases bridge" to TenancyPlan(model.components.associate { it.name to all(if (it.name == "Database") Tenancy.BRIDGE else Tenancy.SHARED) }),
+            "only the other customers share" to TenancyPlan(model.components.associate { it.name to all(Tenancy.OWN) + ("Other customers" to if (it.name == "Database") Tenancy.BRIDGE else Tenancy.SHARED) }),
+            "example, regulated customers all own" to regOwn,
+            "example, large customer all own" to bigOwn,
+            "example, other customers own databases" to with("Database", "Other customers", Tenancy.OWN),
+            "example, other customers one database" to with("Database", "Other customers", Tenancy.SHARED),
+            "example, large customer in the payroll pool" to with("Payroll run", "Large customer", Tenancy.SHARED),
+            "example" to ex,
+        )
+        val r0 = model.result(model.reference)
+        val lines = mutableListOf("E9 One per customer?: reference ${r0.referenceKg / 1_000} t a year, ${r0.referenceServers} servers")
+        val results = plans.associate { (name, plan) ->
+            val r = model.result(plan)
+            lines += "  " + name.padEnd(44) + "%6.1f t".format(r.planKg / 1_000.0) + "%7.1f %%".format(-r.reductionPermille / 10.0) +
+                "  %4d servers".format(r.servers) + "  " + "★".repeat(model.stars(r, scenario.goals)) +
+                (if (r.missed.isNotEmpty()) "  missed ${r.missed.map { it.rule.name + " " + it.component }}" else "")
+            name to r
+        }
+        report(110, lines)
+        fun stars(name: String) = model.stars(results.getValue(name), scenario.goals)
+        assertEquals(1, stars("today (reference)"))
+        assertEquals(0, stars("everything shared"))
+        assertEquals(2, stars("only the other customers share"))
+        assertEquals(2, stars("example, regulated customers all own"))
+        assertEquals(2, stars("example, large customer all own"))
+        assertEquals(0, stars("example, other customers one database"))
+        assertEquals(0, stars("example, large customer in the payroll pool"))
         assertEquals(3, stars("example"))
     }
 

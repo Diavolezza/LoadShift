@@ -292,6 +292,8 @@ private fun ContinueCard(scenario: Scenario, narrow: Boolean, onClick: () -> Uni
 /** "Germany · autumn · 2 days", or what a portfolio scenario is about. */
 private fun cardFacts(scenario: Scenario): String = scenario.availability?.let { t("%lld building blocks · a year", it.blocks.size) }
     ?: scenario.updates?.let { t("%lld kinds of update · a year", it.kinds.size) }
+    ?: scenario.tenancy?.let { t("%lld building blocks · a year", it.components.size) }
+    ?: scenario.lifecycle?.let { t("%lld kinds of data · a year", it.kinds.size) }
     ?: scenario.repatriation?.let { t("%lld applications · three years", it.apps.size) }
     ?: scenario.tidy?.let { t("%lld applications · three years", it.apps.size) }
     ?: scenario.abatement?.let { t("%lld measures · three years", it.measures.size) }
@@ -440,12 +442,16 @@ private fun ScreenPreview(scenario: Scenario, modifier: Modifier) {
     val repatriation = remember(scenario) { scenario.repatriation?.let { RepatriationController(scenario, fresh = true) } }
     val availability = remember(scenario) { scenario.availability?.let { AvailabilityController(scenario, fresh = true) } }
     val updates = remember(scenario) { scenario.updates?.let { UpdatesController(scenario, fresh = true) } }
-    val game = remember(scenario) { if (portfolio == null && abatement == null && tidy == null && repatriation == null && availability == null && updates == null) GameController(scenario, fresh = true) else null }
+    val tenancy = remember(scenario) { scenario.tenancy?.let { TenancyController(scenario, fresh = true) } }
+    val lifecycle = remember(scenario) { scenario.lifecycle?.let { LifecycleController(scenario, fresh = true) } }
+    val game = remember(scenario) { if (portfolio == null && abatement == null && tidy == null && repatriation == null && availability == null && updates == null && tenancy == null && lifecycle == null) GameController(scenario, fresh = true) else null }
     val width = 1366.dp
     val height = 960.dp
     // Marker positions on the full-size screen (GameScreen at 1366 × 960: panel 380 wide, timeline 288 high).
     val markers = if (availability != null) listOf(470.dp to 36.dp, 40.dp to 150.dp, 40.dp to 470.dp, (width - 36.dp) to 136.dp)
         else if (updates != null) listOf(470.dp to 36.dp, 40.dp to 150.dp, 40.dp to 560.dp, (width - 36.dp) to 136.dp)
+        else if (tenancy != null) listOf(470.dp to 36.dp, 40.dp to 150.dp, 40.dp to 700.dp, (width - 36.dp) to 136.dp)
+        else if (lifecycle != null) listOf(470.dp to 36.dp, 40.dp to 150.dp, 40.dp to 640.dp, (width - 36.dp) to 136.dp)
         else if (repatriation != null) listOf(470.dp to 36.dp, 40.dp to 150.dp, 40.dp to (height - 100.dp), (width - 36.dp) to 136.dp)
         else if (tidy != null) listOf(470.dp to 36.dp, 40.dp to 150.dp, 40.dp to (height - 290.dp), (width - 36.dp) to 136.dp)
         else if (abatement != null) listOf(470.dp to 36.dp, 40.dp to 150.dp, 40.dp to 440.dp, (width - 36.dp) to 136.dp)
@@ -463,6 +469,8 @@ private fun ScreenPreview(scenario: Scenario, modifier: Modifier) {
             ) {
                 if (availability != null) AvailabilityScreen(availability, onExit = {})
                 else if (updates != null) UpdatesScreen(updates, onExit = {})
+                else if (tenancy != null) TenancyScreen(tenancy, onExit = {})
+                else if (lifecycle != null) LifecycleScreen(lifecycle, onExit = {})
                 else if (repatriation != null) RepatriationScreen(repatriation, onExit = {})
                 else if (tidy != null) TidyScreen(tidy, onExit = {})
                 else if (abatement != null) AbatementScreen(abatement, onExit = {})
@@ -505,7 +513,17 @@ private fun SideCard(scenario: Scenario, texts: ScenarioTexts, onStart: () -> Un
         val repatriation = scenario.repatriation
         val availability = scenario.availability
         val updates = scenario.updates
-        if (availability != null) Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        val tenancy = scenario.tenancy
+        val lifecycle = scenario.lifecycle
+        if (tenancy != null) Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Fact(t("An HR software for %lld customer companies", tenancy.groups.sumOf { it.count }))
+            Fact(t("%lld building blocks, today one instance of each per customer", tenancy.components.size))
+            Fact(t("Counted: a year, location-based"))
+        } else if (lifecycle != null) Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Fact(t("An online retailer with %lld years of data", lifecycle.historyYears.toLong()))
+            Fact(t("%lld kinds of data, today nothing is deleted", lifecycle.kinds.size))
+            Fact(t("Counted: a year, location-based with the making of the storage media"))
+        } else if (availability != null) Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Fact(t("%lld building blocks, %lld quality scenarios", availability.blocks.size, availability.scenarios.size))
             Fact(t("Today everything active-active on two sites"))
             Fact(t("Counted: a year, location-based"))
