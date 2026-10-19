@@ -46,6 +46,7 @@ The app speaks English and German (switch on the start page); everything in this
 | E9 | One per customer? | Multi-tenancy (Silo, Bridge, Pool) |
 | E10 | Right-sized AI | Green AI (Right-sizing Models) |
 | E11 | Green pipeline | Green CI/CD |
+| E12 | One pattern for everything? | Architecture patterns in context |
 
 | | Portfolio | Term |
 |---|---|---|

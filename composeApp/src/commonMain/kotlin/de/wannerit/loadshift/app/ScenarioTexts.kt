@@ -38,6 +38,21 @@ class ScenarioTexts(
                 term = "Availability Tactics",
                 termText = "Ways to keep a system available in spite of failures: redundancy (active, passive or as a spare), recovery and degradation, as described by Bass, Clements and Kazman. A quality scenario states which availability is needed and where; a tactic states how it is reached.",
             )
+            112 -> ScenarioTexts(
+                situation = "A transport association's mobility platform: timetable information, booking, payment, delay notifications, analytics for the control center, and the nightly import of the transport companies' timetables. The team built it the modern way: Event Sourcing and CQRS in every subsystem, a Lambda architecture for the analytics, every event to every app, each import step as a service of its own. It works – on 51 servers with 143 TB of storage. The IT management asks whether it could be leaner.",
+                idea = "An architecture pattern solves a recurring problem in a context and brings its consequences along: a second model to keep in step, a store of events that only grows, a computation done twice, messages for everyone. The quality scenarios say what the platform must do. For each subsystem, look at the problem it has – and at what each pattern costs.",
+                screen = listOf(
+                    "At the top: CO₂ a year, the change compared with today, the servers and how many quality scenarios are met; below it your goals.",
+                    "The six subsystems with the architecture pattern of each and its CO₂ a year. Click a pattern to choose it, a row to see its facts.",
+                    "The six quality scenarios and whether your plan meets them.",
+                    "The selected subsystem: its patterns explained with their servers, storage and CO₂, and the button that carries out the plan.",
+                ),
+                comparedWith = "compared with today's platform, location-based.",
+                rules = "Every quality scenario met",
+                remark = "Today the platform used the same patterns everywhere. Each pattern pays off only where its problem is. CQRS fits the timetable, read thousands of times for each change; for the bookings the second model only costs. Event Sourcing earns its keep where the history is a requirement – the payments' audit trail –; elsewhere it is a store that only grows. Lambda computes everything twice; one stream with a replay meets the same requirement. Publish/Subscribe saves most when subscribers only get what concerns them – sending everything to everyone was almost as costly as asking. And Pipes and Filters need not wait all day as services: as a batch the steps can wait for clean power, and a faulty file still stops only its own pipe.",
+                term = "Architecture patterns in context",
+                termText = "An architecture pattern is a proven solution to a recurring problem in a given context – for example Layers, CQRS, Event Sourcing, Publish/Subscribe, Pipes and Filters, Lambda and Kappa. It comes with forces and consequences; its benefit depends on whether its problem is there.",
+            )
             111 -> ScenarioTexts(
                 situation = "An online retailer has been selling for twelve years and has kept every byte of it: orders and invoices, images of old products, customer accounts, logs, monthly backups and every click in the shop. New data stays on the fast SSD storage for a year and then moves to the HDD storage; nothing is ever deleted. The data protection officer has asked about the old customer accounts, and the IT management asks what all this data costs in CO₂.",
                 idea = "Stored data costs CO₂ every year it is kept: the power of the storage with its copies and the making of the media. The three storage tiers differ several times over in what a terabyte costs and in how fast it can be read. Each kind of data has its own requirements – from the law, from privacy, from the departments; some set a minimum, one sets a maximum.",

@@ -165,6 +165,8 @@ data class Scenario(
     val tenancy: TenancyModel? = null,
     /** The data lifecycle screen (E6). */
     val lifecycle: DataLifecycleModel? = null,
+    /** The architecture patterns screen (E12). */
+    val patterns: PatternModel? = null,
 ) {
     /** Expected interactive work at a tick: the web load or the VMs' profiles (what an operator can plan with). */
     fun expectedDemand(tick: Int): Int = interactive.expected(tick) + vms.sumOf { it.expectedMilli(tick) } / 1_000
@@ -1040,10 +1042,64 @@ data class Scenario(
             },
         )
 
+        /** E12, "One pattern for everything?": a mobility platform, six subsystems, a pattern for each, a year. */
+        val ONE_PATTERN = Scenario(
+            number = 112, label = "E12", track = Track.ENGINEERING, unlockAfter = null,
+            title = "One pattern for everything?", setting = GridSetting(GridRegion.GERMANY, Season.YEAR), days = 1,
+            seed = 22, fleet = emptyList(), interactive = InteractiveLoad(peak = 0), controls = emptySet(),
+            goals = StarGoals(400, SpecialGoal.Reduction(540)),
+            patterns = PatternModel(
+                subsystems = listOf(
+                    Subsystem("Timetable information", "Connections from A to B – 2,000 queries a second at the peak; the timetable changes a few times a year, disruptions every day", listOf(
+                        PatternOption("layers", "Layers", "Presentation, logic and one normalized database; each query computes its connections from the timetable tables. To answer within a second at the peak it needs 30 servers.", 30.0, 2.0),
+                        PatternOption("cqrs", "CQRS", "Changes go to a write model; a read model with the connections computed in advance answers the queries and is rebuilt when the timetable changes. 9 servers, 2 TB.", 9.0, 2.0),
+                        PatternOption("es-cqrs", "Event Sourcing + CQRS", "Every change is stored as an event, and the read model is built from the events. 13 servers, 8 TB of events.", 13.0, 8.0),
+                    )),
+                    Subsystem("Booking", "Seats and tickets – about as many changes as queries", listOf(
+                        PatternOption("layers", "Layers", "One model and one database for writing and reading. 4 servers, 3 TB.", 4.0, 3.0),
+                        PatternOption("cqrs", "CQRS", "A write model and a read model, kept in step by messages. 6 servers, 5 TB.", 6.0, 5.0),
+                        PatternOption("es-cqrs", "Event Sourcing + CQRS", "Every reservation, change and cancellation is an event, kept for good; read models are built from them. 9 servers, 60 TB.", 9.0, 60.0),
+                    )),
+                    Subsystem("Payment", "Payments, refunds and chargebacks", listOf(
+                        PatternOption("layers", "Layers, current state", "One model and one database; a change overwrites the old state. 3 servers, 2 TB.", 3.0, 2.0, fails = setOf("audit")),
+                        PatternOption("es", "Event Sourcing", "Every change is an event; the state at any moment can be replayed from them. 5 servers, 30 TB.", 5.0, 30.0),
+                        PatternOption("es-cqrs", "Event Sourcing + CQRS", "Events as before, and read models for the queries in addition. 8 servers, 35 TB.", 8.0, 35.0),
+                    )),
+                    Subsystem("Delay notifications", "50,000 people follow their lines; a delay changes every minute or so", listOf(
+                        PatternOption("poll", "Request/Reply", "The apps ask every 10 seconds whether something has changed. 12 servers; the phones and the network about 30 t CO₂ a year.", 12.0, 0.0, otherKg = 30_000),
+                        PatternOption("topics", "Publish/Subscribe by line", "Each app subscribes to the lines it follows; a change goes as a push to those who follow that line. 3 servers; phones and network about 2 t.", 3.0, 0.0, otherKg = 2_000),
+                        PatternOption("all", "Publish/Subscribe to all", "Every app receives every event and filters it itself. 6 servers; phones and network about 15 t.", 6.0, 0.0, otherKg = 15_000),
+                    )),
+                    Subsystem("Analytics", "Occupancy for the control center and the monthly reports", listOf(
+                        PatternOption("batch", "Batch", "The figures are computed every night. 3 servers.", 3.0, 10.0, fails = setOf("live")),
+                        PatternOption("lambda", "Lambda", "The same data is computed twice: in a nightly batch for the reports and in a stream for the live figures. 9 servers, 40 TB.", 9.0, 40.0),
+                        PatternOption("kappa", "Kappa", "One stream computes everything; for a correction it replays the stored log. 6 servers, 30 TB.", 6.0, 30.0),
+                    )),
+                    Subsystem("Timetable import", "Every night 12 transport companies send their timetable data", listOf(
+                        PatternOption("services", "Pipes and Filters as services", "Each step – check, convert, merge, publish – runs as a service of its own and waits for files all day. 6 servers.", 6.0),
+                        PatternOption("batch", "Pipes and Filters as a batch", "The same steps run as a job once the files are in, in the hours before 6:00 with the most wind power – about 40 % less CO₂ per kWh. 1 server on average.", 1.0, shifted = true),
+                        PatternOption("script", "One import script", "A single script reads all files in one go. 0.8 servers on average.", 0.8, fails = setOf("isolation")),
+                    )),
+                ),
+                qualities = listOf(
+                    PatternQuality("query", "Timetable query", "A connection query is answered within a second, also at the peak."),
+                    PatternQuality("audit", "Audit trail", "For 10 years the state of every payment at any past moment can be reconstructed – for disputes and audits."),
+                    PatternQuality("delay", "Delay", "A delay is on the phone of everyone who follows the line within 30 seconds."),
+                    PatternQuality("live", "Control center", "The control center sees the occupancy of the lines within a minute."),
+                    PatternQuality("isolation", "Faulty file", "A faulty file from one company does not stop the import of the others."),
+                    PatternQuality("morning", "Morning", "New timetable data is online by 6:00 the next morning."),
+                ),
+                reference = PatternPlan(mapOf("Timetable information" to "es-cqrs", "Booking" to "es-cqrs", "Payment" to "es-cqrs",
+                    "Delay notifications" to "all", "Analytics" to "lambda", "Timetable import" to "services")),
+                example = PatternPlan(mapOf("Timetable information" to "cqrs", "Booking" to "layers", "Payment" to "es",
+                    "Delay notifications" to "topics", "Analytics" to "kappa", "Timetable import" to "batch")),
+            ),
+        )
+
         /** A week of load, four values a day (the weekend may differ; one campaign day may reach the peak). */
         private fun week(day: List<Int>, weekend: List<Int> = day, campaign: Int? = null): List<Int> =
             (0 until 7).flatMap { d -> if (d == campaign) listOf(30, 100, 95, 35) else if (d >= 5) weekend else day }
 
-        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, OLD_IRON, TRAINING_RUN, ECO_MODE, TWO_SITES, GREEN_ON_PAPER, DARK_DOLDRUMS, HOW_MANY_NINES, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS, DATA_DIET, KEEP_EVERYTHING, CHATTY_SERVICES, CONSTANT_ASKING, ONE_PER_CUSTOMER, RIGHT_SIZED_AI, GREEN_PIPELINE, INVENTORY, WHERE_TO_START, TIDY_UP, LEAVE_THE_CLOUD)
+        val ALL = listOf(NIGHT_SHIFT, WAIT_FOR_THE_SUN, WHEN_THE_WIND_DROPS, HEADROOM, CONSOLIDATION, HEAT_WAVE, OLD_IRON, TRAINING_RUN, ECO_MODE, TWO_SITES, GREEN_ON_PAPER, DARK_DOLDRUMS, HOW_MANY_NINES, MEASURE_FIRST, GROWING_DATA, HIT_OR_MISS, DATA_DIET, KEEP_EVERYTHING, CHATTY_SERVICES, CONSTANT_ASKING, ONE_PER_CUSTOMER, RIGHT_SIZED_AI, GREEN_PIPELINE, ONE_PATTERN, INVENTORY, WHERE_TO_START, TIDY_UP, LEAVE_THE_CLOUD)
     }
 }

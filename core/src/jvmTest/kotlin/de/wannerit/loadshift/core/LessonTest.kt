@@ -1273,6 +1273,53 @@ class LessonTest {
         assertEquals(3, stars("example"))
     }
 
+    @Test fun e12OnePattern() {
+        val scenario = Scenario.ONE_PATTERN
+        val model = scenario.patterns!!
+        val ex = model.example
+        fun with(sub: String, id: String) = PatternPlan(ex.choices + (sub to id))
+        val plans = listOf(
+            "today (reference)" to model.reference,
+            "simplest everywhere" to PatternPlan(model.subsystems.associate { it.name to it.options.minBy { o -> model.kg(o) }.id }),
+            "example, timetable layers" to with("Timetable information", "layers"),
+            "example, timetable with events" to with("Timetable information", "es-cqrs"),
+            "example, booking CQRS" to with("Booking", "cqrs"),
+            "example, booking with events" to with("Booking", "es-cqrs"),
+            "example, payment layers" to with("Payment", "layers"),
+            "example, payment with CQRS" to with("Payment", "es-cqrs"),
+            "example, notifications polling" to with("Delay notifications", "poll"),
+            "example, notifications to all" to with("Delay notifications", "all"),
+            "example, analytics Lambda" to with("Analytics", "lambda"),
+            "example, analytics batch" to with("Analytics", "batch"),
+            "example, import as services" to with("Timetable import", "services"),
+            "example, import script" to with("Timetable import", "script"),
+            "example" to ex,
+        )
+        val r0 = model.result(model.reference)
+        val lines = mutableListOf("E12 One pattern for everything?: reference ${r0.referenceKg / 1_000} t a year, ${r0.servers} servers, ${r0.storageTb} TB")
+        val results = plans.associate { (name, plan) ->
+            val r = model.result(plan)
+            lines += "  " + name.padEnd(44) + "%6.1f t".format(r.planKg / 1_000.0) + "%7.1f %%".format(-r.reductionPermille / 10.0) +
+                "  %5.1f servers %5.0f TB".format(r.servers, r.storageTb) + "  " + "★".repeat(model.stars(r, scenario.goals)) +
+                (if (r.missed.isNotEmpty()) "  missed ${r.missed}" else "")
+            name to r
+        }
+        report(112, lines)
+        fun stars(name: String) = model.stars(results.getValue(name), scenario.goals)
+        assertEquals(1, stars("today (reference)"))
+        assertEquals(0, stars("simplest everywhere"))
+        assertEquals(0, stars("example, payment layers"))
+        assertEquals(0, stars("example, analytics batch"))
+        assertEquals(0, stars("example, import script"))
+        assertEquals(1, stars("example, timetable layers"))
+        assertEquals(2, stars("example, booking CQRS"))
+        assertEquals(2, stars("example, payment with CQRS"))
+        assertEquals(2, stars("example, analytics Lambda"))
+        assertEquals(2, stars("example, import as services"))
+        assertEquals(1, stars("example, notifications to all"))
+        assertEquals(3, stars("example"))
+    }
+
     /** D31: the solution the debrief shows and puts into the task earns three stars in every scenario with a clock. */
     @Test fun solutionsEarnThreeStars() {
         val lines = mutableListOf("Solutions (D31)")
