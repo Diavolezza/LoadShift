@@ -675,6 +675,9 @@ private fun WhatIf(game: GameController) {
             }
         }
         if (hidden > 0) Txt(t("Settings with more stars than you have reached stay hidden until you find them."), Type.caption)
-        SolutionBar(game.scenario.number, hidden, null)
+        // The best run, taken over into the panel when its rules can be set there.
+        val bestRun = alternatives.maxWithOrNull(compareBy({ game.scenario.stars(it.second, ref) }, { -it.second.emissions }))
+        val policy = bestRun?.let { game.whatIfPolicy(it.second) }
+        SolutionBar(game.scenario.number, hidden, policy?.let { p -> { game.loadPolicy(p) } }, clock = true)
     }
 }

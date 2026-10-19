@@ -382,13 +382,6 @@ private fun AvailabilityEnd(game: AvailabilityController, onExit: () -> Unit, on
     val r = game.result
     val met = model.goalsMet(r, scenario.goals)
     val texts = ScenarioTexts.of(scenario)
-    var closed by remember { mutableStateOf(false) }
-    if (closed) {
-        Box(Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.BottomCenter) {
-            PrimaryButton(t("Show the result")) { closed = false }
-        }
-        return
-    }
     Box(
         Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.35f))
             .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {},
@@ -428,7 +421,6 @@ private fun AvailabilityEnd(game: AvailabilityController, onExit: () -> Unit, on
                 horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 PrimaryButton(t("Play again")) { game.restart() }
-                SecondaryButton(t("Look at the architecture")) { closed = true }
                 SecondaryButton(t("To the briefing"), onClick = onExit)
                 if (onOverview != null) SecondaryButton(t("To the overview"), onClick = onOverview)
             }
@@ -465,13 +457,19 @@ fun WhatIfCard(rows: List<Triple<String, Long, Int>>, best: Int, subtitle: Strin
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun SolutionBar(scenario: Int, hidden: Int, onLoad: (() -> Unit)?) {
+fun SolutionBar(scenario: Int, hidden: Int, onLoad: (() -> Unit)?, clock: Boolean = false) {
     val seen = Progress.solutionSeen(scenario)
     if (!seen && hidden == 0) return
     Spacer(Modifier.height(8.dp))
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        if (!seen) SecondaryButton(t("Show the solution")) { Progress.reveal(scenario) }
-        else if (onLoad != null) SecondaryButton(t("Load the model solution"), onClick = onLoad)
+    if (!seen) {
+        SecondaryButton(t("Show the solution")) { Progress.reveal(scenario) }
+        Txt(t("After that, a result in this scenario counts at most one star."), Type.caption)
+        return
     }
-    Txt(if (seen) t("Solution seen: from now on a result here counts at most one star.") else t("After that, a result in this scenario counts at most one star."), Type.caption)
+    if (onLoad != null) {
+        PrimaryButton(t("Put the solution into the task"), onClick = onLoad)
+        Txt(if (clock) t("The best setting above goes into the panel and runs from the start; press play and watch it.")
+            else t("The best setting above goes into the screen; look at it and carry it out."), Type.caption)
+    } else Txt(t("The best setting above, in words: set it in the panel and play again."), Type.caption)
+    Txt(t("Solution seen: from now on a result here counts at most one star."), Type.caption)
 }

@@ -1578,8 +1578,6 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Last / Kapazität",
     "Load over a week" to
         "Last über eine Woche",
-    "Load the model solution" to
-        "Musterlösung laden",
     "Location" to
         "Standort",
     "Location saves more than time here: no hour in the German grid comes close to Norway's hydropower. Look at the energy: it rose – the transfers need energy too – and still the CO₂ fell. Location Shifting saves carbon, not energy. The trainings were the best candidates – hours of computing for little data. The videos were the worst: 30 terabytes through the network cost more CO₂ than Oslo saved, and the transfer took most of a working day. The price calculation needs its database in Frankfurt and misses its deadline far from it; customer data may not leave the country by contract. Data have weight. And clean electricity is not unlimited: if everyone moves to Norway, it runs short there. Location Shifting works best with capacity that is there anyway." to
@@ -1608,12 +1606,6 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Long Polling",
     "Longer than allowed: some answers will be stale." to
         "Länger als erlaubt: Manche Antworten werden veraltet sein.",
-    "Look at the architecture" to
-        "Architektur ansehen",
-    "Look at the cards" to
-        "Karten ansehen",
-    "Look at the plan" to
-        "Plan ansehen",
     "low" to
         "niedrig",
     "Mail archive" to
@@ -2062,6 +2054,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Push bei seltenen Änderungen, ein Stream bei vielen, nichts im Hintergrund, was niemand braucht",
     "Put the architecture in place" to
         "Architektur umsetzen",
+    "Put the solution into the task" to
+        "Lösung in die Aufgabe übernehmen",
     "Q%lld/%lld" to
         "Q%1\$lld/%2\$lld",
     "Quality" to
@@ -2294,8 +2288,6 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Kürzere Aufbewahrung, kalte Speicherklasse",
     "Show solutions" to
         "Lösungen zeigen",
-    "Show the result" to
-        "Ergebnis zeigen",
     "Show the solution" to
         "Lösung zeigen",
     "Single, restarted" to
@@ -2476,6 +2468,12 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Die Batch-Regel: wählen, einstellen, übernehmen. Darunter die Jobs mit ihren Fristen und was die Regel für sie geplant hat.",
     "The best plan within the budget" to
         "Der beste Plan im Budget",
+    "The best setting above goes into the panel and runs from the start; press play and watch it." to
+        "Die beste Einstellung von oben kommt ins Panel und gilt ab dem Start; drück auf Start und sieh zu.",
+    "The best setting above goes into the screen; look at it and carry it out." to
+        "Die beste Einstellung von oben kommt in den Bildschirm; sieh sie dir an und setz sie um.",
+    "The best setting above, in words: set it in the panel and play again." to
+        "Die beste Einstellung steht oben in Worten: Stell sie im Panel ein und spiel noch einmal.",
     "The biggest saving today first" to
         "Die größte Einsparung von heute zuerst",
     "The board wants a green data center. In the report, contracted green energy counts as zero; for the stars, only clean energy that is there in the same hour counts. The cost of electricity may rise by at most %@." to

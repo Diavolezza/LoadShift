@@ -333,13 +333,6 @@ private fun UpdatesEnd(game: UpdatesController, onExit: () -> Unit, onOverview: 
     val r0 = model.result(model.reference)
     val met = model.goalsMet(r, scenario.goals)
     val texts = ScenarioTexts.of(scenario)
-    var closed by remember { mutableStateOf(false) }
-    if (closed) {
-        Box(Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.BottomCenter) {
-            PrimaryButton(t("Show the result")) { closed = false }
-        }
-        return
-    }
     Box(
         Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.35f))
             .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {},
@@ -375,7 +368,6 @@ private fun UpdatesEnd(game: UpdatesController, onExit: () -> Unit, onOverview: 
                 horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 PrimaryButton(t("Play again")) { game.restart() }
-                SecondaryButton(t("Look at the plan")) { closed = true }
                 SecondaryButton(t("To the briefing"), onClick = onExit)
                 if (onOverview != null) SecondaryButton(t("To the overview"), onClick = onOverview)
             }

@@ -335,13 +335,6 @@ private fun RepatriationEnd(game: RepatriationController, onExit: () -> Unit, on
     val r = game.result
     val met = model.goalsMet(r, scenario.goals)
     val texts = ScenarioTexts.of(scenario)
-    var closed by remember { mutableStateOf(false) }
-    if (closed) {
-        Box(Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.BottomCenter) {
-            PrimaryButton(t("Show the result")) { closed = false }
-        }
-        return
-    }
     Box(
         Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.35f))
             .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {},
@@ -383,7 +376,6 @@ private fun RepatriationEnd(game: RepatriationController, onExit: () -> Unit, on
                 horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 PrimaryButton(t("Play again")) { game.restart() }
-                SecondaryButton(t("Look at the plan")) { closed = true }
                 SecondaryButton(t("To the briefing"), onClick = onExit)
                 if (onOverview != null) SecondaryButton(t("To the overview"), onClick = onOverview)
             }
@@ -459,6 +451,6 @@ private fun RepatriationWhatIf(game: RepatriationController) {
             }
         }
         if (hidden > 0) Txt(t("Settings with more stars than you have reached stay hidden until you find them."), Type.caption)
-        SolutionBar(game.scenario.number, hidden) { game.loadSolution() }
+        SolutionBar(game.scenario.number, hidden, { game.loadSolution() })
     }
 }
