@@ -6,6 +6,8 @@ package de.wannerit.loadshift.app
  * literal % in a text with placeholders is written %%.
  */
 internal val GERMAN: Map<String, String> = mapOf(
+    "%@ (%@)" to
+        "%@ (%@)",
     "%@ a year" to
         "%@ im Jahr",
     "%@ and %@" to
@@ -52,6 +54,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "%@ – %lld Quartale. Das neue System braucht %@ des heutigen CO₂; es läuft vom Start an neben dem alten. Das alte System läuft, bis es abgeschaltet wird.",
     "%@ € (%@ €)" to
         "%1\$@ € (%2\$@ €)",
+    "%@ € in three years" to
+        "%@ € in drei Jahren",
     "%@, batching %@" to
         "%1\$@, Batching %2\$@",
     "%@, eco %@ above %lld g/kWh" to
@@ -284,6 +288,12 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Ein Circuit Breaker: Antworten die Empfehlungen nicht, zeigt die Vertragsübersicht die Verträge ohne sie.",
     "A claim is stored in a queue at once and checked against the policy database later; the intake no longer waits for the database. The queue evens out the peaks: 3 servers instead of 6. The message broker runs on 2 servers, active-active." to
         "Eine Schadenmeldung wird sofort in einer Queue gespeichert und später gegen die Bestandsdatenbank geprüft; die Annahme wartet nicht mehr auf die Datenbank. Die Queue glättet die Spitzen: 3 Server statt 6. Der Message Broker läuft auf 2 Servern, Active-Active.",
+    "A client asks, and the server holds the request open until there is something new or a time limit is reached; then the client asks again. Fewer requests than polling, but each waits on the server." to
+        "Ein Client fragt, und der Server hält die Anfrage offen, bis es etwas Neues gibt oder eine Zeitgrenze erreicht ist; dann fragt der Client neu. Weniger Anfragen als beim Polling, aber jede wartet auf dem Server.",
+    "A connection between client and server that stays open, so that both can send at any time (RFC 6455). Good for frequent changes while an app is open; kept open in the background, it needs signs of life that wake the device." to
+        "Eine Verbindung zwischen Client und Server, die offen bleibt, sodass beide jederzeit senden können (RFC 6455). Gut für häufige Änderungen, solange eine App offen ist; im Hintergrund offen gehalten, braucht sie Lebenszeichen, die das Gerät wecken.",
+    "A connection stays open in the background too; a sign of life every %lld minutes wakes the phone." to
+        "Eine Verbindung bleibt auch im Hintergrund offen; alle %lld Minuten weckt ein Lebenszeichen das Smartphone.",
     "A contract keeps its data in Germany." to
         "Laut Vertrag bleiben die Daten in Deutschland.",
     "A dark doldrums is the hard case of Carbon Awareness: when every hour is dirty, shifting within the day gains nothing. Two things remained. Using less – the autoscaler saves in every hour, wind or not; it is the lever that never depends on the weather. And waiting for days – only work whose deadline is far enough away can do that: the training and three of the batch jobs, about a quarter of the energy. In the forecast the wind came back a day early; a plan made with it put the waiting jobs into a day that was still dirty – plans that look days ahead must be made again when the forecast changes. Germany has a few such weeks every winter; grids with storage, hydropower and links to their neighbours bridge them, and data centers that can wait help them." to
@@ -306,6 +316,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Das System einer Spedition: Die Kundschaft verfolgt ihre Lieferungen, die Disposition plant die Routen der LKWs. Es wurde in vier Microservices geschnitten – Tracking, Routen, Kunden und LKWs –, die sich mit REST und JSON aufrufen; der Routen-Service fragt außerdem bei jeder Anfrage einen GPS-Anbieter und einen Kartendienst. Abends wird bis zu 15.000-mal pro Sekunde nachgesehen, wo ein Paket ist – und das Tracking braucht eine Drittelsekunde. Einmal pro Stunde braucht die Routenoptimierung der Disposition 200 Kerne für zehn Minuten.",
     "A logistics system: four microservices, two external providers" to
         "Ein Logistiksystem: vier Microservices, zwei externe Anbieter",
+    "A message the server hands to the phone platform's push service (for example APNs or Firebase Cloud Messaging); the service delivers it to the device, even when the app is closed. Usually within seconds, but without a guarantee, and throttled when there are many." to
+        "Eine Nachricht, die der Server an den Push-Dienst der Smartphone-Plattform übergibt (etwa APNs oder Firebase Cloud Messaging); der Dienst stellt sie dem Gerät zu, auch wenn die App geschlossen ist. Meist binnen Sekunden, aber ohne Garantie und gedrosselt, wenn es viele sind.",
     "A new analytics platform" to
         "Eine neue Analyseplattform",
     "A new ERP in the cloud" to
@@ -316,6 +328,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Ein Muster für Aufrufe zwischen Bausteinen: Nach wiederholten Fehlern ruft der Aufrufer eine Weile nicht mehr auf und antwortet ohne den anderen Baustein – etwa mit weniger Inhalt –, statt selbst auszufallen.",
     "A phone gets a smaller image than a large monitor (srcset); now every screen gets the 2,000-pixel image." to
         "Ein Smartphone bekommt ein kleineres Bild als ein großer Monitor (srcset); jetzt bekommt jeder Bildschirm das Bild mit 2.000 Pixeln.",
+    "A phone that is woken up switches its radio on for some seconds – about %@ J each time, whether there is news or not." to
+        "Ein Smartphone, das geweckt wird, schaltet sein Funkmodul für einige Sekunden ein – jedes Mal etwa %@ J, ob es Neues gibt oder nicht.",
     "A pipeline is a data center of its own, and most of it waits: agents without a job, environments nobody uses at night. Start only what is needed, run only the tests a change can break, run the slow tests when the grid is clean – and keep the team's feedback fast and the release tested." to
         "Eine Pipeline ist ein eigenes Rechenzentrum, und das meiste davon wartet: Agents ohne Job, Umgebungen, die nachts niemand nutzt. Starte nur, was gebraucht wird, lass nur die Tests laufen, die eine Änderung brechen kann, lass die langsamen Tests laufen, wenn der Strom sauber ist – und halte die Rückmeldung für das Team schnell und das Release getestet.",
     "A region with clean power; the move takes two quarters" to
@@ -806,8 +820,6 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Klick auf einen Balken der Kurve oder eine Karte, und die Maßnahme ist im Plan. Alle Maßnahmen beginnen jetzt; jede wirkt, sobald ihr Projekt fertig ist.",
     "closed %@" to
         "geschlossen %@",
-    "Closed: a phone that is woken up switches its radio on for some seconds – about %@ J each time, whether there is news or not. A connection kept open needs a sign of life every %lld minutes." to
-        "Geschlossen: Ein Smartphone, das geweckt wird, schaltet sein Funkmodul für einige Sekunden ein – jedes Mal etwa %@ J, ob es Neues gibt oder nicht. Eine offen gehaltene Verbindung braucht alle %lld Minuten ein Lebenszeichen.",
     "Cloud file sharing" to
         "Cloud-Dateiablage",
     "Cloud Frankfurt" to
@@ -916,6 +928,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Kosten mindestens 20 % niedriger, Kundendaten in Deutschland und eine Buchung im Werk unter einer Sekunde",
     "Costs in three years" to
         "Kosten in drei Jahren",
+    "Costs in three years: %@ €" to
+        "Kosten in drei Jahren: %@ €",
     "costs only %@ lower" to
         "Kosten nur %@ niedriger",
     "Count unique visitors with HyperLogLog" to
@@ -1306,8 +1320,12 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Frankfurt",
     "Fresh enough" to
         "Aktuell genug",
+    "Fresh only when opened." to
+        "Aktuell erst beim Öffnen.",
     "Fresh within" to
         "Aktuell binnen",
+    "Fresh within %@." to
+        "Aktuell binnen %@.",
     "Friday" to
         "Fr",
     "from %@" to
@@ -1764,6 +1782,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Noch kein Projekt: Alles bleibt, wie es ist.",
     "No star because: %@" to
         "Kein Stern, weil: %@",
+    "No updates until the app is opened." to
+        "Keine Updates, bis die App geöffnet wird.",
     "none" to
         "keiner",
     "Norway" to
@@ -1794,6 +1814,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "nichts",
     "Nothing eliminated that must stay" to
         "Nichts eliminiert, was bleiben muss",
+    "Nothing reaches the closed app." to
+        "Nichts erreicht die geschlossene App.",
     "Now %@ of the original." to
         "Jetzt %@ des ursprünglichen Werts.",
     "O%@" to
@@ -1972,8 +1994,6 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Bestandsdatenbank",
     "Polling, Push, Streaming" to
         "Polling, Push, Streaming",
-    "Polling: the app asks at fixed intervals, whether anything has changed or not. Long polling: the server holds the question until something changes. Stream: one connection (WebSocket) stays open and the server sends each change. Push: the server hands the change to the phone platform's push service, which wakes the app – usually within seconds, without a guarantee, and throttled when the messages come often." to
-        "Polling: Die App fragt in festen Abständen, ob sich etwas geändert hat oder nicht. Long Polling: Der Server hält die Frage offen, bis sich etwas ändert. Stream: Eine Verbindung (WebSocket) bleibt offen, und der Server schickt jede Änderung. Push: Der Server gibt die Änderung an den Push-Dienst der Smartphone-Plattform, der die App weckt – meist binnen Sekunden, ohne Garantie und gedrosselt, wenn die Nachrichten oft kommen.",
     "poor" to
         "schlecht",
     "Portfolio" to
@@ -2426,6 +2446,12 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Test Impact Analysis",
     "Testers and business analysts work on weekdays from 8 to 18." to
         "Test und Fachbereich arbeiten werktags von 8 bis 18 Uhr.",
+    "The app asks every %lld seconds whether anything has changed – also when nothing has." to
+        "Die App fragt alle %lld Sekunden, ob sich etwas geändert hat – auch wenn nicht.",
+    "The app asks, and the server holds back the answer until something changes or a minute is over; then the app asks again." to
+        "Die App fragt, und der Server hält die Antwort zurück, bis sich etwas ändert oder eine Minute vorbei ist; dann fragt die App neu.",
+    "The app loads the data once, when it is opened." to
+        "Die App lädt die Daten einmal, wenn sie geöffnet wird.",
     "The app sends the version it has (ETag); if nothing has changed, the answer is a short \"304 Not Modified\" instead of the full data." to
         "Die App schickt die Version mit, die sie hat (ETag); hat sich nichts geändert, ist die Antwort ein kurzes „304 Not Modified“ statt der ganzen Daten.",
     "The applications by business value and technical condition – the size of a bubble is its CO₂ a year; click one to decide" to
@@ -2550,6 +2576,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Die Nacht ist nicht überall sauber: Im Solarnetz sind die Mittagsstunden am saubersten. Ein Teil des CO₂ stammt aus der Herstellung der Hardware – er bleibt gleich, egal wann die Jobs laufen.",
     "The number on the app icon: up to date within 15 minutes, within a minute while the app is open" to
         "Die Zahl am App-Symbol: aktuell binnen 15 Minuten, bei offener App binnen einer Minute",
+    "The operating system wakes the app every 15 minutes to ask." to
+        "Das Betriebssystem weckt die App alle 15 Minuten zum Nachfragen.",
     "The pages: images, product video, product lists and how visitors are counted. Below it a visit to the pages online now: its weight by part, and the LCP." to
         "Die Seiten: Bilder, Produktvideo, Produktlisten und wie Besuchende gezählt werden. Darunter ein Besuch der Seiten, die gerade online sind: sein Gewicht nach Teilen und der LCP.",
     "The percentages: how the viewers on that device rate the quality." to
@@ -2566,6 +2594,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Der Projektplan: jedes Projekt über zwölf Quartale und wie viele gleichzeitig laufen.",
     "The PUE is a ratio, not a goal. Fewer servers saved the most energy – and raised the PUE, because lighting, UPS and pumps draw the same power for fewer servers. A setpoint of 27 °C gives a better PUE than 25 °C, because the faster fans count as IT power – but it uses more energy. All servers on would have had the best PUE of all. Measure CO₂ or energy per request: the PUE only shows how well the building serves the IT, not whether the IT does useful work." to
         "Die PUE ist ein Verhältnis, kein Ziel. Weniger Server sparten am meisten Energie – und erhöhten die PUE, weil Licht, USV und Pumpen für weniger Server gleich viel Strom ziehen. Ein Sollwert von 27 °C ergibt eine bessere PUE als 25 °C, weil die schnelleren Lüfter als IT-Leistung zählen – verbraucht aber mehr Energie. Alle Server an hätte die beste PUE von allen gehabt. Miss CO₂ oder Energie pro Request: Die PUE zeigt nur, wie gut das Gebäude der IT dient, nicht, ob die IT nützliche Arbeit tut.",
+    "The push service wakes the phone only when something has changed." to
+        "Der Push-Dienst weckt das Smartphone nur, wenn sich etwas geändert hat.",
     "The rest stays one deployment." to
         "Der Rest bleibt ein Deployment.",
     "The same 8 servers; the migration takes four quarters" to
@@ -2648,6 +2678,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Der ausgewählte Baustein: die vier Taktiken mit dem, was sie bedeuten, zwei Wege zur Entkopplung und der Button, der die Architektur umsetzt.",
     "The selected kind with its facts and requirements, the ways explained, two switches for all kinds, and the button that carries out the plan." to
         "Die ausgewählte Art mit ihren Daten und Anforderungen, die Wege erklärt, zwei Schalter für alle Arten und der Button, der den Plan umsetzt.",
+    "The server hands each change to the phone platform's push service, which delivers it – usually within seconds, without a guarantee, and throttled when messages come often." to
+        "Der Server gibt jede Änderung an den Push-Dienst der Smartphone-Plattform, der sie zustellt – meist binnen Sekunden, ohne Garantie und gedrosselt, wenn Nachrichten oft kommen.",
     "The servers each application has in the CMDB. Free." to
         "Die Server jeder Anwendung laut CMDB. Kostenlos.",
     "The servers needed for the expected load of the next hour run. A low target leaves headroom for peaks but more servers idle; a high target is efficient but gets slow at peaks." to
@@ -2680,8 +2712,6 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Die zwei Arten, wie das GHG Protocol die Emissionen von gekauftem Strom berichtet (Scope 2): standortbasiert mit dem Mittel des Netzes, in dem der Strom verbraucht wird, marktbasiert mit den gekauften Verträgen und Zertifikaten.",
     "The VMs" to
         "Die VMs",
-    "The ways" to
-        "Die Wege",
     "The web shop again, now in winter and with 30 servers. Autoscaling is on: at 80 % target utilization it keeps just enough servers running. On day 2 marketing sends a newsletter at 19:00 – for three hours twice as many people will shop as usual." to
         "Wieder der Webshop, jetzt im Winter und mit 30 Servern. Autoscaling ist eingeschaltet: Mit 80 % Zielauslastung hält es gerade genug Server am Laufen. An Tag 2 verschickt das Marketing um 19:00 einen Newsletter – drei Stunden lang kaufen doppelt so viele Leute ein wie sonst.",
     "The web shop has a new assistant in its chat window. The team's prototype sends every question to a large language model, one question at a time – it was the quickest way to get it working. Since then, three in ten questions are \"Where is my order?\", and the assistant runs on GPU servers day and night." to
@@ -2950,6 +2980,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Bei geschlossener App",
     "While the app is open" to
         "Bei offener App",
+    "While the app is open, one connection (WebSocket) stays open, and the server sends each change at once." to
+        "Solange die App offen ist, bleibt eine Verbindung (WebSocket) offen, und der Server schickt jede Änderung sofort.",
     "Whole year" to
         "Jahresmittel",
     "Wind farm contract" to
@@ -3008,6 +3040,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Deine Racks: graue Server sind aus, hellblaue starten gerade, der blaue Balken zeigt, wie ausgelastet ein Server ist.",
     "Your racks: grey servers are off, the blue bar shows web requests, the amber bar batch jobs." to
         "Deine Racks: Graue Server sind aus, der blaue Balken zeigt Web-Requests, der gelbe Batch-Jobs.",
+    "– plus the team for own hardware, %@ € a year, once for all applications" to
+        "– dazu das Team für eigene Hardware, %@ € im Jahr, einmal für alle Anwendungen",
     "−%@ t" to
         "−%@ t",
     "≈ %@ t" to

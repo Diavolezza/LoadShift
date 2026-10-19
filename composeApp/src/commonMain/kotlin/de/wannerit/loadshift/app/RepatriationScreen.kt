@@ -144,44 +144,12 @@ fun RepatriationScreen(game: RepatriationController, onExit: () -> Unit, onOverv
 private fun RepatriationTopBar(game: RepatriationController, onExit: () -> Unit, compact: Boolean = false) {
     val r = game.result
     val metrics: @Composable () -> Unit = {
-        Metric(t("In the report (market-based)"), t("%@ t CO₂", tonnes(r.reportKg)))
-        Metric(t("Location-based with making"), t("%@ t CO₂", tonnes(r.planKg)))
-        Metric(t("Costs in three years"), millionEuros(r.planEuro),
+        Metric(t("Costs in three years"), t("%@ (%@)", millionEuros(r.planEuro), Format.changePermille(-r.savingPermille)),
             if (game.started && r.savingPermille < game.model.savingGoalPermille) Palette.red else Palette.ink)
+        Metric(t("Location-based with making"), t("%@ t CO₂", tonnes(r.planKg)))
+        Metric(t("In the report (market-based)"), t("%@ t CO₂", tonnes(r.reportKg)))
     }
-    if (compact) {
-        // A small screen (a phone held sideways): one row, the figures scroll sideways, no scenario name.
-        Row(
-            Modifier.fillMaxWidth().background(Palette.panel).padding(horizontal = 12.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            Txt("‹", Type.style(30, FontWeight.SemiBold), Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = onExit).padding(horizontal = 4.dp))
-            Column {
-                Txt(t("Three years"), Type.caption)
-                Txt(if (game.finished) t("Plan carried out") else t("The plan"), Type.style(18, FontWeight.SemiBold))
-            }
-            Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp)) {
-                metrics()
-            }
-        }
-        return
-    }
-    Box(Modifier.fillMaxWidth().background(Palette.panel).padding(horizontal = 20.dp, vertical = 10.dp)) {
-        Row(Modifier.align(Alignment.CenterStart), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(22.dp)) {
-            Txt("‹", Type.style(34, FontWeight.SemiBold), Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = onExit).padding(horizontal = 6.dp))
-            Column {
-                Txt(t("Scenario %@", game.scenario.shownLabel), Type.caption)
-                Txt(t(game.scenario.title), Type.style(17, FontWeight.SemiBold), maxLines = 1)
-            }
-        }
-        Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
-            Txt(t("Three years"), Type.caption)
-            Txt(if (game.finished) t("Plan carried out") else t("The plan"), Type.style(24, FontWeight.SemiBold))
-        }
-        Row(Modifier.align(Alignment.CenterEnd), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(22.dp)) {
-            metrics()
-        }
-    }
+    PlayTopBar(game.scenario, onExit, compact, t("Three years"), if (game.finished) t("Plan carried out") else t("The plan"), metrics)
 }
 
 @Composable
@@ -236,6 +204,7 @@ private fun AppTable(game: RepatriationController, modifier: Modifier) {
                     Txt(t(a.name), Type.style(15, FontWeight.SemiBold))
                     Txt(t(a.description), Type.caption, maxLines = 2)
                     if (m.offOutsideUse) Txt(t("Off outside its hours of use"), Type.style(12, FontWeight.SemiBold, Palette.accent))
+                    Txt(t("%@ € in three years", Format.number(model.euro(a, m))), Type.style(12, color = Palette.secondary))
                 }
                 Sparkline(a.week, Modifier.width(130.dp).height(30.dp).padding(end = 12.dp))
                 FlowRow(Modifier.weight(1.6f), horizontalArrangement = Arrangement.spacedBy(5.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
@@ -332,7 +301,10 @@ private fun RepatriationPanel(game: RepatriationController, modifier: Modifier) 
                     else -> add(t("the making of the servers is in the price"))
                 }
             }
-            RuleOption(m.place == s.place, { game.place(a, s.place) }, t(s.title), facts.joinToString(" · "))
+            val euro = model.euro(a, Move(s.place, m.offOutsideUse)).toLong()
+            RuleOption(m.place == s.place, { game.place(a, s.place) }, t(s.title),
+                facts.joinToString(" · ") + "\n" + t("Costs in three years: %@ €", Format.number(euro.toDouble())) +
+                    (if (s.cloud) "" else " " + t("– plus the team for own hardware, %@ € a year, once for all applications", Format.number(model.teamEuroPerYear.toDouble()))))
         }
         a.usePercent?.let { use ->
             Row(Modifier.clip(RoundedCornerShape(8.dp)).clickable { game.toggleOff(a) }.padding(vertical = 4.dp),

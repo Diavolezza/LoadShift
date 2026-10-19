@@ -109,6 +109,23 @@ fun closedTitle(c: Closed): String = when (c) {
     Closed.PUSH -> t("push")
 }
 
+/** What a way does while the app is open. */
+private fun openText(o: Open): String = when (o) {
+    is Open.Poll -> t("The app asks every %lld seconds whether anything has changed – also when nothing has.", o.seconds.toLong())
+    Open.OnOpen -> t("The app loads the data once, when it is opened.")
+    Open.LongPoll -> t("The app asks, and the server holds back the answer until something changes or a minute is over; then the app asks again.")
+    Open.Stream -> t("While the app is open, one connection (WebSocket) stays open, and the server sends each change at once.")
+    Open.Push -> t("The server hands each change to the phone platform's push service, which delivers it – usually within seconds, without a guarantee, and throttled when messages come often.")
+}
+
+/** What a way does while the app is closed. */
+private fun closedText(c: Closed, keepalive: Int): String = when (c) {
+    Closed.NONE -> t("No updates until the app is opened.")
+    Closed.REFRESH -> t("The operating system wakes the app every 15 minutes to ask.")
+    Closed.SOCKET -> t("A connection stays open in the background too; a sign of life every %lld minutes wakes the phone.", keepalive.toLong())
+    Closed.PUSH -> t("The push service wakes the phone only when something has changed.")
+}
+
 private fun secondsText(s: Int?): String = when {
     s == null -> "–"
     s < 120 -> t("%lld s", s.toLong())
@@ -264,10 +281,21 @@ private fun UpdatesPanel(game: UpdatesController, modifier: Modifier) {
             k.openFreshness?.let { t("within %@", secondsText(it)) } ?: t("current when opened"),
             k.closedFreshness?.let { t("within %@", secondsText(it)) } ?: t("nothing")), Type.style(15, FontWeight.SemiBold))
         HDivider()
-        Txt(t("The ways"), Type.subheading)
-        Txt(t("Polling: the app asks at fixed intervals, whether anything has changed or not. Long polling: the server holds the question until something changes. Stream: one connection (WebSocket) stays open and the server sends each change. Push: the server hands the change to the phone platform's push service, which wakes the app – usually within seconds, without a guarantee, and throttled when the messages come often."), Type.caption)
-        Txt(t("Closed: a phone that is woken up switches its radio on for some seconds – about %@ J each time, whether there is news or not. A connection kept open needs a sign of life every %lld minutes.",
-            Format.number(model.wakeJ), model.keepaliveMinutes.toLong()), Type.caption)
+        Txt(t("While the app is open"), Type.subheading)
+        for (o in k.openOptions) {
+            val fresh = model.openSeconds(game.plan.copy(open = game.plan.open + (k.name to o)), k)
+            RuleOption(game.open(k) == o, { game.setOpen(k, o) }, openTitle(o).replaceFirstChar { it.uppercase() },
+                openText(o) + " " + (fresh?.let { t("Fresh within %@.", secondsText(it)) } ?: t("Fresh only when opened.")))
+        }
+        if (k.closedOptions.size > 1) {
+            Txt(t("While it is closed"), Type.subheading)
+            Txt(t("A phone that is woken up switches its radio on for some seconds – about %@ J each time, whether there is news or not.", Format.number(model.wakeJ)), Type.caption)
+            for (c in k.closedOptions) {
+                val fresh = model.closedSeconds(game.plan.copy(closed = game.plan.closed + (k.name to c)), k)
+                RuleOption(game.closed(k) == c, { game.setClosed(k, c) }, closedTitle(c).replaceFirstChar { it.uppercase() },
+                    closedText(c, model.keepaliveMinutes) + " " + (fresh?.let { t("Fresh within %@.", secondsText(it)) } ?: t("Nothing reaches the closed app.")))
+            }
+        }
         HDivider()
         Txt(t("For all kinds"), Type.subheading)
         for ((on, title, text, toggle) in listOf(
