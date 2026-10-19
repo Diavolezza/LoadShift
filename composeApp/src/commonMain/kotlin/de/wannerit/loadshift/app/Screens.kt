@@ -83,7 +83,7 @@ fun AboutContent(modifier: Modifier = Modifier) {
         Txt(t("A simulation game for teaching Green IT, in three tracks:"), Type.body)
         for ((track, text) in listOf(
             t("Operations") to t("Run a data center so that it serves its users reliably and emits as little CO₂ as possible – switch servers, shift work in time, cool wisely."),
-            t("Engineering") to t("Build software that does the same work with less – measure first, cache what repeats, size AI models to the task."),
+            t("Engineering") to t("Build software and architectures that do the same work with less – measure first, cache what repeats, choose the pattern that fits the problem."),
             t("Portfolio") to t("Find out where the IT emissions of a whole organisation come from and decide what to change first."),
         )) {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -96,6 +96,10 @@ fun AboutContent(modifier: Modifier = Modifier) {
             Txt(t("Grid data: Electricity Maps, Grid Review 2025 (life-cycle, imports included)"), Type.caption)
             Txt(t("Font: Inter, SIL Open Font License 1.1"), Type.caption)
             Txt(t("Built with Kotlin and Compose Multiplatform"), Type.caption)
+            // Feedback: the repository's issues (opens in the browser).
+            val uri = androidx.compose.ui.platform.LocalUriHandler.current
+            Txt(t("Feedback and ideas: github.com/Diavolezza/LoadShift/issues"), Type.style(13, FontWeight.SemiBold, Palette.accent),
+                Modifier.clickable { uri.openUri("https://github.com/Diavolezza/LoadShift/issues") })
         }
         // All scenarios open: launch option "unlock" (D19), not a switch here.
         ResetProgress()

@@ -12,7 +12,15 @@ The game is a simulation, not a race: pause at any time, plan in peace, and let 
 to be decided. Each scenario introduces one idea and names its technical term; a debrief compares your result with
 a reference operator and shows "what if" with other rules.
 
-**Play it in the browser: https://diavolezza.github.io/LoadShift/** (built from `main` on every push).
+**Play it in the browser: https://diavolezza.github.io/LoadShift/** (built from `main` on every push). No sign-up;
+the progress stays in the browser.
+
+| Operations | Engineering | Portfolio |
+|---|---|---|
+| ![Operations: autoscaling in a winter campaign](docs/screenshots/operations.png) | ![Engineering: tenancy models of an HR software](docs/screenshots/engineering.png) | ![Portfolio: a marginal abatement cost curve](docs/screenshots/portfolio.png) |
+
+Teaching with it: [docs/TEACHING.md](docs/TEACHING.md). Feedback and ideas are welcome as
+[issues](https://github.com/Diavolezza/LoadShift/issues).
 
 The app speaks English and German (switch on the start page); everything in this repository is written in English.
 
@@ -61,7 +69,7 @@ the rest after B4 and the capstone B12 after B8; in Engineering E3 after E2; in 
 can be reset in the About dialog. A player who is stuck can uncover the solution on the
 end card and put it into the task. The start page continues with the next open
 scenario and shows one tab per track; a glossary collects every technical term. `docs/CONCEPT.md`, section 9.4, maps every scenario to the learning goals of the
-iSAQB Advanced Level module GREEN, for courses that follow it. More scenarios are planned (section 9).
+iSAQB Advanced Level module GREEN, for courses that follow it.
 
 ## Running the game
 

@@ -15,4 +15,6 @@ fun main() {
     ComposeViewport(document.body!!) {
         App(LaunchOptions.parse(pairs))
     }
+    // The page shows "Loading …" until the app is there (index.html).
+    document.getElementById("loading")?.remove()
 }

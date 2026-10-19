@@ -800,8 +800,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Build-Agents nur auf Abruf",
     "Build pipeline" to
         "Build-Pipeline",
-    "Build software that does the same work with less – measure first, cache what repeats, size AI models to the task." to
-        "Baue Software, die dieselbe Arbeit mit weniger erledigt – erst messen, Wiederholtes cachen, KI-Modelle passend wählen.",
+    "Build software and architectures that do the same work with less – measure first, cache what repeats, choose the pattern that fits the problem." to
+        "Baue Software und Architekturen, die dieselbe Arbeit mit weniger erledigen – erst messen, Wiederholtes cachen, das Muster wählen, das zum Problem passt.",
     "Building block" to
         "Baustein",
     "Built for a project that ended two years ago" to
@@ -1500,6 +1500,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Rückmeldung %@ min (höchstens %lld min)",
     "Feedback (min)" to
         "Rückmeldung (min)",
+    "Feedback and ideas: github.com/Diavolezza/LoadShift/issues" to
+        "Rückmeldungen und Ideen: github.com/Diavolezza/LoadShift/issues",
     "Feedback within 20 minutes, UI tests before the release and less CO₂ than the reference" to
         "Rückmeldung innerhalb von 20 Minuten, UI-Tests vor dem Release und weniger CO₂ als die Referenz",
     "Feedback without waiting for a free agent" to

@@ -147,7 +147,7 @@ private fun AbatementTopBar(game: AbatementController, onExit: () -> Unit, compa
                 Txt(if (game.finished) t("Plan carried out") else t("The plan"), Type.style(18, FontWeight.SemiBold))
             }
             Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp)) {
-                Metric(t("According to the list"), t("−%@ t", tonnes(game.promisedKg)))
+                Metric(t("According to the list"), if (game.promisedKg > 0) t("−%@ t", tonnes(game.promisedKg)) else "0 t")
                 Metric(t("Budget left"), euros(game.left))
             }
         }
@@ -166,7 +166,7 @@ private fun AbatementTopBar(game: AbatementController, onExit: () -> Unit, compa
             Txt(if (game.finished) t("Plan carried out") else t("The plan"), Type.style(24, FontWeight.SemiBold))
         }
         Row(Modifier.align(Alignment.CenterEnd), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(22.dp)) {
-            Metric(t("According to the list"), t("−%@ t", tonnes(game.promisedKg)))
+            Metric(t("According to the list"), if (game.promisedKg > 0) t("−%@ t", tonnes(game.promisedKg)) else "0 t")
             Metric(t("Budget left"), euros(game.left))
         }
     }
