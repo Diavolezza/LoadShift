@@ -52,8 +52,6 @@ internal val GERMAN: Map<String, String> = mapOf(
         "%@ – %lld Quartale, danach %@ weniger CO₂.",
     "%@ – %lld quarters. The new system needs %@ of today's CO₂; it runs next to the old one from the start. The old system runs until it is switched off." to
         "%@ – %lld Quartale. Das neue System braucht %@ des heutigen CO₂; es läuft vom Start an neben dem alten. Das alte System läuft, bis es abgeschaltet wird.",
-    "%@ – you: %@; solution: %@" to
-        "%@ – du: %@; Lösung: %@",
     "%@ € (%@ €)" to
         "%1\$@ € (%2\$@ €)",
     "%@ € in three years" to
@@ -428,8 +426,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "nach %@",
     "After a storm thousands of customers report damage at the same time; the portal takes every report." to
         "Nach einem Sturm melden Tausende gleichzeitig Schäden; das Portal nimmt jede Meldung an.",
-    "After the forecast changed – you: did not plan again; solution: planned again with the latest forecast" to
-        "Nach der Prognoseänderung – du: nicht neu geplant; Lösung: mit neuester Prognose neu geplant",
+    "After the forecast changed" to
+        "Nachdem sich die Prognose geändert hat",
     "agents %@" to
         "Agents %@",
     "Agents and environments always on, all tests with every commit (reference)" to
@@ -568,8 +566,6 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Autoscaling bei %1\$@, mindestens %2\$lld Server %3\$@–%4\$@",
     "Autoscaling at %@, every day at least %lld servers 18:00–22:00" to
         "Autoscaling bei %1\$@, jeden Tag mindestens %2\$lld Server 18:00–22:00",
-    "Autoscaling at %@, on day 2 at least %lld servers 18:00–22:00" to
-        "Autoscaling bei %1\$@, an Tag 2 mindestens %2\$lld Server 18:00–22:00",
     "Autoscaling at 50 %, 20 °C (reference)" to
         "Autoscaling bei 50 %, 20 °C (Referenz)",
     "Autoscaling at 50 %, 27 °C" to
@@ -1112,6 +1108,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Design-Werkzeug",
     "Designing and building web pages so that they transfer and compute as little as possible: images in modern formats and the right size, no media that plays by itself, less third-party code. It counts the network and the users' devices, not only the servers – and it usually makes pages faster." to
         "Webseiten so gestalten und bauen, dass sie so wenig wie möglich übertragen und rechnen: Bilder in modernen Formaten und passender Größe, keine Medien, die von selbst abspielen, weniger Code von Dritten. Es zählt das Netz und die Geräte der Nutzenden, nicht nur die Server – und macht Seiten meist schneller.",
+    "did not plan again" to
+        "nicht neu geplant",
     "Do not ask the supplier · +%@" to
         "Anbieter doch nicht fragen · +%@",
     "Doing more when the electricity is clean and less when it is dirty – by Time Shifting, Location Shifting and Demand Shaping. Together with energy efficiency and hardware efficiency it is one of the three principles of the Green Software Foundation; in a dark doldrums all three are needed." to
@@ -1994,6 +1992,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "geplant",
     "planned %@" to
         "geplant %@",
+    "planned again with the latest forecast" to
+        "mit der neuesten Prognose neu geplant",
     "Planned by the forecast (from scenario O3)" to
         "Nach Prognose geplant (ab Szenario B3)",
     "Planned with the forecast of %@." to
@@ -2364,6 +2364,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Bisher %@ t CO₂",
     "Solar panels on the data center's roof" to
         "Photovoltaik auf dem Dach des Rechenzentrums",
+    "Solution: %@" to
+        "Lösung: %@",
     "Sources of data" to
         "Datenquellen",
     "Spain" to
@@ -3070,6 +3072,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Du hast die Regeln während des Laufs geändert; die Lösung hat sie von Anfang an.",
     "You run the data center of a web shop in Germany. Its 20 servers are sized for the Christmas season. Today is an ordinary autumn day: in the evening many people shop, at night hardly anyone. It is midnight, and the previous shift has left every server on." to
         "Du betreibst das Rechenzentrum eines Webshops in Deutschland. Seine 20 Server sind für das Weihnachtsgeschäft ausgelegt. Heute ist ein gewöhnlicher Herbsttag: Abends kaufen viele ein, nachts kaum jemand. Es ist Mitternacht, und die vorige Schicht hat alle Server laufen lassen.",
+    "You: %@" to
+        "Du: %@",
     "your architecture" to
         "deine Architektur",
     "Your batch cluster: grey servers are off, light blue ones are booting, the amber bar shows a server working on a job." to

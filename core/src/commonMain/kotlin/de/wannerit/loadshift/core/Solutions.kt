@@ -23,15 +23,21 @@ data class Solution(
 )
 
 object Solutions {
-    /** Servers by hand: enough for the expected load of the next 90 minutes at 80 % (changes only). */
+    /**
+     * Servers by hand, once an hour on the full hour – what a player can follow: enough for the expected load of the
+     * next 90 minutes at 80 %, the highest of the hour (changes only).
+     */
     fun serverPlan(scenario: Scenario): Map<Int, Int> {
         val perServer = (scenario.fleet.firstOrNull()?.kind?.capacity ?: 20) * 800
+        fun needed(tick: Int): Int {
+            val expected = (tick..tick + ServerKind.BOOT_TICKS + GameTime.TICKS_PER_HOUR).maxOf { scenario.interactive.expected(it) }
+            return ((expected * 1_000 + perServer - 1) / perServer).coerceAtMost(scenario.serverCount)
+        }
         val plan = linkedMapOf<Int, Int>()
         var last = -1
-        for (tick in scenario.startTick until scenario.endTick) {
-            val expected = (tick..tick + ServerKind.BOOT_TICKS + GameTime.TICKS_PER_HOUR).maxOf { scenario.interactive.expected(it) }
-            val n = ((expected * 1_000 + perServer - 1) / perServer).coerceAtMost(scenario.serverCount)
-            if (n != last) { plan[tick] = n; last = n }
+        for (hour in scenario.startTick until scenario.endTick step GameTime.TICKS_PER_HOUR) {
+            val n = (hour until minOf(hour + GameTime.TICKS_PER_HOUR, scenario.endTick)).maxOf { needed(it) }
+            if (n != last) { plan[hour] = n; last = n }
         }
         return plan
     }
@@ -59,11 +65,9 @@ object Solutions {
             Control.CACHING in c -> Solution(start.copy(cache = CacheConfig(1, listOf(1_440, 15, 1, 0, 0), approximateCount = true, materializedView = true, invalidate = true)))
             Control.PLACEMENT in c -> Solution(Policy(CapacityMode.Placed(listOf(0, 0, 1, 2, 3, 4, 4, 5, 0, 1, 2, 3, 4, 5, 0, 2, 4, 5, 1, 3, 2, 2, 5, 5))))
             Control.BATCH_BY_HAND in c || Control.BATCH_RULES in c -> Solution(Policy(start.capacity, BatchMode.Greenest), replanAt = revised)
-            Control.CAPACITY_RULES in c -> {
-                // The campaign is announced for day 2 only: the minimum on that evening, not every evening.
-                val target = (start.capacity as? CapacityMode.Autoscale)?.targetUtilization ?: 800
-                Solution(start, changes = mapOf(GameTime.at(1, 12).tick to Policy(CapacityMode.Autoscale(target, ScheduledMinimum(26, 18, 22)))))
-            }
+            // Set once at the start: less headroom all day, a minimum for the evening of the campaign. A minimum only on
+            // day 2 would save a little more, but it needs a change at the right time during the run.
+            Control.CAPACITY_RULES in c -> Solution(Policy(CapacityMode.Autoscale(850, ScheduledMinimum(22, 18, 22))))
             else -> null
         }
     }

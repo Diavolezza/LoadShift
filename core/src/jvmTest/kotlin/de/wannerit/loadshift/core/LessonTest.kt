@@ -1196,4 +1196,30 @@ class LessonTest {
         report(0, lines)
         assertTrue(failed.isEmpty(), "solutions below three stars: $failed")
     }
+
+    /**
+     * A player follows the solution by hand, not to the tick: the servers of O1 switched up to 30 minutes late, the
+     * new plan of O12 (no pause when the forecast changes) up to two hours late. Still three stars.
+     */
+    @Test fun solutionsHoldWhenPlayedByHand() {
+        val failed = mutableListOf<String>()
+        val night = Scenario.NIGHT_SHIFT
+        val plan = Solutions.serverPlan(night)
+        for (lag in 0..2) {
+            val changes = plan.entries.associate { (tick, n) ->
+                (if (tick == night.startTick) tick else tick + lag) to night.initialPolicy.copy(capacity = CapacityMode.Manual(n))
+            }
+            val totals = Simulation.replay(night, changes.getValue(night.startTick), changes = changes).totals
+            if (night.stars(totals, Simulation.reference(night).totals) < 3) failed += "O1 +${lag * 15} min"
+        }
+        for (s in Scenario.ALL) {
+            val sol = Solutions.of(s) ?: continue
+            if (sol.replanAt.isEmpty() || s.controls.size < 2) continue // a single-control scenario pauses for the new forecast
+            for (lag in listOf(4, 8)) {
+                val totals = Simulation.replay(s, sol.policy ?: s.initialPolicy, sol.replanAt.map { it + lag }.toSet(), sol.changes).totals
+                if (s.stars(totals, Solutions.referenceTotals(s)) < 3) failed += "${s.label} replan +${lag * 15} min"
+            }
+        }
+        assertTrue(failed.isEmpty(), "solutions that fail when played a little late: $failed")
+    }
 }

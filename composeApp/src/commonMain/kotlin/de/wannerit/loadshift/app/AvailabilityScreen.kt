@@ -456,7 +456,8 @@ fun WhatIfCard(rows: List<Triple<String, Long, Int>>, best: Int, subtitle: Strin
  * clock, load the model solution into the screen. Afterwards a result in that scenario counts at most one star.
  */
 @Composable
-fun SolutionBar(scenario: Int, hidden: Int, onLoad: (() -> Unit)?, steps: List<String> = emptyList(), clock: Boolean = false, differences: List<String>? = null) {
+fun SolutionBar(scenario: Int, hidden: Int, onLoad: (() -> Unit)?, steps: List<String> = emptyList(), clock: Boolean = false,
+    differences: List<GameController.Difference>? = null) {
     val seen = Progress.revealed(scenario)
     if (!seen && hidden == 0) return
     Spacer(Modifier.height(8.dp))
@@ -466,18 +467,41 @@ fun SolutionBar(scenario: Int, hidden: Int, onLoad: (() -> Unit)?, steps: List<S
     }
     if (differences != null) {
         Txt(t("What your run did differently"), Type.style(15, FontWeight.SemiBold))
+        Spacer(Modifier.height(4.dp))
         if (differences.isEmpty()) Txt(t("Your settings at the end match the solution."), Type.callout)
-        for (d in differences) Txt("• $d", Type.callout)
-        Spacer(Modifier.height(6.dp))
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            for (d in differences) Bullet {
+                if (d.mine == null) Txt(d.aspect, Type.callout)
+                else {
+                    Txt(d.aspect, Type.style(15, FontWeight.SemiBold))
+                    Txt(t("You: %@", d.mine), Type.callout)
+                    Txt(t("Solution: %@", d.theirs ?: ""), Type.callout)
+                }
+            }
+        }
+        Spacer(Modifier.height(14.dp))
     }
     if (steps.isNotEmpty()) {
         Txt(t("The solution"), Type.style(15, FontWeight.SemiBold))
-        for (step in steps) Txt("• $step", Type.callout)
-        Spacer(Modifier.height(6.dp))
+        Spacer(Modifier.height(4.dp))
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            for (step in steps) Bullet { Txt(step, Type.callout) }
+        }
+        Spacer(Modifier.height(14.dp))
     }
     if (onLoad != null) {
         PrimaryButton(t("Put the solution into the task"), onClick = onLoad)
+        Spacer(Modifier.height(8.dp))
         Txt(if (clock) t("A new run starts with the solution in the panel; press play and watch it.")
             else t("The solution goes into the screen; look at it and carry it out."), Type.caption)
+    }
+}
+
+/** A list item with a hanging indent: the second line starts under the first word, not under the dot. */
+@Composable
+private fun Bullet(content: @Composable () -> Unit) {
+    Row {
+        Txt("•", Type.callout, Modifier.width(16.dp))
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) { content() }
     }
 }

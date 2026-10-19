@@ -805,16 +805,9 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
             }
             sol.servers.isNotEmpty() -> {
                 val plan = sol.servers
-                val hourly = linkedMapOf<Int, Int>()
-                var last = -1
-                for (tick in plan.keys) {
-                    val hour = tick / GameTime.TICKS_PER_HOUR * GameTime.TICKS_PER_HOUR
-                    val v = plan.entries.last { it.key <= hour + GameTime.TICKS_PER_HOUR - 1 }.value
-                    if (v != last && hour !in hourly) { hourly[hour] = v; last = v }
-                }
                 lines += t("Switch to %lld servers at the start.", plan.values.first().toLong())
                 lines += t("Then keep just enough servers on for the expected load of the next 90 minutes at about 80 % – a server needs 30 minutes to start, so switch on before the load rises:")
-                lines += hourly.entries.drop(1).joinToString(" · ") { t("%@ → %lld", at(it.key), it.value.toLong()) }
+                lines += plan.entries.drop(1).joinToString(" · ") { t("%@ → %lld", at(it.key), it.value.toLong()) }
             }
             sol.renewal.isNotEmpty() -> {
                 val sites = scenario.renewal?.sites ?: emptyList()
@@ -838,15 +831,18 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
         return lines
     }
 
+    /** One line of the comparison with the solution: an aspect with both settings, or a remark alone. */
+    data class Difference(val aspect: String, val mine: String? = null, val theirs: String? = null)
+
     /**
      * The player's run against the solution: what differs at the start and at the end of the run, and the steps the
      * solution takes that the run did not – so that the debrief says what to change, not only what is best.
      */
-    fun differences(): List<String> {
+    fun differences(): List<Difference> {
         val sol = solution ?: return emptyList()
-        val lines = mutableListOf<String>()
+        val lines = mutableListOf<Difference>()
         fun diff(aspect: String, mine: String, theirs: String) {
-            if (mine != theirs) lines += t("%@ – you: %@; solution: %@", aspect, mine, theirs)
+            if (mine != theirs) lines += Difference(aspect, mine, theirs)
         }
         when {
             sol.sprints.isNotEmpty() -> sol.sprints.forEachIndexed { i, plan ->
@@ -869,11 +865,11 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
                 if (laterChange != null) {
                     val solEnd = sol.changes.values.last()
                     for ((a, b) in aspects(myEnd).zip(aspects(solEnd))) diff(a.first + " " + t("(from %@)", at(laterChange)), a.second, b.second)
-                } else if (myStart != myEnd) lines += t("You changed the rules during the run; the solution has them from the start.")
+                } else if (myStart != myEnd) lines += Difference(t("You changed the rules during the run; the solution has them from the start."))
             }
         }
         if (sol.replanAt.isNotEmpty() && !replanned)
-            lines += t("After the forecast changed – you: did not plan again; solution: planned again with the latest forecast")
+            lines += Difference(t("After the forecast changed"), t("did not plan again"), t("planned again with the latest forecast"))
         return lines
     }
 
@@ -1109,14 +1105,14 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
             fun replay(policy: Policy, changes: Map<Int, Policy> = emptyMap()) = Simulation.replay(scenario, policy, changes = changes).totals
             val start = scenario.initialPolicy
             val target = (start.capacity as? CapacityMode.Autoscale)?.targetUtilization ?: 800
-            val day2 = GameTime.at(1, 12).tick
             val prepared = Policy(CapacityMode.Autoscale(target, ScheduledMinimum(26, 18, 22)))
+            val leaner = Policy(CapacityMode.Autoscale(850, ScheduledMinimum(22, 18, 22)))
             return listOf(
                 t("All servers on (reference)") to reference.totals,
                 t("Autoscaling at %@ (as at the start)", Format.wholePercent(target)) to replay(start),
                 t("Autoscaling at %@", Format.wholePercent(600)) to replay(Policy(CapacityMode.Autoscale(600))),
                 t("Autoscaling at %@, every day at least %lld servers 18:00–22:00", Format.wholePercent(target), 26) to replay(prepared),
-                t("Autoscaling at %@, on day 2 at least %lld servers 18:00–22:00", Format.wholePercent(target), 26) to replay(start, mapOf(day2 to prepared)),
+                t("Autoscaling at %@, every day at least %lld servers 18:00–22:00", Format.wholePercent(850), 22) to replay(leaner),
             )
         }
         val half = scenario.serverCount / 2

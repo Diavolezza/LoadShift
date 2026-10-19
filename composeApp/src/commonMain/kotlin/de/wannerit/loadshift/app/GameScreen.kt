@@ -554,7 +554,11 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
                 // The next scenario, once a star has opened it.
                 val sameTrack = Scenario.ALL.filter { it.track == scenario.track }
                 val next = sameTrack.getOrNull(sameTrack.indexOf(scenario) + 1)?.takeIf { Progress.isUnlocked(it) }
-                if (next != null && onNext != null) {
+                if (next != null && onNext != null && game.stars < 3) {
+                    // Not all stars in this run: trying again comes first.
+                    PrimaryButton(t("Play again")) { game.restart() }
+                    SecondaryButton(t("To scenario %@", next.shownLabel)) { onNext(next) }
+                } else if (next != null && onNext != null) {
                     PrimaryButton(t("To scenario %@", next.shownLabel)) { onNext(next) }
                     SecondaryButton(t("Play again")) { game.restart() }
                 } else {

@@ -265,8 +265,8 @@ private fun initialScreen(options: LaunchOptions): Screen {
         game.setPolicy(Policy(CapacityMode.Placed(listOf(0, 0, 1, 2, 3, 4, 4, 5, 0, 1, 2, 3, 4, 5, 0, 2, 4, 5, 1, 3, 2, 2, 5, 5))))
         game.advance(options.ticks)
     } else if (options.careful && Control.CAPACITY_RULES in scenario.controls) {
-        // Like a careful player: autoscaling with a minimum for the campaign.
-        game.setPolicy(Policy(CapacityMode.Autoscale(800, ScheduledMinimum(26, 18, 22))))
+        // Like a careful player: less headroom, a minimum for the evening of the campaign.
+        game.setPolicy(Policy(CapacityMode.Autoscale(850, ScheduledMinimum(22, 18, 22))))
         game.advance(options.ticks)
     } else if (options.careful) {
         // Switch like a careful player: enough servers for the next 90 minutes at 80 % utilization.
