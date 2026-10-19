@@ -52,6 +52,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "%@ – %lld Quartale, danach %@ weniger CO₂.",
     "%@ – %lld quarters. The new system needs %@ of today's CO₂; it runs next to the old one from the start. The old system runs until it is switched off." to
         "%@ – %lld Quartale. Das neue System braucht %@ des heutigen CO₂; es läuft vom Start an neben dem alten. Das alte System läuft, bis es abgeschaltet wird.",
+    "%@ – you: %@; solution: %@" to
+        "%@ – du: %@; Lösung: %@",
     "%@ € (%@ €)" to
         "%1\$@ € (%2\$@ €)",
     "%@ € in three years" to
@@ -420,6 +422,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "nach %@",
     "After a storm thousands of customers report damage at the same time; the portal takes every report." to
         "Nach einem Sturm melden Tausende gleichzeitig Schäden; das Portal nimmt jede Meldung an.",
+    "After the forecast changed – you: did not plan again; solution: planned again with the latest forecast" to
+        "Nach der Prognoseänderung – du: nicht neu geplant; Lösung: mit neuester Prognose neu geplant",
     "agents %@" to
         "Agents %@",
     "Agents and environments always on, all tests with every commit (reference)" to
@@ -702,6 +706,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Nach der heutigen Einsparung pro Story Point",
     "By your inventory the measures save %@ t a year – %@ of %@ t." to
         "Nach deiner Inventur sparen die Maßnahmen %@ t im Jahr – %@ von %@ t.",
+    "Cache" to
+        "Cache",
     "Cache memory, GB – areas: used, by kind; line: memory of the running cache servers; dotted: expected; red: stale answers" to
         "Cache-Speicher, GB – Flächen: belegt, je Art; Linie: Speicher der laufenden Cache-Server; gepunktet: erwartet; rot: veraltete Antworten",
     "Cache memory: what the running cache servers hold, what is used and what is expected (dotted). Below it the load and capacity of the web servers." to
@@ -1760,6 +1766,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Neue Server kommen zu Beginn des nächsten Quartals. Ein neuer Server leistet so viel wie zwei alte; seine Herstellung verursacht etwa 550 kg CO₂, verteilt über seine sechs Jahre. Alte Server über sechs Jahre fallen nach und nach aus. Der Shop wächst um 15 % pro Jahr.",
     "new servers at %@ € each, %@ t CO₂ each to make" to
         "neue Server zu je %@ €, Herstellung je %@ t CO₂",
+    "New servers in %@" to
+        "Neue Server in %@",
     "Next year, with your measures" to
         "Nächstes Jahr, mit deinen Maßnahmen",
     "Night shift" to
@@ -1966,6 +1974,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Smartphones, t CO₂",
     "Picked up: %@ (%lld GB). Now click a host." to
         "Aufgenommen: %1\$@ (%2\$lld GB). Jetzt einen Host anklicken.",
+    "Pipeline" to
+        "Pipeline",
     "Placement" to
         "Platzierung",
     "Plan" to
@@ -2274,6 +2284,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Server in Betrieb",
     "Servers, t CO₂" to
         "Server, t CO₂",
+    "Services" to
+        "Services",
     "Services at work" to
         "Services arbeiten",
     "Sessions and encryption" to
@@ -2368,6 +2380,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Auf alle Hosts verteilt (Referenz)",
     "Spring" to
         "Frühling",
+    "Sprint %lld" to
+        "Sprint %lld",
     "Sprint %lld is running." to
         "Sprint %lld läuft.",
     "Sprint %lld of %lld" to
@@ -2800,6 +2814,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Verlauf",
     "to %@" to
         "bis %@",
+    "To Oslo" to
+        "Nach Oslo",
     "To scenario %@" to
         "Weiter zu Szenario %@",
     "To the briefing" to
@@ -2840,6 +2856,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Verkehrsinformationen wiederverwendet für",
     "Trained every night on GPUs, region Frankfurt" to
         "Jede Nacht auf GPUs trainiert, Region Frankfurt",
+    "Training" to
+        "Training",
     "Training done" to
         "Training fertig",
     "Training done by the end of day %lld" to
@@ -2984,6 +3002,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Was heute am meisten spart, spart nicht am meisten in einem Jahr. Ein Job mit O(n²) ist anfangs eine Fußnote und nach einem Jahr ein großer Teil der Nächte; das Neuschreiben in einer anderen Sprache spart nur einen konstanten Anteil und blockiert das Team für Monate. Frag, wie die Arbeit wächst, nicht nur, wie groß sie heute ist. Und achte auf den Rebound-Effekt: Frei gewordene Kapazität füllt sich schnell mit neuen Features.",
     "What you did is called %@. %@" to
         "Was du gemacht hast, heißt %1\$@. %2\$@",
+    "What your run did differently" to
+        "Was dein Lauf anders gemacht hat",
     "When the forecast changes: plan again with the latest forecast." to
         "Wenn sich die Prognose ändert: mit neuester Prognose neu planen.",
     "When the pipeline starts" to
@@ -3048,6 +3068,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "ja",
     "You" to
         "Du",
+    "You changed the rules during the run; the solution has them from the start." to
+        "Du hast die Regeln während des Laufs geändert; die Lösung hat sie von Anfang an.",
     "You run the data center of a web shop in Germany. Its 20 servers are sized for the Christmas season. Today is an ordinary autumn day: in the evening many people shop, at night hardly anyone. It is midnight, and the previous shift has left every server on." to
         "Du betreibst das Rechenzentrum eines Webshops in Deutschland. Seine 20 Server sind für das Weihnachtsgeschäft ausgelegt. Heute ist ein gewöhnlicher Herbsttag: Abends kaufen viele ein, nachts kaum jemand. Es ist Mitternacht, und die vorige Schicht hat alle Server laufen lassen.",
     "your architecture" to
@@ -3066,6 +3088,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Deine Racks: graue Server sind aus, hellblaue starten gerade, der blaue Balken zeigt, wie ausgelastet ein Server ist.",
     "Your racks: grey servers are off, the blue bar shows web requests, the amber bar batch jobs." to
         "Deine Racks: Graue Server sind aus, der blaue Balken zeigt Web-Requests, der gelbe Batch-Jobs.",
+    "Your settings at the end match the solution." to
+        "Deine Einstellungen am Ende entsprechen der Lösung.",
     "– plus the team for own hardware, %@ € a year, once for all applications" to
         "– dazu das Team für eigene Hardware, %@ € im Jahr, einmal für alle Anwendungen",
     "−%@ t" to

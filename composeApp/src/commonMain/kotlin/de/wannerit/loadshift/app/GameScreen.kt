@@ -675,6 +675,7 @@ private fun WhatIf(game: GameController) {
             }
         }
         if (hidden > 0) Txt(t("Settings with more stars than you have reached stay hidden until you find them."), Type.caption)
-        SolutionBar(game.scenario.number, hidden, { game.loadSolution() }, steps = remember(game.scenario) { game.solutionSteps() }, clock = true)
+        SolutionBar(game.scenario.number, hidden, { game.loadSolution() }, steps = remember(game.scenario) { game.solutionSteps() }, clock = true,
+            differences = remember(game.version) { game.differences() })
     }
 }

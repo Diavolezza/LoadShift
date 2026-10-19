@@ -305,7 +305,11 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
     }
 
     /** Plans the open jobs again with the latest forecast (greenest-hours rule). */
+    /** The player planned again after the forecast changed (compared with the solution in the debrief). */
+    private var replanned = false
+
     fun replan() {
+        replanned = true
         current.replan()
         forecastNews = false
         changed()
@@ -819,6 +823,53 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
             listOf(t("When the forecast changes: plan again with the latest forecast.")) else emptyList())
     }
 
+    /**
+     * The player's run against the solution: the settings that differ (the rules at the end of the run), and the
+     * steps the solution takes that the run did not – so that the debrief says what to change, not only what is best.
+     */
+    fun differences(): List<String> {
+        val c = scenario.controls
+        val lines = mutableListOf<String>()
+        fun diff(aspect: String, mine: String, theirs: String) {
+            if (mine != theirs) lines += t("%@ – you: %@; solution: %@", aspect, mine, theirs)
+        }
+        fun items(list: Collection<Int>) = if (list.isEmpty()) t("nothing") else list.joinToString(", ") { t(scenario.backlog[it].title) }
+        when {
+            Control.SPRINTS in c -> for ((i, plan) in solutionSprints().withIndex()) {
+                diff(t("Sprint %lld", (i + 1).toLong()), items(sprintPlans[i] ?: emptyList()), items(plan))
+            }
+            Control.LOCATION in c -> {
+                fun jobs(set: Set<Int>) = if (set.isEmpty()) t("nothing") else scenario.batchJobs.withIndex().filter { it.index in set }.joinToString(", ") { t(it.value.name) }
+                diff(t("To Oslo"), jobs(moved), jobs(solutionMoved))
+                diff(t("Batch rule"), ruleText(current.policy), ruleText(current.policy.copy(batch = BatchMode.Greenest)))
+            }
+            Control.RENEWAL in c -> {
+                val sites = scenario.renewal?.sites ?: emptyList()
+                for ((i, s) in sites.withIndex()) diff(t("New servers in %@", t(s.title)), "${renewDraft.getOrElse(i) { 0 }}",
+                    "${if (i == 0) scenario.renewal?.budgetPerYear ?: 0 else 0}")
+            }
+            Control.MANUAL_CAPACITY in c -> {}
+            else -> solutionPolicy()?.let { sol ->
+                val mine = current.policy
+                if (Control.CONTRACT in c) diff(t("Electricity contract"), t(mine.contract.label), t(sol.contract.label))
+                if (Control.CAPACITY_RULES in c || Control.PLACEMENT in c) diff(t("Capacity"), capacityText(mine.capacity), capacityText(sol.capacity))
+                if (Control.COOLING in c) diff(t("Setpoint"), t("%lld °C", mine.setpoint.toLong()), t("%lld °C", sol.setpoint.toLong()))
+                if (Control.BATCH_RULES in c || Control.BATCH_BY_HAND in c) diff(t("Batch jobs"), ruleText(mine), ruleText(sol))
+                if (Control.TRAINING in c) diff(t("Training"), trainingText(mine.training), trainingText(sol.training))
+                scenario.streaming?.let { m -> diff(t("Video quality"), streamingText(mine.streaming, m), streamingText(sol.streaming, m)) }
+                if (Control.CACHING in c) diff(t("Cache"), cacheText(mine.cache), cacheText(sol.cache))
+                scenario.inference?.let { m -> diff(t("Shop assistant"), inferenceText(mine.inference, m), inferenceText(sol.inference, m)) }
+                if (Control.PAGES in c) diff(t("Pages"), pagesText(mine.pages), pagesText(sol.pages))
+                if (Control.PIPELINE in c) diff(t("Pipeline"), pipelineText(mine.pipeline), pipelineText(sol.pipeline))
+                if (Control.SERVICES in c) diff(t("Services"), servicesText(mine.services), servicesText(sol.services))
+                if (startPolicy != null && startPolicy != mine) lines += t("You changed the rules during the run; the solution has them from the start.")
+            }
+        }
+        if (scenario.forecastMiss != null && (isCapstone || Control.BATCH_RULES in c) && !replanned)
+            lines += t("After the forecast changed – you: did not plan again; solution: planned again with the latest forecast")
+        return lines
+    }
+
     /** "What if" for the debrief: the whole scenario replayed with other rules, with the same load and grid mix. */
     fun whatIf(): List<Pair<String, Totals>> {
         if (scenario.location != null) {
@@ -1094,6 +1145,7 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
         sprintPlans.clear()
         presetSprints = emptyList()
         presetServers = emptyMap()
+        replanned = false
         stars = 0
         showEnd = false
         urgentJob = null

@@ -456,13 +456,19 @@ fun WhatIfCard(rows: List<Triple<String, Long, Int>>, best: Int, subtitle: Strin
  * clock, load the model solution into the screen. Afterwards a result in that scenario counts at most one star.
  */
 @Composable
-fun SolutionBar(scenario: Int, hidden: Int, onLoad: (() -> Unit)?, steps: List<String> = emptyList(), clock: Boolean = false) {
+fun SolutionBar(scenario: Int, hidden: Int, onLoad: (() -> Unit)?, steps: List<String> = emptyList(), clock: Boolean = false, differences: List<String>? = null) {
     val seen = Progress.revealed(scenario)
     if (!seen && hidden == 0) return
     Spacer(Modifier.height(8.dp))
     if (!seen) {
         SecondaryButton(t("Show the solution")) { Progress.reveal(scenario) }
         return
+    }
+    if (differences != null) {
+        Txt(t("What your run did differently"), Type.style(15, FontWeight.SemiBold))
+        if (differences.isEmpty()) Txt(t("Your settings at the end match the solution."), Type.callout)
+        for (d in differences) Txt("• $d", Type.callout)
+        Spacer(Modifier.height(6.dp))
     }
     if (steps.isNotEmpty()) {
         Txt(t("The solution"), Type.style(15, FontWeight.SemiBold))
