@@ -53,7 +53,19 @@
                 var d = document.getElementById(p[0]).contentWindow.document;
                 var l = d.getElementById("loading");
                 v = "body children " + d.body.children.length + " · loading " + (l ? (l.isConnected + " / " + getComputedStyle(l).display + " / " + l.innerText.replace(/\s+/g, " ").slice(0, 160)) : "none") +
-                    " · canvas " + d.getElementsByTagName("canvas").length + " · errors: " + errs[p[0]].join(" | ");
+                    " · canvas " + d.getElementsByTagName("canvas").length + " · errors: " + errs[p[0]].join(" | ") +
+                    " · app started: " + !!document.getElementById(p[0]).contentWindow.loadShiftRunning;
+                var c = d.body.children[0];
+                if (c && p[0] === "f2") {
+                    var rc = c.getBoundingClientRect();
+                    v += " · first child " + c.tagName + " " + Math.round(rc.width) + "x" + Math.round(rc.height);
+                    var sr = c.shadowRoot;
+                    if (sr) {
+                        var cv = sr.querySelectorAll("canvas");
+                        v += " · shadow canvas " + cv.length;
+                        if (cv.length) { var r2 = cv[0].getBoundingClientRect(); v += " " + cv[0].width + "x" + cv[0].height + " shown " + Math.round(r2.width) + "x" + Math.round(r2.height); }
+                    } else v += " · no shadow root";
+                }
             } catch (e) { v = "error " + e; }
             out.push([p[1], v]);
         });

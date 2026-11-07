@@ -82,6 +82,7 @@
         window.addEventListener("unhandledrejection", function (e) { failed(e.reason && (e.reason.message || e.reason)); });
         // Called by the app once it runs (main.kt); the loading screen goes after its first frames.
         window.loadShiftStarted = function () {
+            window.loadShiftRunning = true;
             setTimeout(function () { readyAt = Date.now(); if (!broken) box.style.display = "none"; }, 800);
         };
         var s = document.createElement("script");
