@@ -19,6 +19,10 @@ the progress stays in the browser.
 |---|---|---|
 | ![Operations: autoscaling in a winter campaign](docs/screenshots/operations.png) | ![Engineering: tenancy models of an HR software](docs/screenshots/engineering.png) | ![Portfolio: a marginal abatement cost curve](docs/screenshots/portfolio.png) |
 
+Safari (on the Mac, and every browser on iPhone and iPad) gets the app compiled to JavaScript: its WebAssembly
+compiler draws Compose/Wasm apps blank. All other browsers get the WebAssembly build. Phones get a hint that the
+game needs a tablet or a computer.
+
 Teaching with it: [docs/TEACHING.md](docs/TEACHING.md). Feedback and ideas are welcome as
 [issues](https://github.com/Diavolezza/LoadShift/issues).
 
