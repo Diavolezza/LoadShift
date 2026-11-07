@@ -15,6 +15,8 @@ fun main() {
     ComposeViewport(document.body!!) {
         App(LaunchOptions.parse(pairs))
     }
-    // The page shows "Loading …" until the app is there (index.html).
-    document.getElementById("loading")?.remove()
+    // The page shows "Loading …" until the app is there, and an error instead of a blank page (index.html).
+    started()
 }
+
+private fun started(): Unit = js("window.loadShiftStarted && window.loadShiftStarted()")

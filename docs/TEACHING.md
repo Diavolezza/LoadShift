@@ -7,7 +7,8 @@ them and shows "what if" with other decisions. Stars are feedback for the player
 ## Getting started
 
 - **In the browser:** https://diavolezza.github.io/LoadShift/ – nothing to install, no sign-up. The progress stays in
-  the browser on that device; nothing is sent anywhere.
+  the browser on that device; nothing is sent anywhere. It needs a tablet or a computer (about 1000 × 600 pixels or
+  more); on a phone the page says so and offers to open the game anyway.
 - **Language:** English or German, switched on the start page, or with `?lang=de` / `?lang=en` in the address.
 - **All scenarios open:** add `?unlock` to the address (for example `https://diavolezza.github.io/LoadShift/?unlock`),
   or start the desktop app with `./build.sh desktop unlock`. Without it, a scenario opens with a star only where it
