@@ -23,5 +23,44 @@
     try { localStorage.setItem("loadshift.check", "1"); add("localStorage", localStorage.getItem("loadshift.check") === "1"); } catch (e) { add("localStorage", "error " + e); }
     document.getElementById("t").innerHTML = rows.join("");
 </script>
+<h2>Main page · Hauptseite</h2>
+<p>Two copies of the game page, the second one with "Open anyway". After 15 seconds the table below says what they show. · Zwei Kopien der Spielseite, die zweite mit „Trotzdem öffnen“. Nach 15 Sekunden steht unten, was sie zeigen.</p>
+<iframe id="f1" style="width:100%;height:220px;border:1px solid #999"></iframe>
+<iframe id="f2" style="width:100%;height:220px;border:1px solid #999"></iframe>
+<table id="r"><tr><td>Result</td><td>waiting … / warte …</td></tr></table>
+<script>
+    var stamp = Date.now();
+    var probes = [["f1", "index.html?probe=" + stamp], ["f2", "index.html?anyway&probe=" + stamp]];
+    var errs = { f1: [], f2: [] };
+    probes.forEach(function (p) {
+        var f = document.getElementById(p[0]);
+        f.onload = function () {
+            try {
+                f.contentWindow.addEventListener("error", function (e) { errs[p[0]].push(e.message); });
+                f.contentWindow.addEventListener("unhandledrejection", function (e) { errs[p[0]].push("rejection: " + (e.reason && (e.reason.message || e.reason))); });
+            } catch (e) { errs[p[0]].push("no access: " + e); }
+        };
+        f.src = p[1];
+    });
+    fetch("index.html?fetch=" + stamp).then(function (r) { return r.text(); }).then(function (t) {
+        out.push(["index.html", t.length + " characters · new version: " + (t.indexOf("anyway") >= 0)]);
+    }).catch(function (e) { out.push(["index.html", "fetch error " + e]); });
+    var out = [];
+    setTimeout(function () {
+        probes.forEach(function (p) {
+            var v;
+            try {
+                var d = document.getElementById(p[0]).contentWindow.document;
+                var l = d.getElementById("loading");
+                v = "body children " + d.body.children.length + " · loading " + (l ? (l.isConnected + " / " + getComputedStyle(l).display + " / " + l.innerText.replace(/\s+/g, " ").slice(0, 160)) : "none") +
+                    " · canvas " + d.getElementsByTagName("canvas").length + " · errors: " + errs[p[0]].join(" | ");
+            } catch (e) { v = "error " + e; }
+            out.push([p[1], v]);
+        });
+        document.getElementById("r").innerHTML = out.map(function (o) {
+            return "<tr><td>" + o[0].replace(/[<>&]/g, "") + "</td><td>" + String(o[1]).replace(/[<>&]/g, "") + "</td></tr>";
+        }).join("");
+    }, 15000);
+</script>
 </body>
 </html>
