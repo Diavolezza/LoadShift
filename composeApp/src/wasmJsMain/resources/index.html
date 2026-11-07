@@ -69,12 +69,39 @@
                             function (e) { put("wasm", [k + " failed", e]); throw e; });
                     };
                 });
+                // The drawing surface: which context the app asks for, whether it gets one, and whether it is lost.
+                var origCtx = HTMLCanvasElement.prototype.getContext;
+                HTMLCanvasElement.prototype.getContext = function (type, attrs) {
+                    var ctx = origCtx.apply(this, arguments);
+                    if (!this.__logged) {
+                        this.__logged = true;
+                        put("canvas", ["getContext " + type, JSON.stringify(attrs || {}), ctx ? "ok" : "NULL", this.width + "x" + this.height]);
+                        this.addEventListener("webglcontextlost", function () { put("canvas", ["webgl context LOST"]); });
+                        this.addEventListener("webglcontextcreationerror", function (e) { put("canvas", ["webgl creation error", e.statusMessage]); });
+                        if (ctx && ctx.getParameter) {
+                            try {
+                                var dbg = ctx.getExtension("WEBGL_debug_renderer_info");
+                                put("canvas", ["renderer " + (dbg ? ctx.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : ctx.getParameter(ctx.RENDERER)),
+                                    "version " + ctx.getParameter(ctx.VERSION)]);
+                            } catch (e) { put("canvas", ["info error", e]); }
+                        }
+                    }
+                    return ctx;
+                };
                 put("info", ["UA " + navigator.userAgent, "screen " + screen.width + "x" + screen.height, "window " + innerWidth + "x" + innerHeight]);
                 var ticks = 0;
                 var timer = setInterval(function () {
                     if (++ticks >= 4) clearInterval(timer);
                     var b = document.body, c = b && b.children[0];
                     if (c) { var r = c.getBoundingClientRect(); put("state", ["body children " + b.children.length + ", first " + c.tagName + " " + Math.round(r.width) + "x" + Math.round(r.height) + ", started " + !!window.loadShiftRunning]); }
+                    var cv = null;
+                    document.querySelectorAll("*").forEach(function (e) { if (!cv && e.shadowRoot) cv = e.shadowRoot.querySelector("canvas"); });
+                    if (cv) {
+                        var cr = cv.getBoundingClientRect(), gl = cv.getContext("webgl2") || cv.getContext("webgl");
+                        put("state", ["canvas " + cv.width + "x" + cv.height + " shown " + Math.round(cr.width) + "x" + Math.round(cr.height) + " at " + Math.round(cr.left) + "," + Math.round(cr.top) +
+                            ", visible " + getComputedStyle(cv).visibility + "/" + getComputedStyle(cv).display + "/opacity " + getComputedStyle(cv).opacity +
+                            ", context " + (gl ? (gl.isContextLost() ? "lost" : "alive") : "none")]);
+                    } else put("state", ["no canvas found"]);
                 }, 5000);
             }
             var de = (params.get("lang") || navigator.language || "").toLowerCase().indexOf("de") === 0;
