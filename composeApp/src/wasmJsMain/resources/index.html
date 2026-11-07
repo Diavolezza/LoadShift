@@ -51,6 +51,24 @@
                 });
                 window.addEventListener("error", function (e) { put("window error", [e.message, e.filename + ":" + e.lineno]); });
                 window.addEventListener("unhandledrejection", function (e) { put("rejection", [e.reason]); });
+                // Every download and every WebAssembly start, with its time – to see where loading stops.
+                var origFetch = window.fetch;
+                window.fetch = function (input) {
+                    var url = String(input && input.url || input).split("/").pop().slice(0, 60), t = Date.now();
+                    put("fetch", [url]);
+                    return origFetch.apply(this, arguments).then(function (r) { put("fetched", [url, r.status, (Date.now() - t) + " ms"]); return r; },
+                        function (e) { put("fetch failed", [url, e]); throw e; });
+                };
+                ["instantiate", "instantiateStreaming", "compileStreaming"].forEach(function (k) {
+                    var orig = WebAssembly[k];
+                    if (!orig) return;
+                    WebAssembly[k] = function () {
+                        var t = Date.now();
+                        put("wasm", [k + " start"]);
+                        return orig.apply(WebAssembly, arguments).then(function (r) { put("wasm", [k + " done", (Date.now() - t) + " ms"]); return r; },
+                            function (e) { put("wasm", [k + " failed", e]); throw e; });
+                    };
+                });
                 put("info", ["UA " + navigator.userAgent, "screen " + screen.width + "x" + screen.height, "window " + innerWidth + "x" + innerHeight]);
                 var ticks = 0;
                 var timer = setInterval(function () {

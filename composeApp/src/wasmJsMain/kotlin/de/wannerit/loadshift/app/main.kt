@@ -12,9 +12,12 @@ fun main() {
         val parts = it.split("=", limit = 2)
         parts[0] to parts.getOrNull(1)
     }
+    println("app: main")
     ComposeViewport(document.body!!) {
+        androidx.compose.runtime.LaunchedEffect(Unit) { println("app: first composition done") }
         App(LaunchOptions.parse(pairs))
     }
+    println("app: viewport created")
     // The page shows "Loading …" until the app is there, and an error instead of a blank page (index.html).
     started()
 }
