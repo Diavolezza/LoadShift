@@ -71,8 +71,17 @@
                 });
                 // The drawing surface: which context the app asks for, whether it gets one, and whether it is lost.
                 var origCtx = HTMLCanvasElement.prototype.getContext;
+                // ?gl=pdb (preserveDrawingBuffer), ?gl=opaque (alpha false), ?gl=aa (antialias): other surface settings to try.
+                var glMode = params.get("gl") || "";
                 HTMLCanvasElement.prototype.getContext = function (type, attrs) {
-                    var ctx = origCtx.apply(this, arguments);
+                    if (type && type.indexOf("webgl") === 0 && glMode) {
+                        attrs = Object.assign({}, attrs || {});
+                        if (glMode.indexOf("pdb") >= 0) attrs.preserveDrawingBuffer = true;
+                        if (glMode.indexOf("opaque") >= 0) attrs.alpha = false;
+                        if (glMode.indexOf("aa") >= 0) attrs.antialias = true;
+                        arguments[1] = attrs;
+                    }
+                    var ctx = origCtx.call(this, type, attrs);
                     if (!this.__logged) {
                         this.__logged = true;
                         put("canvas", ["getContext " + type, JSON.stringify(attrs || {}), ctx ? "ok" : "NULL", this.width + "x" + this.height]);
