@@ -33,6 +33,32 @@
         // outside the body (on the html element), where the app does not touch it.
         (function () {
             var params = new URLSearchParams(location.search);
+            // ?debug: everything the page writes to the console, in a panel at the bottom (for devices without developer tools).
+            if (params.has("debug")) {
+                var log = document.createElement("pre");
+                log.style.cssText = "position:fixed;left:0;right:0;bottom:0;height:45%;overflow:auto;margin:0;padding:8px;" +
+                    "background:rgba(255,255,255,0.95);color:#000;font:11px/1.35 Menlo,monospace;z-index:2000;white-space:pre-wrap;border-top:2px solid #c00";
+                document.documentElement.appendChild(log);
+                var t0 = Date.now();
+                var put = function (kind, args) {
+                    var line = ((Date.now() - t0) / 1000).toFixed(1) + "s " + kind + ": " +
+                        Array.prototype.map.call(args, function (a) { try { return a instanceof Error ? a.message + " " + a.stack : typeof a === "object" ? JSON.stringify(a) : String(a); } catch (e) { return String(a); } }).join(" ");
+                    log.textContent += line.slice(0, 600) + "\n";
+                };
+                ["log", "info", "warn", "error"].forEach(function (k) {
+                    var orig = console[k];
+                    console[k] = function () { put(k, arguments); orig.apply(console, arguments); };
+                });
+                window.addEventListener("error", function (e) { put("window error", [e.message, e.filename + ":" + e.lineno]); });
+                window.addEventListener("unhandledrejection", function (e) { put("rejection", [e.reason]); });
+                put("info", ["UA " + navigator.userAgent, "screen " + screen.width + "x" + screen.height, "window " + innerWidth + "x" + innerHeight]);
+                var ticks = 0;
+                var timer = setInterval(function () {
+                    if (++ticks >= 4) clearInterval(timer);
+                    var b = document.body, c = b && b.children[0];
+                    if (c) { var r = c.getBoundingClientRect(); put("state", ["body children " + b.children.length + ", first " + c.tagName + " " + Math.round(r.width) + "x" + Math.round(r.height) + ", started " + !!window.loadShiftRunning]); }
+                }, 5000);
+            }
             var de = (params.get("lang") || navigator.language || "").toLowerCase().indexOf("de") === 0;
             var box = document.createElement("div");
             box.id = "loading";
