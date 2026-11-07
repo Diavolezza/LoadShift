@@ -30,6 +30,14 @@ kotlin {
         }
         binaries.executable()
     }
+    // The same web app compiled to JavaScript, for Safari (its WebAssembly compiler draws the Wasm build blank).
+    js {
+        outputModuleName.set("loadshiftjs")
+        browser {
+            commonWebpackConfig { outputFileName = "loadshift-js.js" }
+        }
+        binaries.executable()
+    }
 
     sourceSets {
         commonMain.configure { kotlin.srcDir(generateBuildInfo) }

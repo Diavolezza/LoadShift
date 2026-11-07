@@ -26,7 +26,10 @@ jobs:
           java-version: 21
       - uses: gradle/actions/setup-gradle@v4
       - name: Build the web app
-        run: ./gradlew :composeApp:wasmJsBrowserDistribution --no-daemon
+        # Kotlin/Wasm for most browsers, Kotlin/JS for Safari (index.html chooses); both in one folder.
+        run: |
+          ./gradlew :composeApp:wasmJsBrowserDistribution :composeApp:jsBrowserDistribution --no-daemon
+          cp -Rn composeApp/build/dist/js/productionExecutable/. composeApp/build/dist/wasmJs/productionExecutable/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: composeApp/build/dist/wasmJs/productionExecutable

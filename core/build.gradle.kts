@@ -10,6 +10,10 @@ kotlin {
     wasmJs {
         nodejs()
     }
+    // Kotlin/JS as well: the web app for Safari, whose WebAssembly compiler draws Compose/Wasm apps blank.
+    js {
+        nodejs()
+    }
 
     sourceSets {
         commonTest.dependencies {

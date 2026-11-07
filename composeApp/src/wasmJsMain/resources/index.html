@@ -161,8 +161,15 @@
                 window.loadShiftRunning = true;
                 setTimeout(function () { readyAt = Date.now(); if (!broken) box.style.display = "none"; }, 800);
             };
+            // Safari (all browsers on iPhone and iPad, Safari on the Mac) gets the app compiled to JavaScript: its
+            // WebAssembly compiler draws the Kotlin/Wasm build blank. ?engine=js or ?engine=wasm to choose by hand.
+            var ua = navigator.userAgent;
+            var webkitOnly = /AppleWebKit/.test(ua) && !/Chrome|Chromium|Edg|OPR|Android/.test(ua) || /iPhone|iPad|iPod/.test(ua) ||
+                (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+            var engine = params.get("engine") || (webkitOnly ? "js" : "wasm");
+            window.loadShiftEngine = engine;
             // The same plain script tag as before 1.0, written while the head is parsed.
-            document.write('<script type="application/javascript" src="loadshift.js"><\/script>');
+            document.write('<script type="application/javascript" src="' + (engine === "js" ? "loadshift-js.js" : "loadshift.js") + '"><\/script>');
         })();
     </script>
 </head>
