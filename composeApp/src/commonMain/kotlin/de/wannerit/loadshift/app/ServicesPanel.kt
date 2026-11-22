@@ -81,10 +81,12 @@ fun ServicesPanel(game: GameController) {
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 for (s in ServiceModel.GPS_TTLS) Chip(ttlText(s), d.gpsTtl == s) { set(d.copy(gpsTtl = s)) }
             }
+            if (d.gpsTtl > model.gpsLimit) Txt(t("Longer than allowed: some answers will be stale."), Type.style(12, FontWeight.SemiBold, Palette.red))
             Txt(t("Traffic information reused for"), Type.caption)
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 for (s in ServiceModel.MAP_TTLS) Chip(ttlText(s), d.mapTtl == s) { set(d.copy(mapTtl = s)) }
             }
+            if (d.mapTtl > model.mapLimit) Txt(t("Longer than allowed: some answers will be stale."), Type.style(12, FontWeight.SemiBold, Palette.red))
             Txt(t("A cache instance (Redis) keeps the answers; without it every request asks both providers."), Type.caption)
         }
 
