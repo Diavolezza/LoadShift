@@ -1005,6 +1005,7 @@ class LessonTest {
         val plans = listOf(
             "along the consultant's curve" to model.alongTheCurve(),
             "curve without certificates" to model.alongTheCurve() - idx("Guarantees of origin for the own data center"),
+            "curve, the certificates' money for the next measures" to model.alongTheCurve(skip = idx("Guarantees of origin for the own data center")),
             "best plan" to model.best(),
             "without certificates and laptops, no cloud move" to idx("Switch the test environments off at night and at weekends",
                 "Move the analytics platform to Stockholm", "Rightsize the analytics cluster from 120 to 60 VMs", "Smaller recommendation model, trained once a week",
@@ -1021,6 +1022,11 @@ class LessonTest {
         fun stars(name: String) = model.stars(results.getValue(name), scenario.goals)
         // Along the curve: certificates first, the test environments and the analytics cluster twice – one star.
         assertEquals(1, stars("along the consultant's curve"))
+        // The certificates' money spent on the next measures of the curve saves real CO₂ – and that plan is the best one
+        // within the budget (the what-if of P2 shows both in one row).
+        assertEquals(idx("Guarantees of origin for the own data center"), model.certificates)
+        assertTrue(results.getValue("curve, the certificates' money for the next measures").savedKg > results.getValue("along the consultant's curve").savedKg)
+        assertEquals(model.best(), model.alongTheCurve(skip = model.certificates))
         assertEquals(3, stars("best plan"))
         // Leaving out the second measure for the test environments costs the third star: overlapping measures still add a little.
         assertEquals(2, stars("without certificates and laptops, no cloud move"))

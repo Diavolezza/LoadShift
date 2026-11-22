@@ -564,8 +564,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Alle drei, ohne neue Planung nach dem Prognose-Update",
     "Along the consultant's curve" to
         "Entlang der Kurve des Beratungshauses",
-    "Along the curve, without the certificates" to
-        "Entlang der Kurve, ohne die Zertifikate",
+    "Along the curve, the certificates' money for the next measures – also the best plan within the budget" to
+        "Entlang der Kurve, das Geld der Zertifikate für die nächsten Maßnahmen – zugleich der beste Plan im Budget",
     "always on" to
         "immer an",
     "An architecture pattern in which data flows through a chain of independent steps (filters) connected by pipes; each step does one thing." to

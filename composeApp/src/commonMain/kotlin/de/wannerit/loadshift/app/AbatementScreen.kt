@@ -93,11 +93,11 @@ class AbatementController(val scenario: Scenario, fresh: Boolean = false) {
     }
 
     fun whatIf(): List<Pair<String, AbatementResult>> {
-        val certificates = model.measures.indices.filter { model.measures[it].target == null && model.measures[it].onSiteKgPerYear == 0L }.toSet()
+        // The certificates change the report, not the grid: their money buys the next measure on the curve instead – and that
+        // is the best plan within the budget (LessonTest.p2WhereToStart checks it), so it is one row.
         return listOf(
             t("Along the consultant's curve") to model.result(model.alongTheCurve()),
-            t("Along the curve, without the certificates") to model.result(model.alongTheCurve() - certificates),
-            t("The best plan within the budget") to model.result(model.best()),
+            t("Along the curve, the certificates' money for the next measures – also the best plan within the budget") to model.result(model.alongTheCurve(skip = model.certificates)),
         )
     }
 

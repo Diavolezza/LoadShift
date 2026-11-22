@@ -82,11 +82,14 @@ data class AbatementModel(
         return 1 + (if (met.reduction) 1 else 0) + (if (met.special) 1 else 0)
     }
 
-    /** The consultant's way: along the curve from the left, as long as the budget lasts. */
-    fun alongTheCurve(): Set<Int> {
+    /** Certificates: measures without a target and without an effect on site – they change the report, not the grid. */
+    val certificates: Set<Int> get() = measures.indices.filter { measures[it].target == null && measures[it].onSiteKgPerYear == 0L }.toSet()
+
+    /** The consultant's way: along the curve from the left, as long as the budget lasts – leaving out [skip]. */
+    fun alongTheCurve(skip: Set<Int> = emptySet()): Set<Int> {
         var left = budget
         val plan = mutableSetOf<Int>()
-        for (i in consultantOrder) if (measures[i].costEuro <= left) { plan += i; left -= measures[i].costEuro }
+        for (i in consultantOrder) if (i !in skip && measures[i].costEuro <= left) { plan += i; left -= measures[i].costEuro }
         return plan
     }
 
