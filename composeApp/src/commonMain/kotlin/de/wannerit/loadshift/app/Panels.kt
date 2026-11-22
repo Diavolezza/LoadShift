@@ -113,12 +113,17 @@ private fun CapstoneTabs(game: GameController) {
                 GameController.PanelTab.TRAINING -> t("Training")
             }
             val chosen = game.panelTab == i
+            // B12: a dot on the Batch tab while its plan is older than the latest forecast.
+            val dot = tab == GameController.PanelTab.BATCH && game.forecastOutdated
             Box(
                 Modifier.weight(1f).clip(RoundedCornerShape(9.dp)).background(if (chosen) Palette.accent else Color.Transparent)
                     .clickable { game.panelTab = i }.padding(vertical = 8.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                Txt(title, Type.style(15, FontWeight.SemiBold, if (chosen) Color.White else Palette.ink), maxLines = 1)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Txt(title, Type.style(15, FontWeight.SemiBold, if (chosen) Color.White else Palette.ink), maxLines = 1)
+                    if (dot) Box(Modifier.size(9.dp).clip(RoundedCornerShape(50)).background(Palette.amber))
+                }
             }
         }
     }
@@ -291,6 +296,16 @@ private fun BatchRules(game: GameController) {
         Txt(t("Batch rule"), Type.heading)
         Txt(t("A rule sets when each job starts – you no longer plan every job by hand. Choose a rule and apply it; you can change it at any time."), Type.style(15, color = Palette.secondary))
         if (game.forecastNews) ForecastNews(game)
+        else if (game.forecastOutdated) Row(
+            Modifier.fillMaxWidth().background(Palette.amber.copy(alpha = 0.15f), RoundedCornerShape(10.dp)).padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            CheckMark(ok = false, warning = true)
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Txt(t("New forecast since %@: the wind returns about a day later than forecast.", timeText(game.scenario.forecastMiss?.revisedAt ?: 0)), Type.style(15, FontWeight.SemiBold))
+                Txt(t("Plans made with the old forecast may now fall into dirty hours. Look at the new forecast below."), Type.callout)
+            }
+        }
         RuleOption(game.draftKind == GameController.RuleKind.ASAP, { game.draftKind = GameController.RuleKind.ASAP }, t("As soon as possible"), t("Every job starts when it arrives."))
         RuleOption(game.draftKind == GameController.RuleKind.HOUR, { game.draftKind = GameController.RuleKind.HOUR }, t("At a fixed hour"), t("Every job starts at the next %@ after it arrives.", GameTime.at(0, game.draftHour).clockText)) {
             Stepper(GameTime.at(0, game.draftHour).clockText,

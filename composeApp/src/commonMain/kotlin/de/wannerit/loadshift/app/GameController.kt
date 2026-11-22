@@ -302,6 +302,17 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
         }
     }
 
+    /**
+     * B12: the forecast has been revised and the batch plan is older. No pause and no message box – noticing it stays
+     * part of the task – but a hint in the goal bar and on the Batch tab, until the jobs are planned again.
+     */
+    val forecastOutdated: Boolean get() {
+        val revised = scenario.forecastMiss?.revisedAt ?: return false
+        if (!isCapstone || simulation.tick < revised || isFinished) return false
+        val planned = simulation.plannedWithForecastOf
+        return planned == null || planned < revised
+    }
+
     fun dismissForecastNews() {
         forecastNews = false
     }

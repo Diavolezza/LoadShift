@@ -1162,8 +1162,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "CO₂ nach Speicherklasse, heute und mit deinem Plan.",
     "CO₂ data center (kg)" to
         "CO₂ Rechenzentrum (kg)",
-    "CO₂ expected: %@" to
-        "CO₂ erwartet: %@",
+    "CO₂ expected by the forecast: %@" to
+        "CO₂ erwartet laut Prognose: %@",
     "CO₂ from %@" to
         "CO₂ ab %@",
     "CO₂ hourly matched (kg)" to
@@ -2048,6 +2048,10 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Netz, t CO₂",
     "never" to
         "nie",
+    "New forecast since %@" to
+        "Neue Prognose seit %@",
+    "New forecast since %@: the wind returns about a day later than forecast." to
+        "Neue Prognose seit %@: Der Wind kommt etwa einen Tag später zurück als vorhergesagt.",
     "New hardware does more work per kilowatt-hour – a new server does the work of two old ones. But making a server emits CO₂ too, about 550 kg. Whether a new server pays off depends on the grid: where electricity is dirty, the energy it saves outweighs its making within weeks; where it is clean, hardly ever." to
         "Neue Hardware schafft mehr Arbeit pro Kilowattstunde – ein neuer Server leistet so viel wie zwei alte. Aber auch die Herstellung eines Servers verursacht CO₂, etwa 550 kg. Ob sich ein neuer Server lohnt, hängt am Strommix: Wo der Strom schmutzig ist, wiegt die gesparte Energie seine Herstellung in Wochen auf; wo er sauber ist, kaum je.",
     "New offers twice a day; they must be there when the app is opened" to
@@ -3352,8 +3356,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Trainings, Berichte und Suchindex nach Oslo",
     "Trains from now on until the model is done." to
         "Trainiert ab jetzt, bis das Modell fertig ist.",
-    "Trains in the hours with the lowest forecast that are needed before the deadline – with a reserve of a tenth." to
-        "Trainiert in den Stunden mit der niedrigsten Prognose, die bis zur Frist nötig sind – mit einem Zehntel Reserve.",
+    "Trains in the hours with the lowest forecast that are needed before the deadline – with a reserve of a tenth. Decided anew every quarter of an hour, always with the latest forecast." to
+        "Trainiert in den Stunden mit der niedrigsten Prognose, die bis zur Frist nötig sind – mit einer Reserve von einem Zehntel. Wird jede Viertelstunde neu entschieden, immer mit der neuesten Prognose.",
     "Trucks" to
         "LKWs",
     "Tuesday" to

@@ -338,7 +338,7 @@ private fun GoalBar(game: GameController, compact: Boolean = false) {
                 if (!game.hasInference && !game.hasWeb) GoalItem(minOf(totals.sla, totals.worstSiteSla) >= scenario.slaTarget, change != null,
                     if (game.hasRenewal) t("SLA ≥ %@ at each site", Format.percent(scenario.slaTarget)) else t("SLA ≥ %@", Format.percent(scenario.slaTarget)))
                 GoalItem((change ?: 0) < 0, change != null,
-                    if (change == null) t("CO₂ vs. reference") else if (game.isCapstone && !game.isFinished) t("CO₂ expected: %@", Format.changePermille(change))
+                    if (change == null) t("CO₂ vs. reference") else if (game.isCapstone && !game.isFinished) t("CO₂ expected by the forecast: %@", Format.changePermille(change))
                     else t("CO₂ vs. reference: %@", Format.changePermille(change)))
             }
             scenario.contract?.let { model ->
@@ -406,6 +406,14 @@ private fun GoalBar(game: GameController, compact: Boolean = false) {
                         else t("Batch work: no job has run yet"))
                 }
             }
+        }
+        if (game.forecastOutdated) {
+            // B12: a new forecast without a pause; a click opens the Batch tab, where the jobs can be planned again.
+            val revised = scenario.forecastMiss?.revisedAt ?: 0
+            Txt(t("New forecast since %@", timeText(revised)), Type.style(13, FontWeight.SemiBold, Color(0xFFB0741A)),
+                Modifier.clip(RoundedCornerShape(50)).background(Palette.amber.copy(alpha = 0.18f))
+                    .clickable { game.tabs.indexOf(GameController.PanelTab.BATCH).takeIf { it >= 0 }?.let { game.panelTab = it } }
+                    .padding(horizontal = 10.dp, vertical = 4.dp), maxLines = 1)
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
             StarLabel(2, 13.dp)

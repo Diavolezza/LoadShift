@@ -77,7 +77,7 @@ fun TrainingPanel(game: GameController) {
         // When
         RuleOption(!game.trainGreenest, { game.trainGreenest = false }, t("Without a break"), t("Trains from now on until the model is done."))
         RuleOption(game.trainGreenest, { game.trainGreenest = true }, t("Greenest hours"),
-            t("Trains in the hours with the lowest forecast that are needed before the deadline – with a reserve of a tenth."))
+            t("Trains in the hours with the lowest forecast that are needed before the deadline – with a reserve of a tenth. Decided anew every quarter of an hour, always with the latest forecast."))
 
         // Estimate
         val left = maxOf(0L, model.work - totals.trainingDone)
