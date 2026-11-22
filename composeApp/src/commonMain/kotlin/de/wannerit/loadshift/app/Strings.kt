@@ -40,6 +40,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "%@ außerhalb Deutschlands",
     "%@ t CO₂" to
         "%@ t CO₂",
+    "%@ t CO₂ (%@)" to
+        "%@ t CO₂ (%@)",
     "%@ TB" to
         "%@ TB",
     "%@ TB a year" to

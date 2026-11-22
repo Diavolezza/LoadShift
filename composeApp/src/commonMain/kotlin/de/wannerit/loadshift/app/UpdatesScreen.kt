@@ -178,8 +178,12 @@ private fun UpdatesGoals(game: UpdatesController, compact: Boolean) {
             .padding(horizontal = 20.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        Txt(t("Goals"), Type.style(13, FontWeight.SemiBold, Palette.secondary))
-        GoalItem(r.missed.isEmpty(), r.missed.isNotEmpty() || game.finished, t("Every kind of update as fresh as required"))
+        // The goals take the room that is left and scroll sideways if they need more: stars and "Start over" stay visible.
+        Row(if (compact) Modifier else Modifier.weight(1f).horizontalScroll(rememberScrollState()),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+            Txt(t("Goals"), Type.style(13, FontWeight.SemiBold, Palette.secondary))
+            GoalItem(r.missed.isEmpty(), r.missed.isNotEmpty() || game.finished, t("Every kind of update as fresh as required"))
+        }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             StarLabel(2, 13.dp)
             Txt(t("CO₂ %@", shortChange(-scenario.goals.reduction.toLong())), Type.callout)
@@ -188,7 +192,6 @@ private fun UpdatesGoals(game: UpdatesController, compact: Boolean) {
             StarLabel(3, 13.dp)
             Txt(specialShort(scenario.goals.special), Type.callout)
         }
-        Spacer(Modifier.weight(1f))
         StartOverChip { game.startOver() }
     }
 }

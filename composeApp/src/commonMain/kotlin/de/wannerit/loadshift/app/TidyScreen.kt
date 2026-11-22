@@ -199,9 +199,13 @@ private fun TidyGoals(game: TidyController, compact: Boolean = false) {
             .padding(horizontal = 20.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        Txt(t("Goals"), Type.style(13, FontWeight.SemiBold, Palette.secondary))
-        GoalItem(r.overloaded.isEmpty(), r.overloaded.isNotEmpty() || game.finished, t("At most %lld projects at a time", game.model.capacity))
-        GoalItem(r.wronglyEliminated.isEmpty(), r.wronglyEliminated.isNotEmpty() || game.finished, t("Nothing valuable or required by law eliminated"))
+        // The goals take the room that is left and scroll sideways if they need more: stars and "Start over" stay visible.
+        Row(if (compact) Modifier else Modifier.weight(1f).horizontalScroll(rememberScrollState()),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+            Txt(t("Goals"), Type.style(13, FontWeight.SemiBold, Palette.secondary))
+            GoalItem(r.overloaded.isEmpty(), r.overloaded.isNotEmpty() || game.finished, t("At most %lld projects at a time", game.model.capacity))
+            GoalItem(r.wronglyEliminated.isEmpty(), r.wronglyEliminated.isNotEmpty() || game.finished, t("Nothing valuable or required by law eliminated"))
+        }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             StarLabel(2, 13.dp)
             Txt(t("CO₂ %@", shortChange(-scenario.goals.reduction.toLong())), Type.callout)
@@ -210,7 +214,6 @@ private fun TidyGoals(game: TidyController, compact: Boolean = false) {
             StarLabel(3, 13.dp)
             Txt(specialShort(scenario.goals.special), Type.callout)
         }
-        Spacer(Modifier.weight(1f))
         @Suppress("UNUSED_VARIABLE") val unused = ok
         StartOverChip { game.startOver() }
     }

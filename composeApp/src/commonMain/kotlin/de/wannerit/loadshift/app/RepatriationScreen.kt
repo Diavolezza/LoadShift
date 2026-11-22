@@ -152,7 +152,7 @@ private fun RepatriationTopBar(game: RepatriationController, onExit: () -> Unit,
     val metrics: @Composable () -> Unit = {
         Metric(t("Costs in three years"), t("%@ (%@)", millionEuros(r.planEuro), Format.changePermille(-r.savingPermille)),
             if (game.started && r.savingPermille < game.model.savingGoalPermille) Palette.red else Palette.ink)
-        Metric(t("Location-based with making"), t("%@ t CO₂", tonnes(r.planKg)))
+        Metric(t("Location-based with making"), t("%@ t CO₂ (%@)", tonnes(r.planKg), Format.changePermille(-r.reductionPermille)))
         Metric(t("In the report (market-based)"), t("%@ t CO₂", tonnes(r.reportKg)))
     }
     PlayTopBar(game.scenario, onExit, compact, t("Three years"), if (game.finished) t("Plan carried out") else t("The plan"), metrics)
@@ -169,10 +169,14 @@ private fun RepatriationGoals(game: RepatriationController, compact: Boolean = f
             .padding(horizontal = 20.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        Txt(t("Goals"), Type.style(13, FontWeight.SemiBold, Palette.secondary))
-        GoalItem(r.savingPermille >= model.savingGoalPermille, game.started, t("Costs at least %@ lower", Format.wholePercent(model.savingGoalPermille)))
-        GoalItem(r.outsideGermany.isEmpty(), r.outsideGermany.isNotEmpty() || game.finished, t("Customer data stay in Germany"))
-        GoalItem(!r.bookingTooSlow, r.bookingTooSlow || game.finished, t("A booking in the plant under %@ s", Format.number(model.bookingLimitMs / 1_000.0)))
+        // The goals take the room that is left and scroll sideways if they need more: stars and "Start over" stay visible.
+        Row(if (compact) Modifier else Modifier.weight(1f).horizontalScroll(rememberScrollState()),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+            Txt(t("Goals"), Type.style(13, FontWeight.SemiBold, Palette.secondary))
+            GoalItem(r.savingPermille >= model.savingGoalPermille, game.started, t("Costs at least %@ lower", Format.wholePercent(model.savingGoalPermille)))
+            GoalItem(r.outsideGermany.isEmpty(), r.outsideGermany.isNotEmpty() || game.finished, t("Customer data stay in Germany"))
+            GoalItem(!r.bookingTooSlow, r.bookingTooSlow || game.finished, t("A booking in the plant under %@ s", Format.number(model.bookingLimitMs / 1_000.0)))
+        }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             StarLabel(2, 13.dp)
             Txt(t("CO₂ %@", shortChange(-scenario.goals.reduction.toLong())), Type.callout)
@@ -181,7 +185,6 @@ private fun RepatriationGoals(game: RepatriationController, compact: Boolean = f
             StarLabel(3, 13.dp)
             Txt(specialShort(scenario.goals.special), Type.callout)
         }
-        Spacer(Modifier.weight(1f))
         StartOverChip { game.startOver() }
     }
 }
@@ -295,6 +298,15 @@ private fun RepatriationPanel(game: RepatriationController, modifier: Modifier) 
             a.ownServers, Format.wholePercent(a.ownUtilPercent * 10)), Type.callout)
         if (a.queriesPerBooking > 0) Txt(t("A booking in the plant sends %lld queries to it, one after the other.", a.queriesPerBooking), Type.style(15, FontWeight.SemiBold))
         if (a.germanyOnly) Txt(t("A contract keeps its data in Germany."), Type.style(15, FontWeight.SemiBold))
+        // The switch-off belongs to the application, not to a place: right under its facts, before the places (playtest).
+        a.usePercent?.let { use ->
+            Row(Modifier.clip(RoundedCornerShape(8.dp)).clickable { game.toggleOff(a) }.padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Tick(m.offOutsideUse)
+                Txt(t("Off outside its hours of use (on %@ of the time)", Format.wholePercent(use * 10)), Type.style(14))
+            }
+            if (a.onDemandInCloud) Txt(t("In the cloud it already runs only when needed."), Type.caption)
+        }
         for (s in model.places) {
             val fits = s.place != Place.SERVER_ROOM || model.fitsRoom(game.plan, a)
             val facts = buildList {
@@ -311,14 +323,6 @@ private fun RepatriationPanel(game: RepatriationController, modifier: Modifier) 
             RuleOption(m.place == s.place, { game.place(a, s.place) }, t(s.title),
                 facts.joinToString(" · ") + "\n" + t("Costs in three years: %@ €", Format.number(euro.toDouble())) +
                     (if (s.cloud) "" else " " + t("– plus the team for own hardware, %@ € a year, once for all applications", Format.number(model.teamEuroPerYear.toDouble()))))
-        }
-        a.usePercent?.let { use ->
-            Row(Modifier.clip(RoundedCornerShape(8.dp)).clickable { game.toggleOff(a) }.padding(vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Tick(m.offOutsideUse)
-                Txt(t("Off outside its hours of use (on %@ of the time)", Format.wholePercent(use * 10)), Type.style(14))
-            }
-            if (a.onDemandInCloud) Txt(t("In the cloud it already runs only when needed."), Type.caption)
         }
         HDivider()
         Txt(t("Counted are three years. In the cloud the making of the servers is part of each server equivalent; in the colocation new servers are bought; the server room's are already made. A team for own hardware costs %@ € a year.",

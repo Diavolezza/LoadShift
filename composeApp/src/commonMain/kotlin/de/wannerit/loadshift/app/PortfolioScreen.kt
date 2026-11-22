@@ -240,8 +240,12 @@ private fun PortfolioGoals(game: PortfolioController, compact: Boolean = false) 
             .padding(horizontal = 20.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        Txt(t("Goals"), Type.style(13, FontWeight.SemiBold, Palette.secondary))
-        GoalItem(met.rules, game.finished, t("Inventory within ±%@ of the real footprint", Format.wholePercent(game.model.inventoryLimit)))
+        // The goals take the room that is left and scroll sideways if they need more: stars and "Start over" stay visible.
+        Row(if (compact) Modifier else Modifier.weight(1f).horizontalScroll(rememberScrollState()),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+            Txt(t("Goals"), Type.style(13, FontWeight.SemiBold, Palette.secondary))
+            GoalItem(met.rules, game.finished, t("Inventory within ±%@ of the real footprint", Format.wholePercent(game.model.inventoryLimit)))
+        }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             StarLabel(2, 13.dp)
             Txt(t("CO₂ %@", shortChange(-scenario.goals.reduction.toLong())), Type.callout)
@@ -250,7 +254,6 @@ private fun PortfolioGoals(game: PortfolioController, compact: Boolean = false) 
             StarLabel(3, 13.dp)
             Txt(specialShort(scenario.goals.special), Type.callout)
         }
-        Spacer(Modifier.weight(1f))
         StartOverChip { game.startOver() }
     }
 }
