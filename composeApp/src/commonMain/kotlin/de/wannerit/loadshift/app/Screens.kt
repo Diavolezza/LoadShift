@@ -1,5 +1,10 @@
 package de.wannerit.loadshift.app
 
+import androidx.compose.foundation.focusable
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -219,8 +224,13 @@ fun ScenarioListScreen(onLexicon: () -> Unit = {}, onSelect: (Scenario) -> Unit)
             }
         }
         if (about) {
+            // Escape closes it too (playtest): the box takes the keyboard focus while it is open.
+            val focus = remember { androidx.compose.ui.focus.FocusRequester() }
+            androidx.compose.runtime.LaunchedEffect(Unit) { focus.requestFocus() }
             Box(
                 Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.35f))
+                    .focusRequester(focus).focusable()
+                    .onKeyEvent { if (it.key == Key.Escape) { about = false; true } else false }
                     .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { about = false },
                 contentAlignment = Alignment.Center,
             ) {
@@ -627,6 +637,8 @@ private fun SideCard(scenario: Scenario, texts: ScenarioTexts, onStart: () -> Un
             GoalLine(null, 1, t(texts.rules), Type.style(19))
             GoalLine(null, 2, t("CO₂ %@ or better", Format.changePermille(-scenario.goals.reduction.toLong())), Type.style(19))
             GoalLine(null, 3, specialLong(scenario.goals.special), Type.style(19))
+            // Who "the reference" is (playtest E10): the same sentence as on the end card.
+            Txt(t(texts.comparedWith).replaceFirstChar { it.uppercase() }, Type.style(16, color = Palette.secondary))
             // D32: only the scenarios that build on this one wait for its star.
             val opens = Scenario.ALL.filter { it.unlockAfter == scenario.number }.joinToString(", ") { it.shownLabel }
             if (opens.isNotEmpty()) Txt(t("One star opens %@.", opens), Type.style(16, color = Palette.secondary))

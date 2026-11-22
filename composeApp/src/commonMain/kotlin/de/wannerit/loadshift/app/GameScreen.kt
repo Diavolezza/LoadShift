@@ -657,13 +657,13 @@ private fun WhatIf(game: GameController) {
         Txt(t("The same run with exactly the same load and grid mix – only the rules differ:"), Type.style(15, color = Palette.secondary))
         Spacer(Modifier.height(8.dp))
         val pue = game.scenario.cooling != null
-        val labelWeight = if (pue) 0.40f else 0.52f
+        val labelWeight = if (pue) 0.38f else 0.50f
         Row {
             Spacer(Modifier.weight(labelWeight))
             Txt(t("CO₂ vs. you"), Type.caption.copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.18f))
             if (pue) Txt(t("PUE"), Type.caption.copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.12f))
-            Txt(if (game.hasBatch) t("Missed") else if (game.hasInference) t("Quality") else if (game.hasWeb) t("LCP") else if (game.hasPipeline) t("Feedback") else if (game.hasServices) t("Response") else t("SLA"), Type.caption.copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.14f))
-            Spacer(Modifier.weight(0.16f))
+            Txt(if (game.hasBatch) t("Missed") else if (game.scenario.streaming != null) t("Rating") else if (game.hasInference) t("Quality") else if (game.hasWeb) t("LCP") else if (game.hasPipeline) t("Feedback") else if (game.hasServices) t("Response") else t("SLA"), Type.caption.copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.18f), maxLines = 1)
+            Spacer(Modifier.weight(0.14f))
         }
         // Settings with more stars than the player has reached stay hidden: the second run should not be a recipe.
         val best = maxOf(Progress.stars(game.scenario.number), game.stars)
@@ -681,19 +681,23 @@ private fun WhatIf(game: GameController) {
  val pipe = game.scenario.pipeline
                 val svc = game.scenario.services
                 if (svc != null) {
-                    Txt(t("%lld ms", totals.meanLatency), Type.style(15, color = if (totals.meanLatency <= svc.latencyLimit) Palette.ink else Palette.red).copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.14f))
+                    Txt(t("%lld ms", totals.meanLatency), Type.style(15, color = if (totals.meanLatency <= svc.latencyLimit) Palette.ink else Palette.red).copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.18f))
                 } else if (pipe != null) {
-                    Txt(t("%@ min", Format.number(totals.meanFeedback / 10.0, 1)), Type.style(15, color = if (totals.meanFeedback <= pipe.feedbackLimit * 10) Palette.ink else Palette.red).copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.14f))
+                    Txt(t("%@ min", Format.number(totals.meanFeedback / 10.0, 1)), Type.style(15, color = if (totals.meanFeedback <= pipe.feedbackLimit * 10) Palette.ink else Palette.red).copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.18f))
                 } else if (web != null) {
-                    Txt(t("%@ s", Format.number(totals.meanLcp / 10.0, 1)), Type.style(15, color = if (totals.meanLcp <= web.lcpLimit) Palette.ink else Palette.red).copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.14f))
+                    Txt(t("%@ s", Format.number(totals.meanLcp / 10.0, 1)), Type.style(15, color = if (totals.meanLcp <= web.lcpLimit) Palette.ink else Palette.red).copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.18f))
                 } else if (inference != null) {
-                    Txt(Format.percent(totals.meanAnswerQuality), Type.style(15, color = if (totals.meanAnswerQuality >= inference.qualityTarget) Palette.ink else Palette.red).copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.14f))
+                    Txt(Format.percent(totals.meanAnswerQuality), Type.style(15, color = if (totals.meanAnswerQuality >= inference.qualityTarget) Palette.ink else Palette.red).copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.18f))
+                } else if (game.scenario.streaming != null) {
+                    // B9: the stars hang on the viewers' rating, not on the SLA.
+                    val target = game.scenario.streaming!!.ratingTarget
+                    Txt(Format.percent(totals.meanRating), Type.style(15, color = if (totals.meanRating >= target) Palette.ink else Palette.red).copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.18f))
                 } else if (game.hasBatch) {
-                    Txt("${totals.deadlinesMissed}", Type.style(15, color = if (totals.deadlinesMissed == 0) Palette.ink else Palette.red).copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.14f))
+                    Txt("${totals.deadlinesMissed}", Type.style(15, color = if (totals.deadlinesMissed == 0) Palette.ink else Palette.red).copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.18f))
                 } else {
-                    Txt(Format.percent(totals.sla), Type.style(15, color = if (totals.sla >= game.scenario.slaTarget) Palette.ink else Palette.red).copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.14f))
+                    Txt(Format.percent(totals.sla), Type.style(15, color = if (totals.sla >= game.scenario.slaTarget) Palette.ink else Palette.red).copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.18f))
                 }
-                Box(Modifier.weight(0.16f), contentAlignment = Alignment.CenterEnd) {
+                Box(Modifier.weight(0.14f), contentAlignment = Alignment.CenterEnd) {
                     StarRow(game.scenario.stars(totals, ref), 11.dp)
                 }
             }

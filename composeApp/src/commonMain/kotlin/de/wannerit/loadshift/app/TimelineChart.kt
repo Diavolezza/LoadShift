@@ -68,7 +68,9 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
     val batchLane = lane == Lane.JOBS || lane == Lane.ALL || (lane == null && scenario.interactive.peak == 0 && (simulation.jobs.isNotEmpty() || scenario.location != null))
     val density = scope.density
     val left = 44f * density
-    val right = scope.size.width - (if (batchLane) 130f else if (scenario.caching != null) 100f else 74f) * density
+    // The job names stand right of the lanes: as wide as the longest one needs (B10: two charts side by side), at most a third.
+    private val jobLabels: Float = if (!batchLane) 0f else (simulation.jobs.maxOfOrNull { measurer.measure(t(it.spec.name), Type.style(11)).size.width.toFloat() } ?: 0f) + 12f * density
+    val right = scope.size.width - minOf(scope.size.width / 3f, maxOf(jobLabels, (if (batchLane) 130f else if (scenario.caching != null) 100f else 74f) * density))
     val labelBand = 18f * density
 
     fun x(tick: Int): Float = left + (right - left) * (tick - start) / (end - start).toFloat()
@@ -696,7 +698,7 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
                 }
             }
             // On a low chart the names would lie on top of each other; the tooltip still names the jobs.
-            if (rowHeight >= 11f * density) text(t(job.spec.name), Offset(right + 6f * density, y0 + rowHeight / 2), Type.style(11, color = Palette.ink.copy(alpha = 0.8f)))
+            if (rowHeight >= 9f * density) text(t(job.spec.name), Offset(right + 6f * density, y0 + rowHeight / 2), Type.style(if (rowHeight >= 12f * density) 11 else 10, color = Palette.ink.copy(alpha = 0.8f)))
         }
     }
 

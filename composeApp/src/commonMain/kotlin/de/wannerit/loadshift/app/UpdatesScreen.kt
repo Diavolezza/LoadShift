@@ -136,7 +136,7 @@ private fun secondsText(s: Int?): String = when {
     s == null -> "–"
     s < 120 -> t("%lld s", s.toLong())
     else -> t("%lld min", (s / 60).toLong())
-}
+}.replace(' ', '\u00A0') // number and unit stay on one line
 
 @Composable
 fun UpdatesScreen(game: UpdatesController, onExit: () -> Unit, onOverview: (() -> Unit)? = null) {
@@ -216,7 +216,7 @@ private fun KindTable(game: UpdatesController) {
             Txt(t("Update"), Type.caption, Modifier.weight(1f))
             Txt(t("While the app is open"), Type.caption, Modifier.weight(1.3f))
             Txt(t("While it is closed"), Type.caption, Modifier.weight(1.1f))
-            Txt(t("Fresh within"), Type.caption.copy(textAlign = TextAlign.End), Modifier.width(92.dp))
+            Txt(t("Fresh within"), Type.caption.copy(textAlign = TextAlign.End), Modifier.width(112.dp))
         }
         for ((i, k) in model.kinds.withIndex()) {
             val missed = k.name in r.missed
@@ -226,7 +226,7 @@ private fun KindTable(game: UpdatesController) {
                     .clickable { game.selected = i }.padding(horizontal = 12.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Column(Modifier.weight(1f)) {
+                Column(Modifier.weight(1f).padding(end = 10.dp)) {
                     Txt(t(k.name), Type.style(15, FontWeight.SemiBold))
                     Txt(t(k.description), Type.caption, maxLines = 3)
                 }
@@ -236,10 +236,10 @@ private fun KindTable(game: UpdatesController) {
                 FlowRow(Modifier.weight(1.1f).padding(start = 8.dp), horizontalArrangement = Arrangement.spacedBy(5.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                     for (c in k.closedOptions) Chip(closedTitle(c), game.closed(k) == c, !game.finished) { game.selected = i; game.setClosed(k, c) }
                 }
-                Column(Modifier.width(92.dp), horizontalAlignment = Alignment.End) {
+                Column(Modifier.width(112.dp), horizontalAlignment = Alignment.End) {
                     val color = if (missed) Palette.red else Palette.ink
-                    Txt(t("open %@", secondsText(r.openSeconds[k.name])), Type.style(12, FontWeight.SemiBold, color))
-                    if (k.closedOptions.size > 1) Txt(t("closed %@", secondsText(r.closedSeconds[k.name])), Type.style(12, FontWeight.SemiBold, color))
+                    Txt(t("open %@", secondsText(r.openSeconds[k.name])), Type.style(12, FontWeight.SemiBold, color).copy(textAlign = TextAlign.End))
+                    if (k.closedOptions.size > 1) Txt(t("closed %@", secondsText(r.closedSeconds[k.name])), Type.style(12, FontWeight.SemiBold, color).copy(textAlign = TextAlign.End))
                 }
             }
         }

@@ -45,7 +45,7 @@ fun SprintPanel(game: GameController) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Txt(t("Sprint %lld of %lld", day + 1, scenario.days), Type.heading)
         Txt(
-            if (growth != null) t("Each game day stands for a month, with one sprint at its start. The team has %lld story points per sprint for performance – the rest goes into features. Items bigger than a sprint carry over; started items are continued first.", scenario.sprintPoints)
+            if (growth != null) t("Each game day stands for a month, with one sprint at its start. The team has %lld story points per sprint for performance – the rest goes into features. Items bigger than a sprint carry over; started items are continued first, the others in the order you pick them – what you pick first is done first.", scenario.sprintPoints)
             else t("Each game day stands for the week after a sprint. Your team has %lld story points per sprint. Pick items from the backlog and start the sprint – their effect counts from this day on. Items that do not fit carry over into the next sprint.", scenario.sprintPoints),
             Type.style(15, color = Palette.secondary),
         )

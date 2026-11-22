@@ -141,7 +141,8 @@ fun PlacementBoard(game: GameController, modifier: Modifier = Modifier) {
                     HostChart(game, host, Modifier.fillMaxWidth().height(chartHeight))
                     Txt(
                         t("peak %@", Format.number(peak / 1_000.0, 1)),
-                        Type.style(11, FontWeight.SemiBold, if (peak > safe) Palette.red else Palette.secondary),
+                        // Graded (playtest): above the safe share amber – some requests get slow; above the capacity red.
+                        Type.style(11, FontWeight.SemiBold, if (peak > server.kind.capacity * 1_000) Palette.red else if (peak > safe) Color(0xFFB0741A) else Palette.secondary),
                     )
                 }
             }
@@ -228,9 +229,13 @@ fun PlacementPanel(game: GameController) {
         val hot = used.sorted().filter { Packing.expectedPeakMilli(vms, placement, it) > servers[it].kind.capacity * Packing.SAFE }
         for (host in hot) {
             val peak = Packing.expectedPeakMilli(vms, placement, host)
-            Row(Modifier.fillMaxWidth().background(Palette.red.copy(alpha = 0.1f), RoundedCornerShape(10.dp)).padding(10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // Tight (above the safe share: some requests slow at the peak) in amber, too much (above the capacity) in red.
+            val over = peak > servers[host].kind.capacity * 1_000
+            Row(Modifier.fillMaxWidth().background((if (over) Palette.red else Palette.amber).copy(alpha = if (over) 0.1f else 0.15f), RoundedCornerShape(10.dp)).padding(10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 CheckMark(ok = false, warning = true)
-                Txt(t("Host %lld: expected peak %@ of %lld load units – above %@ requests get slow.", host + 1,
+                if (over) Txt(t("Host %lld: expected peak %@ of %lld load units – more than the host can serve.", host + 1,
+                    Format.number(peak / 1_000.0, 1), servers[host].kind.capacity), Type.callout, Modifier.weight(1f))
+                else Txt(t("Host %lld: expected peak %@ of %lld load units – above %@ requests get slow.", host + 1,
                     Format.number(peak / 1_000.0, 1), servers[host].kind.capacity, Format.wholePercent(Packing.SAFE)), Type.callout, Modifier.weight(1f))
             }
         }

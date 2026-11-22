@@ -60,12 +60,12 @@ fun HallView(
             if (batch) LegendSwatch(Palette.slab, t("Batch job"), Palette.batchLoad)
             if (cacheSlots > 0) LegendSwatch(if (gpuRack) Palette.trainingLoad else Palette.cache, if (gpuRack) t("GPU server for the models") else t("Cache server"))
             if (servers.any { it.kind == ServerKind.CPU_OLD }) LegendSwatch(Palette.old, t("Old server"))
-            Spacer(Modifier.weight(1f))
+            // The status takes the room the legend leaves and may wrap (E10: the GPU servers make it long).
             Txt(
                 if (cacheSlots > 0 && gpuRack) t("%lld of %lld servers on + %lld GPU servers · %@ kW IT power", on, servers.size, cacheOn, Format.kilowatts(itPower))
                 else if (cacheSlots > 0) t("%lld of %lld servers on + %lld cache servers · %@ kW IT power", on, servers.size, cacheOn, Format.kilowatts(itPower))
                 else t("%lld of %lld servers on · %@ kW IT power", on, servers.size, Format.kilowatts(itPower)),
-                Type.callout, maxLines = 1,
+                Type.callout.copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(1f), maxLines = 2,
             )
         }
     }

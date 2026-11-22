@@ -528,7 +528,13 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
         }
 
     /** The draft is what runs now. */
-    val draftIsActive: Boolean get() = simulation.policy == draftPolicy
+    val draftIsActive: Boolean get() = normalized(simulation.policy) == normalized(draftPolicy)
+
+    /** B9: no list of qualities means the highest everywhere – the same rule as a list of UHD (else the panel says "not applied"). */
+    private fun normalized(p: Policy): Policy {
+        val n = scenario.streaming?.devices?.size ?: return p
+        return p.copy(streaming = p.streaming.copy(maxQuality = List(n) { p.streaming.maxQuality.getOrElse(it) { Quality.UHD } }))
+    }
 
     fun applyDraft() {
         setPolicy(draftPolicy)
