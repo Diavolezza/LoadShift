@@ -30,7 +30,7 @@ fun CoolingPanel(game: GameController) {
                 plus = { game.draftSetpoint = minOf(range.last, game.draftSetpoint + 1) })
         }
         // The stepper edits the draft; until "Apply" the cooling keeps the old setpoint – say so, or the panel seems to lie.
-        if (simulation.history.isNotEmpty() && game.draftSetpoint != setpoint)
+        if (game.draftSetpoint != setpoint)
             Txt(t("Running now: %lld °C – “Apply” switches to the new setpoint.", setpoint), Type.style(14, FontWeight.SemiBold, Palette.red))
         Txt(t("ASHRAE recommends 18 to 27 °C at the server inlets."), Type.caption)
         val mechanical = cooling.mechanicalPermille(tick, setpoint)

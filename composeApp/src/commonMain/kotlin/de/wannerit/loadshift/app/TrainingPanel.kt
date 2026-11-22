@@ -24,6 +24,7 @@ import de.wannerit.loadshift.core.TrainingConfig
 import de.wannerit.loadshift.core.TrainingModel
 
 /** O8: how many GPU servers train, with which power cap, and when. */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun TrainingPanel(game: GameController) {
     val model = game.scenario.training ?: return
@@ -56,7 +57,8 @@ fun TrainingPanel(game: GameController) {
 
         // Power cap
         Txt(t("Power cap"), Type.style(15, FontWeight.SemiBold))
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        // Wraps on a narrow panel instead of breaking "50 %" (playtest round 2).
+        androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             for (cap in TrainingModel.CAPS) {
                 val chosen = cap == game.trainCap
                 Txt(
@@ -65,6 +67,7 @@ fun TrainingPanel(game: GameController) {
                     Modifier.clip(RoundedCornerShape(50)).background(if (chosen) Palette.accent else Palette.panel)
                         .border(1.dp, Palette.divider, RoundedCornerShape(50))
                         .clickable { game.trainCap = cap }.padding(horizontal = 10.dp, vertical = 4.dp),
+                    maxLines = 1,
                 )
             }
         }

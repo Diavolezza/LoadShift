@@ -647,12 +647,15 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
         if (perServer > 0) {
             val servers = (unitsTop / perServer).toInt()
             val stepServers = when { servers <= 30 -> 5; servers <= 60 -> 10; else -> 20 }
+            // Only as many as there are (B4: no "40 servers" with 30), and labels at least 11 dp apart.
+            val fleet = simulation.servers.count { it.kind.servesInteractive }
             var count = stepServers
-            while (count * perServer <= unitsTop) {
+            var lastLabel = Float.MAX_VALUE
+            while (count * perServer <= unitsTop && count <= fleet) {
                 val y = yU(count * perServer)
                 drawLine(Palette.capacity.copy(alpha = 0.45f), Offset(left, y), Offset(right, y), 1f,
                     pathEffect = PathEffect.dashPathEffect(floatArrayOf(1f * density, 5f * density)))
-                text(t("%lld servers", count), Offset(right + 6f * density, y))
+                if (lastLabel - y >= 11f * density) { text(t("%lld servers", count), Offset(right + 6f * density, y)); lastLabel = y }
                 count += stepServers
             }
         }
@@ -698,7 +701,9 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
                 }
             }
             // On a low chart the names would lie on top of each other; the tooltip still names the jobs.
-            if (rowHeight >= 9f * density) text(t(job.spec.name), Offset(right + 6f * density, y0 + rowHeight / 2), Type.style(if (rowHeight >= 12f * density) 11 else 10, color = Palette.ink.copy(alpha = 0.8f)))
+            // Names down to small rows (B3: nine jobs, B10: ten), the font shrinks with the row.
+            if (rowHeight >= 7f * density) text(t(job.spec.name), Offset(right + 6f * density, y0 + rowHeight / 2),
+                Type.style((rowHeight / density).toInt().coerceIn(8, 11), color = Palette.ink.copy(alpha = 0.8f)))
         }
     }
 

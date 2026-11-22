@@ -203,7 +203,7 @@ private fun PortfolioTopBar(game: PortfolioController, onExit: () -> Unit, compa
             }
             Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp)) {
                 Metric(t("Your inventory"), t("%@ t CO₂", tonnes(game.inventoryKg)))
-                Metric(t("Expected by your data"), t("−%@ t", tonnes(game.expectedSaving)))
+                Metric(t("Expected by your data"), (if (tonnes(game.expectedSaving) == "0") "0 t" else t("−%@ t", tonnes(game.expectedSaving))))
                 Metric(t("Budget left"), euros(game.left), if (game.left < 0) Palette.red else Palette.ink)
             }
         }
@@ -223,7 +223,7 @@ private fun PortfolioTopBar(game: PortfolioController, onExit: () -> Unit, compa
         }
         Row(Modifier.align(Alignment.CenterEnd), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(22.dp)) {
             Metric(t("Your inventory"), t("%@ t CO₂", tonnes(game.inventoryKg)))
-            Metric(t("Expected by your data"), t("−%@ t", tonnes(game.expectedSaving)))
+            Metric(t("Expected by your data"), (if (tonnes(game.expectedSaving) == "0") "0 t" else t("−%@ t", tonnes(game.expectedSaving))))
             Metric(t("Budget left"), euros(game.left), if (game.left < 0) Palette.red else Palette.ink)
         }
     }
@@ -240,9 +240,8 @@ private fun PortfolioGoals(game: PortfolioController, compact: Boolean = false) 
             .padding(horizontal = 20.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        // The goals take the room that is left and scroll sideways if they need more: stars and "Start over" stay visible.
-        Row(if (compact) Modifier else Modifier.weight(1f).horizontalScroll(rememberScrollState()),
-            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+        // The goals take the room that is left and wrap into a second line if they need more: stars and "Start over" stay visible.
+        GoalsFlow(compact) {
             Txt(t("Goals"), Type.style(13, FontWeight.SemiBold, Palette.secondary))
             GoalItem(met.rules, game.finished, t("Inventory within ±%@ of the real footprint", Format.wholePercent(game.model.inventoryLimit)))
         }
@@ -448,14 +447,10 @@ private fun PortfolioEnd(game: PortfolioController, onExit: () -> Unit, onOvervi
                     GoalLine(met.special, 3, specialLong(scenario.goals.special))
                 }
                 if (!met.rules) {
-                    val missed = buildList {
-                        if (kotlin.math.abs(r.inventoryError) > game.model.inventoryLimit) add(t("inventory %@ from the real footprint (at most ±%@)",
-                            Format.changePermille(r.inventoryError), Format.wholePercent(game.model.inventoryLimit)))
-                        if (r.inventoryCost + r.planCost > game.model.budget) add(t("over budget"))
-                        if (r.afterKg >= r.trueKg) add(t("not less CO₂ next year"))
-                    }
+                    val missed = portfolioMissed(game, r)
                     if (missed.isNotEmpty()) Txt(t("No star because: %@", missed.joinToString("; ")), Type.style(16, FontWeight.SemiBold, Palette.red))
                 }
+                MoreStarsLine(moreStars(r.reductionPermille, scenario.goals, met))
                 Table(listOf("", t("t CO₂")), listOf(
                     listOf(t("Your inventory"), tonnes(r.inventoryKg) + "  (" + Format.changePermille(r.inventoryError) + ")"),
                     listOf(t("Real footprint, location-based"), tonnes(r.trueKg)),
@@ -479,6 +474,14 @@ private fun PortfolioEnd(game: PortfolioController, onExit: () -> Unit, onOvervi
     }
 }
 
+/** What keeps the first star away (end card and the rows of "What if"). */
+private fun portfolioMissed(game: PortfolioController, r: de.wannerit.loadshift.core.PortfolioResult): List<String> = buildList {
+    if (kotlin.math.abs(r.inventoryError) > game.model.inventoryLimit) add(t("inventory %@ from the real footprint (at most ±%@)",
+        Format.changePermille(r.inventoryError), Format.wholePercent(game.model.inventoryLimit)))
+    if (r.inventoryCost + r.planCost > game.model.budget) add(t("over budget"))
+    if (r.afterKg >= r.trueKg) add(t("not less CO₂ next year"))
+}
+
 @Composable
 private fun PortfolioWhatIf(game: PortfolioController) {
     val alternatives = remember(game.finished) { game.whatIf() }
@@ -500,14 +503,17 @@ private fun PortfolioWhatIf(game: PortfolioController) {
             val secret = stars > best && !Progress.solutionSeen(game.scenario.number)
             if (secret) hidden++
             Row(Modifier.padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
-                if (secret) Txt(t("A setting you have not found yet"), Type.style(15, color = Palette.secondary).copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic), Modifier.weight(0.5f))
+                if (secret) Txt(t("A plan you have not found yet"), Type.style(15, color = Palette.secondary).copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic), Modifier.weight(0.5f))
                 else Txt(label, Type.callout, Modifier.weight(0.5f))
                 Txt(Format.changePermille(r.inventoryError), Type.style(15, color = if (kotlin.math.abs(r.inventoryError) <= game.model.inventoryLimit) Palette.ink else Palette.red).copy(textAlign = TextAlign.End), Modifier.weight(0.17f))
                 Txt(Format.changePermille(-r.reductionPermille), Type.callout.copy(textAlign = TextAlign.End), Modifier.weight(0.17f))
                 Box(Modifier.weight(0.16f), contentAlignment = Alignment.CenterEnd) { StarRow(stars, 11.dp) }
             }
+            if (!secret && stars == 0) portfolioMissed(game, r).takeIf { it.isNotEmpty() }?.let {
+                Txt(t("Not met: %@", it.joinToString(", ")), Type.style(12, color = Palette.red), Modifier.padding(bottom = 3.dp))
+            }
         }
-        if (hidden > 0) Txt(t("Settings with more stars than you have reached stay hidden until you find them."), Type.caption)
+        if (hidden > 0) Txt(t("Plans with more stars than you have reached stay hidden until you find them."), Type.caption)
         SolutionBar(game.scenario.number, hidden, { game.loadSolution() })
     }
 }

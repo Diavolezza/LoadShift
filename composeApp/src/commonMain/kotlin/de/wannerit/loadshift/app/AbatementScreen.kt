@@ -182,9 +182,8 @@ private fun AbatementGoals(game: AbatementController, compact: Boolean = false) 
             .padding(horizontal = 20.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        // The goals take the room that is left and scroll sideways if they need more: stars and "Start over" stay visible.
-        Row(if (compact) Modifier else Modifier.weight(1f).horizontalScroll(rememberScrollState()),
-            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+        // The goals take the room that is left and wrap into a second line if they need more: stars and "Start over" stay visible.
+        GoalsFlow(compact) {
             Txt(t("Goals"), Type.style(13, FontWeight.SemiBold, Palette.secondary))
             GoalItem(met.rules, game.finished, t("Within the budget and less CO₂ over three years"))
         }
@@ -353,6 +352,7 @@ private fun AbatementEnd(game: AbatementController, onExit: () -> Unit, onOvervi
                     }
                     if (missed.isNotEmpty()) Txt(t("No star because: %@", missed.joinToString("; ")), Type.style(16, FontWeight.SemiBold, Palette.red))
                 }
+                MoreStarsLine(moreStars(r.reductionPermille, scenario.goals, met))
                 Table(listOf("", t("t CO₂")), listOf(
                     listOf(t("Three years without measures"), tonnes(r.baselineKg)),
                     listOf(t("According to the consultant's list"), "−" + tonnes(game.promisedKg)),
@@ -390,13 +390,13 @@ private fun AbatementWhatIf(game: AbatementController) {
             val secret = stars > best && !Progress.solutionSeen(game.scenario.number)
             if (secret) hidden++
             Row(Modifier.padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
-                if (secret) Txt(t("A setting you have not found yet"), Type.style(15, color = Palette.secondary).copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic), Modifier.weight(0.6f))
+                if (secret) Txt(t("A plan you have not found yet"), Type.style(15, color = Palette.secondary).copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic), Modifier.weight(0.6f))
                 else Txt(label, Type.callout, Modifier.weight(0.6f))
                 Txt(Format.changePermille(-r.reductionPermille), Type.callout.copy(textAlign = TextAlign.End), Modifier.weight(0.22f))
                 Box(Modifier.weight(0.18f), contentAlignment = Alignment.CenterEnd) { StarRow(stars, 11.dp) }
             }
         }
-        if (hidden > 0) Txt(t("Settings with more stars than you have reached stay hidden until you find them."), Type.caption)
+        if (hidden > 0) Txt(t("Plans with more stars than you have reached stay hidden until you find them."), Type.caption)
         SolutionBar(game.scenario.number, hidden, { game.loadSolution() })
     }
 }

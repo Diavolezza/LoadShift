@@ -147,6 +147,9 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
 
     fun changeSpeed(newSpeed: Speed) {
         if (isFinished && newSpeed != Speed.PAUSED) return
+        // E3/E2: a speed button while a sprint waits to be planned starts that sprint with what is picked – otherwise
+        // the week would run without one (playtest round 2).
+        if (newSpeed != Speed.PAUSED && canPlanSprint) { startSprint(); speed = newSpeed; return }
         speed = newSpeed
     }
 
@@ -637,7 +640,7 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
         servicesDraft = d.services
         contractDraft = d.contract
         // A new run starts with the rules the last run started with (the panel shows the last run's final ones).
-        if (d.startPolicy != null && current.history.isEmpty() && !hasSprints) {
+        if (d.startPolicy != null && current.history.isEmpty() && !hasSprints && Control.MANUAL_CAPACITY !in scenario.controls) {
             current.policy = d.startPolicy
             current.applyPolicy()
         }

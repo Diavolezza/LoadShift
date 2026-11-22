@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -93,6 +94,7 @@ fun GameScreen(game: GameController, onExit: () -> Unit, onNext: ((Scenario) -> 
                             ?: game.simulation.history.lastOrNull()?.inference?.let { it.kindWatts.sum() + it.idleWatts } ?: 0,
                         gpuRack = game.hasInference,
                         workLabel = if (game.hasPipeline) t("Build agent at work") else if (game.hasServices) t("Services at work") else null,
+                        started = game.simulation.history.isNotEmpty(),
                     )
                 }
             }
@@ -188,7 +190,7 @@ private fun TopBar(game: GameController, onExit: () -> Unit, compact: Boolean = 
             SpeedControl(game)
             Column(Modifier.weight(1f, fill = false)) {
                 Txt(t("Scenario %@", game.scenario.shownLabel), Type.caption)
-                Txt(t(game.scenario.title), Type.style(17, FontWeight.SemiBold), maxLines = 1)
+                Txt(t(game.scenario.title), Type.style(16, FontWeight.SemiBold), maxLines = 2)
             }
         }
         Column(Modifier.padding(horizontal = 18.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -211,6 +213,8 @@ private fun TopMetrics(game: GameController) {
     val shown = maxOf(simulation.scenario.startTick, simulation.tick)
     val intensity = simulation.grid.intensity(minOf(shown, simulation.scenario.endTick - 1))
     val last = simulation.history.lastOrNull()
+    // Before the first tick there is nothing measured yet: a dash, not 0 ms or 0,0 s (playtest round 2).
+    val started = last != null
     if (!game.hasRenewal) Metric(t("Grid now"), "$intensity g/kWh", Palette.intensity(intensity))
     val totals = game.totals
     Metric(t("CO₂ so far"), if (game.hasRenewal) "${Format.tonnes(totals.emissions)} t" else "${Format.kilograms(totals.emissions)} kg")
@@ -220,16 +224,16 @@ private fun TopMetrics(game: GameController) {
     }
     simulation.scenario.services?.let { model ->
         val l = game.totals.meanLatency
-        Metric(t("Response time"), t("%lld ms", l), if (l <= model.latencyLimit) Palette.ink else Palette.red)
+        Metric(t("Response time"), if (started) t("%lld ms", l) else "–", if (l <= model.latencyLimit) Palette.ink else Palette.red)
     }
     simulation.scenario.pipeline?.let { model ->
         val f = game.totals.meanFeedback
-        Metric(t("Feedback"), t("%@ min", Format.number(f / 10.0, 1)), if (f <= model.feedbackLimit * 10) Palette.ink else Palette.red)
+        Metric(t("Feedback"), if (started) t("%@ min", Format.number(f / 10.0, 1)) else "–", if (f <= model.feedbackLimit * 10) Palette.ink else Palette.red)
     }
     simulation.scenario.web?.let { model ->
-        Metric(t("Page"), t("%@ MB", Format.number(game.totals.meanPageKb / 1_000.0, 1)))
+        Metric(t("Page"), if (started) t("%@ MB", Format.number(game.totals.meanPageKb / 1_000.0, 1)) else "–")
         val lcp = game.totals.meanLcp
-        Metric(t("LCP"), t("%@ s", Format.number(lcp / 10.0, 1)), if (lcp <= model.lcpLimit) Palette.ink else Palette.red)
+        Metric(t("LCP"), if (started) t("%@ s", Format.number(lcp / 10.0, 1)) else "–", if (lcp <= model.lcpLimit) Palette.ink else Palette.red)
     }
     if (game.hasInteractive && !game.hasInference && !game.hasWeb) {
         val sla = minOf(totals.sla, totals.worstSiteSla)
@@ -257,7 +261,7 @@ private fun TopMetrics(game: GameController) {
     if (simulation.scenario.cooling != null) {
         Metric(t("PUE now"), if (last == null || last.itPower == 0) "–" else Format.number(last.facilityPower.toDouble() / last.itPower, 2))
     }
-    if (!game.hasRenewal) Metric(t("Total power"), "${Format.kilowatts(last?.facilityPower ?: 0)} kW")
+    if (!game.hasRenewal) Metric(if (game.hasWeb) t("Data center power") else t("Total power"), if (started) "${Format.kilowatts(last?.facilityPower ?: 0)} kW" else "–")
 }
 
 @Composable
@@ -326,9 +330,8 @@ private fun GoalBar(game: GameController, compact: Boolean = false) {
             .padding(horizontal = 20.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        // The goals take the room that is left and scroll sideways if they need more: the stars and "Start over" stay visible.
-        Row(if (compact) Modifier else Modifier.weight(1f).horizontalScroll(rememberScrollState()),
-              verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+        // The goals take the room that is left and wrap into a second line if they need more: the stars and "Start over" stay visible.
+        GoalsFlow(compact) {
             Txt(t("Goals"), Type.style(13, FontWeight.SemiBold, Palette.secondary))
             scenario.staleLimit?.let { limit ->
                 GoalItem(totals.stalePerTenThousand <= limit, change != null, t("Stale answers: %@ (at most %@)",
@@ -415,11 +418,19 @@ private fun GoalBar(game: GameController, compact: Boolean = false) {
                     .clickable { game.tabs.indexOf(GameController.PanelTab.BATCH).takeIf { it >= 0 }?.let { game.panelTab = it } }
                     .padding(horizontal = 10.dp, vertical = 4.dp), maxLines = 1)
         }
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        // Live ticks for the star goals too (playtest round 2): green when the run so far meets them.
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            StarTick(change?.let { it <= -scenario.goals.reduction })
             StarLabel(2, 13.dp)
             Txt(t("CO₂ %@", shortChange(-scenario.goals.reduction.toLong())), Type.callout)
         }
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            StarTick(if (change == null) null else when (val g = scenario.goals.special) {
+                is SpecialGoal.MeanUtilization -> totals.meanUtilization >= g.permille
+                is SpecialGoal.Reduction -> change <= -g.permille
+                is SpecialGoal.BatchIntensity -> totals.batchEnergy > 0 && totals.meanBatchIntensityTenths <= g.gramsPerKWh * 10
+                is SpecialGoal.MaxServersOn -> totals.meanServersOn <= g.servers * 1_000
+            })
             StarLabel(3, 13.dp)
             Txt(specialShort(scenario.goals.special), Type.callout)
         }
@@ -436,7 +447,7 @@ private fun StartOver(game: GameController) = StartOverChip { game.startOver() }
 fun StartOverChip(onStartOver: () -> Unit) {
     var asking by remember { mutableStateOf(false) }
     LaunchedEffect(asking) {
-        if (asking) { delay(3_000); asking = false }
+        if (asking) { delay(6_000); asking = false }
     }
     Txt(
         if (asking) t("Really start over?") else "↺ " + t("Start over"),
@@ -447,6 +458,20 @@ fun StartOverChip(onStartOver: () -> Unit) {
             .padding(horizontal = 10.dp, vertical = 4.dp),
         maxLines = 1,
     )
+}
+
+/** The goals of a goal bar: in one row that wraps on a wide screen, in one scrolling row on a phone. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun RowScope.GoalsFlow(compact: Boolean, content: @Composable () -> Unit) {
+    if (compact) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) { content() }
+    else FlowRow(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(20.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) { content() }
+}
+
+/** A live tick in front of a star goal: green when met, an empty circle when not, nothing before the start. */
+@Composable
+fun StarTick(ok: Boolean?) {
+    if (ok != null) CheckMark(ok, 15.dp)
 }
 
 @Composable
@@ -492,6 +517,7 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
                     val missed = missedRules(game)
                     if (missed.isNotEmpty()) Txt(t("No star because: %@", missed.joinToString("; ")), Type.style(16, FontWeight.SemiBold, Palette.red))
                 }
+                MoreStarsLine(moreStars(scenario, you, ref, met))
                 val rows = buildList {
                     if (game.hasRenewal) {
                         add(t("CO₂ (t)") to (Format.tonnes(you.emissions) to Format.tonnes(ref.emissions)))
@@ -607,9 +633,9 @@ fun missedRules(s: Scenario, y: Totals, r: Totals): List<String> {
         s.services != null -> t("positions or traffic too old")
         else -> t("rules broken: %lld", y.rulesBroken)
     }
-    if (y.deadlinesMissed > 0) out += t("deadlines missed: %lld", y.deadlinesMissed)
+    if (y.deadlinesMissed > 0) out += if (y.deadlinesMissed == 1) t("1 deadline missed") else t("%lld deadlines missed", y.deadlinesMissed)
     if (y.emissions >= r.emissions) out += t("not less CO₂ than the reference")
-    s.staleLimit?.let { if (y.stalePerTenThousand > it) out += t("too many stale answers") }
+    s.staleLimit?.let { if (y.stalePerTenThousand > it) out += t("stale answers %@ (at most %@)", Format.number(y.stale.toDouble() / maxOf(1, y.requests), 2) + " ‰", Format.number(it / 10.0, 1) + " ‰") }
     s.web?.let { if (y.meanLcp > it.lcpLimit) out += t("LCP %@ s (at most %@ s)", Format.number(y.meanLcp / 10.0, 1), Format.number(it.lcpLimit / 10.0, 1)) }
     s.services?.let { if (y.meanLatency > it.latencyLimit) out += t("tracking %lld ms (at most %lld ms)", y.meanLatency, it.latencyLimit) }
     s.contract?.let {
@@ -622,6 +648,33 @@ fun missedRules(s: Scenario, y: Totals, r: Totals): List<String> {
         if (y.answersOnTime < it.onTimeTarget) out += t("answers in time %@ (at least %@)", Format.percent(y.answersOnTime), Format.percent(it.onTimeTarget))
     }
     return out
+}
+
+/** What a run with one or two stars lacks for the others, in words (empty with no star or three). */
+fun moreStars(s: Scenario, y: Totals, r: Totals, met: de.wannerit.loadshift.core.GoalsMet): List<String> = buildList {
+    if (!met.rules) return@buildList
+    fun co2(goal: Int) = t("CO₂ %@ (needed %@)", Format.change(y.emissions, r.emissions), Format.changePermille(-goal.toLong()))
+    if (!met.reduction) add("★★ " + co2(s.goals.reduction))
+    if (!met.special) add("★★★ " + when (val g = s.goals.special) {
+        is SpecialGoal.MeanUtilization -> t("mean utilization %@ (at least %@)", Format.wholePercent(y.meanUtilization), Format.wholePercent(g.permille))
+        is SpecialGoal.Reduction -> co2(g.permille)
+        is SpecialGoal.BatchIntensity -> t("batch work %lld g/kWh (at most %lld)", (y.meanBatchIntensityTenths + 5) / 10, g.gramsPerKWh)
+        is SpecialGoal.MaxServersOn -> t("%@ hosts on average (at most %lld)", Format.number(y.meanServersOn / 1_000.0, 1), g.servers)
+    })
+}
+
+/** The same for the scenarios without a clock: their result is a reduction in per mille. */
+fun moreStars(reductionPermille: Long, goals: de.wannerit.loadshift.core.StarGoals, met: de.wannerit.loadshift.core.GoalsMet): List<String> = buildList {
+    if (!met.rules) return@buildList
+    fun co2(goal: Int) = t("CO₂ %@ (needed %@)", Format.changePermille(-reductionPermille), Format.changePermille(-goal.toLong()))
+    if (!met.reduction) add("★★ " + co2(goals.reduction))
+    if (!met.special) (goals.special as? SpecialGoal.Reduction)?.let { add("★★★ " + co2(it.permille)) }
+}
+
+/** "For more stars: ★★ CO₂ −20,1 % (needed −25,0 %)" in amber under the goals of an end card (playtest round 2). */
+@Composable
+fun MoreStarsLine(items: List<String>) {
+    if (items.isNotEmpty()) Txt(t("Missing for more stars: %@", items.joinToString("; ")), Type.style(16, FontWeight.SemiBold, Color(0xFFB0741A)))
 }
 
 /** A simple table: first column left, the others right. */
@@ -703,7 +756,8 @@ private fun WhatIf(game: GameController) {
             }
             // A row without a star says why: the rule it breaks.
             if (!secret && game.scenario.stars(totals, ref) == 0) {
-                val why = missedRules(game.scenario, totals, ref)
+                // The reference row itself: "not less CO₂ than the reference" says nothing (playtest round 2).
+                val why = missedRules(game.scenario, totals, ref).filterNot { totals == ref && it == t("not less CO₂ than the reference") }
                 if (why.isNotEmpty()) Txt(t("Not met: %@", why.joinToString(", ")), Type.style(12, color = Palette.red), Modifier.padding(bottom = 3.dp))
             }
         }

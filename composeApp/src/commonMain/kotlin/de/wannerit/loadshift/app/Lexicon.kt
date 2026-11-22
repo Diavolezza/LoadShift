@@ -129,7 +129,7 @@ fun LexiconScreen(onBack: () -> Unit, onOpen: (Scenario) -> Unit) {
             }
             // The sources the debriefs cite: [S…] has to lead somewhere inside the game.
             Txt(t("Sources"), Type.style(28, FontWeight.Bold))
-            Txt(t("The marks in square brackets in the debriefs, for example [S27], refer to these sources."), Type.style(17, color = Palette.secondary))
+            Txt(t("The debriefs cite these sources with marks in square brackets, for example [S27]. The numbers follow the full list in the project's concept, so not every number appears here."), Type.style(17, color = Palette.secondary))
             val uri = androidx.compose.ui.platform.LocalUriHandler.current
             Column(Modifier.background(Palette.panel, RoundedCornerShape(16.dp)).padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 for ((id, text, link) in SOURCES) {

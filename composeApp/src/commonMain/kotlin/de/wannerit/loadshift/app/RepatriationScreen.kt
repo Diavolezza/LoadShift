@@ -169,19 +169,20 @@ private fun RepatriationGoals(game: RepatriationController, compact: Boolean = f
             .padding(horizontal = 20.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        // The goals take the room that is left and scroll sideways if they need more: stars and "Start over" stay visible.
-        Row(if (compact) Modifier else Modifier.weight(1f).horizontalScroll(rememberScrollState()),
-            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+        // The goals take the room that is left and wrap into a second line if they need more: stars and "Start over" stay visible.
+        GoalsFlow(compact) {
             Txt(t("Goals"), Type.style(13, FontWeight.SemiBold, Palette.secondary))
             GoalItem(r.savingPermille >= model.savingGoalPermille, game.started, t("Costs at least %@ lower", Format.wholePercent(model.savingGoalPermille)))
-            GoalItem(r.outsideGermany.isEmpty(), r.outsideGermany.isNotEmpty() || game.finished, t("Customer data stay in Germany"))
-            GoalItem(!r.bookingTooSlow, r.bookingTooSlow || game.finished, t("A booking in the plant under %@ s", Format.number(model.bookingLimitMs / 1_000.0)))
+            GoalItem(r.outsideGermany.isEmpty(), true, t("Customer data stay in Germany"))
+            GoalItem(!r.bookingTooSlow, true, t("A booking in the plant under %@ s", Format.number(model.bookingLimitMs / 1_000.0)))
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            StarTick(r.reductionPermille >= scenario.goals.reduction)
             StarLabel(2, 13.dp)
             Txt(t("CO₂ %@", shortChange(-scenario.goals.reduction.toLong())), Type.callout)
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            StarTick(r.reductionPermille >= ((scenario.goals.special as? de.wannerit.loadshift.core.SpecialGoal.Reduction)?.permille ?: 1_000))
             StarLabel(3, 13.dp)
             Txt(specialShort(scenario.goals.special), Type.callout)
         }
@@ -357,14 +358,8 @@ private fun RepatriationEnd(game: RepatriationController, onExit: () -> Unit, on
                     GoalLine(met.reduction, 2, t("CO₂ %@ or better", Format.changePermille(-scenario.goals.reduction.toLong())))
                     GoalLine(met.special, 3, specialLong(scenario.goals.special))
                 }
-                if (!met.rules) {
-                    val missed = buildList {
-                        if (r.savingPermille < model.savingGoalPermille) add(t("costs only %@ lower", Format.wholePercent(r.savingPermille.toInt())))
-                        for (n in r.outsideGermany) add(t("%@ outside Germany", t(n)))
-                        if (r.bookingTooSlow) add(t("a booking in the plant takes %@ s", Format.number(r.bookingMs / 1_000.0, 1)))
-                    }
-                    Txt(t("No star because: %@", missed.joinToString("; ")), Type.style(16, FontWeight.SemiBold, Palette.red))
-                }
+                if (!met.rules) Txt(t("No star because: %@", repatriationMissed(model, r).joinToString("; ")), Type.style(16, FontWeight.SemiBold, Palette.red))
+                MoreStarsLine(moreStars(r.reductionPermille, scenario.goals, met))
                 Table(listOf("", t("today"), t("your plan")), listOf(
                     listOf(t("In the report (market-based), t CO₂"), tonnes(r.baselineReportKg), tonnes(r.reportKg)),
                     listOf(t("Location-based with making, t CO₂"), tonnes(r.baselineKg), tonnes(r.planKg)),
@@ -426,6 +421,13 @@ private fun Waterfall(r: MoveResult) {
     }
 }
 
+/** What keeps the first star away (end card and the rows of "What if"). */
+private fun repatriationMissed(model: de.wannerit.loadshift.core.RepatriationModel, r: de.wannerit.loadshift.core.MoveResult): List<String> = buildList {
+    if (r.savingPermille < model.savingGoalPermille) add(t("costs only %@ lower (at least %@)", Format.wholePercent(r.savingPermille.toInt()), Format.wholePercent(model.savingGoalPermille.toInt())))
+    for (n in r.outsideGermany) add(t("%@ outside Germany", t(n)))
+    if (r.bookingTooSlow) add(t("a booking in the plant takes %@ s", Format.number(r.bookingMs / 1_000.0, 1)))
+}
+
 @Composable
 private fun RepatriationWhatIf(game: RepatriationController) {
     val alternatives = remember(game.finished) { game.whatIf() }
@@ -447,14 +449,17 @@ private fun RepatriationWhatIf(game: RepatriationController) {
             val secret = stars > best && !Progress.solutionSeen(game.scenario.number)
             if (secret) hidden++
             Row(Modifier.padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
-                if (secret) Txt(t("A setting you have not found yet"), Type.style(15, color = Palette.secondary).copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic), Modifier.weight(0.5f))
+                if (secret) Txt(t("A plan you have not found yet"), Type.style(15, color = Palette.secondary).copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic), Modifier.weight(0.5f))
                 else Txt(label, Type.callout, Modifier.weight(0.5f))
                 Txt(Format.changePermille(-r.reductionPermille), Type.callout.copy(textAlign = TextAlign.End), Modifier.weight(0.16f))
                 Txt(Format.changePermille(-r.savingPermille), Type.callout.copy(textAlign = TextAlign.End), Modifier.weight(0.16f))
                 Box(Modifier.weight(0.18f), contentAlignment = Alignment.CenterEnd) { StarRow(stars, 11.dp) }
             }
+            if (!secret && stars == 0) repatriationMissed(game.model, r).takeIf { it.isNotEmpty() }?.let {
+                Txt(t("Not met: %@", it.joinToString(", ")), Type.style(12, color = Palette.red), Modifier.padding(bottom = 3.dp))
+            }
         }
-        if (hidden > 0) Txt(t("Settings with more stars than you have reached stay hidden until you find them."), Type.caption)
+        if (hidden > 0) Txt(t("Plans with more stars than you have reached stay hidden until you find them."), Type.caption)
         SolutionBar(game.scenario.number, hidden, { game.loadSolution() })
     }
 }

@@ -68,7 +68,7 @@ fun PipelinePanel(game: GameController) {
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 for (n in listOf(3, 1)) Chip(replicas(n), d.replicas == n) { set(d.copy(replicas = n)) }
             }
-            Txt(t("Three replicas per service, as in production, so that resilience can be tested."), Type.caption)
+            Txt(if (d.replicas == 1) t("One replica per service: enough for testing functions, not for testing resilience.") else t("Three replicas per service, as in production, so that resilience can be tested."), Type.caption)
         }
 
         // One run with the draft
@@ -138,8 +138,8 @@ private fun Chip(text: String, chosen: Boolean, onClick: () -> Unit) {
 /** "agents on demand, remote cache, test impact, UI tests every night, every commit, weekdays 7–19, 1 replica" */
 fun pipelineText(c: PipelineConfig): String = listOfNotNull(
     t("agents %@", t(c.runners.label)),
-    if (c.remoteCache) t("remote cache") else null,
-    if (c.testImpact) t("test impact analysis") else null,
+    if (c.remoteCache) t("remote cache") else t("no remote cache"),
+    if (c.testImpact) t("test impact analysis") else t("no test impact analysis"),
     t("UI tests %@", t(c.heavy.label)),
     t(c.trigger.label),
     t("environments %@", t(c.environments.label)),

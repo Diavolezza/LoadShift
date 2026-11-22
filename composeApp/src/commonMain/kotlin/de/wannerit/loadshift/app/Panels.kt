@@ -159,8 +159,9 @@ fun NowBox(game: GameController) {
     val booting = simulation.servers.count { it.state is ServerState.Booting }
     val last = simulation.history.lastOrNull()
     val demandNow = last?.demand ?: simulation.scenario.interactive.expected(simulation.tick)
-    val capacity = last?.capacity ?: simulation.readyCapacity
-    val served = last?.served ?: minOf(demandNow, capacity)
+    // The capacity of the servers ready now (not of the last tick): it must follow a change made in the pause.
+    val capacity = simulation.readyCapacity
+    val served = minOf(demandNow, capacity)
     val inAnHour = simulation.scenario.interactive.expected(simulation.tick + GameTime.TICKS_PER_HOUR)
     val caching = simulation.scenario.caching
     val itPower = simulation.servers.sumOf { it.power() } + (caching?.power(simulation.policy.cache) ?: 0)
@@ -172,7 +173,7 @@ fun NowBox(game: GameController) {
             t("Load / capacity") to "$demandNow / $capacity",
             t("Utilization") to (if (capacity == 0) "–" else Format.wholePercent(served * 1_000 / capacity)),
             t("Expected load in 1 h") to "$inAnHour",
-            t("IT power") to "${Format.kilowatts(itPower)} kW",
+            t("IT power") to (if (last == null) "–" else "${Format.kilowatts(itPower)} kW"),
         ) + listOfNotNull(caching?.let { t("Cache servers") to "${it.servers(simulation.policy.cache)}" })
         for ((label, value) in rows) {
             Row(Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
@@ -277,7 +278,9 @@ private fun JobStatus(game: GameController, job: BatchJob, now: Int) {
             if (job.spec.arrival > now) t("arrives %@", timeText(job.spec.arrival)) to Palette.secondary
             else (if (byRule) t("waiting") else t("not planned")) to (if (job.missedDeadline(now)) Palette.red else Palette.secondary)
         is BatchJobState.Planned ->
-            (if (byRule && state.start > now) t("planned %@", timeText(state.start)) else t("planned")) to Palette.accent
+            // B2: a planned start in the past means the job waits for free servers (playtest round 2).
+            if (state.start < now) t("waiting for free servers") to Palette.amber
+            else (if (byRule && state.start > now) t("planned %@", timeText(state.start)) else t("planned")) to Palette.accent
         is BatchJobState.Started -> t("booting") to Palette.demand
         is BatchJobState.Running -> t("runs until %@", GameTime(state.endsAt).clockText) to Palette.amber
         is BatchJobState.Done ->

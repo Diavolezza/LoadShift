@@ -35,6 +35,8 @@ fun HallView(
     workLabel: String? = null,
     /** O7: two halls side by side – a short status line only. */
     compact: Boolean = false,
+    /** Before the first tick the servers have no load yet: no power figure (it would show idle power only). */
+    started: Boolean = true,
 ) {
     val on = servers.count { it.state.isPowered }
     val itPower = servers.sumOf { it.power() } + cachePower
@@ -62,7 +64,10 @@ fun HallView(
             if (servers.any { it.kind == ServerKind.CPU_OLD }) LegendSwatch(Palette.old, t("Old server"))
             // The status takes the room the legend leaves and may wrap (E10: the GPU servers make it long).
             Txt(
-                if (cacheSlots > 0 && gpuRack) t("%lld of %lld servers on + %lld GPU servers · %@ kW IT power", on, servers.size, cacheOn, Format.kilowatts(itPower))
+                if (!started) (if (cacheSlots > 0 && gpuRack) t("%lld of %lld servers on + %lld GPU servers", on, servers.size, cacheOn)
+                    else if (cacheSlots > 0) t("%lld of %lld servers on + %lld cache servers", on, servers.size, cacheOn)
+                    else t("%lld of %lld servers on", on, servers.size))
+                else if (cacheSlots > 0 && gpuRack) t("%lld of %lld servers on + %lld GPU servers · %@ kW IT power", on, servers.size, cacheOn, Format.kilowatts(itPower))
                 else if (cacheSlots > 0) t("%lld of %lld servers on + %lld cache servers · %@ kW IT power", on, servers.size, cacheOn, Format.kilowatts(itPower))
                 else t("%lld of %lld servers on · %@ kW IT power", on, servers.size, Format.kilowatts(itPower)),
                 Type.callout.copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(1f), maxLines = 2,

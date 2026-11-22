@@ -178,17 +178,18 @@ private fun UpdatesGoals(game: UpdatesController, compact: Boolean) {
             .padding(horizontal = 20.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        // The goals take the room that is left and scroll sideways if they need more: stars and "Start over" stay visible.
-        Row(if (compact) Modifier else Modifier.weight(1f).horizontalScroll(rememberScrollState()),
-            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+        // The goals take the room that is left and wrap into a second line if they need more: stars and "Start over" stay visible.
+        GoalsFlow(compact) {
             Txt(t("Goals"), Type.style(13, FontWeight.SemiBold, Palette.secondary))
-            GoalItem(r.missed.isEmpty(), r.missed.isNotEmpty() || game.finished, t("Every kind of update as fresh as required"))
+            GoalItem(r.missed.isEmpty(), true, t("Every kind of update as fresh as required"))
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            StarTick(r.reductionPermille >= scenario.goals.reduction)
             StarLabel(2, 13.dp)
             Txt(t("CO₂ %@", shortChange(-scenario.goals.reduction.toLong())), Type.callout)
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            StarTick(r.reductionPermille >= ((scenario.goals.special as? de.wannerit.loadshift.core.SpecialGoal.Reduction)?.permille ?: 1_000))
             StarLabel(3, 13.dp)
             Txt(specialShort(scenario.goals.special), Type.callout)
         }
@@ -355,6 +356,7 @@ private fun UpdatesEnd(game: UpdatesController, onExit: () -> Unit, onOverview: 
                     GoalLine(met.special, 3, specialLong(scenario.goals.special))
                 }
                 if (!met.rules) Txt(t("No star because: %@", t("not fresh enough: %@", r.missed.joinToString(", ") { t(it) })), Type.style(16, FontWeight.SemiBold, Palette.red))
+                MoreStarsLine(moreStars(r.reductionPermille, scenario.goals, met))
                 Table(listOf("", t("today"), t("your plan")), listOf(
                     listOf(t("Phones, t CO₂"), tonnes(r0.phonesKg), tonnes(r.phonesKg)),
                     listOf(t("Servers, t CO₂"), tonnes(r0.serversKg), tonnes(r.serversKg)),

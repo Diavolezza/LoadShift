@@ -29,7 +29,9 @@ object Language {
  * The text in the app's language, with the arguments filled in. Keys are the English texts with the placeholders
  * %@ (text) and %lld (whole number); translations may number them (%1$@, %2$lld). With arguments, %% is a literal %.
  */
-fun t(key: String, vararg args: Any): String {
+fun t(key: String, vararg args: Any): String = format(key, *args).replace(" %", "\u202F%") // "50 %" never breaks before the % sign
+
+private fun format(key: String, vararg args: Any): String {
     val pattern = if (Language.german) GERMAN[key] ?: key else key
     if (args.isEmpty()) return pattern
     val out = StringBuilder()

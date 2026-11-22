@@ -199,18 +199,19 @@ private fun TidyGoals(game: TidyController, compact: Boolean = false) {
             .padding(horizontal = 20.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        // The goals take the room that is left and scroll sideways if they need more: stars and "Start over" stay visible.
-        Row(if (compact) Modifier else Modifier.weight(1f).horizontalScroll(rememberScrollState()),
-            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+        // The goals take the room that is left and wrap into a second line if they need more: stars and "Start over" stay visible.
+        GoalsFlow(compact) {
             Txt(t("Goals"), Type.style(13, FontWeight.SemiBold, Palette.secondary))
-            GoalItem(r.overloaded.isEmpty(), r.overloaded.isNotEmpty() || game.finished, t("At most %lld projects at a time", game.model.capacity))
-            GoalItem(r.wronglyEliminated.isEmpty(), r.wronglyEliminated.isNotEmpty() || game.finished, t("Nothing valuable or required by law eliminated"))
+            GoalItem(r.overloaded.isEmpty(), true, t("At most %lld projects at a time", game.model.capacity))
+            GoalItem(r.wronglyEliminated.isEmpty(), true, t("Nothing valuable or required by law eliminated"))
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            StarTick(r.reductionPermille >= scenario.goals.reduction)
             StarLabel(2, 13.dp)
             Txt(t("CO₂ %@", shortChange(-scenario.goals.reduction.toLong())), Type.callout)
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            StarTick(r.reductionPermille >= ((scenario.goals.special as? de.wannerit.loadshift.core.SpecialGoal.Reduction)?.permille ?: 1_000))
             StarLabel(3, 13.dp)
             Txt(specialShort(scenario.goals.special), Type.callout)
         }
@@ -390,6 +391,7 @@ private fun TidyEnd(game: TidyController, onExit: () -> Unit, onOverview: (() ->
                     }
                     Txt(t("No star because: %@", missed.joinToString("; ")), Type.style(16, FontWeight.SemiBold, Palette.red))
                 }
+                MoreStarsLine(moreStars(r.reductionPermille, scenario.goals, met))
                 Table(listOf("", t("t CO₂")), listOf(
                     listOf(t("Three years without measures"), tonnes(r.baselineKg)),
                     listOf(t("Three years with your plan"), tonnes(r.planKg)),
@@ -464,13 +466,13 @@ private fun TidyWhatIf(game: TidyController) {
             val secret = stars > best && !Progress.solutionSeen(game.scenario.number)
             if (secret) hidden++
             Row(Modifier.padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
-                if (secret) Txt(t("A setting you have not found yet"), Type.style(15, color = Palette.secondary).copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic), Modifier.weight(0.6f))
+                if (secret) Txt(t("A plan you have not found yet"), Type.style(15, color = Palette.secondary).copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic), Modifier.weight(0.6f))
                 else Txt(label, Type.callout, Modifier.weight(0.6f))
                 Txt(Format.changePermille(-r.reductionPermille), Type.callout.copy(textAlign = TextAlign.End), Modifier.weight(0.22f))
                 Box(Modifier.weight(0.18f), contentAlignment = Alignment.CenterEnd) { StarRow(stars, 11.dp) }
             }
         }
-        if (hidden > 0) Txt(t("Settings with more stars than you have reached stay hidden until you find them."), Type.caption)
+        if (hidden > 0) Txt(t("Plans with more stars than you have reached stay hidden until you find them."), Type.caption)
         SolutionBar(game.scenario.number, hidden, { game.loadSolution() })
     }
 }

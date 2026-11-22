@@ -568,6 +568,13 @@ private fun SideCard(scenario: Scenario, texts: ScenarioTexts, onStart: () -> Un
             Fact(t("Footprint: about %@ t CO₂ a year", tonnes(abatement.footprintKgPerYear)))
             Fact(t("Budget for the measures: %@ €", Format.number(abatement.budget.toDouble())))
             Fact(t("Counted: three years, location-based"))
+        } else if (scenario.renewal != null) Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            // B7: two sites over three years, quarter by quarter (the generic facts would say "Poland, 12 days").
+            val renewal = scenario.renewal!!
+            Fact(t("%@ and %@", t(renewal.sites[0].title), t(renewal.sites[1].title)))
+            Fact(t("%lld years, quarter by quarter", (scenario.days / renewal.daysPerYear).toLong()))
+            Fact(t("%lld servers at each site, %lld load units each", scenario.serverCount, perServer))
+            Fact(t("Budget: %lld new servers a year for both sites", renewal.budgetPerYear.toLong()))
         } else if (portfolio != null) Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             fun count(h: de.wannerit.loadshift.core.Hosting) = portfolio.apps.count { it.hosting == h }
             Fact(t("%lld applications in the own data center", count(de.wannerit.loadshift.core.Hosting.ON_PREM)))

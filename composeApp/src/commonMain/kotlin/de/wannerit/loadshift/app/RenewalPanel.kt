@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -36,6 +37,9 @@ fun RenewalPanel(game: GameController) {
             val capacity = game.capacityOf(i)
             val peak = game.peakOf(i)
             val short = capacity * InteractiveLoad.SLOW_ABOVE / 1_000 < peak
+            // Graded like B5 (playtest round 2): above 85 % amber, a peak above the capacity red.
+            val over = capacity < peak
+            val warn = if (over) Palette.red else Color(0xFFB0741A)
             Column(
                 Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Palette.background).padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -52,9 +56,13 @@ fun RenewalPanel(game: GameController) {
                 )
                 Txt(
                     t("Capacity %lld, peak this quarter %lld", capacity, peak),
-                    Type.style(13, if (short) FontWeight.SemiBold else FontWeight.Normal, if (short) Palette.red else Palette.secondary),
+                    Type.style(13, if (short) FontWeight.SemiBold else FontWeight.Normal, if (short) warn else Palette.secondary),
                 )
-                if (short) Txt(t("Too little: above 85 % utilization requests get slow."), Type.style(12, FontWeight.SemiBold, Palette.red))
+                if (over) Txt(t("Too little: the peak is above the capacity – requests get slow or are lost."), Type.style(12, FontWeight.SemiBold, Palette.red))
+                else if (short) Txt(t("Tight: above 85 % utilization requests get slow."), Type.style(12, FontWeight.SemiBold, warn))
+                // The failures to come, where the decision is made (playtest round 2): old servers past their life fail.
+                if (old.isNotEmpty() && (age ?: 0) + 365 >= de.wannerit.loadshift.core.Units.LIFESPAN_DAYS)
+                    Txt(t("This year the old servers are past their life: each quarter about %@ of them fail.", Format.wholePercent(model.failure)), Type.caption)
                 Txt(t("So far %@ t CO₂", Format.tonnes(simulation.totals.emissions)), Type.caption)
                 if (game.canRenew) {
                     Row(verticalAlignment = Alignment.CenterVertically) {

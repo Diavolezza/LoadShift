@@ -129,5 +129,5 @@ private fun Chip(text: String, chosen: Boolean, onClick: () -> Unit) {
 /** "no AI / no AI / small / large / large, batching 1 s" */
 fun inferenceText(c: InferenceConfig, model: InferenceModel): String {
     val who = model.kinds.indices.joinToString(" / ") { answererShort(model.answerer(c, it)) }
-    return if (c.windowMs == 0) who else t("%@, batching %@", who, windowText(c.windowMs))
+    return if (c.windowMs == 0) t("%@, no batching", who) else t("%@, batching %@", who, windowText(c.windowMs))
 }

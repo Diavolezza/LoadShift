@@ -222,17 +222,18 @@ private fun AvailabilityGoals(game: AvailabilityController, compact: Boolean) {
             .padding(horizontal = 20.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        // The goals take the room that is left and scroll sideways if they need more: stars and "Start over" stay visible.
-        Row(if (compact) Modifier else Modifier.weight(1f).horizontalScroll(rememberScrollState()),
-            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+        // The goals take the room that is left and wrap into a second line if they need more: stars and "Start over" stay visible.
+        GoalsFlow(compact) {
             Txt(t("Goals"), Type.style(13, FontWeight.SemiBold, Palette.secondary))
-            GoalItem(r.missed.isEmpty(), r.missed.isNotEmpty() || game.finished, t("Every quality scenario met"))
+            GoalItem(r.missed.isEmpty(), true, t("Every quality scenario met"))
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            StarTick(r.reductionPermille >= scenario.goals.reduction)
             StarLabel(2, 13.dp)
             Txt(t("CO₂ %@", shortChange(-scenario.goals.reduction.toLong())), Type.callout)
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            StarTick(r.reductionPermille >= ((scenario.goals.special as? de.wannerit.loadshift.core.SpecialGoal.Reduction)?.permille ?: 1_000))
             StarLabel(3, 13.dp)
             Txt(specialShort(scenario.goals.special), Type.callout)
         }
@@ -407,6 +408,7 @@ private fun AvailabilityEnd(game: AvailabilityController, onExit: () -> Unit, on
                     val s = model.scenarios.first { it.name == name }
                     t("%@ is down %@ (at most %@)", t(name), downtimeText(r.downtime.getValue(name)), downtimeText(s.maxDowntimeMinutes.toDouble()))
                 }), Type.style(16, FontWeight.SemiBold, Palette.red))
+                MoreStarsLine(moreStars(r.reductionPermille, scenario.goals, met))
                 Table(listOf(t("Quality scenario"), t("May be down"), t("Expected")), model.scenarios.map {
                     listOf(t(it.name), downtimeText(it.maxDowntimeMinutes.toDouble()), downtimeText(r.downtime.getValue(it.name)))
                 }, firstWidth = 0.5f)
@@ -446,7 +448,7 @@ fun WhatIfCard(rows: List<Triple<String, Long, Int>>, best: Int, subtitle: Strin
             val secret = stars > best && !Progress.solutionSeen(scenario)
             if (secret) hidden++
             Row(Modifier.padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
-                if (secret) Txt(t("A setting you have not found yet"), Type.style(15, color = Palette.secondary).copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic), Modifier.weight(0.6f))
+                if (secret) Txt(t("A plan you have not found yet"), Type.style(15, color = Palette.secondary).copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic), Modifier.weight(0.6f))
                 else Txt(label, Type.callout, Modifier.weight(0.6f))
                 Txt(Format.changePermille(-reduction), Type.callout.copy(textAlign = TextAlign.End), Modifier.weight(0.22f))
                 Box(Modifier.weight(0.18f), contentAlignment = Alignment.CenterEnd) { StarRow(stars, 11.dp) }
@@ -455,7 +457,7 @@ fun WhatIfCard(rows: List<Triple<String, Long, Int>>, best: Int, subtitle: Strin
             val why = reasons.getOrNull(i).orEmpty()
             if (!secret && stars == 0 && why.isNotEmpty()) Txt(t("Not met: %@", why), Type.style(12, color = Palette.red), Modifier.padding(bottom = 3.dp))
         }
-        if (hidden > 0) Txt(t("Settings with more stars than you have reached stay hidden until you find them."), Type.caption)
+        if (hidden > 0) Txt(t("Plans with more stars than you have reached stay hidden until you find them."), Type.caption)
         SolutionBar(scenario, hidden, onLoad)
     }
 }

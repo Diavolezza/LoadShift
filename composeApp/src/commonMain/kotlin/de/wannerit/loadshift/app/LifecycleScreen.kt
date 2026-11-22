@@ -149,17 +149,18 @@ private fun LifecycleGoals(game: LifecycleController, compact: Boolean) {
             .padding(horizontal = 20.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        // The goals take the room that is left and scroll sideways if they need more: stars and "Start over" stay visible.
-        Row(if (compact) Modifier else Modifier.weight(1f).horizontalScroll(rememberScrollState()),
-            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+        // The goals take the room that is left and wrap into a second line if they need more: stars and "Start over" stay visible.
+        GoalsFlow(compact) {
             Txt(t("Goals"), Type.style(13, FontWeight.SemiBold, Palette.secondary))
-            GoalItem(r.missed.isEmpty(), r.missed.isNotEmpty() || game.finished, t("Every requirement met"))
+            GoalItem(r.missed.isEmpty(), true, t("Every requirement met"))
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            StarTick(r.reductionPermille >= scenario.goals.reduction)
             StarLabel(2, 13.dp)
             Txt(t("CO₂ %@", shortChange(-scenario.goals.reduction.toLong())), Type.callout)
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            StarTick(r.reductionPermille >= ((scenario.goals.special as? de.wannerit.loadshift.core.SpecialGoal.Reduction)?.permille ?: 1_000))
             StarLabel(3, 13.dp)
             Txt(specialShort(scenario.goals.special), Type.callout)
         }
@@ -307,7 +308,8 @@ private fun LifecycleEnd(game: LifecycleController, onExit: () -> Unit, onOvervi
                     GoalLine(met.reduction, 2, t("CO₂ %@ or better", Format.changePermille(-scenario.goals.reduction.toLong())))
                     GoalLine(met.special, 3, specialLong(scenario.goals.special))
                 }
-                if (!met.rules) Txt(t("No star because: %@", r.missed.joinToString("; ") { t(it.text) }), Type.style(16, FontWeight.SemiBold, Palette.red))
+                if (!met.rules) Txt(t("No star because: %@", r.missed.joinToString(", ") { t("“%@”", t(it.text)) }), Type.style(16, FontWeight.SemiBold, Palette.red))
+                MoreStarsLine(moreStars(r.reductionPermille, scenario.goals, met))
                 Table(listOf("", t("today"), t("your plan")), listOf(
                     listOf(t("Hot, TB"), tb(r0.tb.getValue(StorageTier.HOT)), tb(r.tb.getValue(StorageTier.HOT))),
                     listOf(t("Warm, TB"), tb(r0.tb.getValue(StorageTier.WARM)), tb(r.tb.getValue(StorageTier.WARM))),
