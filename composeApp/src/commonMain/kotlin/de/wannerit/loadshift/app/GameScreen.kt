@@ -257,7 +257,7 @@ private fun TopMetrics(game: GameController) {
     if (simulation.scenario.cooling != null) {
         Metric(t("PUE now"), if (last == null || last.itPower == 0) "–" else Format.number(last.facilityPower.toDouble() / last.itPower, 2))
     }
-    if (!game.hasRenewal) Metric(t("Power"), "${Format.kilowatts(last?.facilityPower ?: 0)} kW")
+    if (!game.hasRenewal) Metric(t("Total power"), "${Format.kilowatts(last?.facilityPower ?: 0)} kW")
 }
 
 @Composable
@@ -537,6 +537,11 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
                         add((if (game.hasRenewal) t("SLA (lowest site)") else t("SLA")) to (Format.percent(minOf(you.sla, you.worstSiteSla)) to Format.percent(minOf(ref.sla, ref.worstSiteSla))))
                         add(t("Servers on (mean)") to (Format.number(you.meanServersOn / 1_000.0, 1) to Format.number(ref.meanServersOn / 1_000.0, 1)))
                         add(t("Mean utilization") to (Format.wholePercent(you.meanUtilization) to Format.wholePercent(ref.meanUtilization)))
+                    }
+                    if (game.hasSprints) {
+                        // E2: the SCI per functional unit (1,000 requests served) – the debrief refers to it.
+                        fun sci(x: de.wannerit.loadshift.core.Totals) = Format.number(x.emissions / 1e6 / maxOf(1L, x.requestsServed), 2)
+                        add(t("SCI (g CO₂ per 1,000 requests)") to (sci(you) to sci(ref)))
                     }
                     if (scenario.inference != null) {
                         add(t("Quality of the answers") to (Format.percent(you.meanAnswerQuality) to Format.percent(ref.meanAnswerQuality)))

@@ -54,6 +54,24 @@ private fun entries(): List<Entry> {
     return (fromScenarios + GENERAL.map { Entry(it.first, it.second, emptyList()) }).sortedBy { it.term.lowercase() }
 }
 
+/** The sources the debriefs cite as [S…] (the full list with notes: docs/CONCEPT.md, section 14). Titles stay as published. */
+private val SOURCES = listOf(
+    Triple("S8", "G. Kamiya, IEA: The carbon footprint of streaming video: fact-checking the headlines, 2020.", "https://www.iea.org/commentaries/the-carbon-footprint-of-streaming-video-fact-checking-the-headlines"),
+    Triple("S25", "C. Elsworth, K. Huang, D. Patterson et al.: Measuring the environmental impact of delivering AI at Google Scale, arXiv:2508.15734, 2025.", "https://arxiv.org/abs/2508.15734"),
+    Triple("S26", "J. You: How much energy does ChatGPT use?, Epoch AI, 2025.", "https://epoch.ai/blog/how-much-energy-does-chatgpt-use"),
+    Triple("S27", "J. Delavande, R. Pierrard, S. Luccioni: Understanding Efficiency: Quantization, Batching, and Serving Strategies in LLM Energy Use, arXiv:2601.22362, 2026.", "https://arxiv.org/abs/2601.22362"),
+    Triple("S28", "Sustainable Web Design Model, version 4 (Wholegrain Digital, Mightybytes, Green Web Foundation and others).", "https://sustainablewebdesign.org/estimating-digital-emissions/"),
+    Triple("S29", "HTTP Archive: Web Almanac 2025, Page Weight.", "https://almanac.httparchive.org/en/2025/page-weight"),
+    Triple("S30", "web.dev: Largest Contentful Paint (LCP).", "https://web.dev/articles/lcp"),
+    Triple("S31", "M. Fowler: The Rise of Test Impact Analysis, martinfowler.com, 2017.", "https://martinfowler.com/articles/rise-test-impact-analysis.html"),
+    Triple("S32", "Green Coding Solutions: Eco CI.", "https://www.green-coding.io/projects/eco-ci/"),
+    Triple("S33", "K. Maeda: Performance evaluation of object serialization libraries in XML, JSON and binary formats, DICTAP 2012.", null),
+    Triple("S34", "N. Bjørndal, M. Mazzara, A. Bucchiarone, N. Dragoni, S. Dustdar: Migration from Monolith to Microservices: Benchmarking a Case Study, Journal of Object Technology 20(3), 2021.", "https://doi.org/10.5381/jot.2021.20.2.a3"),
+    Triple("S36", "Association of Issuing Bodies (AIB): European Residual Mixes 2024.", "https://www.aib-net.org/facts/european-residual-mix/2024"),
+    Triple("S37", "GHG Protocol: Public consultations on Scope 2, 2025.", "https://ghgprotocol.org/blog/release-ghg-protocol-opens-public-consultations-scope-2-and-electricity-sector-consequential"),
+    Triple("S38", "Google: 24/7 carbon-free energy.", "https://blog.google/around-the-globe/google-europe/how-carbon-free-energy-around-the-clock-can-work/"),
+)
+
 /** The glossary: every technical term of the game, with the scenarios that teach it (open ones can be started from here). */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -88,6 +106,21 @@ fun LexiconScreen(onBack: () -> Unit, onOpen: (Scenario) -> Unit) {
                                     Txt(t("Scenario %@: %@", s.shownLabel, t(s.title)), Type.style(14, FontWeight.SemiBold, if (open) Palette.accent else Palette.secondary))
                                 }
                             }
+                        }
+                    }
+                }
+            }
+            // The sources the debriefs cite: [S…] has to lead somewhere inside the game.
+            Txt(t("Sources"), Type.style(28, FontWeight.Bold))
+            Txt(t("The marks in square brackets in the debriefs, for example [S27], refer to these sources."), Type.style(17, color = Palette.secondary))
+            val uri = androidx.compose.ui.platform.LocalUriHandler.current
+            Column(Modifier.background(Palette.panel, RoundedCornerShape(16.dp)).padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                for ((id, text, link) in SOURCES) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Txt(id, Type.style(15, FontWeight.Bold), Modifier.width(44.dp))
+                        Column(Modifier.weight(1f)) {
+                            Txt(text, Type.style(15))
+                            if (link != null) Txt(link, Type.style(13, color = Palette.accent), Modifier.clickable { uri.openUri(link) })
                         }
                     }
                 }

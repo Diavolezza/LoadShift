@@ -359,7 +359,7 @@ private fun CapacityRules(game: GameController) {
     val total = game.scenario.fleet.filter { it.kind.servesInteractive }.sumOf { it.count }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Txt(t("Capacity rule"), Type.heading)
-        Txt(t("A rule switches the servers – you no longer do it by hand. One server handles %lld load units; it takes 30 minutes to boot.", perServer), Type.style(15, color = Palette.secondary))
+        Txt(t("A rule switches the servers – you no longer do it by hand. One server handles %lld load units; it takes 30 minutes to boot. Above 85 %% utilization requests get slow.", perServer), Type.style(15, color = Palette.secondary))
         val kind = game.capKind
         RuleOption(kind == GameController.CapacityKind.ALL_ON, { game.capKind = GameController.CapacityKind.ALL_ON },
             t("All on"), t("All %lld servers run all the time.", total))
@@ -383,6 +383,7 @@ private fun CapacityRules(game: GameController) {
                     Txt(t("Minimum in a time window"), Type.style(15, FontWeight.SemiBold))
                     Txt(t("At least %lld servers every day from %@ to %@ (scheduled scaling).", game.capMinimum,
                         GameTime.at(0, game.capFrom).clockText, GameTime.at(0, game.capTo % 24).clockText), Type.caption)
+                    Txt(t("The servers start at %@ and are ready 30 minutes later.", GameTime.at(0, game.capFrom).clockText), Type.caption)
                 }
             }
             if (game.capMinimumOn) {

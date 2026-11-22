@@ -426,12 +426,12 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Eine Handelskette mit 30.000 Beschäftigten",
     "A rule sets when each job starts – you no longer plan every job by hand. Choose a rule and apply it; you can change it at any time." to
         "Eine Regel legt fest, wann jeder Job startet – du planst nicht mehr jeden Job von Hand. Wähle eine Regel und übernimm sie; du kannst sie jederzeit ändern.",
-    "A rule switches the servers – you no longer do it by hand. One server handles %lld load units; it takes 30 minutes to boot." to
-        "Eine Regel schaltet die Server – du machst es nicht mehr von Hand. Ein Server schafft %lld Lasteinheiten und braucht 30 Minuten zum Starten.",
+    "A rule switches the servers – you no longer do it by hand. One server handles %lld load units; it takes 30 minutes to boot. Above 85 %% utilization requests get slow." to
+        "Eine Regel schaltet die Server – du machst es nicht mehr von Hand. Ein Server schafft %lld Lasteinheiten und braucht 30 Minuten zum Starten. Über 85 %% Auslastung werden Requests langsam.",
     "A scenario is available only while every building block it waits for is: their availabilities multiply." to
         "Ein Szenario ist nur verfügbar, solange jeder Baustein verfügbar ist, auf den es wartet: Die Verfügbarkeiten multiplizieren sich.",
-    "A scheduler starts jobs by rules that look at the carbon intensity – now or in the forecast. It automates Time Shifting; Google shifts flexible work in its data centers this way, with day-ahead forecasts." to
-        "Ein Scheduler startet Jobs nach Regeln, die auf die CO₂-Intensität schauen – jetzt oder in der Prognose. Das automatisiert Time Shifting; Google verschiebt so flexible Arbeit in seinen Rechenzentren, mit Prognosen für den nächsten Tag.",
+    "A scheduler starts jobs by rules that follow the carbon intensity – now or in the forecast. It automates Time Shifting; Google shifts flexible work in its data centers this way, with day-ahead forecasts." to
+        "Ein Scheduler startet Jobs nach Regeln, die sich nach der CO₂-Intensität richten – jetzt oder in der Prognose. Das automatisiert Time Shifting; Google verschiebt so flexible Arbeit in seinen Rechenzentren, mit Prognosen für den nächsten Tag.",
     "A second set is prepared but off; the data are copied. After a failure it is started." to
         "Ein zweiter Satz Server steht bereit, ist aber aus; die Daten werden kopiert. Nach einer Störung wird er gestartet.",
     "A second, smaller set runs and keeps the data current; it takes over after a failure." to
@@ -700,7 +700,7 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Autoscaling bei 50 %, 20 °C (Referenz)",
     "Autoscaling at 50 %, 27 °C" to
         "Autoscaling bei 50 %, 27 °C",
-    "Autoscaling at 70 % (from scenario O4)" to
+    "Autoscaling at 70 % (from scenario B4)" to
         "Autoscaling mit 70 % (ab Szenario B4)",
     "Autoscaling at 80 %" to
         "Autoscaling bei 80 %",
@@ -708,7 +708,7 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Autoscaling bei 80 %, 20 °C",
     "Autoscaling at 80 %, 25 °C" to
         "Autoscaling bei 80 %, 25 °C",
-    "Autoscaling does what you did by hand in scenario O1: it switches servers on and off for the load. The target utilization decides how much headroom stays free. Little headroom saves energy – but a server takes 30 minutes to boot, and the autoscaler knows only the usual day; a sudden peak finds it unprepared. Headroom all the time costs energy all the time; a minimum for a known event costs it only when it is needed." to
+    "Autoscaling does what you did by hand in scenario B1: it switches servers on and off for the load. The target utilization decides how much headroom stays free. Little headroom saves energy – but a server takes 30 minutes to boot, and the autoscaler knows only the usual day; a sudden peak finds it unprepared. Headroom all the time costs energy all the time; a minimum for a known event costs it only when it is needed." to
         "Autoscaling macht, was du in Szenario B1 von Hand gemacht hast: Es schaltet Server passend zur Last ein und aus. Die Zielauslastung bestimmt, wie viel Reserve frei bleibt. Wenig Reserve spart Energie – aber ein Server braucht 30 Minuten zum Starten, und das Autoscaling kennt nur den gewöhnlichen Tag; eine plötzliche Spitze trifft es unvorbereitet. Reserve rund um die Uhr kostet rund um die Uhr Energie; ein Minimum für ein bekanntes Ereignis kostet sie nur, wenn sie gebraucht wird.",
     "Autoscaling, region Frankfurt" to
         "Autoscaling, Region Frankfurt",
@@ -1936,8 +1936,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Mittlere Auslastung",
     "mean utilization at least %@" to
         "mittlere Auslastung mindestens %@",
-    "Measure before you optimize: the big items on the team's list hardly mattered, while a one-line change of the log level saved a tenth of the CPU. The checkout is Amdahl's law at work: however much faster a part gets, the whole gains at most its share. Less work per request lowers the energy and – with autoscaling – the number of servers; a data center that needs fewer servers also needs less hardware. The SCI per 1,000 requests shows the effect independent of the load." to
-        "Erst messen, dann optimieren: Die großen Punkte auf der Liste des Teams brachten kaum etwas, eine einzige Zeile beim Log-Level dagegen ein Zehntel der CPU. Der Checkout zeigt Amdahls Gesetz: Wie viel schneller ein Teil auch wird, das Ganze gewinnt höchstens seinen Anteil. Weniger Arbeit pro Request senkt die Energie und – mit Autoscaling – die Zahl der Server; ein Rechenzentrum, das weniger Server braucht, braucht auch weniger Hardware. Die SCI pro 1.000 Requests zeigt den Effekt unabhängig von der Last.",
+    "Measure before you optimize: the big items on the team's list hardly mattered, while a one-line change of the log level saved a tenth of the CPU. The checkout is Amdahl's law at work: however much faster a part gets, the whole gains at most its share. Less work per request lowers the energy and – with autoscaling – the number of servers; a data center that needs fewer servers also needs less hardware. The SCI (Software Carbon Intensity, CO₂ per functional unit – here per 1,000 requests) shows the effect independent of the load." to
+        "Erst messen, dann optimieren: Die großen Punkte auf der Liste des Teams brachten kaum etwas, eine einzige Zeile beim Log-Level dagegen ein Zehntel der CPU. Der Checkout zeigt Amdahls Gesetz: Wie viel schneller ein Teil auch wird, das Ganze gewinnt höchstens seinen Anteil. Weniger Arbeit pro Request senkt die Energie und – mit Autoscaling – die Zahl der Server; ein Rechenzentrum, das weniger Server braucht, braucht auch weniger Hardware. Die SCI (Software Carbon Intensity, CO₂ pro Funktionseinheit – hier pro 1.000 Requests) zeigt den Effekt unabhängig von der Last.",
     "Measure first" to
         "Erst messen",
     "Measured now, with the settings running" to
@@ -2036,8 +2036,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Verlegt",
     "Moving applications from a public cloud back onto own hardware or into a colocation – mostly for costs, sometimes for control over data and hardware. The opposite way, into the cloud, is called cloud migration." to
         "Anwendungen aus einer Public Cloud zurück auf eigene Hardware oder in eine Colocation holen – meist wegen der Kosten, manchmal für die Kontrolle über Daten und Hardware. Der umgekehrte Weg, in die Cloud, heißt Cloud-Migration.",
-    "Moving flexible work into the hours when the grid is cleanest. Together with Location Shifting it is called Demand Shifting – part of the Green Software Foundation principle Carbon Awareness." to
-        "Flexible Arbeit in die Stunden verschieben, in denen der Strom am saubersten ist. Zusammen mit Location Shifting heißt das Demand Shifting – ein Teil des Prinzips Carbon Awareness der Green Software Foundation.",
+    "Moving flexible work into the hours when the grid is cleanest. Together with Location Shifting – moving the work to a place with cleaner power – it is called Demand Shifting, part of the Green Software Foundation principle Carbon Awareness." to
+        "Flexible Arbeit in die Stunden verschieben, in denen der Strom am saubersten ist. Zusammen mit Location Shifting – die Arbeit an einen Ort mit saubererem Strom verlegen – heißt das Demand Shifting, ein Teil des Prinzips Carbon Awareness der Green Software Foundation.",
     "Moving flexible work to the place where the electricity is cleanest. Together with Time Shifting it is called Demand Shifting – part of the Green Software Foundation principle Carbon Awareness. Its limits: moving the data, the latency to users and other systems, and where data may be stored." to
         "Flexible Arbeit an den Ort verschieben, an dem der Strom am saubersten ist. Zusammen mit Time Shifting heißt das Demand Shifting – ein Teil des Prinzips Carbon Awareness der Green Software Foundation. Seine Grenzen: das Verschieben der Daten, die Latenz zu den Nutzenden und anderen Systemen und wo Daten gespeichert werden dürfen.",
     "Must be current." to
@@ -2342,14 +2342,14 @@ internal val GERMAN: Map<String, String> = mapOf(
         "geplant %@",
     "planned again with the latest forecast" to
         "mit der neuesten Prognose neu geplant",
-    "Planned by the forecast (from scenario O3)" to
+    "Planned by the forecast (from scenario B3)" to
         "Nach Prognose geplant (ab Szenario B3)",
     "Planned with the forecast of %@." to
         "Geplant mit der Prognose von %@.",
     "Planned: %@" to
         "Geplant: %@",
-    "Planning every job by hand does not scale. A rule does it for you: at a fixed hour, below a threshold, or into the greenest hours of the forecast. But the forecast is uncertain – ±25 % a day ahead in a wind grid – and a rule that waits for clean power may wait in vain. The deadline safety makes sure that no job misses its deadline." to
-        "Jeden Job von Hand zu planen, skaliert nicht. Eine Regel übernimmt das: zu einer festen Uhrzeit, unter einem Schwellwert oder in die saubersten Stunden der Prognose. Doch die Prognose ist unsicher – in einem Windnetz ±25 % einen Tag im Voraus –, und eine Regel, die auf sauberen Strom wartet, wartet vielleicht vergeblich. Die Fristsicherung sorgt dafür, dass kein Job seine Frist verpasst.",
+    "Planning every job by hand does not scale. A rule does it for you: at a fixed hour, below a threshold, or into the greenest hours of the forecast. But the forecast is uncertain – ±25 % a day ahead in a wind grid – and a rule that waits for clean power may wait in vain. The deadline safety – with a fixed hour and a threshold – makes sure that no job misses its deadline." to
+        "Jeden Job von Hand zu planen, skaliert nicht. Eine Regel übernimmt das: zu einer festen Uhrzeit, unter einem Schwellwert oder in die saubersten Stunden der Prognose. Doch die Prognose ist unsicher – in einem Windnetz ±25 % einen Tag im Voraus –, und eine Regel, die auf sauberen Strom wartet, wartet vielleicht vergeblich. Die Fristsicherung – bei fester Uhrzeit und Schwellwert – sorgt dafür, dass kein Job seine Frist verpasst.",
     "Plans made with the old forecast may now fall into dirty hours. Look at the new forecast below." to
         "Pläne, die mit der alten Prognose gemacht wurden, liegen jetzt vielleicht in schmutzigen Stunden. Schau dir unten die neue Prognose an.",
     "Play again" to
@@ -2638,6 +2638,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Szenario %1\$@: %2\$@",
     "Scenario complete" to
         "Szenario geschafft",
+    "SCI (g CO₂ per 1,000 requests)" to
+        "SCI (g CO₂ pro 1.000 Requests)",
     "Search" to
         "Suche",
     "Search index" to
@@ -2760,6 +2762,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Photovoltaik auf dem Dach des Rechenzentrums",
     "Solution: %@" to
         "Lösung: %@",
+    "Sources" to
+        "Quellen",
     "Sources of data" to
         "Datenquellen",
     "Spain" to
@@ -3024,6 +3028,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Die größte Einsparung brauchte keine KI: Eine Statusabfrage beantwortet „Wo ist meine Bestellung?“ besser als jedes Modell, für ein Fünfhundertstel der Energie. Ein kleines Modell reicht, wo die Antwort in den Produktdaten steht; das große lohnt sich, wo es Qualität bringt – bei Reklamationen und Beratung. Batching ist der zweite Hebel: Die GPU liest die Gewichte des Modells pro Schritt einmal für den ganzen Batch, und Serving-Systeme senken so die Energie pro Antwort um ein Vielfaches [S27] – solange die Wartezeit unter dem bleibt, was die Kundschaft akzeptiert. Reasoning brachte bei Reklamationen drei Punkte Qualität, für das Zweieinhalbfache an Energie und neun Sekunden Warten. Die Zahlen sind Spielwerte im Bereich veröffentlichter Messungen [S25, S26]; sie unterscheiden sich stark zwischen Modellen, Hardware und der Art, wie die Modelle betrieben werden – miss deine eigenen.",
     "the making of the servers is in the price" to
         "die Herstellung der Server steckt im Preis",
+    "The marks in square brackets in the debriefs, for example [S27], refer to these sources." to
+        "Die Marken in eckigen Klammern in den Auflösungen, zum Beispiel [S27], verweisen auf diese Quellen.",
     "The measures take effect next year. The stars go by what really changes." to
         "Die Maßnahmen wirken ab dem nächsten Jahr. Für die Sterne zählt, was sich wirklich ändert.",
     "The model needs a fixed amount of GPU work by the end of day %lld. You decide how many GPU servers train together, how much power each may draw, and when they train. A pause is possible at a checkpoint; resuming costs 15 minutes of loading it." to
@@ -3168,6 +3174,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Die Server jeder Anwendung laut CMDB. Kostenlos.",
     "The servers needed for the expected load of the next hour run. A low target leaves headroom for peaks but more servers idle; a high target is efficient but gets slow at peaks." to
         "Es laufen die Server, die für die erwartete Last der nächsten Stunde nötig sind. Ein niedriges Ziel lässt Reserve für Spitzen, aber mehr Server stehen im Leerlauf; ein hohes Ziel ist effizient, wird aber bei Spitzen langsam.",
+    "The servers start at %@ and are ready 30 minutes later." to
+        "Die Server starten um %@ und sind 30 Minuten später bereit.",
     "The seven building blocks and the three groups of customers: the tenancy model of each, and the servers each building block needs. Click a model to choose it, a row to see its facts." to
         "Die sieben Bausteine und die drei Gruppen von Firmen: das Mandantenmodell für jede, und die Server, die jeder Baustein braucht. Klick auf ein Modell, um es zu wählen, auf eine Zeile, um ihre Zahlen zu sehen.",
     "The shop assistant: who answers each kind of question, with the quality of the answers, and the batching window. Below it the quality and the answers in time with your settings." to
@@ -3322,6 +3330,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "zu viele veraltete Antworten",
     "too many story points" to
         "zu viele Story Points",
+    "Total power" to
+        "Leistung gesamt",
     "tracking %lld ms (at most %lld ms)" to
         "Tracking %lld ms (höchstens %lld ms)",
     "Tracking within 250 ms, positions at most 1 min and traffic at most 5 min old, and less CO₂ than the reference" to

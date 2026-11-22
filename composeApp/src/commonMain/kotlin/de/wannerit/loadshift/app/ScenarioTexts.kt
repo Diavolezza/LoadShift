@@ -364,7 +364,7 @@ class ScenarioTexts(
                 ),
                 comparedWith = "compared with the reference operator, whose team changes nothing in the code.",
                 rules = "SLA at least 99 % and less CO₂ than the reference",
-                remark = "Measure before you optimize: the big items on the team's list hardly mattered, while a one-line change of the log level saved a tenth of the CPU. The checkout is Amdahl's law at work: however much faster a part gets, the whole gains at most its share. Less work per request lowers the energy and – with autoscaling – the number of servers; a data center that needs fewer servers also needs less hardware. The SCI per 1,000 requests shows the effect independent of the load.",
+                remark = "Measure before you optimize: the big items on the team's list hardly mattered, while a one-line change of the log level saved a tenth of the CPU. The checkout is Amdahl's law at work: however much faster a part gets, the whole gains at most its share. Less work per request lowers the energy and – with autoscaling – the number of servers; a data center that needs fewer servers also needs less hardware. The SCI (Software Carbon Intensity, CO₂ per functional unit – here per 1,000 requests) shows the effect independent of the load.",
                 term = "Profiling",
                 termText = "Measuring where a program spends its time and memory, function by function. A profiler shows the hot spots – often not where the team expects them. Without measuring, optimization is guesswork. Donald Knuth warned of premature optimization: optimizing before you know where it pays off.",
             )
@@ -385,7 +385,7 @@ class ScenarioTexts(
             )
             4 -> ScenarioTexts(
                 situation = "The web shop again, now in winter and with 30 servers. Autoscaling is on: at 80 % target utilization it keeps just enough servers running. On day 2 marketing sends a newsletter at 19:00 – for three hours twice as many people will shop as usual.",
-                idea = "Autoscaling does what you did by hand in scenario O1: it switches servers on and off for the load. The target utilization decides how much headroom stays free. Little headroom saves energy – but a server takes 30 minutes to boot, and the autoscaler knows only the usual day; a sudden peak finds it unprepared. Headroom all the time costs energy all the time; a minimum for a known event costs it only when it is needed.",
+                idea = "Autoscaling does what you did by hand in scenario B1: it switches servers on and off for the load. The target utilization decides how much headroom stays free. Little headroom saves energy – but a server takes 30 minutes to boot, and the autoscaler knows only the usual day; a sudden peak finds it unprepared. Headroom all the time costs energy all the time; a minimum for a known event costs it only when it is needed.",
                 screen = listOf(
                     "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals.",
                     "Your racks: grey servers are off, light blue ones are booting, the blue bar shows how busy a server is.",
@@ -400,7 +400,7 @@ class ScenarioTexts(
             )
             3 -> ScenarioTexts(
                 situation = "The web shop's analytics cluster in Great Britain: twelve servers, nine jobs in three days. It is winter, and the British grid depends on the wind. Today is an ordinary winter day; tomorrow a storm front brings plenty of wind power, the day after the wind drops and gas power plants take over.",
-                idea = "Planning every job by hand does not scale. A rule does it for you: at a fixed hour, below a threshold, or into the greenest hours of the forecast. But the forecast is uncertain – ±25 % a day ahead in a wind grid – and a rule that waits for clean power may wait in vain. The deadline safety makes sure that no job misses its deadline.",
+                idea = "Planning every job by hand does not scale. A rule does it for you: at a fixed hour, below a threshold, or into the greenest hours of the forecast. But the forecast is uncertain – ±25 % a day ahead in a wind grid – and a rule that waits for clean power may wait in vain. The deadline safety – with a fixed hour and a threshold – makes sure that no job misses its deadline.",
                 screen = listOf(
                     "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals.",
                     "Your batch cluster: grey servers are off, light blue ones are booting, the amber bar shows a server working on a job.",
@@ -411,7 +411,7 @@ class ScenarioTexts(
                 rules = "every job by its deadline and less CO₂ than the reference",
                 remark = "A fixed threshold works while the wind blows. When it drops, the jobs wait in vain: without the deadline safety they miss their deadlines, with it they start at the last moment – often in the dirtiest hours. A rule that compares the hours of the forecast adapts to the weather – as long as the plan is made again when the forecast changes. Real schedulers plan again regularly for this reason.",
                 term = "Carbon-Aware Scheduling",
-                termText = "A scheduler starts jobs by rules that look at the carbon intensity – now or in the forecast. It automates Time Shifting; Google shifts flexible work in its data centers this way, with day-ahead forecasts.",
+                termText = "A scheduler starts jobs by rules that follow the carbon intensity – now or in the forecast. It automates Time Shifting; Google shifts flexible work in its data centers this way, with day-ahead forecasts.",
             )
             2 -> ScenarioTexts(
                 situation = "The web shop's batch cluster in Spain: ten servers for reports, backups, imports and conversions. Over two days seven jobs arrive, each with a deadline. Nobody minds when a job runs – as long as it is finished in time.",
@@ -426,7 +426,7 @@ class ScenarioTexts(
                 rules = "every job by its deadline and less CO₂ than the reference",
                 remark = "The night is not clean everywhere: in a solar grid the midday hours are the cleanest. Part of the CO₂ is the hardware's manufacturing – it stays the same whenever the jobs run.",
                 term = "Time Shifting",
-                termText = "Moving flexible work into the hours when the grid is cleanest. Together with Location Shifting it is called Demand Shifting – part of the Green Software Foundation principle Carbon Awareness.",
+                termText = "Moving flexible work into the hours when the grid is cleanest. Together with Location Shifting – moving the work to a place with cleaner power – it is called Demand Shifting, part of the Green Software Foundation principle Carbon Awareness.",
             )
             else -> ScenarioTexts(
                 situation = "You run the data center of a web shop in Germany. Its 20 servers are sized for the Christmas season. Today is an ordinary autumn day: in the evening many people shop, at night hardly anyone. It is midnight, and the previous shift has left every server on.",
