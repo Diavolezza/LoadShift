@@ -25,7 +25,7 @@ them and shows "what if" with other decisions. Stars are feedback for the player
 | Operations | B1 Night shift (1) · B2 Wait for the sun (2) · B3 When the wind drops (3) · B4 Headroom (4) | Rightsizing · Time Shifting · Carbon-Aware Scheduling · Autoscaling |
 | | B5 Consolidation (5) · B6 Heat wave (6) · B7 Old iron (7) · B8 Training run (8) | Consolidation · PUE · Embodied Carbon · Carbon-Aware Training |
 | | B9 Eco mode (9) · B10 Two sites (10) · B11 Green on paper (12) · B12 Dark doldrums (11) | Demand Shaping · Location Shifting · 24/7 Carbon-Free Energy · Carbon Awareness |
-| Engineering | E1 How many nines? (108) · E2 Measure first (101) · E3 Growing data (102) · E4 Hit or miss (103) | Availability Tactics · Profiling · Algorithmic complexity · Caching |
+| Engineering | E1 How many nines? (108) · E2 Measure first (101) · E3 Growing data (102) · E4 Hit or miss (103) | Availability Tactics · Profiling · Algorithmic Complexity · Caching |
 | | E5 Data diet (105) · E6 Keep everything? (111) · E7 Chatty services (107) · E8 Constant asking (109) | Sustainable Web Design · Data Lifecycle Management · Green Software Architecture · Polling, Push, Streaming |
 | | E9 One per customer? (110) · E10 Right-sized AI (104) · E11 Green pipeline (106) · E12 One pattern for everything? (112) | Multi-tenancy · Green AI · Green CI/CD · Architecture patterns |
 | Portfolio | P1 Inventory (201) · P2 Where to start (202) · P3 Tidy up with TIME (203) · P4 Leave the cloud? (204) | Carbon Accounting · MACC · TIME · Cloud Repatriation |

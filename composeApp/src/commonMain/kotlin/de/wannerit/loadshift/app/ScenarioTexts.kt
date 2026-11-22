@@ -350,7 +350,7 @@ class ScenarioTexts(
                 comparedWith = "compared with the reference operator, whose team changes nothing in the code.",
                 rules = "SLA at least 99 % and less CO₂ than the reference",
                 remark = "What saves the most today is not what saves the most in a year. A job with O(n²) is a footnote at the start and a large share of the nights after a year; the rewrite in another language saves only a constant share and blocks the team for months. Ask how the work grows, not only how big it is today. And watch for the rebound effect: capacity that is freed fills up quickly with new features.",
-                term = "Algorithmic complexity",
+                term = "Algorithmic Complexity",
                 termText = "How the work of an algorithm grows with the amount of data n, written in Big O notation: O(1) stays the same, O(n) grows in step with the data, O(n²) with its square. For small data the difference hardly shows; for growing data it decides.",
             )
             101 -> ScenarioTexts(

@@ -49,7 +49,7 @@ The app speaks English and German (switch on the start page); everything in this
 |---|---|---|
 | E1 | How many nines? | Availability Tactics |
 | E2 | Measure first | Profiling |
-| E3 | Growing data | Algorithmic complexity |
+| E3 | Growing data | Algorithmic Complexity |
 | E4 | Hit or miss | Caching |
 | E5 | Data diet | Sustainable Web Design |
 | E6 | Keep everything? | Data Lifecycle Management |
