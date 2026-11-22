@@ -43,6 +43,7 @@ import de.wannerit.loadshift.core.Control
 import de.wannerit.loadshift.core.GameTime
 import de.wannerit.loadshift.core.Scenario
 import de.wannerit.loadshift.core.SpecialGoal
+import de.wannerit.loadshift.core.Totals
 import kotlinx.coroutines.delay
 
 /** The play screen (docs/CONCEPT.md 10.1): top bar with the goals, hall and controls, timeline. */
@@ -158,8 +159,8 @@ private fun TopBar(game: GameController, onExit: () -> Unit, compact: Boolean = 
     val simulation = game.simulation
     val shown = maxOf(simulation.scenario.startTick, simulation.tick)
     val time = GameTime(shown)
-    val intensity = simulation.grid.intensity(minOf(shown, simulation.scenario.endTick - 1))
-    val last = simulation.history.lastOrNull()
+    // At the end the clock stands at midnight of the next day; the last day ends at 24:00.
+    val clock = if (simulation.tick >= simulation.scenario.endTick) "24:00" else time.clockText
     if (compact) {
         // A small screen (a phone held sideways): one row, the figures scroll sideways, no scenario name.
         Row(
@@ -171,7 +172,7 @@ private fun TopBar(game: GameController, onExit: () -> Unit, compact: Boolean = 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 val day = minOf(time.day - GameTime.START.day + 1, game.scenario.days)
                 Txt(if (game.hasRenewal) t("Quarter %lld, year %lld", (day - 1) % 4 + 1, (day - 1) / 4 + 1) else t("Day %lld", day), Type.caption)
-                Txt(time.clockText, Type.style(22, FontWeight.SemiBold).copy(fontFeatureSettings = "tnum"))
+                Txt(clock, Type.style(22, FontWeight.SemiBold).copy(fontFeatureSettings = "tnum"))
             }
             Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp)) {
                 TopMetrics(game)
@@ -179,23 +180,26 @@ private fun TopBar(game: GameController, onExit: () -> Unit, compact: Boolean = 
         }
         return
     }
-    // Left the controls, the clock in the middle, the figures on the right: the buttons stay where they are.
-    Box(Modifier.fillMaxWidth().background(Palette.panel).padding(horizontal = 20.dp, vertical = 10.dp)) {
-        Row(Modifier.align(Alignment.CenterStart), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(22.dp)) {
+    // Left the controls, the clock in the middle, the figures on the right: the buttons stay where they are. The sides
+    // share the width (the figures a little more), so nothing runs into the clock; too many figures scroll sideways.
+    Row(Modifier.fillMaxWidth().background(Palette.panel).padding(horizontal = 20.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(22.dp)) {
             Txt("‹", Type.style(34, FontWeight.SemiBold), Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = onExit).padding(horizontal = 6.dp))
             SpeedControl(game)
-            Column {
+            Column(Modifier.weight(1f, fill = false)) {
                 Txt(t("Scenario %@", game.scenario.shownLabel), Type.caption)
                 Txt(t(game.scenario.title), Type.style(17, FontWeight.SemiBold), maxLines = 1)
             }
         }
-        Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(Modifier.padding(horizontal = 18.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             val day = minOf(time.day - GameTime.START.day + 1, game.scenario.days)
             Txt(if (game.hasRenewal) t("Quarter %lld, year %lld", (day - 1) % 4 + 1, (day - 1) / 4 + 1) else t("Day %lld", day), Type.caption)
-            Txt(time.clockText, Type.style(30, FontWeight.SemiBold).copy(fontFeatureSettings = "tnum"))
+            Txt(clock, Type.style(30, FontWeight.SemiBold).copy(fontFeatureSettings = "tnum"))
         }
-        Row(Modifier.align(Alignment.CenterEnd), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(22.dp)) {
-            TopMetrics(game)
+        Box(Modifier.weight(1.3f), contentAlignment = Alignment.CenterEnd) {
+            Row(Modifier.horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                TopMetrics(game)
+            }
         }
     }
 }
@@ -293,10 +297,10 @@ private fun SpeedControl(game: GameController) {
 }
 
 /** "−70 %" for whole percents, "−50,5 %" otherwise – the goal bar is short of room. */
-private fun shortChange(permille: Long): String =
+fun shortChange(permille: Long): String =
     Format.changePermille(permille).let { if (permille % 10 == 0L) it.replace(Regex("[,.]0(?=[^0-9]*%)"), "") else it }
 
-private fun specialShort(goal: SpecialGoal): String = when (goal) {
+fun specialShort(goal: SpecialGoal): String = when (goal) {
     is SpecialGoal.MeanUtilization -> t("utilization ≥ %@", Format.wholePercent(goal.permille))
     is SpecialGoal.Reduction -> t("CO₂ %@", shortChange(-goal.permille.toLong()))
     is SpecialGoal.BatchIntensity -> t("batch ≤ %lld g/kWh", goal.gramsPerKWh)
@@ -322,84 +326,87 @@ private fun GoalBar(game: GameController, compact: Boolean = false) {
             .padding(horizontal = 20.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        Txt(t("Goals"), Type.style(13, FontWeight.SemiBold, Palette.secondary))
-        scenario.staleLimit?.let { limit ->
-            GoalItem(totals.stalePerTenThousand <= limit, change != null, t("Stale answers: %@ (at most %@)",
-                Format.number(totals.stale.toDouble() / maxOf(1, totals.requests), 2) + " ‰", Format.number(limit / 10.0, 1) + " ‰"))
-        }
-        if (game.hasInteractive) {
-            if (!game.hasInference && !game.hasWeb) GoalItem(minOf(totals.sla, totals.worstSiteSla) >= scenario.slaTarget, change != null,
-                if (game.hasRenewal) t("SLA ≥ %@ at each site", Format.percent(scenario.slaTarget)) else t("SLA ≥ %@", Format.percent(scenario.slaTarget)))
-            GoalItem((change ?: 0) < 0, change != null,
-                if (change == null) t("CO₂ vs. reference") else if (game.isCapstone && !game.isFinished) t("CO₂ expected: %@", Format.changePermille(change))
-                else t("CO₂ vs. reference: %@", Format.changePermille(change)))
-        }
-        scenario.contract?.let { model ->
-            val refCost = game.reference.history.getOrNull(game.simulation.history.size - 1)?.contract?.costSoFar ?: 0L
-            val within = totals.energyCost * 1_000 <= refCost * model.budgetPermille
-            GoalItem(within, refCost > 0, t("Electricity cost ≤ +%@", Format.wholePercent(model.budgetPermille - 1_000)))
-        }
-        scenario.services?.let { model ->
-            GoalItem(totals.meanLatency <= model.latencyLimit, change != null, t("Tracking ≤ %lld ms", model.latencyLimit))
-            GoalItem(totals.rulesBroken == 0, true, if (totals.rulesBroken == 0) t("Positions and traffic up to date") else t("Positions or traffic too old"))
-            GoalItem((change ?: 0) < 0, change != null,
-                if (change == null) t("CO₂ vs. reference") else t("CO₂ vs. reference: %@", Format.changePermille(change)))
-        }
-        scenario.pipeline?.let { model ->
-            GoalItem(totals.meanFeedback <= model.feedbackLimit * 10, change != null, t("Feedback ≤ %lld min", model.feedbackLimit))
-            GoalItem(totals.rulesBroken == 0, totals.rulesBroken > 0 || game.isFinished,
-                if (totals.rulesBroken == 0) t("Release on Friday with tested UI") else t("Released without UI tests"))
-            GoalItem((change ?: 0) < 0, change != null,
-                if (change == null) t("CO₂ vs. reference") else t("CO₂ vs. reference: %@", Format.changePermille(change)))
-        }
-        scenario.web?.let { model ->
-            GoalItem(totals.meanLcp <= model.lcpLimit, change != null, t("LCP ≤ %@ s", Format.number(model.lcpLimit / 10.0, 1)))
-        }
-        scenario.inference?.let { model ->
-            GoalItem(totals.meanAnswerQuality >= model.qualityTarget, change != null,
-                t("Quality of the answers ≥ %@", Format.percent(model.qualityTarget)))
-            GoalItem(totals.answersOnTime >= model.onTimeTarget, change != null,
-                t("%@ of the answers within %lld s", Format.percent(model.onTimeTarget), model.limitTenths / 10))
-        }
-        scenario.streaming?.let { model ->
-            GoalItem(totals.meanRating >= model.ratingTarget, change != null,
-                t("Viewers' rating %@ (at least %@)", Format.percent(totals.meanRating), Format.percent(model.ratingTarget)))
-        }
-        if (game.hasTraining) {
-            val done = totals.trainingFinishedAt
-            GoalItem(done != null, done != null || game.isFinished,
-                if (done != null) t("Training done: %@", timeText(done)) else t("Training done by the end of day %lld", scenario.days))
-            if (!game.hasInteractive) {
-                // O8: CO₂ so far would favour waiting for the wind; CO₂ per percent of training done is fair (like the
-                // batch intensity in O2 and O3) – the SCI idea on a small scale: emissions per unit of work.
-                // Compared with the reference after the same amount of work, not over its whole run.
-                val model = scenario.training!!
-                fun perPercent(operational: Long, done: Long) = operational / (done * 100.0 / model.work)
-                val mine = if (totals.trainingDone > 0) perPercent(totals.operational, totals.trainingDone) else null
-                val refAt = game.reference.history.firstOrNull { it.trainingDone >= totals.trainingDone && it.trainingDone > 0 }
-                    ?: game.reference.history.last()
-                val refPerPercent = perPercent(refAt.emissionsSoFar - refAt.embodiedSoFar, refAt.trainingDone)
-                GoalItem(mine != null && mine <= refPerPercent * 1.001, mine != null,
-                    if (mine == null) t("CO₂ per percent of training: none trained yet")
-                    else t("CO₂ per percent of training: %@ kg (reference %@ kg)", Format.number(mine / 1e9, 1), Format.number(refPerPercent / 1e9, 1)))
+        // The goals take the room that is left and scroll sideways if they need more: the stars and "Start over" stay visible.
+        Row(if (compact) Modifier else Modifier.weight(1f).horizontalScroll(rememberScrollState()),
+              verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+            Txt(t("Goals"), Type.style(13, FontWeight.SemiBold, Palette.secondary))
+            scenario.staleLimit?.let { limit ->
+                GoalItem(totals.stalePerTenThousand <= limit, change != null, t("Stale answers: %@ (at most %@)",
+                    Format.number(totals.stale.toDouble() / maxOf(1, totals.requests), 2) + " ‰", Format.number(limit / 10.0, 1) + " ‰"))
+            }
+            if (game.hasInteractive) {
+                if (!game.hasInference && !game.hasWeb) GoalItem(minOf(totals.sla, totals.worstSiteSla) >= scenario.slaTarget, change != null,
+                    if (game.hasRenewal) t("SLA ≥ %@ at each site", Format.percent(scenario.slaTarget)) else t("SLA ≥ %@", Format.percent(scenario.slaTarget)))
+                GoalItem((change ?: 0) < 0, change != null,
+                    if (change == null) t("CO₂ vs. reference") else if (game.isCapstone && !game.isFinished) t("CO₂ expected: %@", Format.changePermille(change))
+                    else t("CO₂ vs. reference: %@", Format.changePermille(change)))
+            }
+            scenario.contract?.let { model ->
+                val refCost = game.reference.history.getOrNull(game.simulation.history.size - 1)?.contract?.costSoFar ?: 0L
+                val within = totals.energyCost * 1_000 <= refCost * model.budgetPermille
+                GoalItem(within, refCost > 0, t("Electricity cost ≤ +%@", Format.wholePercent(model.budgetPermille - 1_000)))
+            }
+            scenario.services?.let { model ->
+                GoalItem(totals.meanLatency <= model.latencyLimit, change != null, t("Tracking ≤ %lld ms", model.latencyLimit))
+                GoalItem(totals.rulesBroken == 0, change != null || totals.rulesBroken > 0, if (totals.rulesBroken == 0) t("Positions and traffic up to date") else t("Positions or traffic too old"))
+                GoalItem((change ?: 0) < 0, change != null,
+                    if (change == null) t("CO₂ vs. reference") else t("CO₂ vs. reference: %@", Format.changePermille(change)))
+            }
+            scenario.pipeline?.let { model ->
+                GoalItem(totals.meanFeedback <= model.feedbackLimit * 10, change != null, t("Feedback ≤ %lld min", model.feedbackLimit))
+                GoalItem(totals.rulesBroken == 0, totals.rulesBroken > 0 || game.isFinished,
+                    if (totals.rulesBroken == 0) t("Release on Friday with tested UI") else t("Released without UI tests"))
+                GoalItem((change ?: 0) < 0, change != null,
+                    if (change == null) t("CO₂ vs. reference") else t("CO₂ vs. reference: %@", Format.changePermille(change)))
+            }
+            scenario.web?.let { model ->
+                GoalItem(totals.meanLcp <= model.lcpLimit, change != null, t("LCP ≤ %@ s", Format.number(model.lcpLimit / 10.0, 1)))
+            }
+            scenario.inference?.let { model ->
+                GoalItem(totals.meanAnswerQuality >= model.qualityTarget, change != null,
+                    t("Quality of the answers ≥ %@", Format.percent(model.qualityTarget)))
+                GoalItem(totals.answersOnTime >= model.onTimeTarget, change != null,
+                    t("%@ of the answers within %lld s", Format.percent(model.onTimeTarget), model.limitTenths / 10))
+            }
+            scenario.streaming?.let { model ->
+                GoalItem(totals.meanRating >= model.ratingTarget, change != null,
+                    t("Viewers' rating %@ (at least %@)", Format.percent(totals.meanRating), Format.percent(model.ratingTarget)))
+            }
+            if (game.hasTraining) {
+                val done = totals.trainingFinishedAt
+                GoalItem(done != null, done != null || game.isFinished,
+                    if (done != null) t("Training done: %@", timeText(done)) else t("Training done by the end of day %lld", scenario.days))
+                if (!game.hasInteractive) {
+                    // O8: CO₂ so far would favour waiting for the wind; CO₂ per percent of training done is fair (like the
+                    // batch intensity in O2 and O3) – the SCI idea on a small scale: emissions per unit of work.
+                    // Compared with the reference after the same amount of work, not over its whole run.
+                    val model = scenario.training!!
+                    fun perPercent(operational: Long, done: Long) = operational / (done * 100.0 / model.work)
+                    val mine = if (totals.trainingDone > 0) perPercent(totals.operational, totals.trainingDone) else null
+                    val refAt = game.reference.history.firstOrNull { it.trainingDone >= totals.trainingDone && it.trainingDone > 0 }
+                        ?: game.reference.history.last()
+                    val refPerPercent = perPercent(refAt.emissionsSoFar - refAt.embodiedSoFar, refAt.trainingDone)
+                    GoalItem(mine != null && mine <= refPerPercent * 1.001, mine != null,
+                        if (mine == null) t("CO₂ per percent of training: none trained yet")
+                        else t("CO₂ per percent of training: %@ kg (reference %@ kg)", Format.number(mine / 1e9, 1), Format.number(refPerPercent / 1e9, 1)))
+                }
+            }
+            if (scenario.location != null) {
+                GoalItem(totals.rulesBroken == 0, change != null || totals.rulesBroken > 0, if (totals.rulesBroken == 0) t("Customer data stays in Germany") else t("Customer data moved abroad"))
+            }
+            if (game.hasBatch) {
+                val missed = totals.deadlinesMissed
+                GoalItem(missed == 0, change != null, if (missed == 0) t("No deadline missed") else t("Deadlines missed: %lld", missed))
+                if (!game.hasInteractive) {
+                    // CO₂ so far would favour waiting; the intensity of the work done is a fair measure.
+                    val mine = totals.meanBatchIntensityTenths
+                    val ref = game.referenceTotals.meanBatchIntensityTenths
+                    GoalItem(mine <= ref, totals.batchEnergy > 0,
+                        if (totals.batchEnergy > 0) t("Batch work Ø %lld g/kWh (reference %lld)", (mine + 5) / 10, (ref + 5) / 10)
+                        else t("Batch work: no job has run yet"))
+                }
             }
         }
-        if (scenario.location != null) {
-            GoalItem(totals.rulesBroken == 0, true, if (totals.rulesBroken == 0) t("Customer data stays in Germany") else t("Customer data moved abroad"))
-        }
-        if (game.hasBatch) {
-            val missed = totals.deadlinesMissed
-            GoalItem(missed == 0, change != null, if (missed == 0) t("No deadline missed") else t("Deadlines missed: %lld", missed))
-            if (!game.hasInteractive) {
-                // CO₂ so far would favour waiting; the intensity of the work done is a fair measure.
-                val mine = totals.meanBatchIntensityTenths
-                val ref = game.referenceTotals.meanBatchIntensityTenths
-                GoalItem(mine <= ref, totals.batchEnergy > 0,
-                    if (totals.batchEnergy > 0) t("Batch work Ø %lld g/kWh (reference %lld)", (mine + 5) / 10, (ref + 5) / 10)
-                    else t("Batch work: no job has run yet"))
-            }
-        }
-        Spacer(Modifier.weight(1f))
         Row(verticalAlignment = Alignment.CenterVertically) {
             StarLabel(2, 13.dp)
             Txt(t("CO₂ %@", shortChange(-scenario.goals.reduction.toLong())), Type.callout)
@@ -572,10 +579,10 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
 }
 
 /** What keeps the first star away, in words – the same tests as Scenario.goalsMet. */
-private fun missedRules(game: GameController): List<String> {
-    val s = game.scenario
-    val y = game.totals
-    val r = game.referenceTotals
+private fun missedRules(game: GameController): List<String> = missedRules(game.scenario, game.totals, game.referenceTotals)
+
+/** The same for any result of the scenario (also the rows of "What if"). */
+fun missedRules(s: Scenario, y: Totals, r: Totals): List<String> {
     val out = mutableListOf<String>()
     val sla = minOf(y.sla, y.worstSiteSla)
     if (sla < s.slaTarget) out += t("SLA %@ (at least %@)", Format.percent(sla), Format.percent(s.slaTarget))
@@ -676,6 +683,11 @@ private fun WhatIf(game: GameController) {
                 Box(Modifier.weight(0.16f), contentAlignment = Alignment.CenterEnd) {
                     StarRow(game.scenario.stars(totals, ref), 11.dp)
                 }
+            }
+            // A row without a star says why: the rule it breaks.
+            if (!secret && game.scenario.stars(totals, ref) == 0) {
+                val why = missedRules(game.scenario, totals, ref)
+                if (why.isNotEmpty()) Txt(t("Not met: %@", why.joinToString(", ")), Type.style(12, color = Palette.red), Modifier.padding(bottom = 3.dp))
             }
         }
         if (hidden > 0) Txt(t("Settings with more stars than you have reached stay hidden until you find them."), Type.caption)

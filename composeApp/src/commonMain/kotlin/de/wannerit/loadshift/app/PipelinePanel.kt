@@ -66,7 +66,7 @@ fun PipelinePanel(game: GameController) {
             }
             Txt(t("Testers and business analysts work on weekdays from 8 to 18."), Type.caption)
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                for (n in listOf(3, 1)) Chip(t("%lld replicas", n), d.replicas == n) { set(d.copy(replicas = n)) }
+                for (n in listOf(3, 1)) Chip(replicas(n), d.replicas == n) { set(d.copy(replicas = n)) }
             }
             Txt(t("Three replicas per service, as in production, so that resilience can be tested."), Type.caption)
         }
@@ -143,5 +143,8 @@ fun pipelineText(c: PipelineConfig): String = listOfNotNull(
     t("UI tests %@", t(c.heavy.label)),
     t(c.trigger.label),
     t("environments %@", t(c.environments.label)),
-    t("%lld replicas", c.replicas),
+    replicas(c.replicas),
 ).joinToString(", ")
+
+/** "1 replica", "3 replicas". */
+private fun replicas(n: Int) = if (n == 1) t("1 replica") else t("%lld replicas", n)

@@ -175,11 +175,11 @@ private fun RepatriationGoals(game: RepatriationController, compact: Boolean = f
         GoalItem(!r.bookingTooSlow, r.bookingTooSlow || game.finished, t("A booking in the plant under %@ s", Format.number(model.bookingLimitMs / 1_000.0)))
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             StarLabel(2, 13.dp)
-            Txt(t("CO₂ %@", Format.changePermille(-scenario.goals.reduction.toLong())), Type.callout)
+            Txt(t("CO₂ %@", shortChange(-scenario.goals.reduction.toLong())), Type.callout)
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             StarLabel(3, 13.dp)
-            Txt(specialLong(scenario.goals.special), Type.callout)
+            Txt(specialShort(scenario.goals.special), Type.callout)
         }
         Spacer(Modifier.weight(1f))
         StartOverChip { game.startOver() }

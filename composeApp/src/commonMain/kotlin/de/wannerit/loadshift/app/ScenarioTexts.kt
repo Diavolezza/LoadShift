@@ -50,7 +50,7 @@ class ScenarioTexts(
                 comparedWith = "compared with today's platform, location-based.",
                 rules = "Every quality scenario met",
                 remark = "Today the platform used the same patterns everywhere. Each pattern pays off only where its problem is. CQRS fits the timetable, read thousands of times for each change; for the bookings the second model only costs. Event Sourcing earns its keep where the history is a requirement – the payments' audit trail –; elsewhere it is a store that only grows. Lambda computes everything twice; one stream with a replay meets the same requirement. Publish/Subscribe saves most when subscribers only get what concerns them – sending everything to everyone was almost as costly as asking. And Pipes and Filters need not wait all day as services: as a batch the steps can wait for clean power, and a faulty file still stops only its own pipe.",
-                term = "Architecture patterns in context",
+                term = "Architecture Patterns",
                 termText = "An architecture pattern is a proven solution to a recurring problem in a given context – for example Layers, CQRS, Event Sourcing, Publish/Subscribe, Pipes and Filters, Lambda and Kappa. It comes with forces and consequences; its benefit depends on whether its problem is there.",
             )
             111 -> ScenarioTexts(
@@ -123,7 +123,7 @@ class ScenarioTexts(
                     "The selected application: its facts, the four decisions with what they take and bring, the start quarter – and the button that carries out the plan.",
                 ),
                 comparedWith = "compared with three years in which everything keeps running as it is, location-based.",
-                rules = "At most three projects at a time, nothing eliminated that must stay, and less CO₂ over three years",
+                rules = "At most three projects at a time, nothing eliminated that has high business value or must be kept by law, and less CO₂ over three years",
                 remark = "Eliminating paid off first: the old test environments, the old reporting system and the old intranet took a quarter or two of the team and then emitted nothing at all. A migration runs the new system next to the old one – during the project the footprint grows, and the saving comes only once the old system is switched off; left running, it saves nothing. The new ERP takes six quarters and a seventh to switch off the old one: within three years its parallel run costs more than it saves, and tuning the old ERP saved more – the migration pays off in the years after. The order counts as much as the decision: with three projects at a time, short projects with a large effect go first. And value is not the only reason to keep something: the mail archive is of little value, but it must be kept by law.",
                 term = "Application Rationalization (TIME)",
                 termText = "Tidying up the application portfolio: each application placed by business value and technical condition, then tolerated, improved, migrated or eliminated – the TIME model made known by Gartner. Projects take time and people; the saving comes when the old system is really off, not when the new one starts.",

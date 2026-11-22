@@ -30,6 +30,8 @@ fun CachePanel(game: GameController) {
     val load = game.scenario.interactive.expected(minOf(game.simulation.tick, game.scenario.endTick - 1))
     val state = model.state(running, load)
     val hits = state.hits
+    // "Now" only once the day runs: before the start (also after "Play again") there is no now yet.
+    val started = game.simulation.history.isNotEmpty()
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Txt(t("Caching"), Type.heading)
         Txt(t("A cache keeps answers so they need not be computed or fetched again. All kinds you tick share the memory of the cache servers; when it is full, the entry used least recently goes first (LRU). A cache server draws power all day. How old an answer may be is a business decision."), Type.style(15, color = Palette.secondary))
@@ -44,7 +46,7 @@ fun CachePanel(game: GameController) {
         Txt(t("%lld GB memory, %lld W all day", game.cacheServers * model.gbPerServer, game.cacheServers * model.serverPower), Type.caption)
 
         // Memory right now
-        if (running.anyCached) {
+        if (started && running.anyCached) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Txt(t("Memory now: %lld of %lld GB used", state.usedGb.roundToInt(), state.capacityGb), Type.style(14, FontWeight.SemiBold))
                 Box(Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)).background(Palette.divider)) {
@@ -73,7 +75,7 @@ fun CachePanel(game: GameController) {
                     Txt(t(kind.title), Type.style(15, FontWeight.SemiBold), Modifier.weight(1f))
                     // The kind's color in the timeline.
                     Box(Modifier.size(10.dp).background(Palette.cacheKinds[k % Palette.cacheKinds.size].copy(alpha = 0.7f)))
-                    if (state.stay[k] > 0.0) Txt(t("hits now: %@ · %lld GB", Format.wholePercent(hits[k]), state.memoryGb[k].roundToInt()), Type.style(12, FontWeight.SemiBold, Palette.accent))
+                    if (started && state.stay[k] > 0.0) Txt(t("hits now: %@ · %lld GB", Format.wholePercent(hits[k]), state.memoryGb[k].roundToInt()), Type.style(12, FontWeight.SemiBold, Palette.accent))
                 }
                 Txt(t(kind.note), Type.caption)
                 Txt(allowedText(kind.allowedMinutes), Type.caption)

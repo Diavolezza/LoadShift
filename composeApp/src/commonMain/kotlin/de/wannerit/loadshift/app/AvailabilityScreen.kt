@@ -226,11 +226,11 @@ private fun AvailabilityGoals(game: AvailabilityController, compact: Boolean) {
         GoalItem(r.missed.isEmpty(), r.missed.isNotEmpty() || game.finished, t("Every quality scenario met"))
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             StarLabel(2, 13.dp)
-            Txt(t("CO₂ %@", Format.changePermille(-scenario.goals.reduction.toLong())), Type.callout)
+            Txt(t("CO₂ %@", shortChange(-scenario.goals.reduction.toLong())), Type.callout)
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             StarLabel(3, 13.dp)
-            Txt(specialLong(scenario.goals.special), Type.callout)
+            Txt(specialShort(scenario.goals.special), Type.callout)
         }
         Spacer(Modifier.weight(1f))
         StartOverChip { game.startOver() }
@@ -414,7 +414,8 @@ private fun AvailabilityEnd(game: AvailabilityController, onExit: () -> Unit, on
                 Txt(t("What you did is called %@. %@", texts.term, t(texts.termText)), Type.style(15, color = Palette.secondary))
                 Txt(t(texts.remark), Type.style(15, color = Palette.secondary))
                 WhatIfCard(game.whatIf().map { (l, x) -> Triple(l, x.reductionPermille, model.stars(x, scenario.goals)) },
-                    maxOf(Progress.stars(scenario.number), game.stars), t("The same portal, other architectures:"), scenario.number) { game.loadSolution() }
+                    maxOf(Progress.stars(scenario.number), game.stars), t("The same portal, other architectures:"), scenario.number,
+                    reasons = game.whatIf().map { (_, x) -> x.missed.joinToString(", ") { t(it) } }) { game.loadSolution() }
             }
             FlowRow(
                 Modifier.fillMaxWidth().padding(horizontal = 30.dp, vertical = 16.dp),
@@ -430,13 +431,15 @@ private fun AvailabilityEnd(game: AvailabilityController, onExit: () -> Unit, on
 
 /** "What if": other plans with their CO₂ change and stars; plans with more stars than reached so far stay hidden (D25). */
 @Composable
-fun WhatIfCard(rows: List<Triple<String, Long, Int>>, best: Int, subtitle: String, scenario: Int, onLoad: (() -> Unit)? = null) {
+fun WhatIfCard(rows: List<Triple<String, Long, Int>>, best: Int, subtitle: String, scenario: Int, reasons: List<String> = emptyList(),
+    onLoad: (() -> Unit)? = null) {
     Card(Modifier.fillMaxWidth(), color = Palette.background, padding = 14.dp) {
         Txt(t("What if …"), Type.subheading)
         Txt(subtitle, Type.style(15, color = Palette.secondary))
         Spacer(Modifier.height(8.dp))
         var hidden = 0
-        for ((label, reduction, stars) in rows) {
+        for ((i, row) in rows.withIndex()) {
+            val (label, reduction, stars) = row
             val secret = stars > best && !Progress.solutionSeen(scenario)
             if (secret) hidden++
             Row(Modifier.padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -445,6 +448,9 @@ fun WhatIfCard(rows: List<Triple<String, Long, Int>>, best: Int, subtitle: Strin
                 Txt(Format.changePermille(-reduction), Type.callout.copy(textAlign = TextAlign.End), Modifier.weight(0.22f))
                 Box(Modifier.weight(0.18f), contentAlignment = Alignment.CenterEnd) { StarRow(stars, 11.dp) }
             }
+            // A row without a star says why: the rule it breaks.
+            val why = reasons.getOrNull(i).orEmpty()
+            if (!secret && stars == 0 && why.isNotEmpty()) Txt(t("Not met: %@", why), Type.style(12, color = Palette.red), Modifier.padding(bottom = 3.dp))
         }
         if (hidden > 0) Txt(t("Settings with more stars than you have reached stay hidden until you find them."), Type.caption)
         SolutionBar(scenario, hidden, onLoad)

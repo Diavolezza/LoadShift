@@ -65,7 +65,7 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
     val start = scenario.startTick
     val end = scenario.endTick
     val now = minOf(simulation.tick, end)
-    val batchLane = lane == Lane.JOBS || lane == Lane.ALL || (lane == null && scenario.interactive.peak == 0 && simulation.jobs.isNotEmpty())
+    val batchLane = lane == Lane.JOBS || lane == Lane.ALL || (lane == null && scenario.interactive.peak == 0 && (simulation.jobs.isNotEmpty() || scenario.location != null))
     val density = scope.density
     val left = 44f * density
     val right = scope.size.width - (if (batchLane) 130f else if (scenario.caching != null) 100f else 74f) * density
@@ -267,7 +267,8 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
         } else if (record != null) {
             lines += t("Load %lld, capacity %lld (%lld servers on)", record.demand, record.capacity, record.serversOn)
             if (record.inTime < record.demand) lines += t("In time: %@", Format.wholePercent(record.inTime * 1_000 / maxOf(1, record.demand)))
-        } else {
+        } else if (simulation.expectedDemand(tick) > 0) {
+            // Scenarios without the shop's load (E7 and the like) have nothing to expect here.
             lines += t("Expected load %lld", simulation.expectedDemand(tick))
         }
         val xLine = x(tick) + (x(tick + 1) - x(tick)) / 2
@@ -493,7 +494,7 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
             }
             drawPath(line, Palette.ink.copy(alpha = 0.6f), style = Stroke(1.2f * density))
         }
-        axis(top, bottom, t("%lld cores", scaleTop.toInt()))
+        axis(top, bottom, if (scaleTop.toInt() == 1) t("1 core") else t("%lld cores", scaleTop.toInt()))
         text(t("CPU – blue: tracking, violet: route optimization, amber: communication, external calls, idle instances; line: servers ready"), Offset(left, top - 12f * density), Type.style(12, FontWeight.SemiBold))
     }
 

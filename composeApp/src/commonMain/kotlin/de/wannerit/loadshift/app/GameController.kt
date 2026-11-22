@@ -1141,6 +1141,12 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
         renewDraft = List(siteCount) { 0 }
         boughtInYear.clear()
         if (keepDraft) restoreDraft() else resetDraft()
+        // B1: the servers are switched by hand during the day; "Play again" starts the day as it began, all of them on.
+        if (Control.MANUAL_CAPACITY in scenario.controls) {
+            current.policy = scenario.initialPolicy
+            current.applyPolicy()
+            setDraftFrom(scenario.initialPolicy)
+        }
         startPolicy = null
         team = Team(scenario.backlog, scenario.sprintPoints)
         sprintDraft = emptyList()

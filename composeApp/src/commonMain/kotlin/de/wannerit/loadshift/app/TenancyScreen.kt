@@ -175,11 +175,11 @@ private fun TenancyGoals(game: TenancyController, compact: Boolean) {
         GoalItem(r.missed.isEmpty(), r.missed.isNotEmpty() || game.finished, t("Every quality scenario met"))
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             StarLabel(2, 13.dp)
-            Txt(t("CO₂ %@", Format.changePermille(-scenario.goals.reduction.toLong())), Type.callout)
+            Txt(t("CO₂ %@", shortChange(-scenario.goals.reduction.toLong())), Type.callout)
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             StarLabel(3, 13.dp)
-            Txt(specialLong(scenario.goals.special), Type.callout)
+            Txt(specialShort(scenario.goals.special), Type.callout)
         }
         Spacer(Modifier.weight(1f))
         StartOverChip { game.startOver() }
@@ -327,7 +327,8 @@ private fun TenancyEnd(game: TenancyController, onExit: () -> Unit, onOverview: 
                 Txt(t("What you did is called %@. %@", texts.term, t(texts.termText)), Type.style(15, color = Palette.secondary))
                 Txt(t(texts.remark), Type.style(15, color = Palette.secondary))
                 WhatIfCard(game.whatIf().map { (l, x) -> Triple(l, x.reductionPermille, model.stars(x, scenario.goals)) },
-                    maxOf(Progress.stars(scenario.number), game.stars), t("The same software, other tenancy models:"), scenario.number) { game.loadSolution() }
+                    maxOf(Progress.stars(scenario.number), game.stars), t("The same software, other tenancy models:"), scenario.number,
+                    reasons = game.whatIf().map { (_, x) -> x.missed.joinToString(", ") { missText(it) } }) { game.loadSolution() }
             }
             FlowRow(
                 Modifier.fillMaxWidth().padding(horizontal = 30.dp, vertical = 16.dp),

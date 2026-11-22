@@ -18,8 +18,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "%@ Tage",
     "%@ down per failure · %@ available" to
         "%@ Ausfall je Störung · %@ verfügbar",
-    "%@ eliminated, but it must stay" to
-        "%@ eliminiert, muss aber bleiben",
+    "%@ eliminated, but it has high business value or is required by law" to
+        "%@ eliminiert, hat aber hohen Geschäftswert oder muss gesetzlich bleiben",
     "%@ h" to
         "%@ h",
     "%@ has no start time and must start by %@, or it misses its deadline." to
@@ -56,10 +56,10 @@ internal val GERMAN: Map<String, String> = mapOf(
         "%1\$@ · Strommix im Mittel %2\$lld g/kWh",
     "%@ · −%lld %%" to
         "%@ · −%lld %%",
-    "%@ – %lld quarters, then %@ less CO₂." to
-        "%@ – %lld Quartale, danach %@ weniger CO₂.",
-    "%@ – %lld quarters. The new system needs %@ of today's CO₂; it runs next to the old one from the start. The old system runs until it is switched off." to
-        "%@ – %lld Quartale. Das neue System braucht %@ des heutigen CO₂; es läuft vom Start an neben dem alten. Das alte System läuft, bis es abgeschaltet wird.",
+    "%@ – %@, then %@ less CO₂." to
+        "%@ – %@, danach %@ weniger CO₂.",
+    "%@ – %@. The new system needs %@ of today's CO₂; it runs next to the old one from the start. The old system runs until it is switched off." to
+        "%@ – %@. Das neue System braucht %@ des heutigen CO₂; es läuft vom Start an neben dem alten. Das alte System läuft, bis es abgeschaltet wird.",
     "%@ € (%@ €)" to
         "%1\$@ € (%2\$@ €)",
     "%@ € in three years" to
@@ -148,6 +148,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "%lld GPU-Server für das Training",
     "%lld GPU servers on, progress %@" to
         "%1\$lld GPU-Server an, Fortschritt %2\$@",
+    "%lld hosts for %lld virtual machines" to
+        "%lld Hosts für %lld virtuelle Maschinen",
     "%lld hosts in use" to
         "%lld Hosts in Benutzung",
     "%lld jobs with deadlines" to
@@ -186,6 +188,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "%lld von 3 Sternen",
     "%lld old servers (%@ years), %lld failed; %lld new" to
         "%1\$lld alte Server (%2\$@ Jahre), %3\$lld ausgefallen; %4\$lld neue",
+    "%lld quarters" to
+        "%lld Quartale",
     "%lld replicas" to
         "%lld Replikas",
     "%lld s" to
@@ -222,12 +226,18 @@ internal val GERMAN: Map<String, String> = mapOf(
         "(ab %@)",
     "+ route optimization" to
         "+ Routenoptimierung",
+    "1 core" to
+        "1 Kern",
     "1 customer" to
         "1 Firma",
     "1 day" to
         "1 Tag",
     "1 day, from 00:00" to
         "1 Tag, ab 00:00",
+    "1 quarter" to
+        "1 Quartal",
+    "1 replica" to
+        "1 Replika",
     "1 year" to
         "1 Jahr",
     "1 year hot, then warm" to
@@ -372,6 +382,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Ein fester Schwellwert funktioniert, solange der Wind weht. Lässt er nach, warten die Jobs vergeblich: Ohne Fristsicherung verpassen sie ihre Fristen, mit ihr starten sie im letzten Moment – oft in den schmutzigsten Stunden. Eine Regel, die die Stunden der Prognose vergleicht, passt sich dem Wetter an – solange neu geplant wird, wenn sich die Prognose ändert. Echte Scheduler planen deshalb regelmäßig neu.",
     "A full backup of the databases at the end of each month (the daily ones are kept for 30 days)" to
         "Ein volles Backup der Datenbanken an jedem Monatsende (die täglichen bleiben 30 Tage)",
+    "A host draws about a quarter of its maximum power when idle" to
+        "Ein Host braucht im Leerlauf etwa ein Viertel seiner Höchstleistung",
     "A job starts as soon as the grid is at or below %lld g/kWh – the value now, not the forecast." to
         "Ein Job startet, sobald der Strom höchstens %lld g/kWh hat – der Wert jetzt, nicht die Prognose.",
     "A job that would otherwise miss its deadline starts when there is just enough time left (with a fixed hour and a threshold)." to
@@ -602,8 +614,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Architekturmuster",
     "Architecture patterns" to
         "Architekturmuster",
-    "Architecture patterns in context" to
-        "Architecture patterns in context",
+    "Architecture Patterns" to
+        "Architecture Patterns",
     "Archive old data of the data warehouse" to
         "Altdaten des Data Warehouse archivieren",
     "Archive old data, shorten the loads" to
@@ -646,8 +658,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "höchstens %lld Hosts in Betrieb",
     "At most %lld projects at a time" to
         "Höchstens %lld Projekte gleichzeitig",
-    "At most three projects at a time, nothing eliminated that must stay, and less CO₂ over three years" to
-        "Höchstens drei Projekte gleichzeitig, nichts eliminiert, was bleiben muss, und weniger CO₂ in drei Jahren",
+    "At most three projects at a time, nothing eliminated that has high business value or must be kept by law, and less CO₂ over three years" to
+        "Höchstens drei Projekte gleichzeitig, nichts eliminiert, was hohen Geschäftswert hat oder gesetzlich bleiben muss, und weniger CO₂ in drei Jahren",
     "At the end of the month the payroll run takes every worker and every database connection it gets." to
         "Am Monatsende belegt der Gehaltslauf jeden Worker und jede Datenbankverbindung, die er bekommt.",
     "At the top: CO₂ a year, the change compared with today, the data stored and how many requirements are met; below it your goals." to
@@ -726,6 +738,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Batch-Jobs – hell: Ankunft bis Frist, umrandet: geplant, gefüllt: läuft oder fertig",
     "Batch rule" to
         "Batch-Regel",
+    "Batch rule at both sites" to
+        "Batch-Regel an beiden Standorten",
     "batch work at %lld g/kWh or less on average" to
         "Batch-Arbeit im Schnitt bei höchstens %lld g/kWh",
     "Batch work Ø %lld g/kWh (reference %lld)" to
@@ -2004,8 +2018,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Die Seiten ins Wiki umziehen",
     "Move the test environments to the cloud, on demand" to
         "Testumgebungen in die Cloud, auf Abruf",
-    "Move the users and data elsewhere, then switch it off – %lld quarters." to
-        "Nutzende und Daten woandershin umziehen, dann abschalten – %lld Quartale.",
+    "Move the users and data elsewhere, then switch it off – %@." to
+        "Nutzende und Daten woandershin umziehen, dann abschalten – %@.",
     "Move to %@: %@." to
         "Nach %@ verlegen: %@.",
     "Move to a region with clean power (Stockholm)" to
@@ -2108,14 +2122,16 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Nicht geschafft",
     "Not met in: %@" to
         "Nicht erfüllt bei: %@",
+    "Not met: %@" to
+        "Nicht erfüllt: %@",
     "not planned" to
         "nicht geplant",
     "nothing" to
         "nichts",
-    "Nothing eliminated that must stay" to
-        "Nichts eliminiert, was bleiben muss",
     "Nothing reaches the closed app." to
         "Nichts erreicht die geschlossene App.",
+    "Nothing valuable or required by law eliminated" to
+        "Nichts Wertvolles oder gesetzlich Nötiges eliminiert",
     "Now %@ of the original." to
         "Jetzt %@ des ursprünglichen Werts.",
     "O%@" to
@@ -2592,6 +2608,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Build- und Testinfrastruktur nur dann und nur so viel betreiben, wie gebraucht wird: Build-Agents auf Abruf mit gemeinsamem Cache, Test Impact Analysis, teure Tests zu sauberen Zeiten, Testumgebungen aus, wenn niemand sie nutzt, weniger Replikas außerhalb der Produktion.",
     "Running now" to
         "Läuft gerade",
+    "Running now: %lld °C – “Apply” switches to the new setpoint." to
+        "Läuft gerade: %lld °C – „Übernehmen“ stellt den neuen Sollwert ein.",
     "Running only as much capacity as the load needs. An idle server still draws power, so servers that are not needed are switched off. Green Software Foundation principle: energy efficiency." to
         "Nur so viel Kapazität betreiben, wie die Last braucht. Ein Server im Leerlauf zieht trotzdem Strom, deshalb werden nicht benötigte Server abgeschaltet. Prinzip der Green Software Foundation: Energy Efficiency.",
     "Running the work on as few machines as it needs, so the others can be switched off. Placing items of different sizes into as few bins as possible is called bin packing." to

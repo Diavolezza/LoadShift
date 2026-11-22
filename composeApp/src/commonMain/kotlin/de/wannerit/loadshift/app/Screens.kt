@@ -604,7 +604,15 @@ private fun SideCard(scenario: Scenario, texts: ScenarioTexts, onStart: () -> Un
                 Fact(t("Evening peak about %lld load units", scenario.interactive.peak))
             } else {
                 val location = scenario.location
-                if (location != null) {
+                if (scenario.vms.isNotEmpty()) {
+                    // B5: virtual machines on hosts, no batch jobs.
+                    Fact(t("%lld hosts for %lld virtual machines", scenario.serverCount, scenario.vms.size))
+                    Fact(t("A host draws about a quarter of its maximum power when idle"))
+                } else if (scenario.training != null) {
+                    // B8: only the training run.
+                    Fact(t("%lld GPU servers for the training", scenario.serverCount))
+                    Fact(t("Training done by the end of day %lld", scenario.days))
+                } else if (location != null) {
                     Fact(t("%lld servers in %@, %lld in %@", location.servers[0], t(location.sites[0].title), location.servers[1], t(location.sites[1].title)))
                     Fact(t("%lld jobs with deadlines", location.jobs.size))
                 } else {

@@ -201,14 +201,14 @@ private fun TidyGoals(game: TidyController, compact: Boolean = false) {
     ) {
         Txt(t("Goals"), Type.style(13, FontWeight.SemiBold, Palette.secondary))
         GoalItem(r.overloaded.isEmpty(), r.overloaded.isNotEmpty() || game.finished, t("At most %lld projects at a time", game.model.capacity))
-        GoalItem(r.wronglyEliminated.isEmpty(), r.wronglyEliminated.isNotEmpty() || game.finished, t("Nothing eliminated that must stay"))
+        GoalItem(r.wronglyEliminated.isEmpty(), r.wronglyEliminated.isNotEmpty() || game.finished, t("Nothing valuable or required by law eliminated"))
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             StarLabel(2, 13.dp)
-            Txt(t("CO₂ %@", Format.changePermille(-scenario.goals.reduction.toLong())), Type.callout)
+            Txt(t("CO₂ %@", shortChange(-scenario.goals.reduction.toLong())), Type.callout)
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             StarLabel(3, 13.dp)
-            Txt(specialLong(scenario.goals.special), Type.callout)
+            Txt(specialShort(scenario.goals.special), Type.callout)
         }
         Spacer(Modifier.weight(1f))
         @Suppress("UNUSED_VARIABLE") val unused = ok
@@ -273,6 +273,9 @@ private fun Matrix(game: TidyController) {
     }
 }
 
+/** "1 quarter", "3 quarters". */
+private fun quarters(n: Int) = if (n == 1) t("1 quarter") else t("%lld quarters", n)
+
 /** The project plan: a row per project over twelve quarters, and how many run at a time. */
 @Composable
 private fun ProjectPlan(game: TidyController) {
@@ -329,10 +332,10 @@ private fun TidyPanel(game: TidyController, modifier: Modifier) {
         a.mustKeep?.let { Txt(t(it), Type.style(15, FontWeight.SemiBold)) }
         RuleOption(c.decision == Decision.TOLERATE, { game.decide(Decision.TOLERATE) }, t("Tolerate"), t("Leave it as it is."))
         RuleOption(c.decision == Decision.INVEST, { game.decide(Decision.INVEST) }, t("Invest"),
-            t("%@ – %lld quarters, then %@ less CO₂.", t(a.invest.title), a.invest.quarters, Format.wholePercent((100 - a.invest.leftPercent) * 10)))
+            t("%@ – %@, then %@ less CO₂.", t(a.invest.title), quarters(a.invest.quarters), Format.wholePercent((100 - a.invest.leftPercent) * 10)))
         RuleOption(c.decision == Decision.MIGRATE, { game.decide(Decision.MIGRATE) }, t("Migrate"),
-            t("%@ – %lld quarters. The new system needs %@ of today's CO₂; it runs next to the old one from the start. The old system runs until it is switched off.",
-                t(a.migrate.title), a.migrate.quarters, Format.wholePercent(a.migrate.leftPercent * 10))) {
+            t("%@ – %@. The new system needs %@ of today's CO₂; it runs next to the old one from the start. The old system runs until it is switched off.",
+                t(a.migrate.title), quarters(a.migrate.quarters), Format.wholePercent(a.migrate.leftPercent * 10))) {
             Row(Modifier.clip(RoundedCornerShape(8.dp)).clickable { game.toggleDecommission() }.padding(vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Tick(c.decommission)
@@ -340,7 +343,7 @@ private fun TidyPanel(game: TidyController, modifier: Modifier) {
             }
         }
         RuleOption(c.decision == Decision.ELIMINATE, { game.decide(Decision.ELIMINATE) }, t("Eliminate"),
-            t("Move the users and data elsewhere, then switch it off – %lld quarters.", a.eliminateQuarters))
+            t("Move the users and data elsewhere, then switch it off – %@.", quarters(a.eliminateQuarters)))
         if (c.decision != Decision.TOLERATE) {
             Txt(t("Start"), Type.subheading)
             Stepper(t("Quarter %lld, year %lld", c.start % 4 + 1, c.start / 4 + 1), { game.moveStart(-1) }, { game.moveStart(1) })
@@ -379,7 +382,7 @@ private fun TidyEnd(game: TidyController, onExit: () -> Unit, onOverview: (() ->
                 if (!met.rules) {
                     val missed = buildList {
                         for (q in r.overloaded) add(t("%@: %lld projects (at most %lld)", quarterText(q), game.load[q], game.model.capacity))
-                        for (n in r.wronglyEliminated) add(t("%@ eliminated, but it must stay", t(n)))
+                        for (n in r.wronglyEliminated) add(t("%@ eliminated, but it has high business value or is required by law", t(n)))
                         if (r.planKg >= r.baselineKg) add(t("not less CO₂ over three years"))
                     }
                     Txt(t("No star because: %@", missed.joinToString("; ")), Type.style(16, FontWeight.SemiBold, Palette.red))
