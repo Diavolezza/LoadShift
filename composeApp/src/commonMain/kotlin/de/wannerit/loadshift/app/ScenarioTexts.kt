@@ -385,7 +385,7 @@ class ScenarioTexts(
             )
             4 -> ScenarioTexts(
                 situation = "The web shop again, now in winter and with 30 servers. Autoscaling is on: at 80 % target utilization it keeps just enough servers running. On day 2 marketing sends a newsletter at 19:00 – for three hours twice as many people will shop as usual.",
-                idea = "Autoscaling does what you did by hand in scenario B1: it switches servers on and off for the load. The target utilization decides how much headroom stays free. Little headroom saves energy – but a server takes 30 minutes to boot, and the autoscaler knows only the usual day; a sudden peak finds it unprepared. Headroom all the time costs energy all the time; a minimum for a known event costs it only when it is needed.",
+                idea = "Autoscaling does what you did by hand in scenario B1: it switches servers on and off for the load. The target utilization decides how much headroom stays free. Little headroom saves energy – but a server takes 30 minutes to boot, and the autoscaler knows only the usual day; a sudden peak finds it unprepared. Headroom all the time costs energy all the time; a minimum for fixed hours costs it only in those hours – but on every day.",
                 screen = listOf(
                     "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals.",
                     "Your racks: grey servers are off, light blue ones are booting, the blue bar shows how busy a server is.",
