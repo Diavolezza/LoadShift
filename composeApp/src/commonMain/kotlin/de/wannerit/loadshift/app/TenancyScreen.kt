@@ -95,7 +95,7 @@ class TenancyController(val scenario: Scenario, fresh: Boolean = false) {
             })),
             t("The regulated customers entirely on their own, everything else shared where allowed") to model.result(except(model.regulated)),
             t("The large customer entirely on its own, everything else shared where allowed") to model.result(except(model.large)),
-            t("Shared where no quality scenario speaks against it; the others' databases on shared servers") to model.result(ex),
+            t("Shared wherever no quality scenario forbids it; the others' databases on shared servers") to model.result(ex),
         )
     }
 
@@ -329,8 +329,9 @@ private fun TenancyEnd(game: TenancyController, onExit: () -> Unit, onOverview: 
                     listOf(t("Servers"), "${r0.servers}", "${r.servers}"),
                     listOf(t("CO₂ a year, t"), tonnes(r0.planKg), tonnes(r.planKg)),
                 ), firstWidth = 0.5f)
-                Txt(t("What you did is called %@. %@", texts.term, t(texts.termText)), Type.style(15, color = Palette.secondary))
+                Txt(termSentence(texts), Type.style(15, color = Palette.secondary))
                 Txt(t(texts.remark), Type.style(15, color = Palette.secondary))
+                SourcesNote(texts)
                 WhatIfCard(game.whatIf().map { (l, x) -> Triple(l, x.reductionPermille, model.stars(x, scenario.goals)) },
                     maxOf(Progress.stars(scenario.number), game.stars), t("The same software, other tenancy models:"), scenario.number,
                     reasons = game.whatIf().map { (_, x) -> x.missed.joinToString(", ") { missText(it) } }) { game.loadSolution() }

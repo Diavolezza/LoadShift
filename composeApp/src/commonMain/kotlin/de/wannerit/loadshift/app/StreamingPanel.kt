@@ -29,7 +29,7 @@ fun StreamingPanel(game: GameController) {
     val grid = simulation.grid.intensity(tick)
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Txt(t("Video quality"), Type.heading)
-        Txt(t("The work in the data center grows with the bitrate: 4K needs four times as much as HD, SD less than half of HD. Viewers notice the difference on a TV, much less on a phone. Their mean rating must stay at %@ or above.", Format.wholePercent(model.ratingTarget)), Type.style(15, color = Palette.secondary))
+        Txt(t("The work in the data center grows with the bitrate: 4K needs four times as much as HD, SD less than half of HD. Viewers notice the difference on a TV, much less on a phone. Their average rating must stay at %@ or higher.", Format.wholePercent(model.ratingTarget)), Type.style(15, color = Palette.secondary))
         for ((i, device) in model.devices.withIndex()) {
             Column(
                 Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Palette.background).padding(12.dp),
@@ -74,6 +74,14 @@ fun StreamingPanel(game: GameController) {
             }
         }
 
+        // The rating for the whole run with the settings above: so far as it was, the rest by the forecast made now
+        // (playtest round 4: without it the third star was a search by trial and error over whole runs).
+        val draft = game.draftPolicy.streaming
+        val expected = estimatedRating(game, draft)
+        val enough = expected >= model.ratingTarget
+        Txt(t("Expected rating for the whole run with these settings, by the forecast: %@ (at least %@)", Format.percent(expected), Format.wholePercent(model.ratingTarget)),
+            Type.style(14, FontWeight.SemiBold, if (enough) Palette.accent else Palette.red))
+
         // Now
         val running = simulation.policy.streaming
         Card(Modifier.fillMaxWidth(), color = Palette.background, padding = 14.dp) {
@@ -92,6 +100,20 @@ fun StreamingPanel(game: GameController) {
         }
         ApplyRow(game) { streamingText(it.streaming, model) }
     }
+}
+
+/** The viewers' mean rating at the end, per mille: the streams so far as rated, the rest by the forecast made now. */
+private fun estimatedRating(game: GameController, config: StreamingConfig): Int {
+    val model = game.scenario.streaming ?: return 1_000
+    val simulation = game.simulation
+    var sum = simulation.totals.ratingSum
+    var streams = simulation.totals.ratedStreams
+    for (tick in simulation.tick until game.scenario.endTick) {
+        val w = game.scenario.interactive.expected(tick).toLong()
+        sum += w * model.rating(config, simulation.grid.forecast(tick, simulation.tick))
+        streams += w
+    }
+    return if (streams == 0L) 1_000 else (sum / streams).toInt()
 }
 
 @Composable

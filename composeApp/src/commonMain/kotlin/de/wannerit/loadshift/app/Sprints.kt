@@ -112,7 +112,7 @@ fun SprintPanel(game: GameController) {
                     } else {
                         Txt(if (item.profiling) t("measures where the time goes") else t("team: −%@", Format.wholePercent(item.estimate)), Type.caption)
                         if (game.profiled && !item.profiling) {
-                            Txt(t("measured: −%@", Format.wholePercent(item.effect)), Type.style(12, FontWeight.SemiBold, Palette.accent))
+                            Txt(t("profiler: −%@", Format.wholePercent(item.effect)), Type.style(12, FontWeight.SemiBold, Palette.accent))
                         }
                     }
                     if (isCarried) Txt(t("in progress: %lld of %lld story points left", game.remaining(i), item.effort), Type.style(12, FontWeight.SemiBold, Palette.amber))

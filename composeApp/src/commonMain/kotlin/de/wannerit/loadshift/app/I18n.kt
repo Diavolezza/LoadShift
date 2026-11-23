@@ -29,7 +29,17 @@ object Language {
  * The text in the app's language, with the arguments filled in. Keys are the English texts with the placeholders
  * %@ (text) and %lld (whole number); translations may number them (%1$@, %2$lld). With arguments, %% is a literal %.
  */
-fun t(key: String, vararg args: Any): String = format(key, *args).replace(" %", "\u202F%") // "50 %" never breaks before the % sign
+fun t(key: String, vararg args: Any): String {
+    // "50 %" never breaks before the % sign; "3 s", "12 t", "8 kW" never break between number and unit (playtest round 4).
+    var s = format(key, *args).replace(" %", "\u202F%")
+    if (s.any { it.isDigit() }) s = UNIT_SPACE.replace(s) { "${it.groupValues[1]}\u00A0${it.groupValues[2]}" }
+    // English: "1 servers" and "1 GPU servers" from a counted format become singular.
+    if (!Language.german && "1 " in s) s = ONE_SERVERS.replace(s) { "${it.groupValues[1]}1 ${it.groupValues[2]}server" }
+    return s
+}
+
+private val UNIT_SPACE = Regex("(\\d) (s|t|ms|min|h|kg|g|TB|GB|MB|kW|kWh|kWp|g/kWh|€)(?![A-Za-zÄÖÜäöüß\\d])")
+private val ONE_SERVERS = Regex("(^|[^\\d.,])1 ((?:GPU |cache |CPU |old |new )?)servers\\b")
 
 private fun format(key: String, vararg args: Any): String {
     val pattern = if (Language.german) GERMAN[key] ?: key else key

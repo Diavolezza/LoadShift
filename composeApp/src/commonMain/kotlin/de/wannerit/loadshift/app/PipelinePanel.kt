@@ -64,7 +64,7 @@ fun PipelinePanel(game: GameController) {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 for (e in Environments.entries) Chip(t(e.label), d.environments == e) { set(d.copy(environments = e)) }
             }
-            Txt(t("Testers and business analysts work on weekdays from 8 to 18."), Type.caption)
+            Txt(t("Testers and business analysts work on weekdays from 8:00 to 18:00."), Type.caption)
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 for (n in listOf(3, 1)) Chip(replicas(n), d.replicas == n) { set(d.copy(replicas = n)) }
             }
@@ -135,7 +135,7 @@ private fun Chip(text: String, chosen: Boolean, onClick: () -> Unit) {
     )
 }
 
-/** "agents on demand, remote cache, test impact, UI tests every night, every commit, weekdays 7–19, 1 replica" */
+/** "agents on demand, remote cache, test impact, UI tests every night, every commit, weekdays 7:00–19:00, 1 replica" */
 fun pipelineText(c: PipelineConfig): String = listOfNotNull(
     t("agents %@", t(c.runners.label)),
     if (c.remoteCache) t("remote cache") else t("no remote cache"),

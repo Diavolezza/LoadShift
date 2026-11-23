@@ -275,8 +275,9 @@ private fun PatternEnd(game: PatternsController, onExit: () -> Unit, onOverview:
                     listOf(t("Storage, TB"), Format.number(r0.storageTb, 0), Format.number(r.storageTb, 0)),
                     listOf(t("CO₂ a year, t"), tonnes(r0.planKg), tonnes(r.planKg)),
                 ), firstWidth = 0.5f)
-                Txt(t("What you did is called %@. %@", texts.term, t(texts.termText)), Type.style(15, color = Palette.secondary))
+                Txt(termSentence(texts), Type.style(15, color = Palette.secondary))
                 Txt(t(texts.remark), Type.style(15, color = Palette.secondary))
+                SourcesNote(texts)
                 WhatIfCard(game.whatIf().map { (l, x) -> Triple(l, x.reductionPermille, model.stars(x, scenario.goals)) },
                     maxOf(Progress.stars(scenario.number), game.stars), t("The same platform, other patterns:"), scenario.number,
                     reasons = game.whatIf().map { (_, x) -> x.missed.joinToString(", ") { id -> t(model.qualities.first { it.id == id }.name) } }) { game.loadSolution() }

@@ -84,7 +84,7 @@ class LifecycleController(val scenario: Scenario, fresh: Boolean = false) {
         val minimum = DataPlan(model.kinds.associate { it.name to "warm" }, model.example.keep)
         return listOf(
             t("As today, the accounts deleted after 3 years") to model.result(privacy),
-            t("The same, everything warm") to model.result(privacy.copy(tiers = model.kinds.associate { it.name to "warm" })),
+            t("As today, the accounts deleted after 3 years, everything warm") to model.result(privacy.copy(tiers = model.kinds.associate { it.name to "warm" })),
             t("Kept only as long as required, everything warm") to model.result(minimum),
             t("Kept only as long as required, each kind as cold as its requirements allow") to model.result(model.example),
         )
@@ -316,8 +316,9 @@ private fun LifecycleEnd(game: LifecycleController, onExit: () -> Unit, onOvervi
                     listOf(t("Cold, TB"), tb(r0.tb.getValue(StorageTier.COLD)), tb(r.tb.getValue(StorageTier.COLD))),
                     listOf(t("CO₂ a year, t"), tonnes(r0.planKg), tonnes(r.planKg)),
                 ), firstWidth = 0.5f)
-                Txt(t("What you did is called %@. %@", texts.term, t(texts.termText)), Type.style(15, color = Palette.secondary))
+                Txt(termSentence(texts), Type.style(15, color = Palette.secondary))
                 Txt(t(texts.remark), Type.style(15, color = Palette.secondary))
+                SourcesNote(texts)
                 WhatIfCard(game.whatIf().map { (l, x) -> Triple(l, x.reductionPermille, model.stars(x, scenario.goals)) },
                     maxOf(Progress.stars(scenario.number), game.stars), t("The same data, other plans:"), scenario.number,
                     reasons = game.whatIf().map { (_, x) -> x.missed.joinToString("; ") { t(it.text) } }) { game.loadSolution() }

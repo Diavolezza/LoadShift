@@ -66,7 +66,7 @@ fun PagesPanel(game: GameController) {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 for (tr in Tracking.entries) Chip(t(tr.label), d.tracking == tr) { set(d.copy(tracking = tr)) }
             }
-            Txt(t("Marketing needs the visitor counts; each way delivers them."), Type.caption)
+            Txt(t("Marketing needs the visitor counts; all three options deliver them."), Type.caption)
         }
 
         // As measured: the pages online now

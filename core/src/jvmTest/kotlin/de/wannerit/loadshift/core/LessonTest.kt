@@ -460,12 +460,14 @@ class LessonTest {
         val reference = ref.map { it.totals }.reduce { a, b -> a + b }
         val asap = scenario.initialPolicy
         val greenest = asap.copy(batch = BatchMode.Greenest)
-        val smart = setOf(0, 1, 5, 6, 7, 8)
+        // Trainings and reports: much computing, little data. The search index (3 TB) costs about as much to move as Oslo saves.
+        val smart = setOf(0, 1, 5, 7, 8)
         val runs = listOf(
             "all in Frankfurt, greenest" to (emptySet<Int>() to greenest),
             "trainings to Oslo" to (setOf(1, 7) to asap),
             "smart, asap" to (smart to asap),
             "smart, greenest" to (smart to greenest),
+            "smart + index, greenest" to (smart + 6 to greenest),
             "smart + videos" to (smart + 2 to asap),
             "smart + price calc" to (smart + 4 + 9 to asap),
             "smart + customer data" to (smart + 3 to asap),

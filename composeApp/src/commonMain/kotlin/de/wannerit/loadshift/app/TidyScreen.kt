@@ -398,8 +398,9 @@ private fun TidyEnd(game: TidyController, onExit: () -> Unit, onOverview: (() ->
                 ), firstWidth = 0.6f)
                 if (r.stillRunning.isNotEmpty()) Txt(t("Old systems still running after their migration: %@", r.stillRunning.joinToString(", ") { t(it) }), Type.style(15, FontWeight.SemiBold))
                 QuarterLines(game)
-                Txt(t("What you did is called %@. %@", texts.term, t(texts.termText)), Type.style(15, color = Palette.secondary))
+                Txt(termSentence(texts), Type.style(15, color = Palette.secondary))
                 Txt(t(texts.remark), Type.style(15, color = Palette.secondary))
+                SourcesNote(texts)
                 TidyWhatIf(game)
             }
             EndButtons(game.scenario, game.stars, { game.restart() }, onExit, onOverview, onNext)

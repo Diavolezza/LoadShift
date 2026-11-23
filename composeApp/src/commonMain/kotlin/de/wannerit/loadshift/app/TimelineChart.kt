@@ -409,7 +409,7 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
         drawLine(Palette.accent.copy(alpha = 0.3f), Offset(left, top), Offset(right, top), 1f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(3f * density, 3f * density)))
         text("100 %", Offset(right + 6f * density, top))
         drawLine(Color.Gray.copy(alpha = 0.5f), Offset(left, bottom), Offset(right, bottom), 1f)
-        text(t("Training – green: progress, violet: GPUs training, light blue: loading after a pause; dashed: the plan with the rules now"), Offset(left, top - 12f * density), Type.style(12, FontWeight.SemiBold))
+        text(t("Training – green: progress, violet: GPUs training, light blue: loading after a pause; dashed: the plan with the current rules"), Offset(left, top - 12f * density), Type.style(12, FontWeight.SemiBold))
     }
 
     /** Scenario 6: outside temperature (line, dashed ahead), setpoint (step line), hours the outside air cools (green). */

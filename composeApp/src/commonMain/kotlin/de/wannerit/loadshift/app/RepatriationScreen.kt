@@ -366,8 +366,9 @@ private fun RepatriationEnd(game: RepatriationController, onExit: () -> Unit, on
                     listOf(t("Costs in three years"), millionEuros(r.baselineEuro), millionEuros(r.planEuro)),
                 ), firstWidth = 0.5f)
                 Waterfall(r)
-                Txt(t("What you did is called %@. %@", texts.term, t(texts.termText)), Type.style(15, color = Palette.secondary))
+                Txt(termSentence(texts), Type.style(15, color = Palette.secondary))
                 Txt(t(texts.remark), Type.style(15, color = Palette.secondary))
+                SourcesNote(texts)
                 RepatriationWhatIf(game)
             }
             EndButtons(game.scenario, game.stars, { game.restart() }, onExit, onOverview, onNext)

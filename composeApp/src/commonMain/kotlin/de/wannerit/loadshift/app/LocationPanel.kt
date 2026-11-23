@@ -46,7 +46,7 @@ fun LocationPanel(game: GameController) {
             ) {
                 Txt(t(job.spec.name), Type.style(15, FontWeight.SemiBold))
                 Txt(t("%lld servers · %lld h · %@ – %@", job.spec.servers, job.spec.duration / GameTime.TICKS_PER_HOUR,
-                    timeText(job.spec.arrival), timeText(job.spec.deadline)), Type.caption)
+                    timeText(job.spec.arrival), endText(job.spec.deadline)), Type.caption)
                 // Enough to weigh it: the computing at each site, the cost of moving the data, and what binds the job.
                 val pue = game.scenario.facility.facilityPower(1_000) / 1_000.0
                 val computeKWh = job.spec.servers * job.spec.duration / GameTime.TICKS_PER_HOUR.toDouble() * ServerKind.CPU_CURRENT.maxPower / 1_000.0 * pue

@@ -158,18 +158,19 @@ fun NowBox(game: GameController) {
     val running = simulation.servers.count { it.state.isOn }
     val booting = simulation.servers.count { it.state is ServerState.Booting }
     val last = simulation.history.lastOrNull()
-    val demandNow = last?.demand ?: simulation.scenario.interactive.expected(simulation.tick)
+    val demandNow = last?.demand ?: simulation.expectedDemand(simulation.tick)
     // The capacity of the servers ready now (not of the last tick): it must follow a change made in the pause.
     val capacity = simulation.readyCapacity
     val served = minOf(demandNow, capacity)
-    val inAnHour = simulation.scenario.interactive.expected(simulation.tick + GameTime.TICKS_PER_HOUR)
+    // The work the requests will cause, as the load above: after code changes (E2, E3) fewer load units per request.
+    val inAnHour = simulation.expectedDemand(simulation.tick + GameTime.TICKS_PER_HOUR)
     val caching = simulation.scenario.caching
     val itPower = simulation.servers.sumOf { it.power() } + (caching?.power(simulation.policy.cache) ?: 0)
     Card(Modifier.fillMaxWidth(), color = Palette.background, padding = 14.dp) {
         Txt(t("Right now"), Type.subheading)
         Spacer(Modifier.padding(4.dp))
         val rows = listOf(
-            t("Servers working") to (if (booting > 0) "$running (+$booting)" else "$running"),
+            t("Servers working") to (if (booting > 0) t("%lld (+%lld booting)", running, booting) else "$running"),
             t("Load / capacity") to "$demandNow / $capacity",
             t("Utilization") to (if (capacity == 0) "–" else Format.wholePercent(served * 1_000 / capacity)),
             t("Expected load in 1 h") to "$inAnHour",
@@ -189,6 +190,10 @@ fun timeText(tick: Int): String {
     val time = GameTime(tick)
     return t("Day %lld, %@", time.day - GameTime.START.day + 1, time.clockText)
 }
+
+/** A deadline at midnight as the end of the day it closes ("Day 2, 24:00"), not the start of the next (playtest round 4). */
+fun endText(tick: Int): String =
+    if (tick > 0 && tick % GameTime.TICKS_PER_DAY == 0) t("Day %lld, %@", GameTime(tick - 1).day - GameTime.START.day + 1, "24:00") else timeText(tick)
 
 /** Scenario 2: plan the batch jobs by hand. A planned job starts by itself, if enough servers are free. */
 @Composable
@@ -231,7 +236,7 @@ private fun JobRow(game: GameController, job: BatchJob) {
             Txt(t(spec.name), Type.subheading, Modifier.weight(1f))
             JobStatus(game, job, now)
         }
-        Txt(t("%lld servers · %lld h · due %@", spec.servers, spec.duration / GameTime.TICKS_PER_HOUR, timeText(spec.deadline)), Type.caption)
+        Txt(t("%lld servers · %lld h · due %@", spec.servers, spec.duration / GameTime.TICKS_PER_HOUR, endText(spec.deadline)), Type.caption)
         if (!job.state.isStarted && Control.BATCH_RULES in game.scenario.controls) {
             Txt(t("start by %@", timeText(spec.latestStart)), Type.caption)
         } else if (!job.state.isStarted) {
@@ -284,8 +289,8 @@ private fun JobStatus(game: GameController, job: BatchJob, now: Int) {
         is BatchJobState.Started -> t("booting") to Palette.demand
         is BatchJobState.Running -> t("runs until %@", GameTime(state.endsAt).clockText) to Palette.amber
         is BatchJobState.Done ->
-            if (state.at > job.spec.deadline) t("late, %@", GameTime(state.at).clockText) to Palette.red
-            else t("done %@", GameTime(state.at).clockText) to Palette.accent
+            if (state.at > job.spec.deadline) t("late, %@", timeText(state.at)) to Palette.red
+            else t("done %@", timeText(state.at)) to Palette.accent
     }
     Box(Modifier.background(color.copy(alpha = 0.12f), RoundedCornerShape(50)).padding(horizontal = 10.dp, vertical = 3.dp)) {
         Txt(text, Type.style(13, FontWeight.SemiBold, if (color == Palette.amber) Color(0xFFB0741A) else color))
@@ -314,7 +319,7 @@ private fun BatchRules(game: GameController) {
             Stepper(GameTime.at(0, game.draftHour).clockText,
                 minus = { game.draftHour = (game.draftHour + 23) % 24 }, plus = { game.draftHour = (game.draftHour + 1) % 24 })
         }
-        RuleOption(game.draftKind == GameController.RuleKind.GREENEST, { game.draftKind = GameController.RuleKind.GREENEST }, t("Greenest hours (forecast)"), t("Every job is planned into the hours with the lowest forecast before its deadline, once, when you apply the rule.")) {
+        RuleOption(game.draftKind == GameController.RuleKind.GREENEST, { game.draftKind = GameController.RuleKind.GREENEST }, t("Greenest hours (forecast)"), t("Every job is planned into the hours with the lowest forecast before its deadline. The plan is made once, when you apply the rule.")) {
             val active = game.simulation.policy.batch == BatchMode.Greenest
             val planned = game.simulation.plannedWithForecastOf
             if (active && planned != null) {
@@ -337,7 +342,7 @@ private fun BatchRules(game: GameController) {
             Tick(game.draftSafety)
             Column(Modifier.weight(1f)) {
                 Txt(t("Deadline safety"), Type.style(15, FontWeight.SemiBold))
-                Txt(t("A job that would otherwise miss its deadline starts when there is just enough time left (with a fixed hour and a threshold)."), Type.caption)
+                Txt(t("A job that would otherwise miss its deadline starts when there is just enough time left (only with a fixed hour or a threshold)."), Type.caption)
             }
         }
         ApplyRow(game) { ruleText(it) }

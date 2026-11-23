@@ -33,7 +33,7 @@ enum class Season(val title: String) {
     WINTER("Winter"), SPRING("Spring"), SUMMER("Summer"), AUTUMN("Autumn"),
 
     /** The annual profile, where the source gives no seasons. */
-    YEAR("Whole year"),
+    YEAR("All year"),
 }
 
 /** Region and season of a scenario. */

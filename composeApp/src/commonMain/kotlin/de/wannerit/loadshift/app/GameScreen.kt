@@ -357,7 +357,10 @@ private fun GoalBar(game: GameController, compact: Boolean = false) {
             }
             scenario.pipeline?.let { model ->
                 GoalItem(totals.meanFeedback <= model.feedbackLimit * 10, change != null, t("Feedback ≤ %lld min", model.feedbackLimit))
-                GoalItem(totals.rulesBroken == 0, totals.rulesBroken > 0 || game.isFinished,
+                // Decided once the release has happened (Friday 14:00), not only at the end of the week (playtest round 4).
+                val released = game.simulation.tick > scenario.startTick + de.wannerit.loadshift.core.PipelineModel.RELEASE_DAY * GameTime.TICKS_PER_DAY +
+                    de.wannerit.loadshift.core.PipelineModel.RELEASE_HOUR * GameTime.TICKS_PER_HOUR
+                GoalItem(totals.rulesBroken == 0, totals.rulesBroken > 0 || game.isFinished || released,
                     if (totals.rulesBroken == 0) t("Release on Friday with tested UI") else t("Released without UI tests"))
                 GoalItem((change ?: 0) < 0, change != null,
                     if (change == null) t("CO₂ vs. reference") else t("CO₂ vs. reference: %@", Format.changePermille(change)))
@@ -405,7 +408,7 @@ private fun GoalBar(game: GameController, compact: Boolean = false) {
                     val mine = totals.meanBatchIntensityTenths
                     val ref = game.referenceTotals.meanBatchIntensityTenths
                     GoalItem(mine <= ref, totals.batchEnergy > 0,
-                        if (totals.batchEnergy > 0) t("Batch work Ø %lld g/kWh (reference %lld)", (mine + 5) / 10, (ref + 5) / 10)
+                        if (totals.batchEnergy > 0) t("Batch work: average %lld g/kWh (reference %lld)", (mine + 5) / 10, (ref + 5) / 10)
                         else t("Batch work: no job has run yet"))
                 }
             }
@@ -569,7 +572,7 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
                     if (game.hasSprints) {
                         // E2: the SCI per functional unit (1,000 requests served) – the debrief refers to it.
                         fun sci(x: de.wannerit.loadshift.core.Totals) = Format.number(x.emissions / 1e6 / maxOf(1L, x.requestsServed), 2)
-                        add(t("SCI (g CO₂ per 1,000 requests)") to (sci(you) to sci(ref)))
+                        add(t("SCI – Software Carbon Intensity (g CO₂ per 1,000 requests)") to (sci(you) to sci(ref)))
                     }
                     if (scenario.inference != null) {
                         add(t("Quality of the answers") to (Format.percent(you.meanAnswerQuality) to Format.percent(ref.meanAnswerQuality)))
@@ -590,8 +593,9 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
                     }
                 }
                 Table(listOf("", t("You"), t("Reference")), rows.map { listOf(it.first, it.second.first, it.second.second) })
-                Txt(t("What you did is called %@. %@", texts.term, t(texts.termText)), Type.style(15, color = Palette.secondary))
+                Txt(termSentence(texts), Type.style(15, color = Palette.secondary))
                 Txt(t(texts.remark), Type.style(15, color = Palette.secondary))
+                SourcesNote(texts)
                 WhatIf(game)
             }
             EndButtons(scenario, game.stars, { game.restart() }, onExit, onOverview, onNext)

@@ -458,8 +458,9 @@ private fun PortfolioEnd(game: PortfolioController, onExit: () -> Unit, onOvervi
                     listOf(t("Spent on data (€)"), Format.number(r.inventoryCost.toDouble())),
                     listOf(t("Spent on measures (€)"), Format.number(r.planCost.toDouble())),
                 ), firstWidth = 0.6f)
-                Txt(t("What you did is called %@. %@", texts.term, t(texts.termText)), Type.style(15, color = Palette.secondary))
+                Txt(termSentence(texts), Type.style(15, color = Palette.secondary))
                 Txt(t(texts.remark), Type.style(15, color = Palette.secondary))
+                SourcesNote(texts)
                 PortfolioWhatIf(game)
             }
             EndButtons(game.scenario, game.stars, { game.restart() }, onExit, onOverview, onNext)

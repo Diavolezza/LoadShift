@@ -51,7 +51,7 @@ object Solutions {
             Control.SPRINTS in c -> Solution(sprints =
                 if (s.growth != null) Engineering.greedy(s, value = Engineering.byLastDay(s))
                 else Engineering.greedy(s, profileFirst = true, value = Engineering.byEstimates(s)))
-            Control.LOCATION in c -> Solution(policy = start.copy(batch = BatchMode.Greenest), moved = setOf(0, 1, 5, 6, 7, 8))
+            Control.LOCATION in c -> Solution(policy = start.copy(batch = BatchMode.Greenest), moved = setOf(0, 1, 5, 7, 8))
             Control.RENEWAL in c -> Solution(renewal = listOf(mapOf(0 to 4, 4 to 8, 8 to 10), mapOf(10 to 2)))
             s.contract != null -> Solution(s.referencePolicy.copy(contract = Contract.HOURLY, capacity = CapacityMode.Autoscale(800), batch = BatchMode.Greenest))
             s.services != null -> Solution(start.copy(services = ServiceConfig(ServiceCut.MICROSERVICES, Protocol.GRPC, MasterData.EVENTS, 60, 300, true)))

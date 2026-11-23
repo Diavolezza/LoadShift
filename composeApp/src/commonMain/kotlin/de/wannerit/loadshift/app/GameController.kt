@@ -250,6 +250,8 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
     private var sprintStartedDay = -1
     /** Plans of this run by day, kept for the next run. */
     private val sprintPlans = mutableMapOf<Int, List<Int>>()
+    /** The picks of the last sprint: what the team did not reach stays picked for the next sprint (playtest round 4). */
+    private var sprintQueue = listOf<Int>()
 
     val hasSprints: Boolean get() = Control.SPRINTS in scenario.controls
     val currentDay: Int get() = (current.tick - scenario.startTick) / GameTime.TICKS_PER_DAY
@@ -279,6 +281,7 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
         if (!canPlanSprint) return
         val day = currentDay
         sprintPlans[day] = sprintDraft
+        sprintQueue = sprintDraft
         team.sprint(day, sprintDraft)
         sprintStartedDay = day
         sprintDraft = emptyList()
@@ -298,7 +301,8 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
     private fun checkSprint() {
         if (!hasSprints || (current.tick - scenario.startTick) % GameTime.TICKS_PER_DAY != 0) return
         speed = Speed.PAUSED
-        presetSprints.getOrNull(currentDay)?.let { planSprint(it) }
+        // After "Play again" the last run's picks; otherwise the picks the team did not reach in the last sprint.
+        planSprint(presetSprints.getOrNull(currentDay) ?: sprintQueue)
     }
 
     /** Pauses when the forecast is revised (CONCEPT.md 3.3). */
@@ -908,13 +912,14 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
         if (scenario.location != null) {
             fun run(moved: Set<Int>, greenest: Boolean) = scenario.runLocation(moved,
                 scenario.initialPolicy.copy(batch = if (greenest) BatchMode.Greenest else BatchMode.Asap)).map { it.totals }.reduce { a, b -> a + b }
-            val smart = setOf(0, 1, 5, 6, 7, 8)
+            val smart = setOf(0, 1, 5, 7, 8)
             return listOf(
                 t("All in Frankfurt, as soon as possible (reference)") to referenceTotals,
                 t("All in Frankfurt, greenest hours") to run(emptySet(), true),
                 t("Both trainings to Oslo") to run(setOf(1, 7), false),
-                t("Trainings, reports and search index to Oslo") to run(smart, false),
+                t("Trainings and reports to Oslo") to run(smart, false),
                 t("The same, greenest hours") to run(smart, true),
+                t("The same plus the search index") to run(smart + 6, true),
                 t("The same plus the product videos") to run(smart + 2, true),
             )
         }
@@ -925,9 +930,9 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
                 t("4K on every device (reference)") to referenceTotals,
                 t("HD everywhere") to run(StreamingConfig(listOf(Quality.HD, Quality.HD, Quality.HD))),
                 t("HD on phones and laptops, 4K on TVs") to run(byDevice),
-                t("The same, eco mode HD above 650 g/kWh") to run(byDevice.copy(eco = true, ecoAbove = 650)),
-                t("The same, eco mode HD above 550 g/kWh") to run(byDevice.copy(eco = true, ecoAbove = 550)),
-                t("The same, eco mode SD above 650 g/kWh") to run(byDevice.copy(eco = true, ecoAbove = 650, ecoQuality = Quality.SD)),
+                t("The same devices, plus eco mode HD above 650 g/kWh") to run(byDevice.copy(eco = true, ecoAbove = 650)),
+                t("The same devices, plus eco mode HD above 550 g/kWh") to run(byDevice.copy(eco = true, ecoAbove = 550)),
+                t("The same devices, plus eco mode SD above 650 g/kWh") to run(byDevice.copy(eco = true, ecoAbove = 650, ecoQuality = Quality.SD)),
             )
         }
         scenario.contract?.let {
@@ -968,12 +973,12 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
             val lean = base.copy(heavy = HeavyTests.NIGHTLY, environments = Environments.OFFICE_HOURS, replicas = 1, testImpact = true)
             return listOf(
                 t("Agents and environments always on, all tests with every commit (reference)") to referenceTotals,
-                t("Environments only on weekdays 7–19") to run(base.copy(environments = Environments.OFFICE_HOURS)),
+                t("Environments only on weekdays 7:00–19:00") to run(base.copy(environments = Environments.OFFICE_HOURS)),
                 t("UI tests every night instead of with every commit") to run(base.copy(heavy = HeavyTests.NIGHTLY)),
-                t("Both, test impact analysis, one replica") to run(lean),
+                t("Both, plus test impact analysis and one replica") to run(lean),
                 t("The same, agents on demand without a remote cache") to run(lean.copy(runners = Runners.ON_DEMAND)),
                 t("The same, agents on demand with a remote cache") to run(lean.copy(runners = Runners.ON_DEMAND, remoteCache = true)),
-                t("The same, builds every 30 minutes") to run(lean.copy(runners = Runners.ON_DEMAND, remoteCache = true, trigger = Trigger.EVERY_30_MIN)),
+                t("The same, pipeline every 30 minutes") to run(lean.copy(runners = Runners.ON_DEMAND, remoteCache = true, trigger = Trigger.EVERY_30_MIN)),
                 t("The same with every commit, UI tests never") to run(lean.copy(runners = Runners.ON_DEMAND, remoteCache = true, heavy = HeavyTests.NEVER)),
             )
         }
@@ -1004,7 +1009,7 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
                 t("Order status and greetings without AI") to run("NNLLL", 0),
                 t("Small model for everything") to run("SSSSS", 0),
                 t("Large model for everything, batching 1 s") to run("LLLLL", 1_000),
-                t("Status and greetings without AI, batching 1 s") to run("NNLLL", 1_000),
+                t("Order status and greetings without AI, batching 1 s") to run("NNLLL", 1_000),
                 t("The same, small model for product questions") to run("NNSLL", 1_000),
                 t("The same, batching 2 s") to run("NNSLL", 2_000),
                 t("The same with 1 s, reasoning for complaints") to run("NNSRL", 1_000),
@@ -1126,7 +1131,7 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
             return listOf(
                 t("Spread over all hosts (reference)") to reference.totals,
                 t("First Fit Decreasing, RAM only") to replay(Packing.firstFitDecreasing(vms, host, fleet, Packing.Check.RAM_ONLY) { it.ramGb }),
-                t("First Fit Decreasing, sum of the peaks") to replay(Packing.firstFitDecreasing(vms, host, fleet, Packing.Check.PEAK_SUM) { it.ramGb }),
+                t("First Fit Decreasing, by the sum of the VM peaks") to replay(Packing.firstFitDecreasing(vms, host, fleet, Packing.Check.PEAK_SUM) { it.ramGb }),
                 t("First Fit Decreasing, daily profiles up to 85 %") to replay(Packing.firstFitDecreasing(vms, host, fleet, Packing.Check.PROFILES, key = both)),
                 t("First Fit Decreasing, daily profiles up to 100 %") to replay(Packing.firstFitDecreasing(vms, host, fleet, Packing.Check.PROFILES, 1_000, both)),
             )
@@ -1189,6 +1194,7 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
         sprintDraft = emptyList()
         sprintStartedDay = -1
         sprintPlans.clear()
+        sprintQueue = emptyList()
         presetSprints = emptyList()
         presetServers = emptyMap()
         presetChanges = emptyMap()

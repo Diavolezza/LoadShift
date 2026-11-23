@@ -33,7 +33,7 @@ fun TrainingPanel(game: GameController) {
     val draft = game.draftTraining
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Txt(t("Training run"), Type.heading)
-        Txt(t("The model needs a fixed amount of GPU work by the end of day %lld. You decide how many GPU servers train together, how much power each may draw, and when they train. A pause is possible at a checkpoint; resuming costs 15 minutes of loading it.", game.scenario.days), Type.style(15, color = Palette.secondary))
+        Txt(t("The model needs a fixed amount of GPU work by the end of day %lld. You decide how many GPU servers train together, how much power each may draw, and when they train. The training can pause at a checkpoint; resuming takes 15 minutes to load it.", game.scenario.days), Type.style(15, color = Palette.secondary))
 
         // Progress
         val done = minOf(1_000L, totals.trainingDone * 1_000 / model.work).toInt()
@@ -80,7 +80,7 @@ fun TrainingPanel(game: GameController) {
         // When
         RuleOption(!game.trainGreenest, { game.trainGreenest = false }, t("Without a break"), t("Trains from now on until the model is done."))
         RuleOption(game.trainGreenest, { game.trainGreenest = true }, t("Greenest hours"),
-            t("Trains in the hours with the lowest forecast that are needed before the deadline – with a reserve of a tenth. Decided anew every quarter of an hour, always with the latest forecast."))
+            t("Trains in the hours with the lowest forecast that are needed before the deadline – with a reserve of 10 %. The plan is made again every 15 minutes with the latest forecast."))
 
         // Estimate
         val left = maxOf(0L, model.work - totals.trainingDone)

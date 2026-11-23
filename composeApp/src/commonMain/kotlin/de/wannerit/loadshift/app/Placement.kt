@@ -259,7 +259,7 @@ fun PlacementPanel(game: GameController) {
             }
         }
         Txt(t("Each host: %lld GB RAM, %lld load units.", servers.first().kind.ramGb, servers.first().kind.capacity), Type.caption)
-        SecondaryButton(t("Spread again (as found)"), enabled = game.canPlace) { game.spreadAgain() }
+        SecondaryButton(t("Back to the start placement"), enabled = game.canPlace) { game.spreadAgain() }
     }
 }
 

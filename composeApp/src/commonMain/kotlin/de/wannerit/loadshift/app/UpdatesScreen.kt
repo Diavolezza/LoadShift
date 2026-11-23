@@ -363,8 +363,9 @@ private fun UpdatesEnd(game: UpdatesController, onExit: () -> Unit, onOverview: 
                     listOf(t("Network, t CO₂"), tonnes(r0.networkKg), tonnes(r.networkKg)),
                     listOf(t("Rest of the app, t CO₂"), tonnes(r0.otherKg), tonnes(r.otherKg)),
                 ), firstWidth = 0.5f)
-                Txt(t("What you did is called %@. %@", texts.term, t(texts.termText)), Type.style(15, color = Palette.secondary))
+                Txt(termSentence(texts), Type.style(15, color = Palette.secondary))
                 Txt(t(texts.remark), Type.style(15, color = Palette.secondary))
+                SourcesNote(texts)
                 WhatIfCard(game.whatIf().map { (l, x) -> Triple(l, x.reductionPermille, model.stars(x, scenario.goals)) },
                     maxOf(Progress.stars(scenario.number), game.stars), t("The same app, other ways to learn about changes:"), scenario.number,
                     reasons = game.whatIf().map { (_, x) -> x.missed.joinToString(", ") { t(it) } }) { game.loadSolution() }

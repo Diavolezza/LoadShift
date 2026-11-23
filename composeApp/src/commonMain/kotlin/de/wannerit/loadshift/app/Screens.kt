@@ -538,23 +538,23 @@ private fun SideCard(scenario: Scenario, texts: ScenarioTexts, onStart: () -> Un
         if (patterns != null) Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Fact(t("A mobility platform with %lld subsystems", patterns.subsystems.size))
             Fact(t("Today Event Sourcing, CQRS and events everywhere"))
-            Fact(t("Counted: a year, location-based"))
+            Fact(t("We count one year, location-based"))
         } else if (tenancy != null) Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Fact(t("An HR software for %lld customer companies", tenancy.groups.sumOf { it.count }))
+            Fact(t("HR software for %lld customer companies", tenancy.groups.sumOf { it.count }))
             Fact(t("%lld building blocks, today one instance of each per customer", tenancy.components.size))
-            Fact(t("Counted: a year, location-based"))
+            Fact(t("We count one year, location-based"))
         } else if (lifecycle != null) Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Fact(t("An online retailer with %lld years of data", lifecycle.historyYears.toLong()))
             Fact(t("%lld kinds of data, today nothing is deleted", lifecycle.kinds.size))
-            Fact(t("Counted: a year, location-based, including the manufacturing of the storage media"))
+            Fact(t("We count one year, location-based, including the manufacturing of the storage media"))
         } else if (availability != null) Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Fact(t("%lld building blocks, %lld quality scenarios", availability.blocks.size, availability.scenarios.size))
             Fact(t("Today everything active-active on two sites"))
-            Fact(t("Counted: a year, location-based"))
+            Fact(t("We count one year, location-based"))
         } else if (updates != null) Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Fact(t("A delivery app on %@ phones", Format.number(updates.phones.toDouble())))
             Fact(t("%lld kinds of update, open and closed", updates.kinds.size))
-            Fact(t("Counted: a year – phones, servers and network, location-based"))
+            Fact(t("We count one year – phones, servers and network, location-based"))
         } else if (repatriation != null) Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Fact(t("%lld applications in the cloud in Frankfurt", repatriation.apps.size))
             Fact(t("Four places: two cloud regions, a colocation, the company's own server room"))
@@ -582,7 +582,7 @@ private fun SideCard(scenario: Scenario, texts: ScenarioTexts, onStart: () -> Un
             Fact(t("%lld applications in the cloud", count(de.wannerit.loadshift.core.Hosting.CLOUD)))
             Fact(t("%lld applications as SaaS", count(de.wannerit.loadshift.core.Hosting.SAAS)))
             Fact(t("Budget for data and measures: €%@", Format.number(portfolio.budget.toDouble())))
-            Fact(t("Counted: a year, location-based"))
+            Fact(t("We count one year, location-based"))
         } else Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             val sites = scenario.location?.sites
             Fact(if (sites != null) t("%@ and %@", t(sites[0].region.title), t(sites[1].region.title)) else t(scenario.setting.region.title))

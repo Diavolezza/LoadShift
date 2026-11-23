@@ -45,12 +45,12 @@ fun ServicesPanel(game: GameController) {
     fun set(c: ServiceConfig) { game.servicesDraft = c }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Txt(t("Architecture"), Type.heading)
-        Txt(t("The tracking must answer within %lld ms on average; positions may be at most %lld s old, traffic information %lld min. From 6 to 20 the dispatchers' route optimization runs once an hour.",
+        Txt(t("The tracking must answer within %lld ms on average; positions may be at most %lld s old, traffic information at most %lld min old. From 6:00 to 20:00 the dispatchers' route optimization runs once an hour.",
             model.latencyLimit, model.gpsLimit, model.mapLimit / 60), Type.style(15, color = Palette.secondary))
 
         ArchitectureDiagram(d, Modifier.fillMaxWidth().height(200.dp).clip(RoundedCornerShape(12.dp)).background(Palette.background))
 
-        Section(t("Cut")) {
+        Section(t("How the system is split")) {
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 for (cut in ServiceCut.entries) Chip(t(cut.label), d.cut == cut) { set(d.copy(cut = cut)) }
             }

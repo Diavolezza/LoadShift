@@ -20,6 +20,8 @@ class ScenarioTexts(
     /** The technical term for what the player does in the scenario, and what it means. */
     val term: String,
     val termText: String,
+    /** False when the term names a measure or a fact rather than what the player did (PUE, Embodied Carbon …). */
+    val termIsAction: Boolean = true,
 ) {
     companion object {
         fun of(scenario: Scenario): ScenarioTexts = when (scenario.number) {
@@ -55,7 +57,7 @@ class ScenarioTexts(
             )
             111 -> ScenarioTexts(
                 situation = "An online retailer has been selling for twelve years and has kept every byte of it: orders and invoices, images of old products, customer accounts, logs, monthly backups and every click in the shop. New data stays on the fast SSD storage for a year and then moves to the HDD storage; nothing is ever deleted. The data protection officer has asked about the old customer accounts, and the IT management asks what all this data costs in CO₂.",
-                idea = "Stored data costs CO₂ every year it is kept: the power of the storage with its copies and the manufacturing of the media. The three storage tiers differ several times over in what a terabyte costs and in how fast it can be read. Each kind of data has its own requirements – from the law, from privacy, from the departments; some set a minimum, one sets a maximum.",
+                idea = "Stored data costs CO₂ every year it is kept: the power of the storage with its copies and the manufacturing of the media. In the three storage tiers, a terabyte costs very different amounts and can be read at very different speeds. Each kind of data has its own requirements – from the law, from privacy, from the departments; some set a minimum, one sets a maximum.",
                 screen = listOf(
                     "At the top: CO₂ a year, the change compared with today, the data stored and how many requirements are met; below it your goals.",
                     "The six kinds of data: where data older than 90 days lives, how long it is kept, and what is stored then. Click an option to choose it, a row to see its facts.",
@@ -64,7 +66,7 @@ class ScenarioTexts(
                 ),
                 comparedWith = "compared with today's storage, location-based, including the manufacturing of the storage media; the live data is the same in both.",
                 rules = "Every requirement met",
-                remark = "Most of the CO₂ was in data nobody reads: logs, backups and click events kept for good, the first year of them on SSDs. Deleting helps most – what is not stored costs nothing –, but only down to what the law, the security team and the departments need; for the customer accounts privacy even sets a maximum. Then the tier: the archive costs a fraction of the HDD storage, but reading takes hours – fine for a tax audit, not for a customer's order history. Two kinds need a closer look: after a month only 5 % of the logs matter, and the yearly report needs the monthly figures, not every click. Storage systems and cloud storage classes can move and delete data by age with lifecycle rules, so the plan does not depend on someone remembering it.",
+                remark = "Most of the CO₂ was in data nobody reads: logs, backups and click events kept for good, the first year of them on SSDs. Deleting helps most – what is not stored costs nothing – but only down to what the law, the security team and the departments need; for the customer accounts privacy even sets a maximum. Then the tier: the archive costs a fraction of the HDD storage, but reading takes hours – fine for a tax audit, not for a customer's order history. Two kinds need a closer look: after a month only 5 % of the logs matter, and the yearly report needs the monthly figures, not every click. Storage systems and cloud storage classes can move and delete data by age with lifecycle rules, so the plan does not depend on someone remembering it.",
                 term = "Data Lifecycle Management",
                 termText = "Deciding for each kind of data where it is stored at which age and when it is deleted – from its creation through frequent and rare use to the archive and deletion.",
             )
@@ -81,7 +83,7 @@ class ScenarioTexts(
                 rules = "Every quality scenario met",
                 remark = "Most of the servers were minimums and overhead: 40 customers, each with seven instances of one or two servers at least, plus load balancer and monitoring. Pooling the small customers saves the most, because their peaks spread out. The quality scenarios decide where not to pool – and only there: the contract asks for the bank's and the insurer's data on their own servers, not their whole stack; the large customer's month-end run hits the payroll run and the database, not the web front end. One database for everyone looks cheapest, but then a single customer can no longer be restored on its own; a database per customer on shared servers keeps that. SaaS providers often mix the models in this way: a silo where a contract or a heavy customer needs it, a pool for the many.",
                 term = "Multi-tenancy (Silo, Bridge, Pool)",
-                termText = "How one software serves several customers (tenants): each with an instance of its own (silo), with shared servers but a database of its own (bridge), or with everything shared and the customers told apart by a tenant ID (pool).",
+                termText = "How one software product serves several customers (tenants): each with an instance of its own (silo), with shared servers but a database of its own (bridge), or with everything shared and the customers told apart by a tenant ID (pool).",
             )
             109 -> ScenarioTexts(
                 situation = "A delivery service's app runs on 400,000 phones. It learns about changes the way it did in its first version: it asks the server – every 10 seconds for the delivery status, every 2 seconds on the map and in the chat, every 30 or 60 seconds for the rest, and in the background every 15 minutes. Customers complain that \"The courier is at the door\" comes too late when the app is closed. The team is to fix that – and the app's CO₂ should go down too.",
@@ -129,7 +131,7 @@ class ScenarioTexts(
                 termText = "Tidying up the application portfolio: each application placed by business value and technical condition, then tolerated, improved, migrated or eliminated – the TIME model made popular by Gartner. Projects take time and people; the saving comes when the old system is really off, not when the new one starts.",
             )
             202 -> ScenarioTexts(
-                situation = "The inventory is done: about 955 t CO₂ a year, the employees' PCs included. A consultancy has listed sixteen measures and drawn them as a curve: each bar a measure, its width the CO₂ it saves in three years, its height what a tonne avoided costs. The board has €200,000 and wants to know where to start.",
+                situation = "The inventory is done: about 955 t CO₂ a year, the employees' PCs included. A consultancy has listed sixteen measures and drawn them as a curve: each bar a measure, its width the CO₂ it saves in three years, its height the cost of avoiding one tonne. The board has €200,000 and wants to know where to start.",
                 idea = "Start where a tonne is cheapest – that is what the curve is for. But the curve was made one measure at a time, from each measure's saving in a year once it works. Check what that leaves out before you follow it.",
                 screen = listOf(
                     "At the top: what the consultant's list gives for your plan and the budget left; below it your goals.",
@@ -139,9 +141,10 @@ class ScenarioTexts(
                 ),
                 comparedWith = "compared with three years without any measure, location-based.",
                 rules = "Within the budget and less CO₂ over three years",
-                remark = "On the consultant's curve the certificates came first: 1,200 t for €40,000 – in the market-based report. In the grid they changed nothing. Two measures on the same servers do not add up: switching the test environments off at night and moving them to the cloud on demand work on the same 88 t a year, and the second saves only what the first leaves – and only after four quarters of migration. The same holds for moving the analytics platform and rightsizing it. Replacing 600 desktop PCs by laptops saves electricity every year, but making the laptops emits more than that saves in three years. A curve of single measures is a good start: it shows where a tonne is cheap. It needs a second look for overlaps, lead times and the CO₂ of new hardware.",
+                remark = "On the consultant's curve the certificates came first: 1,200 t for €40,000 – in the market-based report. In the grid they changed nothing. Two measures on the same servers do not add up: switching the test environments off at night and moving them to the cloud on demand work on the same 88 t a year, and the second saves only what the first leaves – and only after four quarters of migration. The same holds for moving the analytics platform and rightsizing it. Replacing 600 desktop PCs by laptops saves electricity every year, but manufacturing the laptops emits more CO₂ than they save in three years. A curve of single measures is a good start: it shows where a tonne is cheap. It needs a second look for overlaps, lead times and the CO₂ of new hardware.",
                 term = "Marginal Abatement Cost Curve (MACC)",
-                termText = "Measures sorted by what it costs to avoid a tonne of CO₂: each bar's width is the amount a measure avoids, its height the cost per tonne; the cheapest are on the left, some even save money. McKinsey made such curves known from 2007 on. They compare measures one at a time, as if they did not affect each other.",
+                termIsAction = false,
+                termText = "Measures sorted by what it costs to avoid a tonne of CO₂: each bar's width is the amount a measure avoids, its height the cost per tonne; the cheapest are on the left, some even save money. McKinsey made such curves widely known from 2007 onwards. They compare measures one at a time, as if they did not affect each other.",
             )
             201 -> ScenarioTexts(
                 situation = "The CIO wants to know where the IT's CO₂ comes from – and to cut it by a quarter next year. Eighteen applications: six in the company's own data center in Stuttgart, six with a cloud provider in Frankfurt, six as SaaS. These are free: the data center's meter, the servers in the CMDB, the cloud provider's carbon tool and the invoices. Better data costs money – from the same budget of €150,000 that must also pay for the measures. Counted is location-based: with the average of the grid where the electricity is used. Market-based would count the contracts and certificates bought instead.",
@@ -171,6 +174,7 @@ class ScenarioTexts(
                 rules = "SLA at least 99 %, every job by its deadline, electricity cost at most 10 % above the reference and less CO₂ than the reference, counted in the hour",
                 remark = "Green certificates made the report zero and changed nothing in the grid: the hydro plants behind them run anyway. In the report the plain grid contract even looked worse than the grid's average – the residual mix is what is left after others have claimed the green part [S36]. The wind farm adds clean energy, but only while the wind blows: moving the batch jobs into the windy hours let the data center use more of it. 24/7 carbon-free energy covers every hour – and it was affordable only once the data center needed less energy. Google reports 66 % carbon-free energy in the hour across its data centers [S38]; the GHG Protocol's revision of Scope 2 moves the market-based report towards matching in the hour [S37].",
                 term = "24/7 Carbon-Free Energy",
+                termIsAction = false,
                 termText = "Matching electricity consumption with carbon-free generation in the same hour and the same grid, instead of buying certificates for the year. Under the GHG Protocol there are two ways to report Scope 2: location-based (the grid's average) and market-based (contracts and certificates); only matching in the hour shows what the electricity really was.",
             )
             11 -> ScenarioTexts(
@@ -178,7 +182,7 @@ class ScenarioTexts(
                 idea = "Everything you have learned, together. Waiting for clean hours within a day does not help now – every hour is dirty. What helps: use less (size the shop with autoscaling) and move what can wait for days into the windy days; the deadlines show which work can wait for days.",
                 screen = listOf(
                     "The game starts paused. Clock and speed – pause, 1×, 4×, 16×, 64× – and below it your goals: SLA, every deadline, the training done and less CO₂.",
-                    "The hall: 40 CPU servers for the shop and the batch jobs (at most 16 for batch), 4 GPU servers for the training – blue: web requests, amber: batch jobs, violet: training.",
+                    "The data center: 40 CPU servers for the shop and the batch jobs (at most 16 for batch), 4 GPU servers for the training – blue: web requests, amber: batch jobs, violet: training.",
                     "Three tabs – shop, batch, training – each with its rules. Apply applies all of them; an amber note shows changes not applied yet.",
                     "Carbon intensity of the grid with the forecast; below it all three kinds of work: the shop's load and capacity, the batch jobs and the training's progress.",
                 ),
@@ -194,12 +198,12 @@ class ScenarioTexts(
                 screen = listOf(
                     "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals: every job on time, customer data in Germany and less CO₂.",
                     "Both sites side by side: grey servers are off, light blue ones are booting, the amber bar shows a server working on a job.",
-                    "Location: for every job its servers, duration, time window and data – and where it runs. Decide before the start; above it the batch rule for both sites.",
+                    "Location: for every job its servers, duration, time window and data – and where it runs. You decide this before the start. Above it: the batch rule for both sites.",
                     "Both sites side by side: the carbon intensity of the grid with the forecast (the other site as a thin line), and below it one row per job of that site – light: the time between arrival and deadline, filled: running or done.",
                 ),
                 comparedWith = "compared with the reference operator, who runs every job in Frankfurt as soon as it arrives.",
-                rules = "every job by its deadline, customer data in Germany and less CO₂ than the reference",
-                remark = "Location saves more than time here: no hour in the German grid comes close to Norway's hydropower. Look at the energy: it rose – the transfers need energy too – and still the CO₂ fell. Location Shifting saves carbon, not energy. The trainings were the best candidates – hours of computing for little data. The videos were the worst: 30 terabytes through the network cost more CO₂ than Oslo saved, and the transfer took most of a working day. The price calculation needs its database in Frankfurt and misses its deadline far from it; customer data may not leave the country by contract. Data have weight. And clean electricity is not unlimited: if everyone moves to Norway, it runs short there. Location Shifting works best with capacity that is there anyway.",
+                rules = "Every job done by its deadline, customer data in Germany and less CO₂ than the reference",
+                remark = "Here, moving work to another place saves more than moving it to another time: no hour in the German grid comes close to Norway's hydropower. Look at the energy: it rose – the transfers need energy too – and still the CO₂ fell. Location Shifting saves carbon, not energy. The two training jobs were the best candidates – hours of computing for little data. The search index was a close call: moving its 3 terabytes costs about as much CO₂ as Oslo saves. The videos were the worst: 30 terabytes through the network cost more CO₂ than Oslo saved, and the transfer took most of a working day. The price calculation needs its database in Frankfurt and misses its deadline far from it; customer data may not leave the country by contract. Moving data has a cost. And clean electricity is not unlimited: if everyone moves to Norway, it runs short there. Location Shifting works best with capacity that is there anyway.",
                 term = "Location Shifting",
                 termText = "Moving flexible work to the place where the electricity is cleanest. Together with Time Shifting it is called Demand Shifting – part of the Green Software Foundation principle Carbon Awareness. Its limits: moving the data, the latency to users and other systems, and where data may be stored.",
             )
@@ -209,11 +213,11 @@ class ScenarioTexts(
                 screen = listOf(
                     "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals: the viewers' rating and less CO₂.",
                     "Your racks: grey servers are off, light blue ones are booting, the blue bar shows how busy a server is.",
-                    "Video quality: the highest quality per device with the viewers' rating, the eco mode and its threshold. Below it the situation right now.",
+                    "Video quality: the highest quality per device with the viewers' rating, the eco mode and its threshold. Below it: the current situation.",
                     "Carbon intensity of the grid with the forecast, the eco threshold and the hours with eco mode on (green); below it the load and capacity.",
                 ),
                 comparedWith = "compared with the reference operator, who streams 4K to every device.",
-                rules = "Viewers' rating at least 93 % and less CO₂ than the reference",
+                rules = "SLA at least 99 %, viewers' rating at least 93 % and less CO₂ than the reference",
                 remark = "Most of the saving needed no compromise: 4K on a phone is work nobody sees. The eco mode adds the rest – in the dirty evening hours, where it saves most and where it is noticed most. SD goes too far: the viewers' rating falls below the target. In reality most of the energy of streaming goes into networks and devices, not into the data center [S8]; a lower bitrate saves there as well.",
                 term = "Demand Shaping",
                 termText = "Adapting the demand to the supply of clean electricity – here through the quality of the service – instead of moving it in time or place. Eco modes of apps and streaming services are the common examples; the users should notice little and be able to choose.",
@@ -225,12 +229,12 @@ class ScenarioTexts(
                     "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals: the training done by the deadline, and less CO₂.",
                     "The GPU servers: dark ones train, the violet bar shows their power.",
                     "Training run: progress, GPU servers, power cap and when to train – choose, set, apply.",
-                    "Carbon intensity of the grid with the forecast; below it when the GPUs train and the progress, ahead the plan with the rules now.",
+                    "Carbon intensity of the grid with the forecast; below it: when the GPUs train and how far the training is; dashed, ahead of now: the plan with the current rules.",
                 ),
                 comparedWith = "compared with the reference operator: eight servers, no cap, at once.",
                 rules = "Training done by the end of day 3 and less CO₂ than the reference",
                 remark = "All three levers work, and they add up. The greenest hours move the work into wind and sun; the power cap saves energy because the last watts of a GPU bring little speed (MIT Lincoln Laboratory measured 12–15 % less energy for about 3 % more time); and fewer servers waste less time waiting for each other – as long as the training still finishes in time. Each pause costs a checkpoint load: a plan that jumps between hours pays for it.",
-                term = "Carbon-Aware Training (Power Capping)",
+                term = "Carbon-Aware Training and Power Capping",
                 termText = "Training jobs that do not have to finish at a particular hour are moved into the hours with the cleanest electricity, paused at checkpoints and resumed; together with power capping of the GPUs this is one of the most effective levers for the footprint of AI.",
             )
             7 -> ScenarioTexts(
@@ -246,35 +250,37 @@ class ScenarioTexts(
                 rules = "SLA at least 99 % at each site and less CO₂ than the reference",
                 remark = "In Warsaw a new server saves many times its embodied emissions; in Paris it saves little, because the electricity is almost free of CO₂ – there it only has to carry the growth and replace the failed servers, and later generations do that better. The question is not “new or old?” but “where does new hardware replace dirty electricity?”. The earlier the budget goes to the dirty grid, the more it saves – as long as the clean site keeps enough capacity.",
                 term = "Embodied Carbon",
+                termIsAction = false,
                 termText = "The emissions of making, shipping and disposing of hardware, as opposed to those of the electricity it uses. In the SCI they are spread over the hardware's life; in a clean grid they can be the larger part. Hardware efficiency means using hardware long and well – and replacing it where the energy saved outweighs them.",
             )
             6 -> ScenarioTexts(
-                situation = "The web shop in a German summer, with 40 servers. A heat wave is coming: 28 °C today, 35 °C tomorrow, 37 °C the day after. Autoscaling runs at 50 % target utilization, the cooling keeps 20 °C at the server inlets – the way the last shift left it. Management watches the PUE: the Energy Efficiency Act asks existing data centers for at most 1.5 from July 2027.",
-                idea = "Cooling is the biggest part of the facility's own power. Outside air cools for free when it is at least 6 °C cooler than the setpoint; in a heat wave the chiller does the work, and the hotter it is outside, the more power it needs. Servers tolerate warmer air than most data centers give them – up to 27 °C – but above 25 °C their fans speed up. And the PUE, facility power divided by IT power, does not always point the right way.",
+                situation = "The web shop in a German summer, with 40 servers. A heat wave is coming: 28 °C today, 35 °C tomorrow, 37 °C the day after. Autoscaling runs at 50 % target utilization, the cooling keeps 20 °C at the server inlets – the way the last shift left it. Management watches the PUE: from July 2027 the Energy Efficiency Act requires a PUE of at most 1.5 for existing data centers.",
+                idea = "Cooling is the biggest part of the facility's own power. Outside air cools for free when it is at least 6 °C cooler than the setpoint; in a heat wave the chiller does the work, and the hotter it is outside, the more power it needs. Servers tolerate warmer air than most data centers give them – up to 27 °C – but above 25 °C their fans speed up. And the PUE, facility power divided by IT power, is not always a good guide.",
                 screen = listOf(
-                    "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals. On the right the PUE right now.",
+                    "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals. On the right: the current PUE.",
                     "Your racks: grey servers are off, light blue ones are booting, the blue bar shows how busy a server is.",
-                    "Cooling: the setpoint and what cools right now. Below it the capacity rule and the situation right now.",
+                    "Cooling: the setpoint and what is cooling at the moment. Below it: the capacity rule and the current situation.",
                     "Outside temperature with the forecast and the setpoint; green: hours in which the outside air cools. Below it the load and capacity.",
                 ),
                 comparedWith = "compared with the reference operator: autoscaling at 50 %, setpoint 20 °C.",
                 rules = "SLA at least 99 % and less CO₂ than the reference",
                 remark = "The PUE is a ratio, not a goal. Fewer servers saved the most energy – and raised the PUE, because lighting, UPS and pumps draw the same power for fewer servers. A setpoint of 27 °C gives a better PUE than 25 °C, because the faster fans count as IT power – but it uses more energy. All servers on would have had the best PUE of all. Measure CO₂ or energy per request: the PUE only shows how well the building serves the IT, not whether the IT does useful work.",
                 term = "PUE (Power Usage Effectiveness)",
+                termIsAction = false,
                 termText = "Facility energy divided by IT energy: 1.0 would mean that all power goes to the servers. The worldwide average is about 1.5, hyperscalers reach 1.1. A warmer setpoint and cooling with outside air (free cooling) lower it.",
             )
             107 -> ScenarioTexts(
-                situation = "A logistics company's system: customers track their deliveries, dispatchers plan the trucks' routes. It was split into four microservices – tracking, routes, customers and trucks – that call each other with REST and JSON; the routes service also asks a GPS provider and a traffic service on every request. In the evening up to 15,000 customers a second look where their parcel is – and the tracking takes a third of a second. Once an hour the dispatchers' route optimization needs 200 cores for ten minutes.",
-                idea = "In a distributed system, communication is work: every call is serialized, sent, received and deserialized, and every instance runs its runtime even without a request. Fewer and leaner calls, data that is already there and a cut that fits save energy – as long as the customers still see where their truck really is.",
+                situation = "A logistics company's system: customers track their deliveries, dispatchers plan the trucks' routes. It was split into four microservices – tracking, routes, customers and trucks – that call each other with REST and JSON; the routes service also asks a GPS provider and a traffic service on every request. In the evening, up to 15,000 customers per second check where their parcel is – and the tracking takes a third of a second. Once an hour the dispatchers' route optimization needs 200 cores for ten minutes.",
+                idea = "In a distributed system, communication is work: every call is serialized, sent, received and deserialized, and every instance runs its runtime even without a request. Fewer and leaner calls, data that is already there and a split that fits save energy – as long as the customers still see where their parcel really is.",
                 screen = listOf(
                     "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals: the tracking within 250 ms on average, data up to date and less CO₂.",
-                    "The hall: the servers the services run on; the blue bar shows how busy they are.",
+                    "The data center: the servers the services run on; the blue bar shows how busy they are.",
                     "The architecture: a diagram of the services and their calls as your settings would build them, how the system is split, the communication between the services and how long the providers' answers are reused. Below it the values measured with the settings running now.",
                     "Carbon intensity of the grid; below it the CPU: tracking, route optimization, and what communication, external calls and idle instances add; the line shows the servers ready.",
                 ),
                 comparedWith = "compared with the reference operator, who keeps the four microservices with REST, synchronous calls and no cache.",
                 rules = "Tracking within 250 ms on average, positions at most 1 min and traffic at most 5 min old, and less CO₂ than the reference",
-                remark = "Events with a local copy of the master data saved two calls per request, gRPC with Protobuf halves the bytes of JSON [S33], and serverless functions saved idle instances – but only once nobody called them on every request; called synchronously, they cost more than they saved. The modular monolith needs no calls between its modules, but it scales as a whole: it had to keep the capacity for the route optimization ready all day, while the optimization as a service of its own grew for ten minutes and shrank again. That is what microservices are for: cutting along different needs for scaling [S34]. A monolith with only the optimization as a service of its own combines both. The cache made the tracking fast enough in the first place; after a minute almost every position comes from it – reused for longer, it saves nothing more and shows customers a truck that has long driven on.",
+                remark = "Events with a local copy of the master data saved two calls per request, gRPC with Protobuf halves the bytes of JSON [S33], and serverless functions saved idle instances – but only when they were no longer called on every request. Called synchronously, they cost more than they saved. The modular monolith needs no calls between its modules, but it scales as a whole: it had to keep the capacity for the route optimization ready all day, while the optimization as a service of its own grew for ten minutes and shrank again. That is what microservices are for: cutting along different needs for scaling [S34]. A monolith with only the optimization as a service of its own combines both. The cache made the tracking fast enough in the first place; after a minute almost every position comes from it – reused for longer, it saves nothing more and shows customers a truck that has long since moved on.",
                 term = "Green Software Architecture",
                 termText = "Choosing the architecture style, how the system is split and how its parts communicate, with energy in mind: fewer remote calls, compact formats, asynchronous events where data may be a little late, caches for external calls, scale to zero for rarely used parts.",
             )
@@ -283,43 +289,43 @@ class ScenarioTexts(
                 idea = "A pipeline is a data center of its own, and most of it waits: agents without a job, environments nobody uses at night. Start only what is needed, run only the tests a change can break, run the slow tests when the grid is clean – and keep the team's feedback fast and the release tested.",
                 screen = listOf(
                     "The game starts paused. Clock and speed – pause, 1×, 4×, 16×, 64× – and below it your goals: feedback within 20 minutes, a tested release and less CO₂.",
-                    "The hall: the first racks hold the build agents, the others the test environments; the blue bar shows how busy an agent is.",
+                    "The data center: the first racks hold the build agents, the others the test environments; the blue bar shows how busy an agent is.",
                     "The pipeline: build agents and cache, tests, when the pipeline starts, and the test environments. Below it one run with your settings.",
                     "Carbon intensity of the grid; below it the servers on – build agents and test environments – and the UI tests at night.",
                 ),
                 comparedWith = "compared with the reference operator, who leaves agents and environments on and runs all tests with every commit.",
                 rules = "Feedback within 20 minutes, UI tests before the release and less CO₂ than the reference",
-                remark = "Most of the energy went into waiting: environments at night and at the weekend – they are used on weekdays from 8 to 18, a third of the week – and agents without a job. Agents on demand only help with a remote cache: an agent that starts empty downloads and compiles everything again, and the feedback becomes too slow. Test impact analysis cuts the tests to those a change can break [S31]; the slow UI tests do their job at night, in the greenest hours, as long as they have run before the release. Collecting commits saves runs but makes the team wait – fast feedback is a quality too. Tools such as Eco CI measure what a pipeline uses [S32].",
+                remark = "Most of the energy went into waiting: environments at night and at the weekend – they are used on weekdays from 8:00 to 18:00, a third of the week – and agents without a job. Agents on demand only help with a remote cache: an agent that starts empty downloads and compiles everything again, and the feedback becomes too slow. Test impact analysis cuts the tests to those a change can break [S31]; the slow UI tests do their job at night, in the greenest hours, as long as they have run before the release. Collecting commits saves runs but makes the team wait – fast feedback is a quality too. Tools such as Eco CI measure what a pipeline uses [S32].",
                 term = "Green CI/CD",
                 termText = "Running build and test infrastructure only when and as much as it is needed: build agents on demand with a shared cache, test impact analysis, expensive tests at clean times, test environments off when nobody uses them, fewer replicas outside production.",
             )
             105 -> ScenarioTexts(
-                situation = "The shop's product pages have grown heavy: photos of 2,000 pixels for every screen, a product video that starts by itself, 100 products per list and six tracking tags from marketing. A visit transfers about 12 MB – more than four times the median web page [S29]. And the page is slow: its largest image appears only after 3.2 s.",
+                situation = "The shop's product pages have grown heavy: 2,000-pixel-wide photos for every screen, a product video that starts by itself, 100 products per list and six tracking tags from marketing. A visit transfers about 12 MB – more than four times the median web page [S29]. And the page is slow: its largest image appears only after 3.2 s.",
                 idea = "Every byte costs energy three times: in the data center, in the network and on the visitor's device. This scenario counts all three, and the data center is the smallest part. Make the pages lighter – and keep them fast. Speed is measured as LCP (Largest Contentful Paint): the time until the largest image or text block of the page is visible. Up to 2.5 s counts as good, measured at the 75th percentile – three of four visits must be at least that fast.",
                 screen = listOf(
                     "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals: LCP at most 2.5 s and less CO₂.",
-                    "The hall: the shop's servers; the blue bar shows how busy a server is.",
-                    "The pages: images, product video, product lists and how visitors are counted. Below it a visit to the pages online now: its weight by part, and the LCP.",
+                    "The data center: the shop's servers; the blue bar shows how busy a server is.",
+                    "The pages: images, product video, product lists and how visitors are counted. Below it: one visit to the current pages – its size by part, and the LCP.",
                     "Carbon intensity of the grid; below it the power of the three parts: data center, network and the visitors' devices.",
                 ),
                 comparedWith = "compared with the reference operator, who leaves the pages as they are.",
                 rules = "LCP at most 2.5 s and less CO₂ than the reference",
-                remark = "Half of the weight was a video that nobody had asked to watch. Then the images: a modern format, in the size the screen needs, and only when someone scrolls to them. Two changes looked green and made the page slow: converting the images on every request instead of once, and lazy loading the first image as well – the LCP measures exactly that image [S30]. Light pages are fast pages; here the two goals point the same way. The energy per GB is a model value: it spreads the energy of networks and devices over the data they move [S28], and it is disputed – a network does not need much more energy for one more gigabyte. It shows what heavy pages cause on average, not what a single byte costs. Not counted here: phones replaced early because the web has become too heavy for them.",
+                remark = "Half of the weight was a video that nobody had asked to watch. Then the images: a modern format, in the size the screen needs, and only when someone scrolls to them. Two changes seemed to save energy but made the page slow: converting the images on every request instead of once, and lazy loading the first image as well – the LCP measures exactly that image [S30]. Light pages are fast pages; here the two goals point the same way. The energy per gigabyte used here is a model value: it spreads the energy of networks and devices over the data they move [S28], and it is disputed – a network does not need much more energy for one more gigabyte. It shows what heavy pages cause on average, not what a single byte costs. Not counted here: phones replaced early because the web has become too heavy for them.",
                 term = "Sustainable Web Design",
-                termText = "Designing and building web pages so that they transfer and compute as little as possible: images in modern formats and the right size, no media that plays by itself, less third-party code. It counts the network and the users' devices, not only the servers – and it usually makes pages faster.",
+                termText = "Designing and building web pages so that they transfer and compute as little as possible: images in modern formats and the right size, no media that plays by itself, less third-party code. It takes the network and the users' devices into account, not only the servers – and it usually makes pages faster.",
             )
             104 -> ScenarioTexts(
-                situation = "The web shop has a new assistant in its chat window. The team's prototype sends every question to a large language model, one question at a time – it was the quickest way to get it working. Since then, three in ten questions are \"Where is my order?\", and the assistant runs on GPU servers day and night.",
+                situation = "The web shop has a new assistant in its chat window. The team's prototype sends every question to a large language model, one question at a time – it was the quickest way to get it working. Today, three in ten questions are \"Where is my order?\", and the assistant runs on GPU servers day and night.",
                 idea = "Not every question needs the largest model – some need no model at all. Choose for each kind of question who answers it, and keep the quality of the answers up. A GPU answers several questions almost as fast as one: batching shares the work, but every answer waits a little.",
                 screen = listOf(
                     "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals: the quality of the answers, answers in time and less CO₂.",
-                    "The hall: the shop's servers and, in the extra rack, the GPU servers for the models (violet: running).",
+                    "The data center: the shop's servers and, in the extra rack, the GPU servers for the models (violet: running).",
                     "The shop assistant: who answers each kind of question, with the quality of the answers, and the batching window. Below it the quality and the answers in time with your settings.",
                     "Carbon intensity of the grid; below it the assistant's power by kind of question (colors as in the panel) and the idle rest of the GPU servers.",
                 ),
                 comparedWith = "compared with the reference operator, who sends every question to the large model, one at a time.",
                 rules = "Quality of the answers at least 92 %, 95 % of the answers within 3 s and less CO₂ than the reference",
-                remark = "The largest saving needed no AI: a status lookup answers \"Where is my order?\" better than any model, for a five-hundredth of the energy. A small model is good enough where the answer is in the product data; the large one pays off where it adds quality – complaints and advice. Batching is the second lever: the GPU reads the model's weights once per step for the whole batch, and serving systems cut the energy per answer many times this way [S27] – as long as the wait stays below what the customers accept. Reasoning bought three points of quality for complaints, at two and a half times the energy and nine seconds of waiting. The numbers are game values in the range of published measurements [S25, S26]; they differ a lot between models, hardware and the way the models are served – measure your own.",
+                remark = "The largest saving needed no AI: a status lookup answers \"Where is my order?\" better than any model, for a five-hundredth of the energy. A small model is good enough where the answer is in the product data; the large one pays off where it adds quality – complaints and advice. Batching is the second lever: the GPU reads the model's weights once per step for the whole batch, and serving systems cut the energy per answer several times over this way [S27] – as long as the wait stays below what the customers accept. Reasoning added three percentage points of quality for complaints, at two and a half times the energy and nine seconds of waiting. The numbers are game values in the range of published measurements [S25, S26]; they differ a lot between models, hardware and the way the models are served – measure your own.",
                 term = "Green AI (Right-sizing Models)",
                 termText = "Choosing the smallest model that is good enough for a task – or no model at all – and serving it efficiently, for example with batching or a cache for frequent answers. More and more of the energy of AI goes into answering (inference), not into training.",
             )
@@ -329,7 +335,7 @@ class ScenarioTexts(
                 screen = listOf(
                     "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals.",
                     "Your racks: grey servers are off, light blue ones are booting, the blue bar shows how busy a server is.",
-                    "Caching: the cache servers and the memory used right now, for each kind of data whether it is cached, its TTL and what the business allows, four more measures. Below it the situation right now.",
+                    "Caching: the cache servers and the memory used right now, for each kind of data whether it is cached, its TTL and what the business allows, four more measures. Below it: the current situation.",
                     "Cache memory: what the running cache servers hold, what is used and what is expected (dotted). Below it the load and capacity of the web servers.",
                 ),
                 comparedWith = "compared with the reference operator, who caches nothing.",
@@ -340,33 +346,33 @@ class ScenarioTexts(
             )
             102 -> ScenarioTexts(
                 situation = "The web shop is growing: every month 15 % more products, customers and orders – after a year almost five times as much data. Each game day stands for a month. The team spends most of its time on features; for performance it has 2 story points per sprint.",
-                idea = "Measured today, some parts of the code hardly matter: a lookup in a list, a query without an index, a nightly job that compares every pair of products. But their work grows with the data – in step with it, or even with its square. Constant savings look bigger today. The complexity of an algorithm describes how its work grows.",
+                idea = "Today, some parts of the code hardly matter: a lookup in a list, a query without an index, a nightly job that compares every pair of products. But their work grows with the data – in step with it, or even with its square. Savings by a constant factor look bigger today. The complexity of an algorithm describes how its work grows.",
                 screen = listOf(
                     "The game starts paused and pauses at the start of every sprint. Clock and speed – pause, 1×, 4×, 16× – and below it your goals.",
                     "Your racks: grey servers are off, light blue ones are booting, the blue bar shows how busy a server is.",
-                    "Sprint planning: the CPU work of a day by part with its complexity, the backlog with what each item saves today, your story points. Below it the situation right now.",
+                    "Sprint planning: the CPU work of a day by part with its complexity, the backlog with what each item saves today, your story points. Below it: the current situation.",
                     "Carbon intensity of the grid with the forecast, the load so far and the expected load (dotted); the lines on the right show how many servers a load needs.",
                 ),
                 comparedWith = "compared with the reference operator, whose team changes nothing in the code.",
                 rules = "SLA at least 99 % and less CO₂ than the reference",
-                remark = "What saves the most today is not what saves the most in a year. A job with O(n²) is a footnote at the start and a large share of the nights after a year; the rewrite in another language saves only a constant share and blocks the team for months. Ask how the work grows, not only how big it is today. And watch for the rebound effect: capacity that is freed fills up quickly with new features.",
+                remark = "What saves the most today is not what saves the most in a year. A job with O(n²) hardly matters at the start, but after a year it takes a large share of the nights; the rewrite in another language saves only a constant share and blocks the team for months. Ask how the work grows, not only how big it is today. And watch for the rebound effect: capacity that is freed fills up quickly with new features.",
                 term = "Algorithmic Complexity",
-                termText = "How the work of an algorithm grows with the amount of data n, written in Big O notation: O(1) stays the same, O(n) grows in step with the data, O(n²) with its square. For small data the difference hardly shows; for growing data it decides.",
+                termText = "How the work of an algorithm grows with the amount of data n, written in Big O notation: O(1) stays the same, O(n) grows in step with the data, O(n²) with its square. For small data the difference hardly shows; for growing data it is what matters.",
             )
             101 -> ScenarioTexts(
-                situation = "Back to the web shop – this time to its code. Autoscaling keeps the servers in line with the load, so less CPU work per request means fewer servers. Your team has 8 story points per sprint and a backlog of ideas, each with the team's estimate of what it saves. Four sprints; each game day shows the week after a sprint.",
-                idea = "Optimizing by gut feeling is a gamble: the team expects the most from the image resizing and from rewriting the checkout. Whether that is true, only a measurement shows. Profiling costs a few story points and shows where the CPU time really goes – then you fix the hot spots first.",
+                situation = "Back to the web shop – this time to its code. Autoscaling keeps the servers in line with the load, so less CPU work per request means fewer servers. Your team has 8 story points per sprint and a backlog of ideas, each with the team's estimate of what it saves. Four sprints; each game day stands for one week of operation after a sprint.",
+                idea = "Optimizing by gut feeling is a gamble: the team expects the most from the image resizing and from rewriting the checkout. Only a measurement can show whether that is true. Profiling costs a few story points and shows where the CPU time really goes – then you fix the hot spots first.",
                 screen = listOf(
                     "The game starts paused and pauses at the start of every sprint. Clock and speed – pause, 1×, 4×, 16×, 64× – and below it your goals.",
                     "Your racks: grey servers are off, light blue ones are booting, the blue bar shows how busy a server is.",
-                    "Sprint planning: where the CPU time per request goes (once measured), the backlog with the team's estimates, your story points. Below it the situation right now.",
+                    "Sprint planning: where the CPU time per request goes (once measured), the backlog with the team's estimates, your story points. Below it: the current situation.",
                     "Carbon intensity of the grid with the forecast, the load so far and the expected load (dotted); the lines on the right show how many servers a load needs.",
                 ),
                 comparedWith = "compared with the reference operator, whose team changes nothing in the code.",
                 rules = "SLA at least 99 % and less CO₂ than the reference",
-                remark = "Measure before you optimize: the big items on the team's list hardly mattered, while a one-line change of the log level saved a tenth of the CPU. The checkout is Amdahl's law at work: however much faster a part gets, the whole gains at most its share. Less work per request lowers the energy and – with autoscaling – the number of servers; a data center that needs fewer servers also needs less hardware. The SCI (Software Carbon Intensity, CO₂ per functional unit – here per 1,000 requests) shows the effect independent of the load.",
+                remark = "Measure before you optimize: the big items on the team's list hardly mattered, while a one-line change of the log level saved a tenth of the CPU. The checkout is Amdahl's law at work: however much faster a part gets, the whole gains at most its share. Less work per request lowers the energy and – with autoscaling – the number of servers; a data center that needs fewer servers also buys less hardware later. In these few days the servers are already there, so their manufacturing counts the same for you and the reference. The SCI (Software Carbon Intensity, CO₂ per functional unit – here per 1,000 requests) shows the effect independent of the load.",
                 term = "Profiling",
-                termText = "Measuring where a program spends its time and memory, function by function. A profiler shows the hot spots – often not where the team expects them. Without measuring, optimization is guesswork. Donald Knuth warned of premature optimization: optimizing before you know where it pays off.",
+                termText = "Measuring where a program spends its time and memory, function by function. A profiler shows the hot spots – often not where the team expects them. Without measuring, optimization is guesswork. Donald Knuth warned against premature optimization: optimizing before you know where it pays off.",
             )
             5 -> ScenarioTexts(
                 situation = "The web shop's 24 virtual machines – front ends, batch workers, reporting, two database replicas and caches – run on ten hosts. The previous team spread them evenly: every host runs, none is busy. A host draws about a quarter of its maximum power even when idle.",
@@ -389,7 +395,7 @@ class ScenarioTexts(
                 screen = listOf(
                     "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals.",
                     "Your racks: grey servers are off, light blue ones are booting, the blue bar shows how busy a server is.",
-                    "The capacity rule: all on, a fixed number, or autoscaling with a target utilization and, if you want, a minimum for a time window. Choose, set, apply. Below it the situation right now.",
+                    "The capacity rule: all on, a fixed number, or autoscaling with a target utilization and, if you want, a minimum for a time window. Choose, set, apply. Below it: the current situation.",
                     "Carbon intensity of the grid with the forecast, the load so far and the expected load (dotted). The campaign is marked – but it is not in the expected load.",
                 ),
                 comparedWith = "compared with the reference operator, who leaves every server on.",
@@ -400,7 +406,7 @@ class ScenarioTexts(
             )
             3 -> ScenarioTexts(
                 situation = "The web shop's analytics cluster in Great Britain: twelve servers, nine jobs in three days. It is winter, and the British grid depends on the wind. Today is an ordinary winter day; tomorrow a storm front brings plenty of wind power, the day after the wind drops and gas power plants take over.",
-                idea = "Planning every job by hand does not scale. A rule does it for you: at a fixed hour, below a threshold, or into the greenest hours of the forecast. But the forecast is uncertain – ±25 % a day ahead in a wind grid – and a rule that waits for clean power may wait in vain. The deadline safety – with a fixed hour and a threshold – makes sure that no job misses its deadline.",
+                idea = "Planning every job by hand does not scale. A rule does it for you: at a fixed hour, below a threshold, or into the greenest hours of the forecast. But the forecast is uncertain – ±25 % a day ahead in a wind grid – and a rule that waits for clean power may wait in vain. With a fixed hour or a threshold, the deadline safety makes sure that no job misses its deadline.",
                 screen = listOf(
                     "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals.",
                     "Your batch cluster: grey servers are off, light blue ones are booting, the amber bar shows a server working on a job.",
@@ -408,7 +414,7 @@ class ScenarioTexts(
                     "The carbon intensity with the forecast, and below it one row per job – light: the time between arrival and deadline, outlined: planned, filled: running or done.",
                 ),
                 comparedWith = "compared with the reference operator, who starts every job as soon as it arrives.",
-                rules = "every job by its deadline and less CO₂ than the reference",
+                rules = "Every job done by its deadline and less CO₂ than the reference",
                 remark = "A fixed threshold works while the wind blows. When it drops, the jobs wait in vain: without the deadline safety they miss their deadlines, with it they start at the last moment – often in the dirtiest hours. A rule that compares the hours of the forecast adapts to the weather – as long as the plan is made again when the forecast changes. Real schedulers plan again regularly for this reason.",
                 term = "Carbon-Aware Scheduling",
                 termText = "A scheduler starts jobs by rules that follow the carbon intensity – now or in the forecast. It automates Time Shifting; Google shifts flexible work in its data centers this way, with day-ahead forecasts.",
@@ -423,7 +429,7 @@ class ScenarioTexts(
                     "The carbon intensity with the forecast, and below it one row per job – light: the time between arrival and deadline, outlined: planned, filled: running or done.",
                 ),
                 comparedWith = "compared with the reference operator, who starts every job as soon as it arrives.",
-                rules = "every job by its deadline and less CO₂ than the reference",
+                rules = "Every job done by its deadline and less CO₂ than the reference",
                 remark = "The night is not clean everywhere: in a solar grid the midday hours are the cleanest. Part of the CO₂ is the hardware's manufacturing – it stays the same whenever the jobs run.",
                 term = "Time Shifting",
                 termText = "Moving flexible work into the hours when the grid is cleanest. Together with Location Shifting – moving the work to a place with cleaner power – it is called Demand Shifting, part of the Green Software Foundation principle Carbon Awareness.",
@@ -434,7 +440,7 @@ class ScenarioTexts(
                 screen = listOf(
                     "The game starts paused. Clock and speed – pause, 1×, 4×, 16× – and below it your goals.",
                     "Your racks: grey servers are off, light blue ones are booting, the blue bar shows how busy a server is.",
-                    "Plus and minus for the servers, and the situation right now.",
+                    "Plus and minus for the servers, and the current situation.",
                     "Carbon intensity of the grid with the forecast, the load so far and the expected load (dotted); the lines on the right show how many servers a load needs.",
                 ),
                 comparedWith = "compared with the reference operator, who leaves every server on.",
@@ -445,4 +451,13 @@ class ScenarioTexts(
             )
         }
     }
+}
+
+/**
+ * The term and its meaning as one sentence in the debrief: "What you did is called Rightsizing: running …" – or, when the
+ * term names a measure rather than an action, "The term for it is PUE …" (playtest round 4: "What you did is called PUE").
+ */
+fun termSentence(texts: ScenarioTexts): String {
+    val meaning = t(texts.termText).let { m -> if (Language.german || m.length < 2 || m[1].isUpperCase()) m else m.replaceFirstChar { it.lowercase() } }
+    return if (texts.termIsAction) t("What you did is called %@: %@", texts.term, meaning) else t("The term for it is %@: %@", texts.term, meaning)
 }

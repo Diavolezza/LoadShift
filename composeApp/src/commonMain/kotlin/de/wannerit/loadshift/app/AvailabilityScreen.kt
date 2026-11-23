@@ -205,6 +205,12 @@ fun EndButtons(scenario: Scenario, stars: Int, onRestart: () -> Unit, onExit: ()
     }
 }
 
+/** Under a debrief that cites sources: where to find them (playtest round 4 – nobody found the list). */
+@Composable
+fun SourcesNote(texts: ScenarioTexts) {
+    if ("[S" in texts.remark || "[S" in texts.termText) Txt(t("The sources marked [S…] are listed at the end of the glossary."), Type.caption)
+}
+
 @Composable
 fun PlayTopBar(scenario: Scenario, onExit: () -> Unit, compact: Boolean, caption: String, title: String, metrics: @Composable () -> Unit) {
     if (compact) {
@@ -444,8 +450,9 @@ private fun AvailabilityEnd(game: AvailabilityController, onExit: () -> Unit, on
                     listOf(t("CO₂ a year, t"), tonnes(r.referenceKg), tonnes(r.planKg)),
                     listOf(t("Servers on"), Format.number(model.result(model.reference).serversOn), Format.number(r.serversOn)),
                 ), firstWidth = 0.5f)
-                Txt(t("What you did is called %@. %@", texts.term, t(texts.termText)), Type.style(15, color = Palette.secondary))
+                Txt(termSentence(texts), Type.style(15, color = Palette.secondary))
                 Txt(t(texts.remark), Type.style(15, color = Palette.secondary))
+                SourcesNote(texts)
                 WhatIfCard(game.whatIf().map { (l, x) -> Triple(l, x.reductionPermille, model.stars(x, scenario.goals)) },
                     maxOf(Progress.stars(scenario.number), game.stars), t("The same portal, other architectures:"), scenario.number,
                     reasons = game.whatIf().map { (_, x) -> x.missed.joinToString(", ") { t(it) } }) { game.loadSolution() }

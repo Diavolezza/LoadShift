@@ -54,6 +54,9 @@ class AbatementController(val scenario: Scenario, fresh: Boolean = false) {
     var plan by mutableStateOf((if (fresh) null else lastPlans[scenario.number]) ?: emptySet())
         private set
     var finished by mutableStateOf(false)
+
+    /** What each measure of the last carried-out plan really added (shown on the cards after "Play again"). */
+    var lastReally by mutableStateOf<Map<Int, Long>>(emptyMap())
         private set
 
     val cost: Int get() = model.cost(plan)
@@ -75,6 +78,7 @@ class AbatementController(val scenario: Scenario, fresh: Boolean = false) {
 
     fun finish() {
         finished = true
+        lastReally = plan.associateWith { contribution(it) }
         Progress.record(stars, scenario.number)
         lastPlans[scenario.number] = plan
     }
@@ -83,6 +87,7 @@ class AbatementController(val scenario: Scenario, fresh: Boolean = false) {
 
     fun startOver() {
         plan = emptySet()
+        lastReally = emptyMap()
         finished = false
     }
 
@@ -97,7 +102,7 @@ class AbatementController(val scenario: Scenario, fresh: Boolean = false) {
         // is the best plan within the budget (LessonTest.p2WhereToStart checks it), so it is one row.
         return listOf(
             t("Along the consultant's curve") to model.result(model.alongTheCurve()),
-            t("Along the curve, the certificates' money for the next measures – also the best plan within the budget") to model.result(model.alongTheCurve(skip = model.certificates)),
+            t("Along the curve, but without the certificates: their money goes to the next measures (also the best plan within the budget)") to model.result(model.alongTheCurve(skip = model.certificates)),
         )
     }
 
@@ -291,6 +296,9 @@ private fun MeasureCard(game: AbatementController, i: Int, modifier: Modifier) {
         if (game.finished && inPlan) {
             val c = game.contribution(i)
             Txt(t("Really %@ t in three years", (if (c < 0) "+" else "−") + tonnes(kotlin.math.abs(c))), Type.style(13, FontWeight.SemiBold, if (c > 0) Palette.accent else Palette.red))
+        } else if (!game.finished) game.lastReally[i]?.let { c ->
+            // After "Play again": what the measure really added in the last run, as a help for the next plan.
+            Txt(t("Last run: really %@ t in three years", (if (c < 0) "+" else "−") + tonnes(kotlin.math.abs(c))), Type.style(13, color = if (c > 0) Palette.accent else Palette.red))
         }
     }
 }
@@ -359,8 +367,14 @@ private fun AbatementEnd(game: AbatementController, onExit: () -> Unit, onOvervi
                     listOf(t("Really saved, location-based"), (if (r.savedKg < 0) "+" else "−") + tonnes(kotlin.math.abs(r.savedKg))),
                     listOf(t("Spent (€)"), Format.number(r.costEuro.toDouble())),
                 ), firstWidth = 0.6f)
-                Txt(t("What you did is called %@. %@", texts.term, t(texts.termText)), Type.style(15, color = Palette.secondary))
+                // Each measure of the plan: what the list promised and what it really added together with the others.
+                Table(listOf(t("Your measures, t CO₂"), t("List"), t("Really")), game.plan.sorted().map { i ->
+                    val c = game.contribution(i)
+                    listOf(t(game.model.measures[i].title), "−" + tonnes(game.model.consultantKg(i)), (if (c < 0) "+" else "−") + tonnes(kotlin.math.abs(c)))
+                }, firstWidth = 0.6f)
+                Txt(termSentence(texts), Type.style(15, color = Palette.secondary))
                 Txt(t(texts.remark), Type.style(15, color = Palette.secondary))
+                SourcesNote(texts)
                 AbatementWhatIf(game)
             }
             EndButtons(game.scenario, game.stars, { game.restart() }, onExit, onOverview, onNext)
