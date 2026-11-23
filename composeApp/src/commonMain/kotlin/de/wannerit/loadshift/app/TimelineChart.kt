@@ -374,7 +374,11 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
     private fun DrawScope.drawTraining(top: Float, bottom: Float) {
         val model = scenario.training ?: return
         val history = simulation.history
-        val plan = if (now < end) simulation.cachedProjection(simulation.policy).history else emptyList()
+        // The projection may have been made a few game hours ago: only what lies ahead, joined to the progress now.
+        val projected = if (now < end) simulation.cachedProjection(simulation.policy).history else emptyList()
+        val plan = projected.filter { it.tick >= now }
+        val planBefore = projected.lastOrNull { it.tick < now }?.trainingDone ?: simulation.totals.trainingDone
+        val offset = simulation.totals.trainingDone - planBefore
         val barTop = top + (bottom - top) * 0.55f
         fun bars(records: List<de.wannerit.loadshift.core.TickRecord>, before: Long, planned: Boolean) {
             var last = before
@@ -388,7 +392,7 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
             }
         }
         bars(history, 0, false)
-        bars(plan, simulation.totals.trainingDone, true)
+        bars(plan, planBefore, true)
         fun yP(done: Long) = barTop - (barTop - top) * (minOf(done, model.work.toLong()).toFloat() / model.work)
         val line = Path().apply {
             moveTo(x(start), yP(0))
@@ -398,7 +402,7 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
         if (plan.isNotEmpty()) {
             val ahead = Path().apply {
                 moveTo(x(now), yP(simulation.totals.trainingDone))
-                plan.forEach { lineTo(x(it.tick + 1), yP(it.trainingDone)) }
+                plan.forEach { lineTo(x(it.tick + 1), yP(maxOf(0L, it.trainingDone + offset))) }
             }
             drawPath(ahead, Palette.accent.copy(alpha = 0.6f), style = Stroke(1.5f * density, pathEffect = PathEffect.dashPathEffect(floatArrayOf(4f * density, 3f * density))))
         }

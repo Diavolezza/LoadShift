@@ -162,6 +162,8 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
         if (current.history.isEmpty()) startPolicy = current.policy
         beforeTick()
         sims.forEach { if (!it.isFinished) it.step() }
+        // B8, B12: keeps the projection ("CO₂ expected", the dashed plan) up to date a few steps per tick.
+        sims.forEach { it.refreshProjection() }
         if (simulation.isFinished) finish() else {
             checkUrgentJobs()
             checkForecast()
@@ -893,8 +895,16 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
         return lines
     }
 
+    // "What if" does not depend on the player's run: computed once (per language) and kept for "Play again".
+    private var whatIfCache: Pair<Boolean, List<Pair<String, Totals>>>? = null
+
+    /** "What if", if it has been computed already (B12 needs a few seconds for it in Safari). */
+    val whatIfReady: List<Pair<String, Totals>>? get() = whatIfCache?.takeIf { it.first == Language.german }?.second
+
+    fun whatIf(): List<Pair<String, Totals>> = whatIfReady ?: computeWhatIf().also { whatIfCache = Language.german to it }
+
     /** "What if" for the debrief: the whole scenario replayed with other rules, with the same load and grid mix. */
-    fun whatIf(): List<Pair<String, Totals>> {
+    private fun computeWhatIf(): List<Pair<String, Totals>> {
         if (scenario.location != null) {
             fun run(moved: Set<Int>, greenest: Boolean) = scenario.runLocation(moved,
                 scenario.initialPolicy.copy(batch = if (greenest) BatchMode.Greenest else BatchMode.Asap)).map { it.totals }.reduce { a, b -> a + b }

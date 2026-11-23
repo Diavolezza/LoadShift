@@ -686,7 +686,12 @@ fun Table(header: List<String>, rows: List<List<String>>, firstWidth: Float = 0.
 private fun WhatIf(game: GameController) {
     val you = game.totals
     val ref = game.referenceTotals
-    val alternatives = remember(game.version) { game.whatIf() }
+    // The end card appears at once; "what if" (whole scenarios replayed) follows after the first frame.
+    var computed by remember(game.version) { mutableStateOf(game.whatIfReady) }
+    LaunchedEffect(game.version) {
+        if (computed == null) { delay(60); computed = game.whatIf() }
+    }
+    val alternatives = computed ?: emptyList()
     Card(Modifier.fillMaxWidth(), color = Palette.background, padding = 14.dp) {
         Txt(t("What if …"), Type.subheading)
         Txt(t("The same run with exactly the same load and grid mix – only the rules differ:"), Type.style(15, color = Palette.secondary))
@@ -700,6 +705,7 @@ private fun WhatIf(game: GameController) {
             Txt(if (game.hasBatch) t("Missed") else if (game.scenario.streaming != null) t("Rating") else if (game.hasInference) t("Quality") else if (game.hasWeb) t("LCP") else if (game.hasPipeline) t("Feedback") else if (game.hasServices) t("Response") else t("SLA"), Type.caption.copy(textAlign = androidx.compose.ui.text.style.TextAlign.End), Modifier.weight(0.18f), maxLines = 1)
             Spacer(Modifier.weight(0.14f))
         }
+        if (computed == null) Txt(t("Calculating …"), Type.style(15, color = Palette.secondary))
         // Settings with more stars than the player has reached stay hidden: the second run should not be a recipe.
         val best = maxOf(Progress.stars(game.scenario.number), game.stars)
         val seen = Progress.solutionSeen(game.scenario.number)

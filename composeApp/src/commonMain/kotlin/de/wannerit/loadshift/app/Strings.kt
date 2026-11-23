@@ -902,6 +902,8 @@ internal val GERMAN: Map<String, String> = mapOf(
         "Caching: die Cache-Server und der gerade belegte Speicher, für jede Art von Daten, ob sie in den Cache kommt, ihre TTL und was die Fachlichkeit erlaubt, vier weitere Maßnahmen. Darunter die Lage gerade jetzt.",
     "Calculate a tariff" to
         "Tarif berechnen",
+    "Calculating …" to
+        "Wird gerechnet …",
     "Camera off by default in large meetings" to
         "Kamera in großen Runden standardmäßig aus",
     "Camera off by default in large meetings, 720p" to

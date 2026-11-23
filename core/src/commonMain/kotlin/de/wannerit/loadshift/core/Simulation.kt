@@ -307,24 +307,67 @@ class Simulation private constructor(
 
     private var projectionKey: Any? = null
     private var projectionRun: Simulation? = null
+    private var projectionMadeAt = 0
+    private var refreshRun: Simulation? = null
+    private var refreshKey: Any? = null
+    private var refreshMadeAt = 0
 
-    /**
-     * The same projection as [projected] and [projectedHistory] in one run, kept for a game hour (and as long as the
-     * policy, the plan and the jobs stay as they are). A projection runs the whole rest of the scenario; the app needs
-     * it on every tick and every redraw, which made B12 crawl in the JavaScript build for Safari.
-     */
-    fun cachedProjection(with: Policy): Simulation {
-        val key = listOf(with, tick / GameTime.TICKS_PER_HOUR, plannedWithForecastOf, jobList.map { it.state })
-        projectionRun?.let { if (key == projectionKey) return it }
+    /** Counts the jobs planned or unplanned by hand, so that a projection notices a changed plan. */
+    private var handPlans = 0
+
+    /** What a projection depends on besides the time: the rules, the plan and whether the forecast has been revised. */
+    private fun projectionKeyFor(with: Policy): Any =
+        listOf(with, plannedWithForecastOf, handPlans, scenario.forecastMiss?.let { tick >= it.revisedAt })
+
+    private fun startProjection(with: Policy): Simulation {
         val copy = copy()
         copy.policy = with
         copy.plannedAt = tick
         copy.trainedLastTick = trainedLastTick
         copy.historyList.clear()
+        return copy
+    }
+
+    /**
+     * The same projection as [projected] and [projectedHistory] in one run, kept until the rules, the plan or the
+     * forecast change. A projection runs the whole rest of the scenario; the app needs it on every tick and every
+     * redraw, which made B12 crawl in the JavaScript build for Safari. To follow how the weather and the load really
+     * turn out, [refreshProjection] computes a newer one a few ticks at a time while the game runs.
+     */
+    fun cachedProjection(with: Policy): Simulation {
+        val key = projectionKeyFor(with)
+        projectionRun?.let { if (key == projectionKey) return it }
+        val copy = startProjection(with)
         copy.run()
         projectionKey = key
         projectionRun = copy
+        projectionMadeAt = tick
+        refreshRun = null
         return copy
+    }
+
+    /**
+     * Called after every tick: once the projection is older than a few game hours, a new one is computed in small
+     * steps (a fixed number per tick), so that no frame waits for a whole week to be simulated.
+     */
+    fun refreshProjection(stepsPerTick: Int = 8) {
+        val have = projectionRun ?: return
+        if (isFinished) { refreshRun = null; return }
+        val next = refreshRun ?: run {
+            if (tick - projectionMadeAt < REFRESH_AFTER) return
+            refreshKey = projectionKey
+            refreshMadeAt = tick
+            startProjection(have.policy).also { refreshRun = it }
+        }
+        repeat(stepsPerTick) { if (!next.isFinished) next.step() }
+        if (next.isFinished) {
+            // Only if nothing changed meanwhile; otherwise cachedProjection has already made a new one.
+            if (refreshKey == projectionKey && refreshKey == projectionKeyFor(have.policy)) {
+                projectionRun = next
+                projectionMadeAt = refreshMadeAt
+            }
+            refreshRun = null
+        }
     }
 
     /** The rest of the scenario with a policy, by the forecast made now: the ticks it would bring (O8: the plan). */
@@ -343,11 +386,13 @@ class Simulation private constructor(
     /** Plans a job to start at a tick (not before its arrival or now). Started jobs cannot be moved. */
     fun plan(job: Int, start: Int) {
         if (job !in jobList.indices || jobList[job].state.isStarted) return
+        handPlans++
         jobList[job] = jobList[job].copy(state = BatchJobState.Planned(maxOf(start, jobList[job].spec.arrival, tick)))
     }
 
     fun unplan(job: Int) {
         if (job !in jobList.indices || jobList[job].state.isStarted) return
+        handPlans++
         jobList[job] = jobList[job].copy(state = BatchJobState.Waiting)
     }
 
@@ -971,6 +1016,9 @@ class Simulation private constructor(
     }
 
     companion object {
+        /** A projection is computed anew after this many ticks (six game hours), see [refreshProjection]. */
+        private const val REFRESH_AFTER = 6 * GameTime.TICKS_PER_HOUR
+
         /** Runs the scenario with the reference operator's policy (CONCEPT.md 8.2). */
         fun reference(scenario: Scenario): Simulation = replay(scenario, scenario.referencePolicy)
 

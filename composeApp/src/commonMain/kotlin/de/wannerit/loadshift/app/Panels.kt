@@ -319,7 +319,9 @@ private fun BatchRules(game: GameController) {
             val planned = game.simulation.plannedWithForecastOf
             if (active && planned != null) {
                 Txt(t("Planned with the forecast of %@.", timeText(planned)), Type.caption)
-                SecondaryButton(t("Plan again with the latest forecast"), enabled = !game.isFinished) { game.replan() }
+                // Only once there is a newer forecast than the one the plan was made with (not right after the start).
+                if (game.simulation.tick > planned && !game.isFinished)
+                    SecondaryButton(t("Plan again with the latest forecast")) { game.replan() }
             }
         }
         RuleOption(game.draftKind == GameController.RuleKind.THRESHOLD, { game.draftKind = GameController.RuleKind.THRESHOLD }, t("Below a threshold"), t("A job starts as soon as the grid is at or below %lld g/kWh – the value now, not the forecast.", game.draftThreshold)) {
