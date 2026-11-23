@@ -305,6 +305,28 @@ class Simulation private constructor(
         return copy.totals
     }
 
+    private var projectionKey: Any? = null
+    private var projectionRun: Simulation? = null
+
+    /**
+     * The same projection as [projected] and [projectedHistory] in one run, kept for a game hour (and as long as the
+     * policy, the plan and the jobs stay as they are). A projection runs the whole rest of the scenario; the app needs
+     * it on every tick and every redraw, which made B12 crawl in the JavaScript build for Safari.
+     */
+    fun cachedProjection(with: Policy): Simulation {
+        val key = listOf(with, tick / GameTime.TICKS_PER_HOUR, plannedWithForecastOf, jobList.map { it.state })
+        projectionRun?.let { if (key == projectionKey) return it }
+        val copy = copy()
+        copy.policy = with
+        copy.plannedAt = tick
+        copy.trainedLastTick = trainedLastTick
+        copy.historyList.clear()
+        copy.run()
+        projectionKey = key
+        projectionRun = copy
+        return copy
+    }
+
     /** The rest of the scenario with a policy, by the forecast made now: the ticks it would bring (O8: the plan). */
     fun projectedHistory(with: Policy): List<TickRecord> {
         val copy = copy()

@@ -374,7 +374,7 @@ private class TimelineDrawing(val simulation: Simulation, val measurer: TextMeas
     private fun DrawScope.drawTraining(top: Float, bottom: Float) {
         val model = scenario.training ?: return
         val history = simulation.history
-        val plan = if (now < end) simulation.projectedHistory(simulation.policy) else emptyList()
+        val plan = if (now < end) simulation.cachedProjection(simulation.policy).history else emptyList()
         val barTop = top + (bottom - top) * 0.55f
         fun bars(records: List<de.wannerit.loadshift.core.TickRecord>, before: Long, planned: Boolean) {
             var last = before

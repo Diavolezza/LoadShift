@@ -210,6 +210,9 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
             if (renewDraft[i] > sims[i].policy.renewed) {
                 sims[i].policy = sims[i].policy.copy(renewed = renewDraft[i])
                 sims[i].applyPolicy()
+                // Remembered for "Play again": the next run buys the same servers on the same day.
+                val day = (current.tick - scenario.startTick) / GameTime.TICKS_PER_DAY
+                renewLog[i][day] = renewDraft[i]
             }
         }
     }
@@ -289,7 +292,7 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
         return if (before == 0L) 0 else ((before - after) * 1_000 / before).toInt()
     }
 
-    /** Pauses at the start of every sprint (the plan is the player's: nothing from the last run appears by itself). */
+    /** Pauses at the start of every sprint; after "Play again" the last run's picks for this sprint are filled in, ready to change. */
     private fun checkSprint() {
         if (!hasSprints || (current.tick - scenario.startTick) % GameTime.TICKS_PER_DAY != 0) return
         speed = Speed.PAUSED
@@ -732,21 +735,18 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
             return (sims.sumOf { it.emissions(last.tick) } - ref) * 1_000 / ref
         }
 
-    private var expectedAt = -1 to 0L
-
-    /** O11: the expected change at the end, with the rules now (computed once per tick). */
+    /** O11: the expected change at the end, with the rules now (the projection is computed once per game hour). */
     private fun expectedChange(): Long {
-        val key = version
-        if (expectedAt.first != key) {
-            val ref = referenceTotals.emissions
-            expectedAt = key to (current.projected(current.policy).emissions - ref) * 1_000 / maxOf(1, ref)
-        }
-        return expectedAt.second
+        val ref = referenceTotals.emissions
+        return (current.cachedProjection(current.policy).totals.emissions - ref) * 1_000 / maxOf(1, ref)
     }
 
     // The solution (D31, core Solutions – LessonTest checks three stars for each): taken over into a new run. Rules
     // apply from the start and change when the solution changes them; sprint plans fill in at the start of each
     // sprint; servers by hand and servers bought switch by themselves; planning again happens when the forecast changes.
+
+    /** B7: the servers each site had after each quarter's purchase in this run (day → total), for "Play again". */
+    private var renewLog: List<MutableMap<Int, Int>> = List(siteCount) { mutableMapOf() }
 
     val solution: Solution? = Solutions.of(scenario)
     private var presetSprints: List<List<Int>> = emptyList()
@@ -1156,6 +1156,13 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
 
     fun restart(keepDraft: Boolean = true) {
         if (keepDraft) saveDraft()
+        // "Play again" keeps the plan of the last run, ready to change (Gerhard, 23.11.2026): the jobs planned by hand (B2),
+        // the purchases (B7) and the sprints (E2, E3) – like the rules, which the draft keeps.
+        val keptJobs = if (keepDraft && Control.BATCH_BY_HAND in scenario.controls)
+            current.jobs.mapNotNull { job -> (job.startedAt ?: job.plannedStart)?.let { job.id to it } } else emptyList()
+        val keptRenewal = if (keepDraft && hasRenewal) renewLog.map { it.toMap() } else emptyList()
+        val keptSprints = if (keepDraft && hasSprints && sprintPlans.isNotEmpty())
+            List((sprintPlans.keys.maxOrNull() ?: 0) + 1) { sprintPlans[it] ?: emptyList() } else emptyList()
         speed = Speed.PAUSED
         sims = newSims()
         renewDraft = List(siteCount) { 0 }
@@ -1177,12 +1184,17 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
         presetChanges = emptyMap()
         presetReplan = emptySet()
         presetRenewal = emptyList()
+        renewLog = List(siteCount) { mutableMapOf() }
         replanned = false
         stars = 0
         showEnd = false
         urgentJob = null
         forecastNews = false
         warnedJobs.clear()
+        for ((job, start) in keptJobs) current.plan(job, start)
+        presetRenewal = keptRenewal
+        presetSprints = keptSprints
+        presetSprints.firstOrNull()?.let { planSprint(it) }
         changed()
     }
 }
