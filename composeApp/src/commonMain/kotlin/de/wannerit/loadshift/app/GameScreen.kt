@@ -594,27 +594,7 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
                 Txt(t(texts.remark), Type.style(15, color = Palette.secondary))
                 WhatIf(game)
             }
-            // The buttons wrap into a second line when the card is too narrow for all of them.
-            FlowRow(
-                Modifier.fillMaxWidth().padding(horizontal = 30.dp, vertical = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                // The next scenario, once a star has opened it.
-                val sameTrack = Scenario.ALL.filter { it.track == scenario.track }
-                val next = sameTrack.getOrNull(sameTrack.indexOf(scenario) + 1)?.takeIf { Progress.isUnlocked(it) }
-                if (next != null && onNext != null && game.stars < 3) {
-                    // Not all stars in this run: trying again comes first.
-                    PrimaryButton(t("Play again")) { game.restart() }
-                    SecondaryButton(t("To scenario %@", next.shownLabel)) { onNext(next) }
-                } else if (next != null && onNext != null) {
-                    PrimaryButton(t("To scenario %@", next.shownLabel)) { onNext(next) }
-                    SecondaryButton(t("Play again")) { game.restart() }
-                } else {
-                    PrimaryButton(t("Play again")) { game.restart() }
-                }
-                SecondaryButton(t("To the briefing"), onClick = onExit)
-                if (onOverview != null) SecondaryButton(t("To the overview"), onClick = onOverview)
-            }
+            EndButtons(scenario, game.stars, { game.restart() }, onExit, onOverview, onNext)
         }
     }
 }

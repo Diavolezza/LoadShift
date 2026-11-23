@@ -108,7 +108,7 @@ class AbatementController(val scenario: Scenario, fresh: Boolean = false) {
 
 /** P2: the consultant's curve on top, the measures below it, the plan on the right. */
 @Composable
-fun AbatementScreen(game: AbatementController, onExit: () -> Unit, onOverview: (() -> Unit)? = null) {
+fun AbatementScreen(game: AbatementController, onExit: () -> Unit, onOverview: (() -> Unit)? = null, onNext: ((Scenario) -> Unit)? = null) {
     BoxWithConstraints(Modifier.fillMaxSize().background(Palette.background)) {
         val panelWidth = (maxWidth * 0.3f).coerceIn(if (maxWidth < 1000.dp) 270.dp else 300.dp, 380.dp)
         // A low screen (a phone held sideways): the page scrolls and keeps a height everything fits into.
@@ -128,7 +128,7 @@ fun AbatementScreen(game: AbatementController, onExit: () -> Unit, onOverview: (
                 AbatementPanel(game, Modifier.width(panelWidth).fillMaxHeight())
             }
         }
-        if (game.finished) AbatementEnd(game, onExit, onOverview)
+        if (game.finished) AbatementEnd(game, onExit, onOverview, onNext)
         RotateHint(maxWidth, maxHeight)
     }
 }
@@ -322,7 +322,7 @@ private fun AbatementPanel(game: AbatementController, modifier: Modifier) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun AbatementEnd(game: AbatementController, onExit: () -> Unit, onOverview: (() -> Unit)?) {
+private fun AbatementEnd(game: AbatementController, onExit: () -> Unit, onOverview: (() -> Unit)?, onNext: ((Scenario) -> Unit)?) {
     val scenario = game.scenario
     val r = game.result
     val met = game.model.goalsMet(r, scenario.goals)
@@ -363,14 +363,7 @@ private fun AbatementEnd(game: AbatementController, onExit: () -> Unit, onOvervi
                 Txt(t(texts.remark), Type.style(15, color = Palette.secondary))
                 AbatementWhatIf(game)
             }
-            FlowRow(
-                Modifier.fillMaxWidth().padding(horizontal = 30.dp, vertical = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                PrimaryButton(t("Play again")) { game.restart() }
-                SecondaryButton(t("To the briefing"), onClick = onExit)
-                if (onOverview != null) SecondaryButton(t("To the overview"), onClick = onOverview)
-            }
+            EndButtons(game.scenario, game.stars, { game.restart() }, onExit, onOverview, onNext)
         }
     }
 }

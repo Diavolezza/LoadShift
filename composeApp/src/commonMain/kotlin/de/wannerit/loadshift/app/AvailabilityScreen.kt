@@ -140,7 +140,7 @@ fun downtimeText(minutes: Double): String = when {
 }
 
 @Composable
-fun AvailabilityScreen(game: AvailabilityController, onExit: () -> Unit, onOverview: (() -> Unit)? = null) {
+fun AvailabilityScreen(game: AvailabilityController, onExit: () -> Unit, onOverview: (() -> Unit)? = null, onNext: ((Scenario) -> Unit)? = null) {
     BoxWithConstraints(Modifier.fillMaxSize().background(Palette.background)) {
         val panelWidth = (maxWidth * 0.3f).coerceIn(if (maxWidth < 1000.dp) 270.dp else 300.dp, 380.dp)
         val low = maxHeight < 640.dp
@@ -158,7 +158,7 @@ fun AvailabilityScreen(game: AvailabilityController, onExit: () -> Unit, onOverv
                 AvailabilityPanel(game, Modifier.width(panelWidth).fillMaxHeight())
             }
         }
-        if (game.finished) AvailabilityEnd(game, onExit, onOverview)
+        if (game.finished) AvailabilityEnd(game, onExit, onOverview, onNext)
         RotateHint(maxWidth, maxHeight)
     }
 }
@@ -177,6 +177,34 @@ private fun AvailabilityTopBar(game: AvailabilityController, onExit: () -> Unit,
 }
 
 /** The top bar of the screens without a clock: back, scenario, what is being planned, the figures. */
+/**
+ * The buttons under every end card, with and without a clock: "Play again", the next scenario of the same strand
+ * (once this run has opened it), the briefing and the overview. They wrap into a second line when the card is narrow.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun EndButtons(scenario: Scenario, stars: Int, onRestart: () -> Unit, onExit: () -> Unit, onOverview: (() -> Unit)?, onNext: ((Scenario) -> Unit)?) {
+    FlowRow(
+        Modifier.fillMaxWidth().padding(horizontal = 30.dp, vertical = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        val sameTrack = Scenario.ALL.filter { it.track == scenario.track }
+        val next = sameTrack.getOrNull(sameTrack.indexOf(scenario) + 1)?.takeIf { Progress.isUnlocked(it) }
+        if (next != null && onNext != null && stars < 3) {
+            // Not all stars in this run: trying again comes first.
+            PrimaryButton(t("Play again"), onClick = onRestart)
+            SecondaryButton(t("To scenario %@", next.shownLabel)) { onNext(next) }
+        } else if (next != null && onNext != null) {
+            PrimaryButton(t("To scenario %@", next.shownLabel)) { onNext(next) }
+            SecondaryButton(t("Play again"), onClick = onRestart)
+        } else {
+            PrimaryButton(t("Play again"), onClick = onRestart)
+        }
+        SecondaryButton(t("To the briefing"), onClick = onExit)
+        if (onOverview != null) SecondaryButton(t("To the overview"), onClick = onOverview)
+    }
+}
+
 @Composable
 fun PlayTopBar(scenario: Scenario, onExit: () -> Unit, compact: Boolean, caption: String, title: String, metrics: @Composable () -> Unit) {
     if (compact) {
@@ -380,7 +408,7 @@ private fun AvailabilityPanel(game: AvailabilityController, modifier: Modifier) 
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun AvailabilityEnd(game: AvailabilityController, onExit: () -> Unit, onOverview: (() -> Unit)?) {
+private fun AvailabilityEnd(game: AvailabilityController, onExit: () -> Unit, onOverview: (() -> Unit)?, onNext: ((Scenario) -> Unit)?) {
     val scenario = game.scenario
     val model = game.model
     val r = game.result
@@ -422,14 +450,7 @@ private fun AvailabilityEnd(game: AvailabilityController, onExit: () -> Unit, on
                     maxOf(Progress.stars(scenario.number), game.stars), t("The same portal, other architectures:"), scenario.number,
                     reasons = game.whatIf().map { (_, x) -> x.missed.joinToString(", ") { t(it) } }) { game.loadSolution() }
             }
-            FlowRow(
-                Modifier.fillMaxWidth().padding(horizontal = 30.dp, vertical = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                PrimaryButton(t("Play again")) { game.restart() }
-                SecondaryButton(t("To the briefing"), onClick = onExit)
-                if (onOverview != null) SecondaryButton(t("To the overview"), onClick = onOverview)
-            }
+            EndButtons(game.scenario, game.stars, { game.restart() }, onExit, onOverview, onNext)
         }
     }
 }

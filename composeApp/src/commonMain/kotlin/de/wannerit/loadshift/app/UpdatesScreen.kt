@@ -139,7 +139,7 @@ private fun secondsText(s: Int?): String = when {
 }.replace(' ', '\u00A0') // number and unit stay on one line
 
 @Composable
-fun UpdatesScreen(game: UpdatesController, onExit: () -> Unit, onOverview: (() -> Unit)? = null) {
+fun UpdatesScreen(game: UpdatesController, onExit: () -> Unit, onOverview: (() -> Unit)? = null, onNext: ((Scenario) -> Unit)? = null) {
     BoxWithConstraints(Modifier.fillMaxSize().background(Palette.background)) {
         val panelWidth = (maxWidth * 0.3f).coerceIn(if (maxWidth < 1000.dp) 270.dp else 300.dp, 380.dp)
         val low = maxHeight < 640.dp
@@ -164,7 +164,7 @@ fun UpdatesScreen(game: UpdatesController, onExit: () -> Unit, onOverview: (() -
                 UpdatesPanel(game, Modifier.width(panelWidth).fillMaxHeight())
             }
         }
-        if (game.finished) UpdatesEnd(game, onExit, onOverview)
+        if (game.finished) UpdatesEnd(game, onExit, onOverview, onNext)
         RotateHint(maxWidth, maxHeight)
     }
 }
@@ -330,7 +330,7 @@ private data class Quadruple<A, B, C, D>(val a: A, val b: B, val c: C, val d: D)
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun UpdatesEnd(game: UpdatesController, onExit: () -> Unit, onOverview: (() -> Unit)?) {
+private fun UpdatesEnd(game: UpdatesController, onExit: () -> Unit, onOverview: (() -> Unit)?, onNext: ((Scenario) -> Unit)?) {
     val scenario = game.scenario
     val model = game.model
     val r = game.result
@@ -369,14 +369,7 @@ private fun UpdatesEnd(game: UpdatesController, onExit: () -> Unit, onOverview: 
                     maxOf(Progress.stars(scenario.number), game.stars), t("The same app, other ways to learn about changes:"), scenario.number,
                     reasons = game.whatIf().map { (_, x) -> x.missed.joinToString(", ") { t(it) } }) { game.loadSolution() }
             }
-            FlowRow(
-                Modifier.fillMaxWidth().padding(horizontal = 30.dp, vertical = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                PrimaryButton(t("Play again")) { game.restart() }
-                SecondaryButton(t("To the briefing"), onClick = onExit)
-                if (onOverview != null) SecondaryButton(t("To the overview"), onClick = onOverview)
-            }
+            EndButtons(game.scenario, game.stars, { game.restart() }, onExit, onOverview, onNext)
         }
     }
 }

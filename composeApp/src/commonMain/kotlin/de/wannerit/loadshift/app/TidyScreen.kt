@@ -122,7 +122,7 @@ private fun quarterText(q: Int) = t("Q%lld/%lld", q % 4 + 1, q / 4 + 1)
 
 /** P3: the TIME matrix and the project plan on the left, the selected application on the right. */
 @Composable
-fun TidyScreen(game: TidyController, onExit: () -> Unit, onOverview: (() -> Unit)? = null) {
+fun TidyScreen(game: TidyController, onExit: () -> Unit, onOverview: (() -> Unit)? = null, onNext: ((Scenario) -> Unit)? = null) {
     BoxWithConstraints(Modifier.fillMaxSize().background(Palette.background)) {
         val panelWidth = (maxWidth * 0.3f).coerceIn(if (maxWidth < 1000.dp) 270.dp else 300.dp, 380.dp)
         // A low screen (a phone held sideways): the page scrolls and keeps a height everything fits into.
@@ -142,7 +142,7 @@ fun TidyScreen(game: TidyController, onExit: () -> Unit, onOverview: (() -> Unit
                 TidyPanel(game, Modifier.width(panelWidth).fillMaxHeight())
             }
         }
-        if (game.finished) TidyEnd(game, onExit, onOverview)
+        if (game.finished) TidyEnd(game, onExit, onOverview, onNext)
         RotateHint(maxWidth, maxHeight)
     }
 }
@@ -360,7 +360,7 @@ private fun TidyPanel(game: TidyController, modifier: Modifier) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun TidyEnd(game: TidyController, onExit: () -> Unit, onOverview: (() -> Unit)?) {
+private fun TidyEnd(game: TidyController, onExit: () -> Unit, onOverview: (() -> Unit)?, onNext: ((Scenario) -> Unit)?) {
     val scenario = game.scenario
     val r = game.result
     val met = game.model.goalsMet(r, scenario.goals)
@@ -402,14 +402,7 @@ private fun TidyEnd(game: TidyController, onExit: () -> Unit, onOverview: (() ->
                 Txt(t(texts.remark), Type.style(15, color = Palette.secondary))
                 TidyWhatIf(game)
             }
-            FlowRow(
-                Modifier.fillMaxWidth().padding(horizontal = 30.dp, vertical = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                PrimaryButton(t("Play again")) { game.restart() }
-                SecondaryButton(t("To the briefing"), onClick = onExit)
-                if (onOverview != null) SecondaryButton(t("To the overview"), onClick = onOverview)
-            }
+            EndButtons(game.scenario, game.stars, { game.restart() }, onExit, onOverview, onNext)
         }
     }
 }

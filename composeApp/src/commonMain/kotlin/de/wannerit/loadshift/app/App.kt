@@ -83,15 +83,15 @@ fun App(options: LaunchOptions = LaunchOptions()) {
                 else if (s.scenario.lifecycle != null) Screen.Lifecycle(LifecycleController(s.scenario))
                 else if (s.scenario.patterns != null) Screen.Patterns(PatternsController(s.scenario)) else Screen.Game(GameController(s.scenario))
         }, onBack = { screen = Screen.List })
-        is Screen.Availability -> FitLowScreen { AvailabilityScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }) }
-        is Screen.Updates -> FitLowScreen { UpdatesScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }) }
-        is Screen.Tenancy -> FitLowScreen { TenancyScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }) }
-        is Screen.Patterns -> FitLowScreen { PatternsScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }) }
-        is Screen.Lifecycle -> FitLowScreen { LifecycleScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }) }
-        is Screen.Repatriation -> FitLowScreen { RepatriationScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }) }
-        is Screen.Tidy -> FitLowScreen { TidyScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }) }
-        is Screen.Abatement -> FitLowScreen { AbatementScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }) }
-        is Screen.Portfolio -> FitLowScreen { PortfolioScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }) }
+        is Screen.Availability -> FitLowScreen { AvailabilityScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }, onNext = { screen = Screen.Briefing(it) }) }
+        is Screen.Updates -> FitLowScreen { UpdatesScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }, onNext = { screen = Screen.Briefing(it) }) }
+        is Screen.Tenancy -> FitLowScreen { TenancyScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }, onNext = { screen = Screen.Briefing(it) }) }
+        is Screen.Patterns -> FitLowScreen { PatternsScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }, onNext = { screen = Screen.Briefing(it) }) }
+        is Screen.Lifecycle -> FitLowScreen { LifecycleScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }, onNext = { screen = Screen.Briefing(it) }) }
+        is Screen.Repatriation -> FitLowScreen { RepatriationScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }, onNext = { screen = Screen.Briefing(it) }) }
+        is Screen.Tidy -> FitLowScreen { TidyScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }, onNext = { screen = Screen.Briefing(it) }) }
+        is Screen.Abatement -> FitLowScreen { AbatementScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }, onNext = { screen = Screen.Briefing(it) }) }
+        is Screen.Portfolio -> FitLowScreen { PortfolioScreen(s.controller, onExit = { screen = Screen.Briefing(s.controller.scenario) }, onOverview = { screen = Screen.List }, onNext = { screen = Screen.Briefing(it) }) }
         is Screen.Game -> FitLowScreen {
             GameScreen(s.controller, onExit = { s.controller.saveDraft(); screen = Screen.Briefing(s.controller.scenario) },
                 onNext = { s.controller.saveDraft(); screen = Screen.Briefing(it) },

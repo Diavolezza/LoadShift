@@ -119,7 +119,7 @@ private fun shortPlace(p: Place) = when (p) {
 private fun millionEuros(euro: Long) = t("€%@ m", Format.number(euro / 1_000_000.0, 2))
 
 @Composable
-fun RepatriationScreen(game: RepatriationController, onExit: () -> Unit, onOverview: (() -> Unit)? = null) {
+fun RepatriationScreen(game: RepatriationController, onExit: () -> Unit, onOverview: (() -> Unit)? = null, onNext: ((Scenario) -> Unit)? = null) {
     BoxWithConstraints(Modifier.fillMaxSize().background(Palette.background)) {
         val panelWidth = (maxWidth * 0.3f).coerceIn(if (maxWidth < 1000.dp) 270.dp else 300.dp, 380.dp)
         // A low screen (a phone held sideways): the page scrolls and keeps a height everything fits into.
@@ -141,7 +141,7 @@ fun RepatriationScreen(game: RepatriationController, onExit: () -> Unit, onOverv
                 RepatriationPanel(game, Modifier.width(panelWidth).fillMaxHeight())
             }
         }
-        if (game.finished) RepatriationEnd(game, onExit, onOverview)
+        if (game.finished) RepatriationEnd(game, onExit, onOverview, onNext)
         RotateHint(maxWidth, maxHeight)
     }
 }
@@ -334,7 +334,7 @@ private fun RepatriationPanel(game: RepatriationController, modifier: Modifier) 
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun RepatriationEnd(game: RepatriationController, onExit: () -> Unit, onOverview: (() -> Unit)?) {
+private fun RepatriationEnd(game: RepatriationController, onExit: () -> Unit, onOverview: (() -> Unit)?, onNext: ((Scenario) -> Unit)?) {
     val scenario = game.scenario
     val model = game.model
     val r = game.result
@@ -370,14 +370,7 @@ private fun RepatriationEnd(game: RepatriationController, onExit: () -> Unit, on
                 Txt(t(texts.remark), Type.style(15, color = Palette.secondary))
                 RepatriationWhatIf(game)
             }
-            FlowRow(
-                Modifier.fillMaxWidth().padding(horizontal = 30.dp, vertical = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                PrimaryButton(t("Play again")) { game.restart() }
-                SecondaryButton(t("To the briefing"), onClick = onExit)
-                if (onOverview != null) SecondaryButton(t("To the overview"), onClick = onOverview)
-            }
+            EndButtons(game.scenario, game.stars, { game.restart() }, onExit, onOverview, onNext)
         }
     }
 }

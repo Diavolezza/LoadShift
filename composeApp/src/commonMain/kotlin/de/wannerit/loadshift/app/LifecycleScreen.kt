@@ -110,7 +110,7 @@ private fun tierText(t: StorageTier, kg: Double, hours: Int): String = when (t) 
 private fun tb(x: Double): String = if (x < 0.05) "0" else Format.number(x, if (x < 10) 1 else 0)
 
 @Composable
-fun LifecycleScreen(game: LifecycleController, onExit: () -> Unit, onOverview: (() -> Unit)? = null) {
+fun LifecycleScreen(game: LifecycleController, onExit: () -> Unit, onOverview: (() -> Unit)? = null, onNext: ((Scenario) -> Unit)? = null) {
     BoxWithConstraints(Modifier.fillMaxSize().background(Palette.background)) {
         val panelWidth = (maxWidth * 0.3f).coerceIn(if (maxWidth < 1000.dp) 270.dp else 300.dp, 380.dp)
         val low = maxHeight < 640.dp
@@ -135,7 +135,7 @@ fun LifecycleScreen(game: LifecycleController, onExit: () -> Unit, onOverview: (
                 LifecyclePanel(game, Modifier.width(panelWidth).fillMaxHeight())
             }
         }
-        if (game.finished) LifecycleEnd(game, onExit, onOverview)
+        if (game.finished) LifecycleEnd(game, onExit, onOverview, onNext)
         RotateHint(maxWidth, maxHeight)
     }
 }
@@ -283,7 +283,7 @@ private fun LifecyclePanel(game: LifecycleController, modifier: Modifier) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun LifecycleEnd(game: LifecycleController, onExit: () -> Unit, onOverview: (() -> Unit)?) {
+private fun LifecycleEnd(game: LifecycleController, onExit: () -> Unit, onOverview: (() -> Unit)?, onNext: ((Scenario) -> Unit)?) {
     val scenario = game.scenario
     val model = game.model
     val r = game.result
@@ -322,14 +322,7 @@ private fun LifecycleEnd(game: LifecycleController, onExit: () -> Unit, onOvervi
                     maxOf(Progress.stars(scenario.number), game.stars), t("The same data, other plans:"), scenario.number,
                     reasons = game.whatIf().map { (_, x) -> x.missed.joinToString("; ") { t(it.text) } }) { game.loadSolution() }
             }
-            FlowRow(
-                Modifier.fillMaxWidth().padding(horizontal = 30.dp, vertical = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                PrimaryButton(t("Play again")) { game.restart() }
-                SecondaryButton(t("To the briefing"), onClick = onExit)
-                if (onOverview != null) SecondaryButton(t("To the overview"), onClick = onOverview)
-            }
+            EndButtons(game.scenario, game.stars, { game.restart() }, onExit, onOverview, onNext)
         }
     }
 }
