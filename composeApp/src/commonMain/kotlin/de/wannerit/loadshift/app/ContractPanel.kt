@@ -20,10 +20,10 @@ fun ContractPanel(game: GameController) {
         Txt(t("The board wants a green data center. In the report, contracted green energy counts as zero; for the stars, only clean energy that is there in the same hour counts. The cost of electricity may rise by at most %@.",
             Format.wholePercent(model.budgetPermille - 1_000)), Type.style(15, color = Palette.secondary))
         val notes = mapOf(
-            Contract.GREY to t("The grid as it is, %@ ct/kWh.", Format.number(model.priceTenthsCent / 10.0, 1)),
-            Contract.CERTIFICATES to t("Guarantees of origin from hydro plants that have run for decades, +%@ ct/kWh.", Format.number(Contract.CERTIFICATES.surchargeTenthsCent / 10.0, 1)),
+            Contract.GREY to t("The grid as it is, %@ cents/kWh.", Format.number(model.priceTenthsCent / 10.0, 1)),
+            Contract.CERTIFICATES to t("Guarantees of origin from hydro plants that have run for decades, +%@ cents/kWh.", Format.number(Contract.CERTIFICATES.surchargeTenthsCent / 10.0, 1)),
             Contract.PPA to t("A wind farm delivers as much energy over the week as the data center uses without changes – when the wind blows; what is not used in that hour goes to the grid. +%@ ct for each of its kWh.", Format.number(Contract.PPA.surchargeTenthsCent / 10.0, 1)),
-            Contract.HOURLY to t("A supplier covers %@ of every hour with wind, sun and storage, +%@ ct/kWh.", Format.wholePercent(model.hourlyShare), Format.number(Contract.HOURLY.surchargeTenthsCent / 10.0, 1)),
+            Contract.HOURLY to t("A supplier covers %@ of every hour with wind, sun and storage, +%@ cents/kWh.", Format.wholePercent(model.hourlyShare), Format.number(Contract.HOURLY.surchargeTenthsCent / 10.0, 1)),
         )
         for (c in Contract.entries) {
             RuleOption(game.contractDraft == c, { game.contractDraft = c }, t(c.label), notes.getValue(c))
@@ -47,7 +47,7 @@ fun ContractPanel(game: GameController) {
             }
             Row(Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
                 Txt(t("Electricity cost so far (reference)"), Type.callout, Modifier.weight(1f))
-                Txt(t("%@ € (%@ €)", Format.number(totals.energyCost / 1_000.0, 0), Format.number(refCost / 1_000.0, 0)), Type.callout)
+                Txt(t("€%@ (€%@)", Format.number(totals.energyCost / 1_000.0, 0), Format.number(refCost / 1_000.0, 0)), Type.callout)
             }
         }
         ApplyRow(game) { contractText(it) }

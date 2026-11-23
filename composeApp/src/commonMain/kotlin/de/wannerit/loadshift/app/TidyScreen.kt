@@ -206,12 +206,12 @@ private fun TidyGoals(game: TidyController, compact: Boolean = false) {
             GoalItem(r.wronglyEliminated.isEmpty(), true, t("Nothing valuable or required by law eliminated"))
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            StarTick(r.reductionPermille >= scenario.goals.reduction)
+            StarTick(game.model.goalsMet(r, scenario.goals).rules && r.reductionPermille >= scenario.goals.reduction)
             StarLabel(2, 13.dp)
             Txt(t("CO₂ %@", shortChange(-scenario.goals.reduction.toLong())), Type.callout)
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            StarTick(r.reductionPermille >= ((scenario.goals.special as? de.wannerit.loadshift.core.SpecialGoal.Reduction)?.permille ?: 1_000))
+            StarTick(game.model.goalsMet(r, scenario.goals).rules && r.reductionPermille >= ((scenario.goals.special as? de.wannerit.loadshift.core.SpecialGoal.Reduction)?.permille ?: 1_000))
             StarLabel(3, 13.dp)
             Txt(specialShort(scenario.goals.special), Type.callout)
         }
@@ -353,7 +353,7 @@ private fun TidyPanel(game: TidyController, modifier: Modifier) {
             Stepper(t("Quarter %lld, year %lld", c.start % 4 + 1, c.start / 4 + 1), { game.moveStart(-1) }, { game.moveStart(1) })
         }
         HDivider()
-        Txt(t("Counted are three years, quarter by quarter, location-based. While a project runs, the application stays as it is."), Type.caption)
+        Txt(t("We count three years, quarter by quarter, location-based. While a project runs, the application stays as it is."), Type.caption)
         PrimaryButton(t("Carry out the plan"), Modifier.fillMaxWidth(), enabled = !game.finished && game.plan.isNotEmpty()) { game.finish() }
     }
 }
@@ -373,7 +373,7 @@ private fun TidyEnd(game: TidyController, onExit: () -> Unit, onOverview: (() ->
         Column(Modifier.padding(vertical = 40.dp, horizontal = 24.dp).widthIn(max = 640.dp).background(Palette.panel, RoundedCornerShape(20.dp))) {
             Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(30.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Txt(if (!met.rules) t("Not made") else t("Scenario complete"), Type.title, Modifier.weight(1f))
+                    Txt(if (!met.rules) t("Goal not reached") else t("Scenario complete"), Type.title, Modifier.weight(1f))
                     StarRow(game.stars)
                 }
                 Txt("${Format.changePermille(-r.reductionPermille)} CO₂", Type.style(40, FontWeight.Bold, if (r.reductionPermille > 0) Palette.accent else Palette.red))

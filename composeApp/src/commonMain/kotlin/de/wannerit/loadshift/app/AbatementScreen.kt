@@ -315,7 +315,7 @@ private fun AbatementPanel(game: AbatementController, modifier: Modifier) {
         }
         Txt(t("For these measures the consultant's list gives %@ t over three years – %@ of the %@ t the company emits in that time.",
             tonnes(game.promisedKg), Format.wholePercent((game.promisedKg * 1_000 / model.baselineKg).toInt()), tonnes(model.baselineKg)), Type.callout)
-        Txt(t("Counted are three years, quarter by quarter, location-based. The stars go by what really changes."), Type.caption)
+        Txt(t("We count three years, quarter by quarter, location-based. The stars go by what really changes."), Type.caption)
         PrimaryButton(t("Carry out the plan"), Modifier.fillMaxWidth(), enabled = !game.finished && game.plan.isNotEmpty()) { game.finish() }
     }
 }
@@ -335,7 +335,7 @@ private fun AbatementEnd(game: AbatementController, onExit: () -> Unit, onOvervi
         Column(Modifier.padding(vertical = 40.dp, horizontal = 24.dp).widthIn(max = 640.dp).background(Palette.panel, RoundedCornerShape(20.dp))) {
             Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(30.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Txt(if (!met.rules) t("Not made") else t("Scenario complete"), Type.title, Modifier.weight(1f))
+                    Txt(if (!met.rules) t("Goal not reached") else t("Scenario complete"), Type.title, Modifier.weight(1f))
                     StarRow(game.stars)
                 }
                 Txt("${Format.changePermille(-r.reductionPermille)} CO₂", Type.style(40, FontWeight.Bold, if (r.reductionPermille > 0) Palette.accent else Palette.red))

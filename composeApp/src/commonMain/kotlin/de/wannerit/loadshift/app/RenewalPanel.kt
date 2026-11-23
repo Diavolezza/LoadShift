@@ -59,7 +59,7 @@ fun RenewalPanel(game: GameController) {
                     Type.style(13, if (short) FontWeight.SemiBold else FontWeight.Normal, if (short) warn else Palette.secondary),
                 )
                 if (over) Txt(t("Too little: the peak is above the capacity – requests get slow or are lost."), Type.style(12, FontWeight.SemiBold, Palette.red))
-                else if (short) Txt(t("Tight: above 85 % utilization requests get slow."), Type.style(12, FontWeight.SemiBold, warn))
+                else if (short) Txt(t("Tight: above 85 % utilization, requests get slow."), Type.style(12, FontWeight.SemiBold, warn))
                 // The failures to come, where the decision is made (playtest round 2): old servers past their life fail.
                 if (old.isNotEmpty() && (age ?: 0) + 365 >= de.wannerit.loadshift.core.Units.LIFESPAN_DAYS)
                     Txt(t("This year the old servers are past their life: each quarter about %@ of them fail.", Format.wholePercent(model.failure)), Type.caption)

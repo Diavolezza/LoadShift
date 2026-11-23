@@ -140,12 +140,12 @@ private fun PatternGoals(game: PatternsController, compact: Boolean) {
             GoalItem(r.missed.isEmpty(), true, t("Every quality scenario met"))
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            StarTick(r.reductionPermille >= scenario.goals.reduction)
+            StarTick(game.model.goalsMet(r, scenario.goals).rules && r.reductionPermille >= scenario.goals.reduction)
             StarLabel(2, 13.dp)
             Txt(t("CO₂ %@", shortChange(-scenario.goals.reduction.toLong())), Type.callout)
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            StarTick(r.reductionPermille >= ((scenario.goals.special as? de.wannerit.loadshift.core.SpecialGoal.Reduction)?.permille ?: 1_000))
+            StarTick(game.model.goalsMet(r, scenario.goals).rules && r.reductionPermille >= ((scenario.goals.special as? de.wannerit.loadshift.core.SpecialGoal.Reduction)?.permille ?: 1_000))
             StarLabel(3, 13.dp)
             Txt(specialShort(scenario.goals.special), Type.callout)
         }
@@ -235,7 +235,7 @@ private fun PatternPanel(game: PatternsController, modifier: Modifier) {
         Txt(t("A server for a year: about %@ kWh, with a PUE of %@ and %lld g CO₂ per kWh about %@ t CO₂. A TB of storage: about %lld kg a year.",
             Format.number(model.serverKwh.toDouble()), Format.number(model.pueHundredths / 100.0, 2), model.gramsPerKwh.toLong(),
             Format.number(model.serverKg / 1_000, 1), model.kgPerTb.toLong()), Type.caption)
-        Txt(t("Counted is a year: servers, storage and – for the notifications – phones and network, location-based."), Type.caption)
+        Txt(t("We count a year: servers, storage and – for the notifications – phones and network, location-based."), Type.caption)
         PrimaryButton(t("Carry out the plan"), Modifier.fillMaxWidth(), enabled = !game.finished && game.started) { game.finish() }
     }
 }
@@ -257,7 +257,7 @@ private fun PatternEnd(game: PatternsController, onExit: () -> Unit, onOverview:
         Column(Modifier.padding(vertical = 40.dp, horizontal = 24.dp).widthIn(max = 640.dp).background(Palette.panel, RoundedCornerShape(20.dp))) {
             Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(30.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Txt(if (!met.rules) t("Not made") else t("Scenario complete"), Type.title, Modifier.weight(1f))
+                    Txt(if (!met.rules) t("Goal not reached") else t("Scenario complete"), Type.title, Modifier.weight(1f))
                     StarRow(game.stars)
                 }
                 Txt("${Format.changePermille(-r.reductionPermille)} CO₂", Type.style(40, FontWeight.Bold, if (r.reductionPermille > 0) Palette.accent else Palette.red))
@@ -267,7 +267,7 @@ private fun PatternEnd(game: PatternsController, onExit: () -> Unit, onOverview:
                     GoalLine(met.reduction, 2, t("CO₂ %@ or better", Format.changePermille(-scenario.goals.reduction.toLong())))
                     GoalLine(met.special, 3, specialLong(scenario.goals.special))
                 }
-                if (!met.rules) Txt(t("No star because: %@", r.missed.joinToString(", ") { id -> t(model.qualities.first { it.id == id }.name) }),
+                if (!met.rules) Txt(t("No star because: %@", r.missed.joinToString(", ") { id -> model.qualities.first { it.id == id }.let { q -> t(q.name) + " " + t("“%@”", t(q.text)) } }),
                     Type.style(16, FontWeight.SemiBold, Palette.red))
                 MoreStarsLine(moreStars(r.reductionPermille, scenario.goals, met))
                 Table(listOf("", t("today"), t("your plan")), listOf(

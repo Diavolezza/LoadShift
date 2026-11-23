@@ -70,7 +70,7 @@ class PortfolioController(val scenario: Scenario, fresh: Boolean = false) {
     val result: PortfolioResult get() = model.result(inventory, plan)
     val stars: Int get() = model.stars(result, scenario.goals)
 
-    /** A key for the own data center: once bought it stays bought, switching back costs nothing. */
+    /** A key for the company's own data center: once bought it stays bought, switching back costs nothing. */
     fun chooseKey(key: OnPremKey) {
         if (finished) return
         if (replay) {
@@ -154,7 +154,7 @@ class PortfolioController(val scenario: Scenario, fresh: Boolean = false) {
 }
 
 internal fun tonnes(kg: Long): String = Format.number(kg / 1_000.0, if (kg in 1..9_999) 1 else 0)
-internal fun euros(euro: Int): String = Format.number(euro.toDouble()) + " €"
+internal fun euros(euro: Int): String = if (Language.german) Format.number(euro.toDouble()) + "\u202F€" else "€" + Format.number(euro.toDouble())
 
 fun hostingTitle(h: Hosting): String = when (h) {
     Hosting.ON_PREM -> t("Own data center")
@@ -203,7 +203,7 @@ private fun PortfolioTopBar(game: PortfolioController, onExit: () -> Unit, compa
             }
             Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp)) {
                 Metric(t("Your inventory"), t("%@ t CO₂", tonnes(game.inventoryKg)))
-                Metric(t("Expected by your data"), (if (tonnes(game.expectedSaving) == "0") "0 t" else t("−%@ t", tonnes(game.expectedSaving))))
+                Metric(t("Expected saving by your data"), (if (tonnes(game.expectedSaving) == "0") "0 t" else t("−%@ t", tonnes(game.expectedSaving))))
                 Metric(t("Budget left"), euros(game.left), if (game.left < 0) Palette.red else Palette.ink)
             }
         }
@@ -223,7 +223,7 @@ private fun PortfolioTopBar(game: PortfolioController, onExit: () -> Unit, compa
         }
         Row(Modifier.align(Alignment.CenterEnd), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(22.dp)) {
             Metric(t("Your inventory"), t("%@ t CO₂", tonnes(game.inventoryKg)))
-            Metric(t("Expected by your data"), (if (tonnes(game.expectedSaving) == "0") "0 t" else t("−%@ t", tonnes(game.expectedSaving))))
+            Metric(t("Expected saving by your data"), (if (tonnes(game.expectedSaving) == "0") "0 t" else t("−%@ t", tonnes(game.expectedSaving))))
             Metric(t("Budget left"), euros(game.left), if (game.left < 0) Palette.red else Palette.ink)
         }
     }
@@ -268,9 +268,9 @@ private fun HostingColumn(game: PortfolioController, hosting: Hosting, modifier:
             Txt(t("%@ t", tonnes(sum)), Type.style(17, FontWeight.SemiBold))
         }
         Txt(when (hosting) {
-            Hosting.ON_PREM -> t("Stuttgart: the meter shows %@ MWh a year, cooling included; the grid's mean %lld g/kWh.", Format.number(model.meterKWh / 1_000.0), model.gridGrams)
+            Hosting.ON_PREM -> t("Stuttgart: the meter shows %@ MWh a year, cooling included; the grid's average %lld g/kWh.", Format.number(model.meterKWh / 1_000.0), model.gridGrams)
             Hosting.CLOUD -> t("One provider; it buys green certificates for all its regions.")
-            Hosting.SAAS -> t("Known: the invoices. Spend-based: %@ kg CO₂e per 1,000 €.", Format.number(model.spendGrams.toDouble()))
+            Hosting.SAAS -> t("Known: the invoices. Spend-based: %@ kg CO₂e per €1,000.", Format.number(model.spendGrams.toDouble()))
         }, Type.caption)
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             for (i in indices) AppCard(game, i)
@@ -373,7 +373,7 @@ private fun PortfolioPanel(game: PortfolioController, modifier: Modifier) {
             QualityDots(3); Txt(t("good data"), Type.caption); Spacer(Modifier.width(10.dp)); QualityDots(1); Txt(t("rough"), Type.caption)
         }
         Txt(if (game.replay) t("Another try: your last choices are set, and every one can be changed – the data too.")
-            else t("Data you buy stays bought. It costs from the same budget as the measures."), Type.style(15, color = Palette.secondary))
+            else t("Data you have bought stays yours. It costs from the same budget as the measures."), Type.style(15, color = Palette.secondary))
         Txt(t("Own data center: how the meter's energy is split"), Type.subheading)
         val notes = mapOf(
             OnPremKey.SERVERS to t("The servers each application has in the CMDB. Free."),
@@ -413,7 +413,7 @@ private fun PortfolioPanel(game: PortfolioController, modifier: Modifier) {
                 }
             }
         }
-        Txt(t("By your inventory the measures save %@ t a year – %@ of %@ t.", tonnes(game.expectedSaving),
+        Txt(t("According to your inventory, the measures save %@ t a year – %@ of %@ t.", tonnes(game.expectedSaving),
             Format.wholePercent(if (game.inventoryKg == 0L) 0 else (game.expectedSaving * 1_000 / game.inventoryKg).toInt()), tonnes(game.inventoryKg)), Type.callout)
         Txt(t("The measures take effect next year. The stars go by what really changes."), Type.caption)
         PrimaryButton(t("Carry out the plan"), Modifier.fillMaxWidth(), enabled = !game.finished && game.plan.isNotEmpty()) { game.finish() }
@@ -436,7 +436,7 @@ private fun PortfolioEnd(game: PortfolioController, onExit: () -> Unit, onOvervi
         Column(Modifier.padding(vertical = 40.dp, horizontal = 24.dp).widthIn(max = 640.dp).background(Palette.panel, RoundedCornerShape(20.dp))) {
             Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(30.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Txt(if (!met.rules) t("Not made") else t("Scenario complete"), Type.title, Modifier.weight(1f))
+                    Txt(if (!met.rules) t("Goal not reached") else t("Scenario complete"), Type.title, Modifier.weight(1f))
                     StarRow(game.stars)
                 }
                 Txt("${Format.changePermille(-r.reductionPermille)} CO₂", Type.style(40, FontWeight.Bold, if (r.reductionPermille > 0) Palette.accent else Palette.red))

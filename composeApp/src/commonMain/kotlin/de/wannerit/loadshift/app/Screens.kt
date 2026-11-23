@@ -89,7 +89,7 @@ fun AboutContent(modifier: Modifier = Modifier) {
         for ((track, text) in listOf(
             t("Operations") to t("Run a data center so that it serves its users reliably and emits as little CO₂ as possible – switch servers, shift work in time, cool wisely."),
             t("Engineering") to t("Build software and architectures that do the same work with less – measure first, cache what repeats, choose the pattern that fits the problem."),
-            t("Portfolio") to t("Find out where the IT emissions of a whole organisation come from and decide what to change first."),
+            t("Portfolio") to t("Find out where the IT emissions of a whole organization come from and decide what to change first."),
         )) {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Txt(track, Type.style(15, FontWeight.SemiBold))
@@ -127,7 +127,7 @@ private fun ResetProgress() {
                 .clickable { if (asking) { asking = false; Progress.resetAll() } else asking = true }
                 .padding(horizontal = 14.dp, vertical = 6.dp),
         )
-        Txt(t("Deletes the stars of all scenarios on this device. The scenarios close again."), Type.caption)
+        Txt(t("Deletes the stars of all scenarios on this device. The scenarios are locked again."), Type.caption)
     }
 }
 
@@ -189,12 +189,13 @@ fun ScenarioListScreen(onLexicon: () -> Unit = {}, onSelect: (Scenario) -> Unit)
                 Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     for ((track, title) in listOf(Track.OPERATIONS to t("Operations"), Track.ENGINEERING to t("Engineering"), Track.PORTFOLIO to t("Portfolio"))) {
                         val all = Scenario.ALL.filter { it.track == track }
-                        val done = all.count { Progress.stars(it.number) > 0 }
+                        // Stars, not scenarios (playtest round 3: "3 / 12 ★" read as three of twelve stars).
+                        val done = all.sumOf { Progress.stars(it.number) }
                         val on = tab == track.ordinal
                         Column(Modifier.width(androidx.compose.foundation.layout.IntrinsicSize.Max).clip(RoundedCornerShape(8.dp)).clickable { tab = track.ordinal; Storage.setInt("tab", tab) }) {
                             Row(Modifier.padding(horizontal = if (narrow) 10.dp else 18.dp, vertical = 10.dp), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 Txt(title, Type.style(19, FontWeight.SemiBold, if (on) Palette.ink else Palette.secondary))
-                                Txt(t("%lld / %lld ★", done, all.size), Type.style(14, color = Palette.secondary))
+                                Txt(t("%lld / %lld ★", done, all.size * 3), Type.style(14, color = Palette.secondary))
                             }
                             Box(Modifier.fillMaxWidth().height(3.dp).background(if (on) Palette.accent else Color.Transparent))
                         }
@@ -545,7 +546,7 @@ private fun SideCard(scenario: Scenario, texts: ScenarioTexts, onStart: () -> Un
         } else if (lifecycle != null) Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Fact(t("An online retailer with %lld years of data", lifecycle.historyYears.toLong()))
             Fact(t("%lld kinds of data, today nothing is deleted", lifecycle.kinds.size))
-            Fact(t("Counted: a year, location-based with the making of the storage media"))
+            Fact(t("Counted: a year, location-based, including the manufacturing of the storage media"))
         } else if (availability != null) Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Fact(t("%lld building blocks, %lld quality scenarios", availability.blocks.size, availability.scenarios.size))
             Fact(t("Today everything active-active on two sites"))
@@ -556,9 +557,9 @@ private fun SideCard(scenario: Scenario, texts: ScenarioTexts, onStart: () -> Un
             Fact(t("Counted: a year – phones, servers and network, location-based"))
         } else if (repatriation != null) Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Fact(t("%lld applications in the cloud in Frankfurt", repatriation.apps.size))
-            Fact(t("Four places: two cloud regions, a colocation, the own server room"))
+            Fact(t("Four places: two cloud regions, a colocation, the company's own server room"))
             Fact(t("Costs at least %@ lower", Format.wholePercent(repatriation.savingGoalPermille)))
-            Fact(t("Counted: three years, location-based with the making of servers"))
+            Fact(t("Counted: three years, location-based, including server manufacturing"))
         } else if (tidy != null) Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Fact(t("%lld applications", tidy.apps.size))
             Fact(t("At most %lld projects at a time", tidy.capacity))
@@ -566,7 +567,7 @@ private fun SideCard(scenario: Scenario, texts: ScenarioTexts, onStart: () -> Un
         } else if (abatement != null) Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Fact(t("%lld measures on a consultant's list", abatement.measures.size))
             Fact(t("Footprint: about %@ t CO₂ a year", tonnes(abatement.footprintKgPerYear)))
-            Fact(t("Budget for the measures: %@ €", Format.number(abatement.budget.toDouble())))
+            Fact(t("Budget for the measures: €%@", Format.number(abatement.budget.toDouble())))
             Fact(t("Counted: three years, location-based"))
         } else if (scenario.renewal != null) Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             // B7: two sites over three years, quarter by quarter (the generic facts would say "Poland, 12 days").
@@ -577,10 +578,10 @@ private fun SideCard(scenario: Scenario, texts: ScenarioTexts, onStart: () -> Un
             Fact(t("Budget: %lld new servers a year for both sites", renewal.budgetPerYear.toLong()))
         } else if (portfolio != null) Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             fun count(h: de.wannerit.loadshift.core.Hosting) = portfolio.apps.count { it.hosting == h }
-            Fact(t("%lld applications in the own data center", count(de.wannerit.loadshift.core.Hosting.ON_PREM)))
+            Fact(t("%lld applications in the company's own data center", count(de.wannerit.loadshift.core.Hosting.ON_PREM)))
             Fact(t("%lld applications in the cloud", count(de.wannerit.loadshift.core.Hosting.CLOUD)))
             Fact(t("%lld applications as SaaS", count(de.wannerit.loadshift.core.Hosting.SAAS)))
-            Fact(t("Budget for data and measures: %@ €", Format.number(portfolio.budget.toDouble())))
+            Fact(t("Budget for data and measures: €%@", Format.number(portfolio.budget.toDouble())))
             Fact(t("Counted: a year, location-based"))
         } else Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             val sites = scenario.location?.sites
@@ -594,7 +595,7 @@ private fun SideCard(scenario: Scenario, texts: ScenarioTexts, onStart: () -> Un
             if (contract != null) {
                 Fact(t("%lld servers, %lld load units each", scenario.serverCount, perServer))
                 Fact(t("%lld batch jobs that can wait", scenario.batchJobs.size))
-                Fact(t("Electricity: %@ ct/kWh, the budget may rise by %@", Format.number(contract.priceTenthsCent / 10.0, 1), Format.wholePercent(contract.budgetPermille - 1_000)))
+                Fact(t("Electricity: %@ cents/kWh, the budget may rise by %@", Format.number(contract.priceTenthsCent / 10.0, 1), Format.wholePercent(contract.budgetPermille - 1_000)))
             } else if (services != null) {
                 Fact(t("A logistics system: four microservices, two external providers"))
                 Fact(t("Up to %@ tracking requests a second", Format.number(services.peakRate.toDouble())))
@@ -648,7 +649,7 @@ private fun SideCard(scenario: Scenario, texts: ScenarioTexts, onStart: () -> Un
             Txt(t(texts.comparedWith).replaceFirstChar { it.uppercase() }, Type.style(16, color = Palette.secondary))
             // D32: only the scenarios that build on this one wait for its star.
             val opens = Scenario.ALL.filter { it.unlockAfter == scenario.number }.joinToString(", ") { it.shownLabel }
-            if (opens.isNotEmpty()) Txt(t("One star opens %@.", opens), Type.style(16, color = Palette.secondary))
+            if (opens.isNotEmpty()) Txt(t("One star unlocks %@.", opens), Type.style(16, color = Palette.secondary))
         }
         PrimaryButton("▶  " + t("Start"), Modifier.fillMaxWidth(), large = true, onClick = onStart)
     }

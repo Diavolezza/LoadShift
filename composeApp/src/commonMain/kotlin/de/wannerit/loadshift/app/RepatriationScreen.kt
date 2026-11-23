@@ -116,7 +116,7 @@ private fun shortPlace(p: Place) = when (p) {
     Place.SERVER_ROOM -> t("Server room")
 }
 
-private fun millionEuros(euro: Long) = t("%@ m€", Format.number(euro / 1_000_000.0, 2))
+private fun millionEuros(euro: Long) = t("€%@ m", Format.number(euro / 1_000_000.0, 2))
 
 @Composable
 fun RepatriationScreen(game: RepatriationController, onExit: () -> Unit, onOverview: (() -> Unit)? = null) {
@@ -152,7 +152,7 @@ private fun RepatriationTopBar(game: RepatriationController, onExit: () -> Unit,
     val metrics: @Composable () -> Unit = {
         Metric(t("Costs in three years"), t("%@ (%@)", millionEuros(r.planEuro), Format.changePermille(-r.savingPermille)),
             if (game.started && r.savingPermille < game.model.savingGoalPermille) Palette.red else Palette.ink)
-        Metric(t("Location-based with making"), t("%@ t CO₂ (%@)", tonnes(r.planKg), Format.changePermille(-r.reductionPermille)))
+        Metric(t("Location-based incl. manufacturing"), t("%@ t CO₂ (%@)", tonnes(r.planKg), Format.changePermille(-r.reductionPermille)))
         Metric(t("In the report (market-based)"), t("%@ t CO₂", tonnes(r.reportKg)))
     }
     PlayTopBar(game.scenario, onExit, compact, t("Three years"), if (game.finished) t("Plan carried out") else t("The plan"), metrics)
@@ -177,12 +177,12 @@ private fun RepatriationGoals(game: RepatriationController, compact: Boolean = f
             GoalItem(!r.bookingTooSlow, true, t("A booking in the plant under %@ s", Format.number(model.bookingLimitMs / 1_000.0)))
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            StarTick(r.reductionPermille >= scenario.goals.reduction)
+            StarTick(game.model.goalsMet(r, scenario.goals).rules && r.reductionPermille >= scenario.goals.reduction)
             StarLabel(2, 13.dp)
             Txt(t("CO₂ %@", shortChange(-scenario.goals.reduction.toLong())), Type.callout)
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            StarTick(r.reductionPermille >= ((scenario.goals.special as? de.wannerit.loadshift.core.SpecialGoal.Reduction)?.permille ?: 1_000))
+            StarTick(game.model.goalsMet(r, scenario.goals).rules && r.reductionPermille >= ((scenario.goals.special as? de.wannerit.loadshift.core.SpecialGoal.Reduction)?.permille ?: 1_000))
             StarLabel(3, 13.dp)
             Txt(specialShort(scenario.goals.special), Type.callout)
         }
@@ -214,7 +214,7 @@ private fun AppTable(game: RepatriationController, modifier: Modifier) {
                     Txt(t(a.name), Type.style(15, FontWeight.SemiBold))
                     Txt(t(a.description), Type.caption, maxLines = 2)
                     if (m.offOutsideUse) Txt(t("Off outside its hours of use"), Type.style(12, FontWeight.SemiBold, Palette.accent))
-                    Txt(t("%@ € in three years", Format.number(model.euro(a, m))), Type.style(12, color = Palette.secondary))
+                    Txt(t("€%@ in three years", Format.number(model.euro(a, m))), Type.style(12, color = Palette.secondary))
                 }
                 Sparkline(a.week, Modifier.width(130.dp).height(30.dp).padding(end = 12.dp))
                 FlowRow(Modifier.weight(1.6f), horizontalArrangement = Arrangement.spacedBy(5.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
@@ -249,7 +249,7 @@ private fun Sparkline(week: List<Int>, modifier: Modifier) {
     }
 }
 
-/** Today and the plan: in the report, location-based with the making of the servers, and in euros. */
+/** Today and the plan: in the report, location-based, including server manufacturing, and in euros. */
 @Composable
 private fun Comparison(game: RepatriationController, modifier: Modifier) {
     val r = game.result
@@ -257,7 +257,7 @@ private fun Comparison(game: RepatriationController, modifier: Modifier) {
         val maxKg = maxOf(r.baselineKg, r.planKg, r.reportKg, r.baselineReportKg).toFloat()
         Bars(t("In the report (market-based), t CO₂"), r.baselineReportKg / maxKg, r.reportKg / maxKg,
             tonnes(r.baselineReportKg), tonnes(r.reportKg), if (r.reportKg > r.baselineReportKg) Palette.red else Palette.accent, Modifier.fillMaxWidth())
-        Bars(t("Location-based with making – counts for the stars"), r.baselineKg / maxKg, r.planKg / maxKg,
+        Bars(t("Location-based incl. manufacturing – counts for the stars"), r.baselineKg / maxKg, r.planKg / maxKg,
             tonnes(r.baselineKg), tonnes(r.planKg), if (r.planKg > r.baselineKg) Palette.red else Palette.accent, Modifier.fillMaxWidth())
         val maxEuro = maxOf(r.baselineEuro, r.planEuro).toFloat()
         Bars(t("Costs in three years"), r.baselineEuro / maxEuro, r.planEuro / maxEuro,
@@ -293,7 +293,7 @@ private fun RepatriationPanel(game: RepatriationController, modifier: Modifier) 
     Column(modifier.background(Palette.panel).verticalScroll(rememberScrollState()).padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Txt(t(a.name), Type.heading)
         Txt(t(a.description), Type.style(15, color = Palette.secondary))
-        Txt(t("In the cloud today: %lld server equivalents, on average %@ busy, %@ € a year.",
+        Txt(t("In the cloud today: %lld server equivalents, on average %@ busy, €%@ a year.",
             a.cloudServers, Format.wholePercent(a.cloudUtilPercent * 10), Format.number(a.cloudServers.toDouble() * model.cloudEuroPerServer)), Type.callout)
         Txt(t("On own hardware it needs %lld servers for its peak; on average they are %@ busy.",
             a.ownServers, Format.wholePercent(a.ownUtilPercent * 10)), Type.callout)
@@ -315,18 +315,18 @@ private fun RepatriationPanel(game: RepatriationController, modifier: Modifier) 
                 add(t("grid %lld g/kWh", s.gramsPerKwh))
                 add(t("round trip from the plant %@ ms", Format.number(s.roundTripTenthMs / 10.0, if (s.roundTripTenthMs % 10 == 0) 0 else 1)))
                 when (s.place) {
-                    Place.COLOCATION -> add(t("new servers at %@ € each, %@ t CO₂ each to make", Format.number(model.serverEuro.toDouble()), Format.number(model.embodiedKg / 1_000.0, 1)))
-                    Place.SERVER_ROOM -> add(if (fits) t("%lld free servers, already made", model.roomCapacity - model.roomUsed(game.plan - a.name)) else t("not enough free servers"))
-                    else -> add(t("the making of the servers is in the price"))
+                    Place.COLOCATION -> add(t("new servers at €%@ each, %@ t CO₂ each to make", Format.number(model.serverEuro.toDouble()), Format.number(model.embodiedKg / 1_000.0, 1)))
+                    Place.SERVER_ROOM -> add(if (fits) t("%lld free servers, already manufactured", model.roomCapacity - model.roomUsed(game.plan - a.name)) else t("not enough free servers"))
+                    else -> add(t("server manufacturing is in the price"))
                 }
             }
             val euro = model.euro(a, Move(s.place, m.offOutsideUse)).toLong()
             RuleOption(m.place == s.place, { game.place(a, s.place) }, t(s.title),
-                facts.joinToString(" · ") + "\n" + t("Costs in three years: %@ €", Format.number(euro.toDouble())) +
-                    (if (s.cloud) "" else " " + t("– plus the team for own hardware, %@ € a year, once for all applications", Format.number(model.teamEuroPerYear.toDouble()))))
+                facts.joinToString(" · ") + "\n" + t("Costs in three years: €%@", Format.number(euro.toDouble())) +
+                    (if (s.cloud) "" else " " + t("– plus the team for own hardware, €%@ a year, once for all applications", Format.number(model.teamEuroPerYear.toDouble()))))
         }
         HDivider()
-        Txt(t("Counted are three years. In the cloud the making of the servers is part of each server equivalent; in the colocation new servers are bought; the server room's are already made. A team for own hardware costs %@ € a year.",
+        Txt(t("We count three years. In the cloud server manufacturing is part of each server equivalent; in the colocation new servers are bought; the server room's are already manufactured. A team for own hardware costs €%@ a year.",
             Format.number(model.teamEuroPerYear.toDouble())), Type.caption)
         PrimaryButton(t("Carry out the plan"), Modifier.fillMaxWidth(), enabled = !game.finished && game.plan.isNotEmpty()) { game.finish() }
     }
@@ -348,7 +348,7 @@ private fun RepatriationEnd(game: RepatriationController, onExit: () -> Unit, on
         Column(Modifier.padding(vertical = 40.dp, horizontal = 24.dp).widthIn(max = 640.dp).background(Palette.panel, RoundedCornerShape(20.dp))) {
             Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(30.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Txt(if (!met.rules) t("Not made") else t("Scenario complete"), Type.title, Modifier.weight(1f))
+                    Txt(if (!met.rules) t("Goal not reached") else t("Scenario complete"), Type.title, Modifier.weight(1f))
                     StarRow(game.stars)
                 }
                 Txt("${Format.changePermille(-r.reductionPermille)} CO₂", Type.style(40, FontWeight.Bold, if (r.reductionPermille > 0) Palette.accent else Palette.red))
@@ -362,7 +362,7 @@ private fun RepatriationEnd(game: RepatriationController, onExit: () -> Unit, on
                 MoreStarsLine(moreStars(r.reductionPermille, scenario.goals, met))
                 Table(listOf("", t("today"), t("your plan")), listOf(
                     listOf(t("In the report (market-based), t CO₂"), tonnes(r.baselineReportKg), tonnes(r.reportKg)),
-                    listOf(t("Location-based with making, t CO₂"), tonnes(r.baselineKg), tonnes(r.planKg)),
+                    listOf(t("Location-based incl. manufacturing, t CO₂"), tonnes(r.baselineKg), tonnes(r.planKg)),
                     listOf(t("Costs in three years"), millionEuros(r.baselineEuro), millionEuros(r.planEuro)),
                 ), firstWidth = 0.5f)
                 Waterfall(r)
@@ -387,7 +387,7 @@ private fun RepatriationEnd(game: RepatriationController, onExit: () -> Unit, on
 private fun Waterfall(r: MoveResult) {
     val measurer = rememberTextMeasurer()
     val b = r.breakdown
-    val steps = listOf(t("Grid") to b.region, t("Servers and load") to b.energy, t("Cooling (PUE)") to b.pue, t("Making servers") to b.embodied)
+    val steps = listOf(t("Grid") to b.region, t("Servers and load") to b.energy, t("Cooling (PUE)") to b.pue, t("Server manufacturing") to b.embodied)
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Txt(t("Where the change comes from, t CO₂ in three years"), Type.style(13, FontWeight.SemiBold))
         Canvas(Modifier.fillMaxWidth().height(170.dp)) {

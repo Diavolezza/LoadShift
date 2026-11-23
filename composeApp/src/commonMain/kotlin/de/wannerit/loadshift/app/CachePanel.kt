@@ -102,7 +102,7 @@ fun CachePanel(game: GameController) {
         // More measures
         Txt(t("More measures"), Type.subheading)
         Measure(game.cacheInvalidate, t("Invalidate the catalog pages when the prices change"), t("Removes them from the cache at once (day 2, 18:00); the cache fills again. Without it, cached pages show the old prices until they expire.")) { game.cacheInvalidate = !game.cacheInvalidate }
-        Measure(game.cacheWarmUp, t("Warm the cache every night"), t("From 03:00 to 07:00 computes all catalog pages in all variants (language, currency, sort order) in advance, so that nothing is missing in the morning.")) { game.cacheWarmUp = !game.cacheWarmUp }
+        Measure(game.cacheWarmUp, t("Warm the cache every night"), t("From 03:00 to 07:00 it computes all catalog pages in all variants (language, currency, sort order) in advance, so that nothing is missing in the morning.")) { game.cacheWarmUp = !game.cacheWarmUp }
         Measure(game.cacheCount, t("Count unique visitors with HyperLogLog"), t("About 2 % error, which the marketing team accepts – instead of keeping every visitor ID.")) { game.cacheCount = !game.cacheCount }
         Measure(game.cacheView, t("Materialized view for the sales dashboard"), t("Stores the result instead of recomputing it every 15 minutes; costs storage.")) { game.cacheView = !game.cacheView }
 

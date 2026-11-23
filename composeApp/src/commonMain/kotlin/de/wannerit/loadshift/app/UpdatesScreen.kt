@@ -128,7 +128,7 @@ private fun openText(o: Open): String = when (o) {
 private fun closedText(c: Closed, keepalive: Int): String = when (c) {
     Closed.NONE -> t("No updates until the app is opened.")
     Closed.REFRESH -> t("The operating system wakes the app every 15 minutes to ask.")
-    Closed.SOCKET -> t("A connection stays open in the background too; a sign of life every %lld minutes wakes the phone.", keepalive.toLong())
+    Closed.SOCKET -> t("A connection stays open in the background too; a heartbeat message every %lld minutes wakes the phone.", keepalive.toLong())
     Closed.PUSH -> t("The push service wakes the phone only when something has changed.")
 }
 
@@ -149,7 +149,7 @@ fun UpdatesScreen(game: UpdatesController, onExit: () -> Unit, onOverview: (() -
             PlayTopBar(game.scenario, onExit, compact, t("A year"), if (game.finished) t("Plan carried out") else t("The plan")) {
                 Metric(t("CO₂ a year"), t("%@ t", tonnes(r.planKg)))
                 Metric(t("Compared with today"), Format.changePermille(-r.reductionPermille))
-                Metric(t("Of it on the phones"), t("%@ t", tonnes(r.phonesKg)))
+                Metric(t("Of which on phones"), t("%@ t", tonnes(r.phonesKg)))
                 Metric(t("Fresh enough"), t("%lld of %lld", (game.model.kinds.size - r.missed.size).toLong(), game.model.kinds.size.toLong()),
                     if (r.missed.isNotEmpty()) Palette.red else Palette.ink)
             }
@@ -184,12 +184,12 @@ private fun UpdatesGoals(game: UpdatesController, compact: Boolean) {
             GoalItem(r.missed.isEmpty(), true, t("Every kind of update as fresh as required"))
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            StarTick(r.reductionPermille >= scenario.goals.reduction)
+            StarTick(game.model.goalsMet(r, scenario.goals).rules && r.reductionPermille >= scenario.goals.reduction)
             StarLabel(2, 13.dp)
             Txt(t("CO₂ %@", shortChange(-scenario.goals.reduction.toLong())), Type.callout)
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            StarTick(r.reductionPermille >= ((scenario.goals.special as? de.wannerit.loadshift.core.SpecialGoal.Reduction)?.permille ?: 1_000))
+            StarTick(game.model.goalsMet(r, scenario.goals).rules && r.reductionPermille >= ((scenario.goals.special as? de.wannerit.loadshift.core.SpecialGoal.Reduction)?.permille ?: 1_000))
             StarLabel(3, 13.dp)
             Txt(specialShort(scenario.goals.special), Type.callout)
         }
@@ -321,7 +321,7 @@ private fun UpdatesPanel(game: UpdatesController, modifier: Modifier) {
             }
         }
         HDivider()
-        Txt(t("Counted is a year: the phones' energy, the servers' with a PUE of %@, the network's by the data sent, location-based.", Format.number(model.pueHundredths / 100.0, 2)), Type.caption)
+        Txt(t("We count a year: the energy of the phones, of the servers (with a PUE of %@) and of the network (by the data sent), location-based.", Format.number(model.pueHundredths / 100.0, 2)), Type.caption)
         PrimaryButton(t("Carry out the plan"), Modifier.fillMaxWidth(), enabled = !game.finished && game.started) { game.finish() }
     }
 }
@@ -345,7 +345,7 @@ private fun UpdatesEnd(game: UpdatesController, onExit: () -> Unit, onOverview: 
         Column(Modifier.padding(vertical = 40.dp, horizontal = 24.dp).widthIn(max = 640.dp).background(Palette.panel, RoundedCornerShape(20.dp))) {
             Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(30.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Txt(if (!met.rules) t("Not made") else t("Scenario complete"), Type.title, Modifier.weight(1f))
+                    Txt(if (!met.rules) t("Goal not reached") else t("Scenario complete"), Type.title, Modifier.weight(1f))
                     StarRow(game.stars)
                 }
                 Txt("${Format.changePermille(-r.reductionPermille)} CO₂", Type.style(40, FontWeight.Bold, if (r.reductionPermille > 0) Palette.accent else Palette.red))

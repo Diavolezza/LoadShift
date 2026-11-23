@@ -102,8 +102,8 @@ fun tierName(t: StorageTier): String = when (t) {
 }
 
 private fun tierText(t: StorageTier, kg: Double, hours: Int): String = when (t) {
-    StorageTier.HOT -> t("SSD storage, three copies: read at once. About %@ kg CO₂ per TB and year – the power and the making of the SSDs.", Format.number(kg))
-    StorageTier.WARM -> t("HDD storage with erasure coding (the data plus half again): read within a second. About %@ kg CO₂ per TB and year.", Format.number(kg))
+    StorageTier.HOT -> t("SSD storage, three copies: read at once. About %@ kg CO₂ per TB and year – the power and the manufacturing of the SSDs.", Format.number(kg))
+    StorageTier.WARM -> t("HDD storage with erasure coding (1.5 times the data): read within a second. About %@ kg CO₂ per TB and year.", Format.number(kg))
     StorageTier.COLD -> t("Archive on tape, two copies: reading takes about %lld hours. About %@ kg CO₂ per TB and year.", hours.toLong(), Format.number(kg))
 }
 
@@ -155,12 +155,12 @@ private fun LifecycleGoals(game: LifecycleController, compact: Boolean) {
             GoalItem(r.missed.isEmpty(), true, t("Every requirement met"))
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            StarTick(r.reductionPermille >= scenario.goals.reduction)
+            StarTick(game.model.goalsMet(r, scenario.goals).rules && r.reductionPermille >= scenario.goals.reduction)
             StarLabel(2, 13.dp)
             Txt(t("CO₂ %@", shortChange(-scenario.goals.reduction.toLong())), Type.callout)
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            StarTick(r.reductionPermille >= ((scenario.goals.special as? de.wannerit.loadshift.core.SpecialGoal.Reduction)?.permille ?: 1_000))
+            StarTick(game.model.goalsMet(r, scenario.goals).rules && r.reductionPermille >= ((scenario.goals.special as? de.wannerit.loadshift.core.SpecialGoal.Reduction)?.permille ?: 1_000))
             StarLabel(3, 13.dp)
             Txt(specialShort(scenario.goals.special), Type.callout)
         }
@@ -276,7 +276,7 @@ private fun LifecyclePanel(game: LifecycleController, modifier: Modifier) {
         }
         Txt(t("Data younger than 90 days stays hot, as do the live databases."), Type.caption)
         HDivider()
-        Txt(t("Counted is a year in the steady state, location-based, with the making of the storage media."), Type.caption)
+        Txt(t("We count a year in the steady state, location-based, including the manufacturing of the storage media."), Type.caption)
         PrimaryButton(t("Carry out the plan"), Modifier.fillMaxWidth(), enabled = !game.finished && game.started) { game.finish() }
     }
 }
@@ -298,7 +298,7 @@ private fun LifecycleEnd(game: LifecycleController, onExit: () -> Unit, onOvervi
         Column(Modifier.padding(vertical = 40.dp, horizontal = 24.dp).widthIn(max = 640.dp).background(Palette.panel, RoundedCornerShape(20.dp))) {
             Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(30.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Txt(if (!met.rules) t("Not made") else t("Scenario complete"), Type.title, Modifier.weight(1f))
+                    Txt(if (!met.rules) t("Goal not reached") else t("Scenario complete"), Type.title, Modifier.weight(1f))
                     StarRow(game.stars)
                 }
                 Txt("${Format.changePermille(-r.reductionPermille)} CO₂", Type.style(40, FontWeight.Bold, if (r.reductionPermille > 0) Palette.accent else Palette.red))

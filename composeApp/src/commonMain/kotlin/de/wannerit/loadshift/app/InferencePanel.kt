@@ -41,7 +41,7 @@ fun InferencePanel(game: GameController) {
     val simulation = game.simulation
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Txt(t("Shop assistant"), Type.heading)
-        Txt(t("Choose for each kind of question who answers it. The mean quality of the answers must stay at %@ or above, and %@ of the answers must come within %lld seconds.",
+        Txt(t("Choose for each kind of question who answers it. The average quality of the answers must stay at %@ or above, and %@ of the answers must come within %lld seconds.",
             Format.wholePercent(model.qualityTarget), Format.wholePercent(model.onTimeTarget), model.limitTenths / 10), Type.style(15, color = Palette.secondary))
 
         // Who answers: energy and time per answer

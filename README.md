@@ -38,7 +38,7 @@ The app speaks English and German (switch on the start page); everything in this
 | O4 | Headroom | Autoscaling |
 | O5 | Consolidation | Consolidation (Bin Packing) |
 | O6 | Heat wave | PUE (Power Usage Effectiveness) |
-| O7 | Old iron | Embodied Carbon |
+| O7 | Old hardware | Embodied Carbon |
 | O8 | Training run | Carbon-Aware Training (Power Capping) |
 | O9 | Eco mode | Demand Shaping |
 | O10 | Two sites | Location Shifting |

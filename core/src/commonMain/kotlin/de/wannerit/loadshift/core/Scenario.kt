@@ -62,7 +62,7 @@ enum class Control {
 
 /** The special goal of a scenario: the third star. */
 sealed interface SpecialGoal {
-    /** Mean utilization of the running servers at least this, per mille. */
+    /** Average utilization of the running servers at least this, per mille. */
     data class MeanUtilization(val permille: Int) : SpecialGoal
 
     /** CO₂ at least this much below the reference, per mille. */
@@ -319,7 +319,7 @@ data class Scenario(
         )
 
         /**
-         * Scenario 7, "Old iron": the company's two data centers, in Warsaw and in Paris, each with 24 old servers, four
+         * Scenario 7, "Old hardware": the company's two data centers, in Warsaw and in Paris, each with 24 old servers, four
          * years old. Three years, one game day per quarter. Every year a budget for four new servers and a new
          * generation that does 20 % more work per kWh; the shop grows by 15 % a year; from year 3 the old servers are
          * past their life and fail. New servers in the coal-heavy Polish grid save many times their embodied emissions
@@ -327,7 +327,7 @@ data class Scenario(
          * until the capacity is needed.
          */
         val OLD_IRON = Scenario(
-            number = 7, unlockAfter = 4, title = "Old iron", setting = GridSetting(GridRegion.POLAND, Season.WINTER), days = 12,
+            number = 7, unlockAfter = 4, title = "Old hardware", setting = GridSetting(GridRegion.POLAND, Season.WINTER), days = 12,
             seed = 7, fleet = listOf(FleetEntry(ServerKind.CPU_OLD, 24, ageYears = 4)),
             interactive = InteractiveLoad(peak = 150, growthPerYear = 150, daysPerYear = 4),
             controls = setOf(Control.RENEWAL),
@@ -678,7 +678,7 @@ data class Scenario(
         )
 
         /**
-         * P1, "Inventory": eighteen applications in the own data center, in the cloud and as SaaS. Each hosting path
+         * P1, "Inventory": eighteen applications in the company's own data center, in the cloud and as SaaS. Each hosting path
          * has its own source of data; better data costs from the same budget as the measures.
          */
         val INVENTORY = Scenario(
@@ -758,7 +758,7 @@ data class Scenario(
                         15_000, 21_000, 1, "sharing", 60),
                     AbatementMeasure("Replace the 600 oldest desktop PCs by laptops", "Workplace", "A laptop uses about 65 % less electricity; making one emits about 300 kg CO₂e",
                         45_000, 40_000, 2, "pcs", 65, embodiedKg = 180_000),
-                    AbatementMeasure("Guarantees of origin for the own data center", "Own data center", "1,000 MWh a year from hydro plants that have run for decades; the market-based report counts them as zero",
+                    AbatementMeasure("Guarantees of origin for the company's own data center", "Own data center", "1,000 MWh a year from hydro plants that have run for decades; the market-based report counts them as zero",
                         40_000, 400_000, 0),
                     AbatementMeasure("Solar panels on the data center's roof", "Own data center", "100 kWp, about 95 MWh a year used on site; building takes four quarters",
                         120_000, 38_000, 4, onSiteKgPerYear = 38_000),

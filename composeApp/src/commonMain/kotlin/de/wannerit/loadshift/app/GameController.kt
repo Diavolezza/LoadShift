@@ -1074,7 +1074,7 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
                 t("Every job as soon as it arrives (reference)") to reference.totals,
                 t("Every job at night, at 01:00") to replay(BatchMode.AtHour(1)),
                 t("Every job at 11:00") to replay(BatchMode.AtHour(11)),
-                t("Planned by the forecast (from scenario B3)") to replay(BatchMode.Greenest),
+                t("Planned by the forecast (from scenario O3)") to replay(BatchMode.Greenest),
             )
         }
         if (scenario.caching != null) {
@@ -1142,7 +1142,7 @@ class GameController(val scenario: Scenario, fresh: Boolean = false) {
             t("All servers on (reference)") to reference.totals,
             t("Fixed: %lld servers all day", half) to replay(CapacityMode.Manual(half)),
             t("Fixed: %lld servers all day", most) to replay(CapacityMode.Manual(most)),
-            t("Autoscaling at 70 % (from scenario B4)") to replay(CapacityMode.Autoscale(700)),
+            t("Autoscaling at 70 % (from scenario O4)") to replay(CapacityMode.Autoscale(700)),
         )
     }
 

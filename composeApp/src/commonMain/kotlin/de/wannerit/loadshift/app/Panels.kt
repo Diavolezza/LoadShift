@@ -146,7 +146,7 @@ fun ManualCapacity(game: GameController) {
             RoundButton(plus = true, enabled = wanted < total && !game.isFinished) { game.setWantedServers(wanted + 1) }
         }
         Txt(t("Capacity: %lld load units", wanted * perServer), Type.subheading.copy(textAlign = TextAlign.Center), Modifier.fillMaxWidth())
-        Txt(t("One server handles %lld load units (%lld,000 requests per 15 minutes). Above 85 %% utilization requests get slow.", perServer, perServer), Type.callout)
+        Txt(t("One server handles %lld load units (%lld,000 requests per 15 minutes). Above 85 %% utilization, requests get slow.", perServer, perServer), Type.callout)
         Txt(t("Takes effect at once. Switched-off servers stop immediately; switched-on servers boot for 30 minutes."), Type.caption)
     }
 }
@@ -362,7 +362,7 @@ private fun CapacityRules(game: GameController) {
     val total = game.scenario.fleet.filter { it.kind.servesInteractive }.sumOf { it.count }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Txt(t("Capacity rule"), Type.heading)
-        Txt(t("A rule switches the servers – you no longer do it by hand. One server handles %lld load units; it takes 30 minutes to boot. Above 85 %% utilization requests get slow.", perServer), Type.style(15, color = Palette.secondary))
+        Txt(t("A rule switches the servers – you no longer do it by hand. One server handles %lld load units; it takes 30 minutes to boot. Above 85 %% utilization, requests get slow.", perServer), Type.style(15, color = Palette.secondary))
         val kind = game.capKind
         RuleOption(kind == GameController.CapacityKind.ALL_ON, { game.capKind = GameController.CapacityKind.ALL_ON },
             t("All on"), t("All %lld servers run all the time.", total))

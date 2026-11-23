@@ -312,7 +312,7 @@ fun specialShort(goal: SpecialGoal): String = when (goal) {
 }
 
 fun specialLong(goal: SpecialGoal): String = when (goal) {
-    is SpecialGoal.MeanUtilization -> t("mean utilization at least %@", Format.wholePercent(goal.permille))
+    is SpecialGoal.MeanUtilization -> t("average utilization at least %@", Format.wholePercent(goal.permille))
     is SpecialGoal.Reduction -> t("CO₂ %@ or better", Format.changePermille(-goal.permille.toLong()))
     is SpecialGoal.BatchIntensity -> t("batch work at %lld g/kWh or less on average", goal.gramsPerKWh)
     is SpecialGoal.MaxServersOn -> t("at most %lld hosts running", goal.servers)
@@ -399,7 +399,7 @@ private fun GoalBar(game: GameController, compact: Boolean = false) {
             }
             if (game.hasBatch) {
                 val missed = totals.deadlinesMissed
-                GoalItem(missed == 0, change != null, if (missed == 0) t("No deadline missed") else t("Deadlines missed: %lld", missed))
+                GoalItem(missed == 0, change != null, if (missed == 0) t("No deadline missed") else if (missed == 1) t("1 deadline missed") else t("%lld deadlines missed", missed))
                 if (!game.hasInteractive) {
                     // CO₂ so far would favour waiting; the intensity of the work done is a fair measure.
                     val mine = totals.meanBatchIntensityTenths
@@ -418,14 +418,16 @@ private fun GoalBar(game: GameController, compact: Boolean = false) {
                     .clickable { game.tabs.indexOf(GameController.PanelTab.BATCH).takeIf { it >= 0 }?.let { game.panelTab = it } }
                     .padding(horizontal = 10.dp, vertical = 4.dp), maxLines = 1)
         }
-        // Live ticks for the star goals too (playtest round 2): green when the run so far meets them.
+        // Live ticks for the star goals too (playtest round 2): green when the run so far meets them – and the first
+        // star's rules, without which no further star counts (round 3).
+        val rulesLive = change != null && change < 0 && scenario.goalsMet(totals, game.referenceTotals).rules
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            StarTick(change?.let { it <= -scenario.goals.reduction })
+            StarTick(change?.let { rulesLive && it <= -scenario.goals.reduction })
             StarLabel(2, 13.dp)
             Txt(t("CO₂ %@", shortChange(-scenario.goals.reduction.toLong())), Type.callout)
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            StarTick(if (change == null) null else when (val g = scenario.goals.special) {
+            StarTick(if (change == null) null else rulesLive && when (val g = scenario.goals.special) {
                 is SpecialGoal.MeanUtilization -> totals.meanUtilization >= g.permille
                 is SpecialGoal.Reduction -> change <= -g.permille
                 is SpecialGoal.BatchIntensity -> totals.batchEnergy > 0 && totals.meanBatchIntensityTenths <= g.gramsPerKWh * 10
@@ -503,7 +505,7 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
         ) {
             Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(30.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Txt(if (!met.rules) t("Not made") else if (scenario.days == 1) t("Day complete") else t("Scenario complete"), Type.title, Modifier.weight(1f))
+                    Txt(if (!met.rules) t("Goal not reached") else if (scenario.days == 1) t("Day complete") else t("Scenario complete"), Type.title, Modifier.weight(1f))
                     StarRow(game.stars)
                 }
                 Txt("${Format.change(you.emissions, ref.emissions)} CO₂", Type.style(40, FontWeight.Bold, if (you.emissions < ref.emissions) Palette.accent else Palette.red))
@@ -521,12 +523,12 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
                 val rows = buildList {
                     if (game.hasRenewal) {
                         add(t("CO₂ (t)") to (Format.tonnes(you.emissions) to Format.tonnes(ref.emissions)))
-                        add(t("of it embodied (t)") to (Format.tonnes(you.embodied) to Format.tonnes(ref.embodied)))
+                        add(t("of which embodied (t)") to (Format.tonnes(you.embodied) to Format.tonnes(ref.embodied)))
                         add(t("Old servers failed") to ("${you.failedServers}" to "${ref.failedServers}"))
                         add(t("Energy (MWh)") to (Format.number(you.facilityEnergy / 1e9, 0) to Format.number(ref.facilityEnergy / 1e9, 0)))
                     } else {
                         add(t("CO₂ (kg)") to (Format.kilograms(you.emissions) to Format.kilograms(ref.emissions)))
-                        add(t("of it embodied (kg)") to (Format.kilograms(you.embodied) to Format.kilograms(ref.embodied)))
+                        add(t("of which embodied (kg)") to (Format.kilograms(you.embodied) to Format.kilograms(ref.embodied)))
                         // E5: the network and the visitors' devices count too.
                         fun energy(x: de.wannerit.loadshift.core.Totals) = x.facilityEnergy + x.networkEnergy + x.deviceEnergy
                         add(t("Energy (kWh)") to (Format.kilowattHours(energy(you)) to Format.kilowattHours(energy(ref))))
@@ -543,12 +545,12 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
                     }
                     if (scenario.services != null) {
                         add(t("Response time of the tracking (ms)") to ("${you.meanLatency}" to "${ref.meanLatency}"))
-                        add(t("Servers on (mean)") to (Format.number(you.meanServersOn / 1_000.0, 1) to Format.number(ref.meanServersOn / 1_000.0, 1)))
+                        add(t("Servers on (average)") to (Format.number(you.meanServersOn / 1_000.0, 1) to Format.number(ref.meanServersOn / 1_000.0, 1)))
                         add(t("Hours with data too old") to ("${you.rulesBroken}" to "${ref.rulesBroken}"))
                     }
                     if (scenario.pipeline != null) {
                         add(t("Feedback (min)") to (Format.number(you.meanFeedback / 10.0, 1) to Format.number(ref.meanFeedback / 10.0, 1)))
-                        add(t("Servers on (mean)") to (Format.number(you.meanServersOn / 1_000.0, 1) to Format.number(ref.meanServersOn / 1_000.0, 1)))
+                        add(t("Servers on (average)") to (Format.number(you.meanServersOn / 1_000.0, 1) to Format.number(ref.meanServersOn / 1_000.0, 1)))
                         add(t("Release with tested UI") to ((if (you.rulesBroken == 0) t("yes") else t("no")) to (if (ref.rulesBroken == 0) t("yes") else t("no"))))
                     }
                     if (scenario.web != null) {
@@ -561,8 +563,8 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
                     }
                     if (game.hasInteractive && !game.hasInference && !game.hasWeb) {
                         add((if (game.hasRenewal) t("SLA (lowest site)") else t("SLA")) to (Format.percent(minOf(you.sla, you.worstSiteSla)) to Format.percent(minOf(ref.sla, ref.worstSiteSla))))
-                        add(t("Servers on (mean)") to (Format.number(you.meanServersOn / 1_000.0, 1) to Format.number(ref.meanServersOn / 1_000.0, 1)))
-                        add(t("Mean utilization") to (Format.wholePercent(you.meanUtilization) to Format.wholePercent(ref.meanUtilization)))
+                        add(t("Servers on (average)") to (Format.number(you.meanServersOn / 1_000.0, 1) to Format.number(ref.meanServersOn / 1_000.0, 1)))
+                        add(t("Average utilization") to (Format.wholePercent(you.meanUtilization) to Format.wholePercent(ref.meanUtilization)))
                     }
                     if (game.hasSprints) {
                         // E2: the SCI per functional unit (1,000 requests served) – the debrief refers to it.
@@ -573,7 +575,7 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
                         add(t("Quality of the answers") to (Format.percent(you.meanAnswerQuality) to Format.percent(ref.meanAnswerQuality)))
                         add(t("Answers in time") to (Format.percent(you.answersOnTime) to Format.percent(ref.answersOnTime)))
                         fun gpu(sim: de.wannerit.loadshift.core.Simulation) = sim.history.sumOf { it.inference?.servers ?: 0 }.toDouble() / maxOf(1, sim.history.size)
-                        add(t("GPU servers (mean)") to (Format.number(gpu(game.simulation), 1) to Format.number(gpu(game.reference), 1)))
+                        add(t("GPU servers (average)") to (Format.number(gpu(game.simulation), 1) to Format.number(gpu(game.reference), 1)))
                     }
                     if (scenario.streaming != null) add(t("Viewers' rating") to (Format.percent(you.meanRating) to Format.percent(ref.meanRating)))
                     if (game.hasTraining) {
@@ -584,7 +586,7 @@ private fun EndCard(game: GameController, onExit: () -> Unit, onNext: ((Scenario
                         val n = game.jobsTotal
                         if (game.scenario.location != null) add(t("Data transfers (kWh)") to (Format.number(you.transferEnergy / 1e6, 0) to Format.number(ref.transferEnergy / 1e6, 0)))
                         add(t("Jobs on time") to ("${n - you.deadlinesMissed} / $n" to "${n - ref.deadlinesMissed} / $n"))
-                        add(t("Batch work, mean g/kWh") to ("${(you.meanBatchIntensityTenths + 5) / 10}" to "${(ref.meanBatchIntensityTenths + 5) / 10}"))
+                        add(t("Batch work, average g/kWh") to ("${(you.meanBatchIntensityTenths + 5) / 10}" to "${(ref.meanBatchIntensityTenths + 5) / 10}"))
                     }
                 }
                 Table(listOf("", t("You"), t("Reference")), rows.map { listOf(it.first, it.second.first, it.second.second) })
@@ -656,7 +658,7 @@ fun moreStars(s: Scenario, y: Totals, r: Totals, met: de.wannerit.loadshift.core
     fun co2(goal: Int) = t("CO₂ %@ (needed %@)", Format.change(y.emissions, r.emissions), Format.changePermille(-goal.toLong()))
     if (!met.reduction) add("★★ " + co2(s.goals.reduction))
     if (!met.special) add("★★★ " + when (val g = s.goals.special) {
-        is SpecialGoal.MeanUtilization -> t("mean utilization %@ (at least %@)", Format.wholePercent(y.meanUtilization), Format.wholePercent(g.permille))
+        is SpecialGoal.MeanUtilization -> t("average utilization %@ (at least %@)", Format.wholePercent(y.meanUtilization), Format.wholePercent(g.permille))
         is SpecialGoal.Reduction -> co2(g.permille)
         is SpecialGoal.BatchIntensity -> t("batch work %lld g/kWh (at most %lld)", (y.meanBatchIntensityTenths + 5) / 10, g.gramsPerKWh)
         is SpecialGoal.MaxServersOn -> t("%@ hosts on average (at most %lld)", Format.number(y.meanServersOn / 1_000.0, 1), g.servers)
